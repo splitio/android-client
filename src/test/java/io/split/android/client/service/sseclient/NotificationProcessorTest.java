@@ -21,6 +21,7 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
+import io.split.android.client.service.sseclient.notifications.MyLargeSegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeV2Notification;
 import io.split.android.client.service.sseclient.notifications.MySegmentsPayloadDecoder;
@@ -29,6 +30,7 @@ import io.split.android.client.service.sseclient.notifications.NotificationProce
 import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.SplitKillNotification;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.service.sseclient.notifications.mysegments.MyLargeSegmentsNotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessor;
 
 public class NotificationProcessorTest {
@@ -127,5 +129,23 @@ public class NotificationProcessorTest {
         mNotificationProcessor.process(mIncomingNotification);
 
         verify(mySegmentsNotificationProcessor).processMySegmentsUpdateV2(mySegmentChangeNotification);
+    }
+
+    @Test
+    public void notificationProcessorDelegatesLargeSegmentsNotificationToRegisteredProcessors() {
+        MyLargeSegmentsNotificationProcessor mySegmentsNotificationProcessor = mock(MyLargeSegmentsNotificationProcessor.class);
+        MyLargeSegmentsNotificationProcessor mySegmentsNotificationProcessor2 = mock(MyLargeSegmentsNotificationProcessor.class);
+        MyLargeSegmentChangeNotification mySegmentChangeNotification = mock(MyLargeSegmentChangeNotification.class);
+
+        when(mySegmentChangeNotification.getData()).thenReturn("{}");
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_LARGE_SEGMENT_UPDATE);
+        when(mNotificationParser.parseMyLargeSegmentUpdate(anyString())).thenReturn(mySegmentChangeNotification);
+
+        mNotificationProcessor.registerMyLargeSegmentsProcessor("1", mySegmentsNotificationProcessor);
+        mNotificationProcessor.registerMyLargeSegmentsProcessor("2", mySegmentsNotificationProcessor2);
+        mNotificationProcessor.process(mIncomingNotification);
+
+        verify(mySegmentsNotificationProcessor).process(mySegmentChangeNotification);
+        verify(mySegmentsNotificationProcessor2).process(mySegmentChangeNotification);
     }
 }

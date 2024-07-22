@@ -14,6 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.sseclient.notifications.mysegments.MyLargeSegmentsNotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorRegistry;
 import io.split.android.client.utils.logger.Logger;
@@ -25,6 +26,7 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
     private final SplitTaskFactory mSplitTaskFactory;
     private final BlockingQueue<SplitsChangeNotification> mSplitsUpdateNotificationsQueue;
     private final ConcurrentMap<String, MySegmentsNotificationProcessor> mMySegmentsNotificationProcessors;
+    private final ConcurrentMap<String, MyLargeSegmentsNotificationProcessor> mMyLargeSegmentsNotificationProcessors;
     private final MySegmentsPayloadDecoder mMySegmentsPayloadDecoder;
 
     public NotificationProcessor(
@@ -39,6 +41,7 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
         mSplitsUpdateNotificationsQueue = checkNotNull(splitsUpdateNotificationsQueue);
         mMySegmentsPayloadDecoder = checkNotNull(mySegmentsPayloadDecoder);
         mMySegmentsNotificationProcessors = new ConcurrentHashMap<>();
+        mMyLargeSegmentsNotificationProcessors = new ConcurrentHashMap<>();
     }
 
     public void process(IncomingNotification incomingNotification) {
@@ -58,6 +61,9 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
                 case MY_SEGMENTS_UPDATE_V2:
                     processMySegmentUpdateV2(mNotificationParser.parseMySegmentUpdateV2(notificationJson));
                     break;
+                case MY_LARGE_SEGMENT_UPDATE:
+                    processMyLargeSegmentUpdate(mNotificationParser.parseMyLargeSegmentUpdate(notificationJson));
+                    break;
                 default:
                     Logger.e("Unknown notification arrived: " + notificationJson);
             }
@@ -76,8 +82,14 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
     }
 
     @Override
+    public void registerMyLargeSegmentsProcessor(String matchingKey, MyLargeSegmentsNotificationProcessor processor) {
+        mMyLargeSegmentsNotificationProcessors.put(matchingKey, processor);
+    }
+
+    @Override
     public void unregisterMySegmentsProcessor(String matchingKey) {
         mMySegmentsNotificationProcessors.remove(matchingKey);
+        mMyLargeSegmentsNotificationProcessors.remove(matchingKey);
     }
 
     private void processSplitUpdate(SplitsChangeNotification notification) {
@@ -111,6 +123,12 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
     private void processMySegmentUpdateV2(MySegmentChangeV2Notification notification) {
         for (MySegmentsNotificationProcessor processor : mMySegmentsNotificationProcessors.values()) {
             processor.processMySegmentsUpdateV2(notification);
+        }
+    }
+
+    private void processMyLargeSegmentUpdate(MyLargeSegmentChangeNotification notification) {
+        for (MyLargeSegmentsNotificationProcessor processor : mMyLargeSegmentsNotificationProcessors.values()) {
+            processor.process(notification);
         }
     }
 }
