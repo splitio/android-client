@@ -5,8 +5,11 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
+import io.split.android.client.common.CompressionType;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
@@ -14,6 +17,7 @@ import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.sseclient.notifications.KeyList;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeV2Notification;
+import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.utils.logger.Logger;
@@ -51,30 +55,34 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
 
     @Override
     public void processMySegmentsUpdateV2(MySegmentChangeV2Notification notification) {
+        processUpdate(notification.getUpdateStrategy(), notification.getData(), notification.getCompression(), Collections.singleton(notification.getSegmentName()));
+    }
+
+    private void processUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames) {
         try {
-            switch (notification.getUpdateStrategy()) {
+            switch (updateStrategy) {
                 case UNBOUNDED_FETCH_REQUEST:
                     Logger.d("Received Unbounded my segment fetch request");
                     notifyMySegmentRefreshNeeded();
                     break;
                 case BOUNDED_FETCH_REQUEST:
                     Logger.d("Received Bounded my segment fetch request");
-                    byte[] keyMap = mMySegmentsPayloadDecoder.decodeAsBytes(notification.getData(),
-                            mCompressionProvider.get(notification.getCompression()));
+                    byte[] keyMap = mMySegmentsPayloadDecoder.decodeAsBytes(data,
+                            mCompressionProvider.get(compression));
                     executeBoundedFetch(keyMap);
                     break;
                 case KEY_LIST:
                     Logger.d("Received KeyList my segment fetch request");
-                    updateSegments(mMySegmentsPayloadDecoder.decodeAsString(notification.getData(),
-                            mCompressionProvider.get(notification.getCompression())),
-                            notification.getSegmentName());
+                    updateSegments(mMySegmentsPayloadDecoder.decodeAsString(data,
+                                    mCompressionProvider.get(compression)),
+                            segmentNames);
                     break;
                 case SEGMENT_REMOVAL:
                     Logger.d("Received Segment removal request");
-                    removeSegment(notification.getSegmentName());
+                    removeSegment(segmentNames);
                     break;
                 default:
-                    Logger.i("Unknown my segment change v2 notification type: " + notification.getUpdateStrategy());
+                    Logger.i("Unknown my segment change v2 notification type: " + updateStrategy);
             }
         } catch (Exception e) {
             Logger.e("Executing unbounded fetch because an error has occurred processing my segmentV2 notification: " + e.getLocalizedMessage());
@@ -86,12 +94,12 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
         mConfiguration.getMySegmentUpdateNotificationsQueue().offer(new MySegmentChangeNotification());
     }
 
-    private void removeSegment(String segmentName) {
+    private void removeSegment(Set<String> segmentNames) {
         // Shouldn't be null, some defensive code here
-        if (segmentName == null) {
+        if (segmentNames == null) {
             return;
         }
-        MySegmentsUpdateTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(false, segmentName);
+        MySegmentsUpdateTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(false, segmentNames);
         mSplitTaskExecutor.submit(task, null);
     }
 
@@ -103,9 +111,9 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
         }
     }
 
-    private void updateSegments(String keyListString, String segmentName) {
+    private void updateSegments(String keyListString, Set<String> segmentNames) {
         // Shouldn't be null, some defensive code here
-        if (segmentName == null) {
+        if (segmentNames == null) {
             return;
         }
         KeyList keyList = mNotificationParser.parseKeyList(keyListString);
@@ -116,7 +124,7 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
             return;
         }
         Logger.d("Executing KeyList my segment fetch request: Adding = " + actionIsAdd);
-        MySegmentsUpdateTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(actionIsAdd, segmentName);
+        MySegmentsUpdateTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(actionIsAdd, segmentNames);
         mSplitTaskExecutor.submit(task, null);
     }
 }
