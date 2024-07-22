@@ -70,6 +70,8 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
         mListener = listener;
         if (initialDelayInMillis != null) {
             mInitialDelayInSeconds = TimeUnit.MILLISECONDS.toSeconds(initialDelayInMillis);
+        } else {
+            mInitialDelayInSeconds = 0L;
         }
         mCurrentAttempts.set(0);
     }

@@ -90,6 +90,20 @@ public class MySegmentsSynchronizerImplTest {
     }
 
     @Test
+    public void forceMySegmentsSyncStopsPreviouslyRunningTask() {
+        MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
+        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(true)).thenReturn(mockTask);
+
+        mMySegmentsSynchronizer.forceMySegmentsSync(1000L);
+        mMySegmentsSynchronizer.forceMySegmentsSync(0L);
+
+        verify(mRetryBackoffCounterTimer).setTask(eq(mockTask), eq(1000L), any());
+        verify(mRetryBackoffCounterTimer).setTask(eq(mockTask), eq(0L), any());
+        verify(mRetryBackoffCounterTimer, times(2)).stop();
+        verify(mRetryBackoffCounterTimer, times(2)).start();
+    }
+
+    @Test
     public void scheduleSegmentsSyncTaskSchedulesSyncTaskInTaskExecutor() {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
         when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false)).thenReturn(mockTask);
