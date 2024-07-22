@@ -23,7 +23,7 @@ public class MySegmentsUpdateWorkerTest {
     @Mock
     MySegmentsSynchronizer mSynchronizer;
 
-    BlockingQueue<MySegmentChangeNotification> mNotificationQueue;
+    BlockingQueue<Long> mNotificationQueue;
 
     @Before
     public void setup() {
@@ -36,10 +36,10 @@ public class MySegmentsUpdateWorkerTest {
     @Test
     public void mySegmentsUpdateReceived() throws InterruptedException {
 
-        mNotificationQueue.offer(new MySegmentChangeNotification());
-        mNotificationQueue.offer(new MySegmentChangeNotification());
-        mNotificationQueue.offer(new MySegmentChangeNotification());
-        mNotificationQueue.offer(new MySegmentChangeNotification());
+        mNotificationQueue.offer(0L);
+        mNotificationQueue.offer(1L);
+        mNotificationQueue.offer(2L);
+        mNotificationQueue.offer(3L);
 
         Thread.sleep(1000);
 
@@ -49,7 +49,7 @@ public class MySegmentsUpdateWorkerTest {
     @Test
     public void stopped() throws InterruptedException {
         mWorker.stop();
-        mNotificationQueue.offer(new MySegmentChangeNotification());
+        mNotificationQueue.offer(0L);
 
         Thread.sleep(1000);
 

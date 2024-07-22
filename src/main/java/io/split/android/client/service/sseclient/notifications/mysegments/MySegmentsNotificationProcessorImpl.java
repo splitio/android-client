@@ -8,15 +8,13 @@ import androidx.annotation.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
-import io.split.android.client.common.CompressionType;
 import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeV2Notification;
-import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 
@@ -46,7 +44,7 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
     @Override
     public void processMySegmentsUpdate(MySegmentChangeNotification notification) {
         if (!notification.isIncludesPayload()) {
-            mConfiguration.getMySegmentUpdateNotificationsQueue().offer(notification);
+            mConfiguration.getMySegmentUpdateNotificationsQueue().offer(ServiceConstants.NO_INITIAL_DELAY);
         } else {
             List<String> segmentList = notification.getSegmentList() != null ? notification.getSegmentList() : new ArrayList<>();
             MySegmentsOverwriteTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsOverwriteTask(segmentList);
@@ -61,6 +59,6 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
                 notification.getCompression(),
                 Collections.singleton(notification.getSegmentName()),
                 mConfiguration.getMySegmentUpdateNotificationsQueue(),
-                0);
+                ServiceConstants.NO_INITIAL_DELAY);
     }
 }

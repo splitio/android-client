@@ -8,17 +8,16 @@ import java.math.BigInteger;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 
 public class MySegmentsNotificationProcessorConfiguration {
 
     private final MySegmentsTaskFactory mMySegmentsTaskFactory;
-    private final BlockingQueue<MySegmentChangeNotification> mMySegmentUpdateNotificationsQueue;
+    private final BlockingQueue<Long> mMySegmentUpdateNotificationsQueue;
     private final String mUserKey;
     private final BigInteger mHashedUserKey;
 
     public MySegmentsNotificationProcessorConfiguration(@NonNull MySegmentsTaskFactory mySegmentsTaskFactory,
-                                                        @NonNull BlockingQueue<MySegmentChangeNotification> mySegmentUpdateNotificationsQueue,
+                                                        @NonNull BlockingQueue<Long> mySegmentUpdateNotificationsQueue,
                                                         @NonNull String userKey,
                                                         @NonNull BigInteger hashedUserKey) {
         mMySegmentsTaskFactory = checkNotNull(mySegmentsTaskFactory);
@@ -31,7 +30,7 @@ public class MySegmentsNotificationProcessorConfiguration {
         return mMySegmentsTaskFactory;
     }
 
-    public BlockingQueue<MySegmentChangeNotification> getMySegmentUpdateNotificationsQueue() {
+    public BlockingQueue<Long> getMySegmentUpdateNotificationsQueue() {
         return mMySegmentUpdateNotificationsQueue;
     }
 
