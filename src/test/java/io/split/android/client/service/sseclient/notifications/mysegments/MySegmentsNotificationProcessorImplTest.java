@@ -20,7 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.math.BigInteger;
@@ -281,7 +280,7 @@ public class MySegmentsNotificationProcessorImplTest {
 
         mNotificationProcessor.processMySegmentsUpdateV2(notification);
 
-        verify(helper).processUpdate(MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST, "dummy", CompressionType.GZIP, Collections.singleton("dummy"), mMySegmentChangeQueue);
+        verify(helper).processUpdate(MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST, "dummy", CompressionType.GZIP, Collections.singleton("dummy"), mMySegmentChangeQueue, 0);
     }
 
     private void mySegmentsUpdateV2KeyListNotification(String segmentName, KeyList.Action action) {

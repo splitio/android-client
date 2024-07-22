@@ -1,0 +1,70 @@
+package io.split.android.client.service.sseclient.notifications.mysegments;
+
+import static org.mockito.ArgumentMatchers.notNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import org.junit.Before;
+import org.junit.Test;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.concurrent.BlockingQueue;
+
+import io.split.android.client.common.CompressionType;
+import io.split.android.client.service.sseclient.notifications.MyLargeSegmentChangeNotification;
+import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
+
+public class MyLargeSegmentsNotificationProcessorImplTest {
+
+    private MySegmentsNotificationProcessorHelper mHelper;
+    private MySegmentsNotificationProcessorConfiguration mConfiguration;
+    private SyncDelayCalculator mSyncDelayCalculator;
+    private BlockingQueue mBlockingQueue;
+    private MyLargeSegmentsNotificationProcessorImpl mNotificationProcessor;
+
+    @Before
+    public void setup() {
+        mConfiguration = mock(MySegmentsNotificationProcessorConfiguration.class);
+        mBlockingQueue = mock(BlockingQueue.class);
+        when(mConfiguration.getMySegmentUpdateNotificationsQueue()).thenReturn(mBlockingQueue);
+        when(mConfiguration.getUserKey()).thenReturn("key");
+        mHelper = mock(MySegmentsNotificationProcessorHelper.class);
+        mSyncDelayCalculator = mock(SyncDelayCalculator.class);
+        mNotificationProcessor = new MyLargeSegmentsNotificationProcessorImpl(mHelper, mConfiguration, mSyncDelayCalculator);
+    }
+
+    @Test
+    public void processDelegatesToHelper() {
+        MyLargeSegmentChangeNotification notification = mock(MyLargeSegmentChangeNotification.class);
+        when(notification.getCompression()).thenReturn(CompressionType.GZIP);
+        when(notification.getData()).thenReturn("dummy");
+        when(notification.getLargeSegments()).thenReturn(new HashSet<>(Arrays.asList("segment1", "segment2")));
+        when(notification.getUpdateIntervalMs()).thenReturn(1000L);
+        when(notification.getAlgorithmSeed()).thenReturn(1234);
+        when(notification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.BOUNDED_FETCH_REQUEST);
+        when(mSyncDelayCalculator.calculateSyncDelay("key", 1000L, 1234)).thenReturn(25L);
+
+        mNotificationProcessor.process(notification);
+
+        verify(mHelper).processUpdate(MySegmentUpdateStrategy.BOUNDED_FETCH_REQUEST,
+                "dummy",
+                CompressionType.GZIP,
+                new HashSet<>(Arrays.asList("segment1", "segment2")),
+                mBlockingQueue,
+                25L);
+    }
+
+    @Test
+    public void delayIsCalculatedWithCalculator() {
+        MyLargeSegmentChangeNotification notification = mock(MyLargeSegmentChangeNotification.class);
+        when(notification.getUpdateIntervalMs()).thenReturn(1000L);
+        when(notification.getAlgorithmSeed()).thenReturn(1234);
+        when(mSyncDelayCalculator.calculateSyncDelay("key", 1000L, 1234)).thenReturn(25L);
+
+        mNotificationProcessor.process(notification);
+
+        verify(mSyncDelayCalculator).calculateSyncDelay("key", 1000L, 1234);
+    }
+}
