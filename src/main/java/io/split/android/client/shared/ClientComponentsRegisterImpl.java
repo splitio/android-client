@@ -84,7 +84,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
         registerMySegmentsSynchronizer(key, mySegmentsSynchronizer);
 
         MySegmentsSynchronizer myLargeSegmentsSynchronizer = null;
-        if (mSplitConfig.largeSegmentsEnabled() && myLargeSegmentsTaskFactory != null) {
+        if (isLargeSegmentsEnabled()) {
             myLargeSegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(myLargeSegmentsTaskFactory, eventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, mSplitConfig.largeSegmentsRefreshRate());
             mMySegmentsSynchronizerRegistry.registerMyLargeSegmentsSynchronizer(key.matchingKey(),
                     myLargeSegmentsSynchronizer);
@@ -98,7 +98,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
             registerMySegmentsNotificationProcessor(key, mySegmentsTaskFactory, mySegmentsNotificationQueue);
             registerMySegmentsUpdateWorker(key, mySegmentsSynchronizer, mySegmentsNotificationQueue);
 
-            if (mSplitConfig.largeSegmentsEnabled() && myLargeSegmentsTaskFactory != null) {
+            if (isLargeSegmentsEnabled()) {
                 LinkedBlockingDeque<MySegmentChangeNotification> myLargeSegmentsNotificationQueue = new LinkedBlockingDeque<>();
                 registerMyLargeSegmentsNotificationProcessor(key, myLargeSegmentsTaskFactory, myLargeSegmentsNotificationQueue);
                 registerMyLargeSegmentsUpdateWorker(key, myLargeSegmentsSynchronizer, myLargeSegmentsNotificationQueue);
@@ -182,5 +182,9 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
 
     private boolean isSyncEnabled() {
         return mSplitConfig.syncEnabled();
+    }
+
+    private boolean isLargeSegmentsEnabled() {
+        return mSplitConfig.largeSegmentsEnabled();
     }
 }
