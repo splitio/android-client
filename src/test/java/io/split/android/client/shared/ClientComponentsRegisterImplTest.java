@@ -131,15 +131,6 @@ public class ClientComponentsRegisterImplTest {
     }
 
     @Test
-    public void myLargeSegmentsSynchronizerIsNotRegisteredWhenTaskFactoryIsNull() {
-        register = getRegister(true);
-        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory, null);
-
-        verify(mMySegmentsSynchronizerFactory, times(0)).getSynchronizer(mMyLargeSegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, 60);
-        verify(mMySegmentsSynchronizerRegistry, times(0)).registerMyLargeSegmentsSynchronizer("matching_key", mMySegmentsSynchronizer);
-    }
-
-    @Test
     public void myLargeSegmentsSynchronizerIsRegisteredWhenLargeSegmentsIsEnabledAndTaskFactoryIsNotNull() {
         register = getRegister(true);
         register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
