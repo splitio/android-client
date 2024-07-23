@@ -187,4 +187,20 @@ public class RetryBackoffCounterTimerTest {
 
         verify(taskExecutor).schedule(mockTask, 5L, counterTimer);
     }
+
+    @Test
+    public void testWithListenerAndInitialDelay() throws InterruptedException {
+        SplitTaskExecutionListener mockListener = mock(SplitTaskExecutionListener.class);
+        counterTimer = new RetryBackoffCounterTimer(taskExecutor, backoffCounter, 2);
+        when(taskExecutor.schedule(mockTask, 5, counterTimer)).then(invocation -> {
+            counterTimer.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC, Collections.singletonMap("DO_NOT_RETRY", true)));
+            return "100";
+        });
+
+        counterTimer.setTask(mockTask, 5000L, mockListener);
+
+        counterTimer.start();
+
+        verify(taskExecutor).schedule(mockTask, 5L, counterTimer);
+    }
 }
