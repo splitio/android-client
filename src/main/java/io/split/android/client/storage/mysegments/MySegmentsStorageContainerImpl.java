@@ -12,7 +12,6 @@ import java.util.concurrent.ConcurrentMap;
 public class MySegmentsStorageContainerImpl implements MySegmentsStorageContainer {
 
     private final ConcurrentMap<String, MySegmentsStorage> mStorageMap = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, MySegmentsStorage> mLargeSegmentsStorageMap = new ConcurrentHashMap<>();
     private final PersistentMySegmentsStorage mPersistentMySegmentsStorage;
     private final Object lock = new Object();
 
@@ -32,32 +31,11 @@ public class MySegmentsStorageContainerImpl implements MySegmentsStorageContaine
         }
     }
 
-    @NonNull
-    @Override
-    public MySegmentsStorage getLargeSegmentsStorageForKey(String matchingKey) {
-        if (mLargeSegmentsStorageMap.get(matchingKey) == null) {
-            mLargeSegmentsStorageMap.put(matchingKey, new MySegmentsStorageImpl(matchingKey, mPersistentMySegmentsStorage));
-        }
-
-        return mLargeSegmentsStorageMap.get(matchingKey);
-    }
-
     @Override
     public long getUniqueAmount() {
         Set<String> segments = new HashSet<>();
 
         for (MySegmentsStorage mySegmentsStorage : mStorageMap.values()) {
-            segments.addAll(mySegmentsStorage.getAll());
-        }
-
-        return segments.size();
-    }
-
-    @Override
-    public long getUniqueLargeSegmentsAmount() {
-        Set<String> segments = new HashSet<>();
-
-        for (MySegmentsStorage mySegmentsStorage : mLargeSegmentsStorageMap.values()) {
             segments.addAll(mySegmentsStorage.getAll());
         }
 

@@ -76,6 +76,10 @@ public class SplitStorageContainer {
         return mMySegmentsStorageContainer;
     }
 
+    public MySegmentsStorageContainer getMyLargeSegmentsStorageContainer() {
+        return mMyLargeSegmentsStorageContainer;
+    }
+
     public MySegmentsStorage getMySegmentsStorage(String matchingKey) {
         return mMySegmentsStorageContainer.getStorageForKey(matchingKey);
     }

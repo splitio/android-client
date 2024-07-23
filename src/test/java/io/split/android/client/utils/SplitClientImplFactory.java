@@ -34,7 +34,7 @@ public class SplitClientImplFactory {
     public static SplitClientImpl get(Key key, SplitsStorage splitsStorage) {
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventsManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
-        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class));
+        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class), mock(MySegmentsStorageContainer.class));
         TelemetryStorage telemetryStorage = mock(TelemetryStorage.class);
         TreatmentManagerFactory treatmentManagerFactory = new TreatmentManagerFactoryImpl(
                 new KeyValidatorImpl(), new SplitValidatorImpl(), new ImpressionListener.NoopImpressionListener(),
@@ -61,7 +61,7 @@ public class SplitClientImplFactory {
     }
 
     public static SplitClientImpl get(Key key, ImpressionListener impressionListener) {
-        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class));
+        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class), mock(MySegmentsStorageContainer.class));
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         return new SplitClientImpl(
                 mock(SplitFactory.class),
@@ -79,7 +79,7 @@ public class SplitClientImplFactory {
     }
 
     public static SplitClientImpl get(Key key, SplitEventsManager eventsManager) {
-        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class));
+        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class), mock(MySegmentsStorageContainer.class));
         return new SplitClientImpl(
                 mock(SplitFactory.class),
                 mock(SplitClientContainer.class),

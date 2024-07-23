@@ -325,7 +325,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Initialize default client
         client();
-        SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer());
+        SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer(), mStorageContainer.getMyLargeSegmentsStorageContainer());
         mManager = new SplitManagerImpl(
                 mStorageContainer.getSplitsStorage(),
                 new SplitValidatorImpl(), mSplitParser);

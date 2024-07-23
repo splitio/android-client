@@ -16,8 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.split.android.client.storage.cipher.SplitCipher;
-import io.split.android.client.storage.db.MySegmentDao;
-import io.split.android.client.storage.db.MySegmentEntity;
+import io.split.android.client.storage.db.MyLargeSegmentDao;
+import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 
 public class SqLitePersistentMyLargeSegmentsStorageTest {
@@ -27,14 +27,14 @@ public class SqLitePersistentMyLargeSegmentsStorageTest {
     @Mock
     private SplitCipher mSplitCipher;
     @Mock
-    private MySegmentDao mDao;
-    private SqLitePersistentMySegmentsStorage<MySegmentEntity> mStorage;
+    private MyLargeSegmentDao mDao;
+    private SqLitePersistentMySegmentsStorage<MyLargeSegmentEntity> mStorage;
 
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        when(mDatabase.mySegmentDao()).thenReturn(mDao);
-        mStorage = new SqLitePersistentMySegmentsStorage<>(mSplitCipher, mDatabase.mySegmentDao(), MySegmentEntity.creator());
+        when(mDatabase.myLargeSegmentDao()).thenReturn(mDao);
+        mStorage = new SqLitePersistentMySegmentsStorage<>(mSplitCipher, mDatabase.myLargeSegmentDao(), MyLargeSegmentEntity.creator());
     }
 
     @Test
@@ -48,7 +48,7 @@ public class SqLitePersistentMyLargeSegmentsStorageTest {
         mStorage.set(userKey, segments);
 
         verify(mSplitCipher).encrypt("segment1,segment2,segment3");
-        verify(mDao).update(any(MySegmentEntity.class));
+        verify(mDao).update(any(MyLargeSegmentEntity.class));
     }
 
     @Test
@@ -69,7 +69,7 @@ public class SqLitePersistentMyLargeSegmentsStorageTest {
         String userKey = "user_key";
         String encryptedSegments = "encrypted_segments";
         String decryptedSegments = "segment1,segment2,segment3";
-        MySegmentEntity entity = new MySegmentEntity();
+        MyLargeSegmentEntity entity = new MyLargeSegmentEntity();
         entity.setUserKey(userKey);
         entity.setSegmentList(encryptedSegments);
 
