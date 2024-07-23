@@ -7,6 +7,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import static java.lang.Boolean.TRUE;
+
 import androidx.annotation.NonNull;
 
 import org.junit.After;
@@ -167,7 +169,7 @@ public class RetryBackoffCounterTimerTest {
         counterTimer.start();
 
         verify(mockListener).taskExecuted(argThat(taskInfo -> taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR &&
-                taskInfo.getTaskType() == SplitTaskType.SPLITS_SYNC));
+                taskInfo.getTaskType() == SplitTaskType.SPLITS_SYNC && TRUE.equals(taskInfo.getBoolValue("DO_NOT_RETRY"))));
     }
 
     @Test
