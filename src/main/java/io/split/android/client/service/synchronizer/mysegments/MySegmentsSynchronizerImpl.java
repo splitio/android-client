@@ -66,9 +66,10 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
     }
 
     @Override
-    public void forceMySegmentsSync() {
+    public void forceMySegmentsSync(Long syncDelay) {
         if (mIsSynchronizing.get()) {
-            mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), mMySegmentsSyncListener);
+            mMySegmentsSyncRetryTimer.stop();
+            mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), syncDelay, mMySegmentsSyncListener);
             mMySegmentsSyncRetryTimer.start();
         }
     }

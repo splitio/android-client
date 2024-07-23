@@ -8,7 +8,6 @@ import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.sseclient.notifications.KeyList;
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
@@ -34,7 +33,7 @@ class MySegmentsNotificationProcessorHelper {
         mConfiguration = configuration;
     }
 
-    void processUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, BlockingQueue<MySegmentChangeNotification> notificationsQueue, long syncDelay) {
+    void processUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, BlockingQueue<Long> notificationsQueue, long syncDelay) {
         try {
             switch (updateStrategy) {
                 case UNBOUNDED_FETCH_REQUEST:
@@ -66,8 +65,8 @@ class MySegmentsNotificationProcessorHelper {
         }
     }
 
-    private void notifyMySegmentRefreshNeeded(BlockingQueue<MySegmentChangeNotification> notificationsQueue, long syncDelay) {
-        notificationsQueue.offer(new MySegmentChangeNotification());
+    private void notifyMySegmentRefreshNeeded(BlockingQueue<Long> notificationsQueue, long syncDelay) {
+        notificationsQueue.offer(syncDelay);
     }
 
     private void removeSegment(Set<String> segmentNames) {

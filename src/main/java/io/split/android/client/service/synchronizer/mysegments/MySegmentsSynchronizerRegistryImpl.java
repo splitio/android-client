@@ -60,8 +60,8 @@ public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronize
     }
 
     @Override
-    public void forceMySegmentsSync(SegmentType segmentType) {
-        executeForAll(MySegmentsSynchronizer::forceMySegmentsSync, segmentType);
+    public void forceMySegmentsSync(SegmentType segmentType, Long syncDelay) {
+        executeForAll(mySegmentsSynchronizer -> mySegmentsSynchronizer.forceMySegmentsSync(syncDelay), segmentType);
     }
 
     @Override

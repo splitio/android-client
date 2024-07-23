@@ -62,7 +62,7 @@ public class MySegmentsNotificationProcessorImplTest {
     private CompressionUtil mCompressionUtil;
     private final BigInteger mHashedUserKey = new BigInteger("11288179738259047283");
     @Mock
-    private BlockingQueue<MySegmentChangeNotification> mMySegmentChangeQueue;
+    private BlockingQueue<Long> mMySegmentChangeQueue;
     @Mock
     private MySegmentChangeNotification mIncomingNotification;
     @Mock
@@ -140,10 +140,9 @@ public class MySegmentsNotificationProcessorImplTest {
         mNotificationProcessor.processMySegmentsUpdate(mySegmentChangeNotification);
 
         verify(mSplitTaskFactory, never()).createMySegmentsOverwriteTask(any());
-        ArgumentCaptor<MySegmentChangeNotification> messageCaptor =
-                ArgumentCaptor.forClass(MySegmentChangeNotification.class);
+        ArgumentCaptor<Long> messageCaptor =
+                ArgumentCaptor.forClass(Long.class);
         verify(mMySegmentChangeQueue, times(1)).offer(messageCaptor.capture());
-        Assert.assertEquals(NotificationType.MY_SEGMENTS_UPDATE, messageCaptor.getValue().getType());
     }
 
     @Test

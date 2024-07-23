@@ -10,7 +10,6 @@ import java.util.concurrent.BlockingQueue;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.sseclient.notifications.MyLargeSegmentChangeNotification;
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 
@@ -18,7 +17,7 @@ public class MyLargeSegmentsNotificationProcessorImpl implements MyLargeSegments
 
     private final MySegmentsNotificationProcessorHelper mProcessorHelper;
     private final String mUserKey;
-    private final BlockingQueue<MySegmentChangeNotification> mNotificationQueue;
+    private final BlockingQueue<Long> mNotificationQueue;
     private final SyncDelayCalculator mSyncDelayCalculator;
 
     public MyLargeSegmentsNotificationProcessorImpl(@NonNull NotificationParser notificationParser,

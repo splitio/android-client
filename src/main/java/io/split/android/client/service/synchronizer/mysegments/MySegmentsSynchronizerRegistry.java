@@ -18,7 +18,7 @@ public interface MySegmentsSynchronizerRegistry {
 
         void synchronizeMySegments(SegmentType segmentType);
 
-        void forceMySegmentsSync(SegmentType segmentType);
+        void forceMySegmentsSync(SegmentType segmentType, Long syncDelay);
 
         void destroy();
 
