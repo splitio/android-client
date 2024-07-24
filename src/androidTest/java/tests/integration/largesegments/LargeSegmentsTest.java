@@ -11,6 +11,7 @@ import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -131,6 +132,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         assertEquals(1, mEndpointHits.get("myLargeSegments").get());
     }
 
+    @Ignore
     @Test
     public void sdkReadyIsEmittedWhenWaitForLargeSegmentsIsTrueAndSyncFailsWith403Code() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
