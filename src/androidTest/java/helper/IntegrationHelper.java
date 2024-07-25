@@ -357,7 +357,9 @@ public class IntegrationHelper {
             @Override
             public HttpStreamResponseMock getStreamResponse(URI uri) {
                 try {
-                    sseLatch.countDown();
+                    if (sseLatch != null) {
+                        sseLatch.countDown();
+                    }
                     return new HttpStreamResponseMock(200, streamingQueue);
                 } catch (IOException e) {
                     e.printStackTrace();
