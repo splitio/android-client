@@ -70,12 +70,13 @@ public class TreatmentManagerTest {
         if (evaluator == null) {
             FileHelper fileHelper = new FileHelper();
             MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
+            MySegmentsStorageContainer myLargeSegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
             MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
             Set<String> mySegments = new HashSet(Arrays.asList("s1", "s2", "test_copy"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-            SplitParser splitParser = new SplitParser(mySegmentsStorageContainer);
+            SplitParser splitParser = new SplitParser(mySegmentsStorageContainer, myLargeSegmentsStorageContainer);
 
             Map<String, Split> splitsMap = splitsMap(splits);
             when(splitsStorage.getAll()).thenReturn(splitsMap);

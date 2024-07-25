@@ -106,15 +106,20 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
     @Override
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
         mTaskId = null;
-        if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR &&
-                (taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY) == null ||
-                        Boolean.FALSE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY)))) {
+        if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+            if (taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY) == null ||
+                    Boolean.FALSE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
 
-            if (mRetryAttemptsLimit == DEFAULT_MAX_ATTEMPTS || mCurrentAttempts.get() < mRetryAttemptsLimit) {
-                schedule();
+                if (mRetryAttemptsLimit == DEFAULT_MAX_ATTEMPTS || mCurrentAttempts.get() < mRetryAttemptsLimit) {
+                    schedule();
+                }
+
+                return;
+            } else if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
+                if (mListener != null) {
+                    mListener.taskExecuted(taskInfo);
+                }
             }
-
-            return;
         }
 
         mBackoffCounter.resetCounter();

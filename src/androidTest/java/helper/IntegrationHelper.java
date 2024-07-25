@@ -169,6 +169,12 @@ public class IntegrationHelper {
         return "{\"mySegments\":[], \"changeNumber\": 9999999999999}";
     }
 
+    public static String randomizedMyLargeSegments() {
+        int randIntOne = (int) (Math.random() * 100);
+        int randIntTwo = (int) (Math.random() * 100);
+        return "{\"myLargeSegments\":[\"large-segment1\", \"large-segment"+randIntOne+"\", \"large-segment"+randIntTwo+"\"], \"changeNumber\": 9999999999999}";
+    }
+
     public static String dummyApiKey() {
         return "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
     }

@@ -48,30 +48,6 @@ public class MySegmentsStorageContainerImplTest {
     }
 
     @Test
-    public void getLargeSegmentsStorageForKeyReturnsNewStorageForEachKey() {
-        String userKey = "user_key";
-        String userKey2 = "user_key_2";
-
-        MySegmentsStorage storageForKey = mContainer.getLargeSegmentsStorageForKey(userKey);
-        MySegmentsStorage storageForKey2 = mContainer.getLargeSegmentsStorageForKey(userKey2);
-
-        assertNotNull(storageForKey);
-        assertNotNull(storageForKey2);
-        assertNotEquals(storageForKey, storageForKey2);
-    }
-
-    @Test
-    public void getLargeSegmentsStorageForKeyDoesNotCreateNewStorageForSameKey() {
-        String userKey = "user_key";
-
-        MySegmentsStorage storageForKey = mContainer.getLargeSegmentsStorageForKey(userKey);
-        MySegmentsStorage storageForKeySecondRequest = mContainer.getLargeSegmentsStorageForKey(userKey);
-
-        assertNotNull(storageForKey);
-        assertEquals(storageForKey, storageForKeySecondRequest);
-    }
-
-    @Test
     public void getUniqueAmountReturnsUniqueSegmentCount() {
         String userKey = "user_key";
         String userKey2 = "user_key_2";
@@ -83,22 +59,6 @@ public class MySegmentsStorageContainerImplTest {
         storageForKey2.set(Arrays.asList("s2", "s4", "s6"));
 
         long distinctAmount = mContainer.getUniqueAmount();
-
-        assertEquals(4, distinctAmount);
-    }
-
-    @Test
-    public void getUniqueLargeSegmentsAmountReturnsUniqueSegmentCountForLargeSegments() {
-        String userKey = "user_key";
-        String userKey2 = "user_key_2";
-
-        MySegmentsStorage storageForKey = mContainer.getLargeSegmentsStorageForKey(userKey);
-        MySegmentsStorage storageForKey2 = mContainer.getLargeSegmentsStorageForKey(userKey2);
-
-        storageForKey.set(Arrays.asList("s1", "s2"));
-        storageForKey2.set(Arrays.asList("s2", "s4", "s6"));
-
-        long distinctAmount = mContainer.getUniqueLargeSegmentsAmount();
 
         assertEquals(4, distinctAmount);
     }

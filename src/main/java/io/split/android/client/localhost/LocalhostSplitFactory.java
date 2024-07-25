@@ -66,7 +66,7 @@ public class LocalhostSplitFactory implements SplitFactory {
         EventsManagerCoordinator eventsManagerCoordinator = new EventsManagerCoordinator();
         FileStorage fileStorage = new FileStorage(context.getCacheDir(), ServiceConstants.LOCALHOST_FOLDER);
         SplitsStorage splitsStorage = new LocalhostSplitsStorage(mLocalhostFileName, context, fileStorage, eventsManagerCoordinator);
-        SplitParser splitParser = new SplitParser(new LocalhostMySegmentsStorageContainer());
+        SplitParser splitParser = new SplitParser(new LocalhostMySegmentsStorageContainer(), new LocalhostMySegmentsStorageContainer());
         SplitTaskExecutorImpl taskExecutor = new SplitTaskExecutorImpl();
         AttributesManagerFactory attributesManagerFactory = new AttributesManagerFactoryImpl(new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
 

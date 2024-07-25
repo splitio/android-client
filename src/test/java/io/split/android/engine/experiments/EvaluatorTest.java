@@ -40,12 +40,13 @@ public class EvaluatorTest {
             MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
             MySegmentsStorage myLargeSegmentsStorage = mock(MySegmentsStorage.class);
             MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
+            MySegmentsStorageContainer myLargeSegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
             Set<String> mySegments = new HashSet<>(Arrays.asList("s1", "s2", "test_copy"));
             Set<String> myLargeSegments = new HashSet<>(Arrays.asList("segment1"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-            SplitParser splitParser = new SplitParser(mySegmentsStorageContainer);
+            SplitParser splitParser = new SplitParser(mySegmentsStorageContainer, myLargeSegmentsStorageContainer);
 
             Map<String, Split> splitsMap = splitsMap(splits);
             when(splitsStorage.getAll()).thenReturn(splitsMap);
@@ -63,7 +64,7 @@ public class EvaluatorTest {
             when(splitsStorage.get("ls_split")).thenReturn(splitsMap.get("ls_split"));
 
             when(mySegmentsStorageContainer.getStorageForKey(any())).thenReturn(mySegmentsStorage);
-            when(mySegmentsStorageContainer.getLargeSegmentsStorageForKey("anyKey")).thenReturn(myLargeSegmentsStorage);
+            when(myLargeSegmentsStorageContainer.getStorageForKey("anyKey")).thenReturn(myLargeSegmentsStorage);
             when(mySegmentsStorage.getAll()).thenReturn(mySegments);
             when(myLargeSegmentsStorage.getAll()).thenReturn(myLargeSegments);
 

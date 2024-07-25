@@ -8,6 +8,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import androidx.annotation.NonNull;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -26,6 +28,7 @@ import io.split.android.client.dtos.Matcher;
 import io.split.android.client.dtos.MatcherCombiner;
 import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.MatcherType;
+import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
@@ -59,6 +62,8 @@ public class SplitParserTest {
     MySegmentsStorage mMySegmentsStorage;
     @Mock
     MySegmentsStorageContainer mMySegmentsStorageContainer;
+    @Mock
+    MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
 
     @Before
     public void setup() {
@@ -68,7 +73,7 @@ public class SplitParserTest {
 
     @Test
     public void less_than_or_equal_to() {
-        SplitParser parser = SplitParser.get(mMySegmentsStorageContainer);
+        SplitParser parser = createParser();
 
         Matcher ageLessThan10 = ConditionsTestUtil.numericMatcher("user", "age", MatcherType.LESS_THAN_OR_EQUAL_TO, DataType.NUMBER, 10L, false);
 
@@ -98,7 +103,7 @@ public class SplitParserTest {
     @Test
     public void equal_to() {
 
-        SplitParser parser = SplitParser.get(mMySegmentsStorageContainer);
+        SplitParser parser = createParser();
 
         Matcher ageLessThan10 = ConditionsTestUtil.numericMatcher("user", "age", MatcherType.EQUAL_TO, DataType.NUMBER, 10L, true);
 
@@ -125,7 +130,7 @@ public class SplitParserTest {
     @Test
     public void equal_to_negative_number() {
 
-        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+        SplitParser parser = createParser();
 
         Matcher equalToNegative10 = ConditionsTestUtil.numericMatcher("user", "age", MatcherType.EQUAL_TO, DataType.NUMBER, -10L, false);
 
@@ -149,10 +154,15 @@ public class SplitParserTest {
         assertThat(actual, is(equalTo(expected)));
     }
 
+    @NonNull
+    private SplitParser createParser() {
+        return new SplitParser(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer);
+    }
+
     @Test
     public void between() {
 
-        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+        SplitParser parser = createParser();
 
         Matcher ageBetween10And11 = ConditionsTestUtil.betweenMatcher("user",
                 "age",
@@ -330,7 +340,7 @@ public class SplitParserTest {
         condition.matcherGroup.matchers = Collections.singletonList(matcher);
         Split split = makeSplit("test1", Collections.singletonList(condition));
 
-        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+        SplitParser parser = createParser();
 
         ParsedSplit parsedSplit = parser.parse(split);
         assertEquals("test1", parsedSplit.feature());
@@ -357,7 +367,7 @@ public class SplitParserTest {
         condition.matcherGroup.matchers = Collections.singletonList(matcher);
         Split split = makeSplit("test1", Collections.singletonList(condition));
 
-        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+        SplitParser parser = createParser();
 
         ParsedSplit parsedSplit = parser.parse(split);
         assertEquals("test1", parsedSplit.feature());
@@ -384,7 +394,7 @@ public class SplitParserTest {
         condition.matcherGroup.matchers = Collections.singletonList(matcher);
         Split split = makeSplit("test1", Collections.singletonList(condition));
 
-        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+        SplitParser parser = createParser();
 
         ParsedSplit parsedSplit = parser.parse(split);
         assertEquals("test1", parsedSplit.feature());
@@ -414,7 +424,7 @@ public class SplitParserTest {
         condition.matcherGroup.matchers = Collections.singletonList(matcher);
         Split split = makeSplit("test1", Collections.singletonList(condition));
 
-        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+        SplitParser parser = createParser();
 
         ParsedSplit parsedSplit = parser.parse(split);
         assertEquals("test1", parsedSplit.feature());
@@ -443,7 +453,7 @@ public class SplitParserTest {
         condition.matcherGroup.matchers = Collections.singletonList(matcher);
         Split split = makeSplit("test1", Collections.singletonList(condition));
 
-        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+        SplitParser parser = createParser();
 
         ParsedSplit parsedSplit = parser.parse(split);
         assertEquals("test1", parsedSplit.feature());
@@ -472,7 +482,7 @@ public class SplitParserTest {
         condition.matcherGroup.matchers = Collections.singletonList(matcher);
         Split split = makeSplit("test1", Collections.singletonList(condition));
 
-        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+        SplitParser parser = createParser();
 
         ParsedSplit parsedSplit = parser.parse(split, "matching_key");
         assertEquals("test1", parsedSplit.feature());
@@ -482,13 +492,13 @@ public class SplitParserTest {
         assertEquals("new label", parsedCondition.label());
         assertEquals(ConditionType.ROLLOUT, parsedCondition.conditionType());
         assertEquals(2, parsedCondition.partitions().size());
-        verify(mMySegmentsStorageContainer).getLargeSegmentsStorageForKey("matching_key");
+        verify(mMyLargeSegmentsStorageContainer).getStorageForKey("matching_key");
         verify(mMySegmentsStorageContainer, never()).getStorageForKey("matching_key");
     }
 
     private void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
 
-        SplitParser parser = new SplitParser(mMySegmentsStorageContainer);
+        SplitParser parser = createParser();
 
         List<Partition> partitions = Arrays.asList(ConditionsTestUtil.partition("on", 100));
 
