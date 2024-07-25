@@ -197,6 +197,9 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
                 Logger.d("Push Subsystem Up event message received.");
                 mSynchronizer.synchronizeSplits();
                 mSynchronizer.synchronizeMySegments();
+                if (mSplitClientConfig.largeSegmentsEnabled()) {
+                    mSynchronizer.synchronizeMyLargeSegments();
+                }
                 mSynchronizer.stopPeriodicFetching();
                 mStreamingReconnectTimer.cancel();
                 mIsPollingEnabled.set(false);

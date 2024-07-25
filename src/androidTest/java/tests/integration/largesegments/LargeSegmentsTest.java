@@ -211,8 +211,9 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         String[] largeSegments = testDatabase.myLargeSegmentDao()
                 .getByUserKey(IntegrationHelper.dummyUserKey().matchingKey())
                 .getSegmentList().split(",");
-        assertEquals(2, largeSegments.length);
+        assertEquals(3, largeSegments.length);
         assertEquals("large-segment1", largeSegments[0]);
         assertEquals("large-segment2", largeSegments[1]);
+        assertEquals("large-segment3", largeSegments[2]);
     }
 }

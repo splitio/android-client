@@ -23,6 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -158,7 +159,7 @@ public class IntegrationHelper {
     }
 
     public static String dummyMyLargeSegments() {
-        return "{\"myLargeSegments\":[\"large-segment1\", \"large-segment2\"], \"changeNumber\": 9999999999999}";
+        return "{\"myLargeSegments\":[\"large-segment1\", \"large-segment2\", \"large-segment3\"], \"changeNumber\": 9999999999999}";
     }
 
     public static String emptyMySegments() {
@@ -172,7 +173,7 @@ public class IntegrationHelper {
     public static String randomizedMyLargeSegments() {
         int randIntOne = (int) (Math.random() * 100);
         int randIntTwo = (int) (Math.random() * 100);
-        return "{\"myLargeSegments\":[\"large-segment1\", \"large-segment"+randIntOne+"\", \"large-segment"+randIntTwo+"\"], \"changeNumber\": 9999999999999}";
+        return "{\"myLargeSegments\":[\"large-segment1\", \"large-random\", \"large-segment"+randIntOne+"\", \"large-segment"+randIntTwo+"\"], \"changeNumber\": 9999999999999}";
     }
 
     public static String dummyApiKey() {
@@ -258,6 +259,14 @@ public class IntegrationHelper {
 
     }
 
+    public static String streamingEnabledTokenLargeSegments() {
+        return "{" +
+                "    \"pushEnabled\": true," +
+                "    \"connDelay\": " + 0 + "," +
+                "    \"token\": \"eyJhbGciOiJIUzI1NiIsImtpZCI6IjVZOU05US45QnJtR0EiLCJ0eXAiOiJKV1QifQ.ewogICJ4LWFibHktY2FwYWJpbGl0eSI6ICJ7XCJNek01TmpjME9EY3lOZz09X01URXhNemd3TmpneF9NVGN3TlRJMk1UTTBNZz09X215U2VnbWVudHNcIjpbXCJzdWJzY3JpYmVcIl0sXCJNek01TmpjME9EY3lOZz09X01URXhNemd3TmpneF9NVGN3TlRJMk1UTTBNZz09X215bGFyZ2VzZWdtZW50c1wiOltcInN1YnNjcmliZVwiXSxcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X3NwbGl0c1wiOltcInN1YnNjcmliZVwiXSxcImNvbnRyb2xfcHJpXCI6W1wic3Vic2NyaWJlXCIsXCJjaGFubmVsLW1ldGFkYXRhOnB1Ymxpc2hlcnNcIl0sXCJjb250cm9sX3NlY1wiOltcInN1YnNjcmliZVwiLFwiY2hhbm5lbC1tZXRhZGF0YTpwdWJsaXNoZXJzXCJdfSIsCiAgIngtYWJseS1jbGllbnRJZCI6ICJjbGllbnRJZCIsCiAgImV4cCI6IDIyMDg5ODg4MDAsCiAgImlhdCI6IDE1ODc0MDQzODgKfQ==.LcKAXnkr-CiYVxZ7l38w9i98Y-BMAv9JlGP2i92nVQY\"" +
+                "}";
+    }
+
     public static String streamingDisabledToken() {
         return "{\"pushEnabled\": false }";
     }
@@ -317,6 +326,10 @@ public class IntegrationHelper {
         return buildDispatcher(responses, null);
     }
 
+    public static HttpResponseMockDispatcher buildDispatcher(Map<String, ResponseClosure> responses, @Nullable BlockingQueue<String> streamingQueue) {
+        return buildDispatcher(responses, streamingQueue, null);
+    }
+
     /**
      * Builds a dispatcher with the given responses.
      *
@@ -324,7 +337,7 @@ public class IntegrationHelper {
      * @param streamingQueue The streaming responses to be returned by the dispatcher.
      * @return The dispatcher to be used in {@link HttpClientMock}
      */
-    public static HttpResponseMockDispatcher buildDispatcher(Map<String, ResponseClosure> responses, @Nullable BlockingQueue<String> streamingQueue) {
+    public static HttpResponseMockDispatcher buildDispatcher(Map<String, ResponseClosure> responses, @Nullable BlockingQueue<String> streamingQueue, CountDownLatch sseLatch) {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
@@ -344,6 +357,7 @@ public class IntegrationHelper {
             @Override
             public HttpStreamResponseMock getStreamResponse(URI uri) {
                 try {
+                    sseLatch.countDown();
                     return new HttpStreamResponseMock(200, streamingQueue);
                 } catch (IOException e) {
                     e.printStackTrace();
