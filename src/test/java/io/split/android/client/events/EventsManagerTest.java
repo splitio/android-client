@@ -292,7 +292,7 @@ public class EventsManagerTest {
 
         boolean shouldStop = false;
         long maxExecutionTime = System.currentTimeMillis() + 10000;
-        long intervalExecutionTime = 200;
+        long intervalExecutionTime = 100;
 
         assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
         assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
