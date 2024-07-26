@@ -56,7 +56,7 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
 
     @Override
     protected void createNewClient(Key key) {
-        SplitEventsManager eventsManager = new SplitEventsManager(mConfig, mSplitTaskExecutor);
+        SplitEventsManager eventsManager = new SplitEventsManager(mSplitTaskExecutor, mConfig.blockUntilReady(), mConfig.largeSegmentsEnabled(), false);
         eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
         eventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);

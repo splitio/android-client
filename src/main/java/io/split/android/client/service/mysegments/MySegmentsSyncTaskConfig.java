@@ -55,7 +55,7 @@ public class MySegmentsSyncTaskConfig {
     }
 
     @NonNull
-    static MySegmentsSyncTaskConfig getForMyLargeSegments() {
+    public static MySegmentsSyncTaskConfig getForMyLargeSegments() {
         return MY_LARGE_SEGMENTS_TASK_CONFIG;
     }
 }

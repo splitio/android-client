@@ -44,6 +44,7 @@ public class LargeSegmentTestHelper {
     protected final AtomicLong mMyLargeSegmentsDelay = new AtomicLong(1000L);
     protected final AtomicInteger mMyLargeSegmentsStatusCode = new AtomicInteger(200);
     protected final AtomicBoolean mRandomizeMyLargeSegments = new AtomicBoolean(false);
+    protected final AtomicBoolean mEmptyMyLargeSegments = new AtomicBoolean(false);
     protected final AtomicBoolean mBrokenApi = new AtomicBoolean(false);
 
     @Before
@@ -53,6 +54,7 @@ public class LargeSegmentTestHelper {
         mMyLargeSegmentsDelay.set(1000L);
         mMyLargeSegmentsStatusCode.set(200);
         mRandomizeMyLargeSegments.set(false);
+        mEmptyMyLargeSegments.set(false);
         mBrokenApi.set(false);
         initializeLatches();
 
@@ -80,7 +82,8 @@ public class LargeSegmentTestHelper {
                     if (mMyLargeSegmentsStatusCode.get() != 200) {
                         return new MockResponse().setResponseCode(mMyLargeSegmentsStatusCode.get());
                     } else {
-                        String body = IntegrationHelper.dummyMyLargeSegments();
+
+                        String body = (mEmptyMyLargeSegments.get()) ? IntegrationHelper.emptyMyLargeSegments() : IntegrationHelper.dummyMyLargeSegments();
                         if (mRandomizeMyLargeSegments.get()) {
                             body = IntegrationHelper.randomizedMyLargeSegments();
                         }
