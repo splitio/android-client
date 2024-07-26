@@ -79,6 +79,10 @@ public class MySegmentsSyncTask implements SplitTask {
             mTelemetryRuntimeProducer.recordSyncError(mTelemetryOperationType, e.getHttpStatus());
 
             if (HttpStatus.isNotRetryable(HttpStatus.fromCode(e.getHttpStatus()))) {
+                if (isLargeSegmentsSync()) {
+                    mEventsManager.disableLargeSegments();
+                }
+
                 return SplitTaskExecutionInfo.error(mTaskType,
                         Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true));
             }
@@ -126,5 +130,9 @@ public class MySegmentsSyncTask implements SplitTask {
             return mUpdateEvent;
         }
         return mFetchedEvent;
+    }
+
+    private boolean isLargeSegmentsSync() {
+        return mTaskType == SplitTaskType.MY_LARGE_SEGMENT_SYNC;
     }
 }

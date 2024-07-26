@@ -2,42 +2,25 @@ package tests.integration.largesegments;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import android.content.Context;
-
-import androidx.test.platform.app.InstrumentationRegistry;
-
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import helper.DatabaseHelper;
-import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.TestableSplitConfigBuilder;
-import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.exceptions.SplitInstantiationException;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Json;
-import okhttp3.mockwebserver.Dispatcher;
-import okhttp3.mockwebserver.MockResponse;
-import okhttp3.mockwebserver.MockWebServer;
-import okhttp3.mockwebserver.RecordedRequest;
 import tests.integration.shared.TestingHelper;
 
 public class LargeSegmentsTest extends LargeSegmentTestHelper {
@@ -132,7 +115,6 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         assertEquals(1, mEndpointHits.get("myLargeSegments").get());
     }
 
-    @Ignore
     @Test
     public void sdkReadyIsEmittedWhenWaitForLargeSegmentsIsTrueAndSyncFailsWith403Code() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
@@ -149,7 +131,6 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         assertEquals(1, mEndpointHits.get("myLargeSegments").get());
         assertTrue(readyAwait);
         assertFalse(sdkReadyTimeoutAwait);
-
     }
 
     @Test
@@ -215,5 +196,62 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         assertEquals("large-segment1", largeSegments[0]);
         assertEquals("large-segment2", largeSegments[1]);
         assertEquals("large-segment3", largeSegments[2]);
+    }
+
+    @Test
+    public void syncOfLargeSegmentsForMultiClient() throws InterruptedException {
+        mRandomizeMyLargeSegments.set(true);
+        SplitRoomDatabase testDatabase = DatabaseHelper.getTestDatabase(mContext);
+        SplitFactory factory = getFactory(true, true, 10, null, testDatabase);
+
+        SplitClient client1 = factory.client();
+        SplitClient client2 = factory.client("key2");
+
+        CountDownLatch latch = new CountDownLatch(2);
+        client1.on(SplitEvent.SDK_READY, TestingHelper.testTask(latch));
+        client2.on(SplitEvent.SDK_READY, TestingHelper.testTask(latch));
+
+        latch.await(10, TimeUnit.SECONDS);
+
+        String segmentList1 = testDatabase.myLargeSegmentDao().getByUserKey("CUSTOMER_ID").getSegmentList();
+        String segmentList2 = testDatabase.myLargeSegmentDao().getByUserKey("key2").getSegmentList();
+
+        assertEquals(2, mEndpointHits.get("myLargeSegments").get());
+        assertEquals(4, segmentList1.split(",").length);
+        assertEquals(4, segmentList2.split(",").length);
+        assertNotEquals(segmentList1,
+                segmentList2);
+    }
+
+    @Test
+    public void emptyMyLargeSegmentsSdkIsReady() throws InterruptedException {
+        mMyLargeSegmentsDelay.set(0L);
+        mEmptyMyLargeSegments.set(true);
+        SplitFactory factory = getFactory(true, true, null, null, null);
+        SplitClient client = factory.client();
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        client.on(SplitEvent.SDK_READY, TestingHelper.testTask(readyLatch));
+        boolean readyAwait = readyLatch.await(5, TimeUnit.SECONDS);
+
+        assertEquals(1, mEndpointHits.get("splitChanges").get());
+        assertEquals(1, mEndpointHits.get("mySegments").get());
+        assertEquals(1, mEndpointHits.get("myLargeSegments").get());
+        assertTrue(readyAwait);
+    }
+
+    @Test
+    public void localhostModeIsReadyWhenWaitForLargeSegmentsIsTrue() throws SplitInstantiationException, InterruptedException {
+        SplitFactory factory = SplitFactoryBuilder.build("localhost", IntegrationHelper.dummyUserKey(),
+                new TestableSplitConfigBuilder()
+                        .largeSegmentsEnabled(true)
+                        .waitForLargeSegments(true)
+                        .build(), mContext);
+
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        factory.client().on(SplitEvent.SDK_READY, TestingHelper.testTask(readyLatch));
+
+        boolean await = readyLatch.await(5, TimeUnit.SECONDS);
+
+        assertTrue(await);
     }
 }

@@ -277,6 +277,34 @@ public class EventsManagerTest {
         sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, true, false, false);
     }
 
+    @Test
+    public void disableLargeSegmentsAtRuntime() {
+        SplitClientConfig cfg = SplitClientConfig.builder()
+                .largeSegmentsEnabled(true)
+                .waitForLargeSegments(true)
+                .ready(2000)
+                .build();
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
+
+        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
+
+        boolean shouldStop = false;
+        long maxExecutionTime = System.currentTimeMillis() + 10000;
+        long intervalExecutionTime = 100;
+
+        assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
+        assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
+
+        eventManager.disableLargeSegments();
+
+        execute(shouldStop, intervalExecutionTime, maxExecutionTime, eventManager, SplitEvent.SDK_READY_TIMED_OUT);
+
+        assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
+        assertTrue(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
+    }
+
     private static void sdkUpdateTest(SplitInternalEvent eventToCheck, boolean largeSegmentsEnabled, boolean waitForLargeSegments, boolean negate) throws InterruptedException {
         SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder()
                 .largeSegmentsEnabled(largeSegmentsEnabled)
