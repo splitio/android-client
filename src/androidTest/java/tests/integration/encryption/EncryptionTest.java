@@ -354,7 +354,7 @@ public class EncryptionTest {
         responses.put("mySegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.dummyMySegments()));
         responses.put("events/bulk", (uri, httpMethod, body) -> new HttpResponseMock(404, ""));
         responses.put("testImpressions/bulk", (uri, httpMethod, body) -> new HttpResponseMock(404, ""));
-        responses.put("myLargeSegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.dummyMyLargeSegments()));
+        responses.put("myLargeSegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.randomizedMyLargeSegments()));
         return responses;
     }
 

@@ -125,4 +125,32 @@ public final static String BOUNDED_NOTIFICATION_ZLIB_2 = "{" +
     public static String encodedBoundedPayloadGzip() {
         return (Json.fromJson(BOUNDED_NOTIFICATION_GZIP, MySegmentChangeV2Notification.class)).getData();
     }
+
+    public static String largeSegmentsUnboundedNoCompression(String intervalMs) {
+        return "{" +
+                "\\\"type\\\":\\\"MY_LARGE_SEGMENT_UPDATE\\\"" +
+                ",\\\"changeNumber\\\":1702507130121," +
+                "\\\"largeSegments\\\":[\\\"android_test\\\",\\\"ios_test\\\"]," +
+                "\\\"c\\\":0," +
+                "\\\"u\\\":0," +
+                "\\\"d\\\":\\\"\\\"," +
+                "\\\"i\\\":" + intervalMs + "," +
+                "\\\"h\\\":0," +
+                "\\\"s\\\":0" +
+                "}";
+    }
+
+    public static String largeSegmentsRemoval() {
+        return "{" +
+                "\\\"type\\\":\\\"MY_LARGE_SEGMENT_UPDATE\\\"" +
+                ",\\\"changeNumber\\\":1702507130121," +
+                "\\\"largeSegments\\\":[\\\"large-segment1\\\",\\\"large-segment2\\\"]," +
+                "\\\"c\\\":0," +
+                "\\\"u\\\":3," +
+                "\\\"d\\\":\\\"\\\"," +
+                "\\\"i\\\":100," +
+                "\\\"h\\\":0," +
+                "\\\"s\\\":0" +
+                "}";
+    }
 }
