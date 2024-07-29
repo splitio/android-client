@@ -32,6 +32,7 @@ import io.split.android.client.service.impressions.ImpressionManagerConfig;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkManagerWrapper;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
+import io.split.android.client.service.workmanager.MyLargeSegmentsSyncWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.splits.SplitsSyncWorker;
 import io.split.android.client.utils.Json;
@@ -76,6 +77,7 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         mWorkManager.cancelUniqueWork(SplitTaskType.EVENTS_RECORDER.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.IMPRESSIONS_RECORDER.toString());
         mWorkManager.cancelUniqueWork(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK.toString());
+        mWorkManager.cancelUniqueWork(SplitTaskType.MY_LARGE_SEGMENT_SYNC.toString());
         if (mFetcherExecutionListener != null) {
             mFetcherExecutionListener.clear();
         }
@@ -101,6 +103,11 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
     public void scheduleMySegmentsWork(Set<String> keys) {
         scheduleWork(SplitTaskType.MY_SEGMENTS_SYNC.toString(), MySegmentsSyncWorker.class,
                 buildMySegmentsSyncInputData(keys));
+
+        if (isLargeSegmentsEnabled()) {
+            scheduleWork(SplitTaskType.MY_LARGE_SEGMENT_SYNC.toString(), MyLargeSegmentsSyncWorker.class,
+                    buildMySegmentsSyncInputData(keys));
+        }
     }
 
     private void scheduleWork(String requestType,
@@ -261,5 +268,9 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
 
     private boolean isNoneImpressionsMode() {
         return ImpressionManagerConfig.Mode.fromImpressionMode(mSplitClientConfig.impressionsMode()).isNone();
+    }
+
+    private boolean isLargeSegmentsEnabled() {
+        return mSplitClientConfig.largeSegmentsEnabled();
     }
 }

@@ -22,6 +22,7 @@ import io.split.android.client.service.impressions.ImpressionsCountRequestBodySe
 import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.service.impressions.unique.MTK;
 import io.split.android.client.service.impressions.unique.MTKRequestBodySerializer;
+import io.split.android.client.service.mysegments.MyLargeSegmentsResponseParser;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.service.sseauthentication.SseAuthenticationResponseParser;
@@ -51,6 +52,16 @@ public class ServiceFactory {
         return new HttpFetcherImpl<>(httpClient,
                 SdkTargetPath.mySegments(endPoint, key),
                 new MySegmentsResponseParser());
+    }
+
+    public static HttpFetcher<List<MySegment>> getMyLargeSegmentsFetcher(
+            HttpClient httpClient,
+            String endPoint,
+            String key) throws URISyntaxException {
+
+        return new HttpFetcherImpl<>(httpClient,
+                SdkTargetPath.myLargeSegments(endPoint, key),
+                new MyLargeSegmentsResponseParser());
     }
 
     public static HttpRecorder<List<Event>> getEventsRecorder(

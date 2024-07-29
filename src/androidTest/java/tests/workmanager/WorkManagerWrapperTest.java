@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +37,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
+import io.split.android.client.service.workmanager.MyLargeSegmentsSyncWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.splits.SplitsSyncWorker;
 
@@ -51,7 +53,13 @@ public class WorkManagerWrapperTest {
 
         when(mWorkManager.getWorkInfosByTagLiveData(any())).thenReturn(mock(LiveData.class));
 
-        SplitClientConfig splitClientConfig = new SplitClientConfig.Builder()
+        SplitClientConfig splitClientConfig = buildConfig(false);
+
+        mWrapper = getWrapper(splitClientConfig);
+    }
+
+    private static @NonNull SplitClientConfig buildConfig(boolean largeSegmentsEnabled) {
+        SplitClientConfig config = new SplitClientConfig.Builder()
                 .serviceEndpoints(
                         ServiceEndpoints.builder()
                                 .sseAuthServiceEndpoint("https://test.split.io/serviceEndpoint")
@@ -60,6 +68,7 @@ public class WorkManagerWrapperTest {
                                 .telemetryServiceEndpoint("https://test.split.io/telemetry")
                                 .build()
                 )
+                .largeSegmentsEnabled(largeSegmentsEnabled)
                 .synchronizeInBackgroundPeriod(5263)
                 .eventsPerPush(526)
                 .impressionsPerPush(256)
@@ -73,14 +82,18 @@ public class WorkManagerWrapperTest {
                 .build();
 
         try {
-            Method method = splitClientConfig.getClass().getDeclaredMethod("enableTelemetry");
+            Method method = config.getClass().getDeclaredMethod("enableTelemetry");
             method.setAccessible(true);
-            method.invoke(splitClientConfig);
+            method.invoke(config);
         } catch (Exception exception) {
             exception.printStackTrace();
         }
 
-        mWrapper = new WorkManagerWrapper(
+        return config;
+    }
+
+    private @NonNull WorkManagerWrapper getWrapper(SplitClientConfig splitClientConfig) {
+        return new WorkManagerWrapper(
                 mWorkManager,
                 splitClientConfig,
                 "api_key",
@@ -97,6 +110,8 @@ public class WorkManagerWrapperTest {
         verify(mWorkManager).cancelUniqueWork(SplitTaskType.MY_SEGMENTS_SYNC.toString());
         verify(mWorkManager).cancelUniqueWork(SplitTaskType.EVENTS_RECORDER.toString());
         verify(mWorkManager).cancelUniqueWork(SplitTaskType.IMPRESSIONS_RECORDER.toString());
+        verify(mWorkManager).cancelUniqueWork(SplitTaskType.UNIQUE_KEYS_RECORDER_TASK.toString());
+        verify(mWorkManager).cancelUniqueWork(SplitTaskType.MY_LARGE_SEGMENT_SYNC.toString());
     }
 
     @Test
@@ -214,6 +229,46 @@ public class WorkManagerWrapperTest {
 
         verify(mWorkManager).enqueueUniquePeriodicWork(
                 eq(SplitTaskType.MY_SEGMENTS_SYNC.toString()),
+                eq(ExistingPeriodicWorkPolicy.REPLACE),
+                argumentCaptor.capture()
+        );
+        verify(mWorkManager, times(0)).enqueueUniquePeriodicWork(
+                eq(SplitTaskType.MY_LARGE_SEGMENT_SYNC.toString()),
+                eq(ExistingPeriodicWorkPolicy.REPLACE),
+                argumentCaptor.capture()
+        );
+
+        assertWorkSpecMatches(argumentCaptor.getValue().getWorkSpec(), expectedRequest.getWorkSpec());
+    }
+
+    @Test
+    public void scheduleMySegmentsWorkSchedulesWorkWhenLargeSegmentsIsEnabled() {
+        mWrapper = getWrapper(buildConfig(true));
+
+        HashSet<String> keys = new HashSet<>();
+        keys.add("key1");
+        keys.add("key2");
+        mWrapper.scheduleMySegmentsWork(keys);
+
+        Data.Builder dataBuilder = new Data.Builder();
+        String[] keysArray = new String[keys.size()];
+        keys.toArray(keysArray);
+        dataBuilder.putString("endpoint", "https://test.split.io/api");
+        dataBuilder.putStringArray("key", keysArray);
+        dataBuilder.putBoolean("shouldRecordTelemetry", true);
+        dataBuilder.putString("certificatePins", certificatePinsJson());
+
+        PeriodicWorkRequest expectedRequest = new PeriodicWorkRequest
+                .Builder(MyLargeSegmentsSyncWorker.class, 5263, TimeUnit.MINUTES)
+                .setInputData(buildInputData(dataBuilder.build()))
+                .setConstraints(buildConstraints())
+                .setInitialDelay(15L, TimeUnit.MINUTES)
+                .build();
+
+        ArgumentCaptor<PeriodicWorkRequest> argumentCaptor = ArgumentCaptor.forClass(PeriodicWorkRequest.class);
+
+        verify(mWorkManager).enqueueUniquePeriodicWork(
+                eq(SplitTaskType.MY_LARGE_SEGMENT_SYNC.toString()),
                 eq(ExistingPeriodicWorkPolicy.REPLACE),
                 argumentCaptor.capture()
         );
