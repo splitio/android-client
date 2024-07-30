@@ -1,6 +1,7 @@
 package tests.workmanager;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -27,6 +28,7 @@ import org.mockito.MockitoAnnotations;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.ServiceEndpoints;
@@ -40,6 +42,9 @@ import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;
 import io.split.android.client.service.workmanager.MyLargeSegmentsSyncWorker;
 import io.split.android.client.service.workmanager.MySegmentsSyncWorker;
 import io.split.android.client.service.workmanager.splits.SplitsSyncWorker;
+import io.split.android.client.utils.logger.LogPrinter;
+import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.utils.logger.SplitLogLevel;
 
 public class WorkManagerWrapperTest {
 
@@ -53,13 +58,13 @@ public class WorkManagerWrapperTest {
 
         when(mWorkManager.getWorkInfosByTagLiveData(any())).thenReturn(mock(LiveData.class));
 
-        SplitClientConfig splitClientConfig = buildConfig(false);
+        SplitClientConfig splitClientConfig = buildConfig(false, true);
 
         mWrapper = getWrapper(splitClientConfig);
     }
 
-    private static @NonNull SplitClientConfig buildConfig(boolean largeSegmentsEnabled) {
-        SplitClientConfig config = new SplitClientConfig.Builder()
+    private static @NonNull SplitClientConfig buildConfig(boolean largeSegmentsEnabled, boolean useCertificatePinning) {
+        SplitClientConfig.Builder configBuilder = new SplitClientConfig.Builder()
                 .serviceEndpoints(
                         ServiceEndpoints.builder()
                                 .sseAuthServiceEndpoint("https://test.split.io/serviceEndpoint")
@@ -73,13 +78,17 @@ public class WorkManagerWrapperTest {
                 .eventsPerPush(526)
                 .impressionsPerPush(256)
                 .backgroundSyncWhenWifiOnly(true)
-                .backgroundSyncWhenBatteryNotLow(false)
-                .certificatePinningConfiguration(CertificatePinningConfiguration.builder()
-                        .addPin("events.split.io", "sha256/sDKdggs")
-                        .addPin("sdk.split.io", "sha256/jIUe51")
-                        .addPin("events.split.io", "sha1/jLeisDf")
-                        .build())
-                .build();
+                .backgroundSyncWhenBatteryNotLow(false);
+
+        if (useCertificatePinning) {
+            configBuilder.certificatePinningConfiguration(CertificatePinningConfiguration.builder()
+                    .addPin("events.split.io", "sha256/sDKdggs")
+                    .addPin("sdk.split.io", "sha256/jIUe51")
+                    .addPin("events.split.io", "sha1/jLeisDf")
+                    .build());
+        }
+
+        SplitClientConfig config = configBuilder.build();
 
         try {
             Method method = config.getClass().getDeclaredMethod("enableTelemetry");
@@ -243,7 +252,7 @@ public class WorkManagerWrapperTest {
 
     @Test
     public void scheduleMySegmentsWorkSchedulesWorkWhenLargeSegmentsIsEnabled() {
-        mWrapper = getWrapper(buildConfig(true));
+        mWrapper = getWrapper(buildConfig(true, true));
 
         HashSet<String> keys = new HashSet<>();
         keys.add("key1");
@@ -273,6 +282,44 @@ public class WorkManagerWrapperTest {
                 argumentCaptor.capture()
         );
 
+        assertWorkSpecMatches(argumentCaptor.getValue().getWorkSpec(), expectedRequest.getWorkSpec());
+    }
+
+    @Test
+    public void schedulingWithoutCertificatePinning() {
+        SplitClientConfig splitClientConfig = buildConfig(false, false);
+        LinkedList<String> logs = new LinkedList<>();
+        mWrapper = getWrapper(splitClientConfig);
+        Logger.instance().setLevel(SplitLogLevel.ERROR);
+        Logger.instance().setPrinter(getLogPrinter(logs));
+
+        mWrapper.scheduleWork();
+
+        Data inputData = new Data.Builder()
+                .putLong("splitCacheExpiration", 864000)
+                .putString("endpoint", "https://test.split.io/api")
+                .putBoolean("shouldRecordTelemetry", true)
+                .putStringArray("configuredFilterValues", new String[]{"set_1", "set_2"})
+                .putString("configuredFilterType", SplitFilter.Type.BY_SET.queryStringField())
+                .putString("flagsSpec", "1.1")
+                .build();
+
+        PeriodicWorkRequest expectedRequest = new PeriodicWorkRequest
+                .Builder(SplitsSyncWorker.class, 5263, TimeUnit.MINUTES)
+                .setInputData(buildInputData(inputData))
+                .setConstraints(buildConstraints())
+                .setInitialDelay(15L, TimeUnit.MINUTES)
+                .build();
+
+        ArgumentCaptor<PeriodicWorkRequest> argumentCaptor = ArgumentCaptor.forClass(PeriodicWorkRequest.class);
+
+        verify(mWorkManager).enqueueUniquePeriodicWork(
+                eq(SplitTaskType.SPLITS_SYNC.toString()),
+                eq(ExistingPeriodicWorkPolicy.REPLACE),
+                argumentCaptor.capture()
+        );
+
+        assertTrue(logs.isEmpty());
         assertWorkSpecMatches(argumentCaptor.getValue().getWorkSpec(), expectedRequest.getWorkSpec());
     }
 
@@ -310,5 +357,40 @@ public class WorkManagerWrapperTest {
     @NonNull
     private static String certificatePinsJson() {
         return "{\"events.split.io\":[{\"algo\":\"sha256\",\"pin\":[-80,50,-99,-126,11]},{\"algo\":\"sha1\",\"pin\":[-116,-73,-94,-80,55]}],\"sdk.split.io\":[{\"algo\":\"sha256\",\"pin\":[-116,-123,30,-25]}]}";
+    }
+
+
+    private static @NonNull LogPrinter getLogPrinter(LinkedList<String> logs) {
+        return new LogPrinter() {
+            @Override
+            public void v(String tag, String msg, Throwable tr) {
+                logs.add("V: " + tag + " - " + msg);
+            }
+
+            @Override
+            public void d(String tag, String msg, Throwable tr) {
+                logs.add("D: " + tag + " - " + msg);
+            }
+
+            @Override
+            public void i(String tag, String msg, Throwable tr) {
+                logs.add("I: " + tag + " - " + msg);
+            }
+
+            @Override
+            public void w(String tag, String msg, Throwable tr) {
+                logs.add("W: " + tag + " - " + msg);
+            }
+
+            @Override
+            public void e(String tag, String msg, Throwable tr) {
+                logs.add("E: " + tag + " - " + msg);
+            }
+
+            @Override
+            public void wtf(String tag, String msg, Throwable tr) {
+                logs.add("!: " + tag + " - " + msg);
+            }
+        };
     }
 }

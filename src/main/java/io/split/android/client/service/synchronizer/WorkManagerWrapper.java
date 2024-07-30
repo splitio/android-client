@@ -18,12 +18,14 @@ import androidx.work.WorkManager;
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
+import io.split.android.client.network.CertificatePin;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -152,11 +154,14 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_DATABASE_NAME, mDatabaseName);
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_API_KEY, mApiKey);
         dataBuilder.putBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, mSplitClientConfig.encryptionEnabled());
-        try {
-            String pinsJson = Json.toJson(mSplitClientConfig.certificatePinningConfiguration().getPins());
-            dataBuilder.putString(ServiceConstants.WORKER_PARAM_CERTIFICATE_PINS, pinsJson);
-        } catch (Exception e) {
-            Logger.e("Error converting pins to JSON for BG sync", e.getLocalizedMessage());
+        if (mSplitClientConfig.certificatePinningConfiguration() != null) {
+            try {
+                Map<String, Set<CertificatePin>> pins = mSplitClientConfig.certificatePinningConfiguration().getPins();
+                String pinsJson = Json.toJson(pins);
+                dataBuilder.putString(ServiceConstants.WORKER_PARAM_CERTIFICATE_PINS, pinsJson);
+            } catch (Exception e) {
+                Logger.e("Error converting pins to JSON for BG sync", e.getLocalizedMessage());
+            }
         }
 
         if (customData != null) {
