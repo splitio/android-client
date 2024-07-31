@@ -31,13 +31,13 @@ public class SseAuthenticator {
 
     public SseAuthenticator(@NonNull HttpFetcher<SseAuthenticationResponse> authFetcher,
                             @NonNull SseJwtParser jwtParser,
-                            boolean largSegmentsEnabled,
+                            boolean largeSegmentsEnabled,
                             @Nullable String flagsSpec) {
         mAuthFetcher = checkNotNull(authFetcher);
         mUserKeys = Collections.newSetFromMap(new ConcurrentHashMap<>());
         mJwtParser = checkNotNull(jwtParser);
         mFlagsSpec = flagsSpec;
-        mLargeSegmentsEnabled = largSegmentsEnabled;
+        mLargeSegmentsEnabled = largeSegmentsEnabled;
     }
 
     public SseAuthenticationResult authenticate(long defaultSseConnectionDelaySecs) {
