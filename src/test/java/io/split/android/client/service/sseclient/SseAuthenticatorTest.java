@@ -51,7 +51,7 @@ public class SseAuthenticatorTest {
         when(mResponse.isStreamingEnabled()).thenReturn(true);
         when(mResponse.getToken()).thenReturn("");
 
-        when(mJwtParser.parse(anyString())).thenReturn(token);
+        when(mJwtParser.parse(anyString(), true)).thenReturn(token);
 
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
@@ -71,7 +71,7 @@ public class SseAuthenticatorTest {
         when(mResponse.isStreamingEnabled()).thenReturn(true);
         when(mResponse.getToken()).thenReturn("");
 
-        when(mJwtParser.parse(anyString())).thenThrow(InvalidJwtTokenException.class);
+        when(mJwtParser.parse(anyString(), true)).thenThrow(InvalidJwtTokenException.class);
 
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
