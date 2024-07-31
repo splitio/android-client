@@ -133,7 +133,7 @@ public class WorkManagerWrapperTest {
                 .putBoolean("shouldRecordTelemetry", true)
                 .putStringArray("configuredFilterValues", new String[]{"set_1", "set_2"})
                 .putString("configuredFilterType", SplitFilter.Type.BY_SET.queryStringField())
-                .putString("flagsSpec", "1.1")
+                .putString("flagsSpec", "1.2")
                 .putString("certificatePins", certificatePinsJson())
                 .build();
 
@@ -301,7 +301,7 @@ public class WorkManagerWrapperTest {
                 .putBoolean("shouldRecordTelemetry", true)
                 .putStringArray("configuredFilterValues", new String[]{"set_1", "set_2"})
                 .putString("configuredFilterType", SplitFilter.Type.BY_SET.queryStringField())
-                .putString("flagsSpec", "1.1")
+                .putString("flagsSpec", "1.2")
                 .build();
 
         PeriodicWorkRequest expectedRequest = new PeriodicWorkRequest
