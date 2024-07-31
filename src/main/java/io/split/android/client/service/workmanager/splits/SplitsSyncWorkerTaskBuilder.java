@@ -1,7 +1,5 @@
 package io.split.android.client.service.workmanager.splits;
 
-import androidx.annotation.NonNull;
-
 import java.net.URISyntaxException;
 
 import io.split.android.client.service.executor.SplitTask;

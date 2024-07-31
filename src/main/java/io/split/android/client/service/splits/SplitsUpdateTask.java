@@ -7,6 +7,7 @@ import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -50,7 +51,7 @@ public class SplitsUpdateTask implements SplitTask {
             return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         }
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mChangeNumber);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mChangeNumber, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
         if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
             SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
             if (mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {
