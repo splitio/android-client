@@ -361,7 +361,7 @@ class SplitFactoryHelper {
                 defaultHttpClient);
 
         SseAuthenticator sseAuthenticator = new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(),
-                new SseJwtParser(), flagsSpec);
+                new SseJwtParser(), config.largeSegmentsEnabled(), flagsSpec);
 
         PushNotificationManager pushNotificationManager = getPushNotificationManager(splitTaskExecutor,
                 sseAuthenticator,

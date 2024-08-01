@@ -51,11 +51,11 @@ public class SseAuthenticatorTest {
         when(mResponse.isStreamingEnabled()).thenReturn(true);
         when(mResponse.getToken()).thenReturn("");
 
-        when(mJwtParser.parse(anyString())).thenReturn(token);
+        when(mJwtParser.parse(anyString(), eq(false))).thenReturn(token);
 
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, false, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
 
         SseJwtToken respToken = result.getJwtToken();
@@ -71,11 +71,11 @@ public class SseAuthenticatorTest {
         when(mResponse.isStreamingEnabled()).thenReturn(true);
         when(mResponse.getToken()).thenReturn("");
 
-        when(mJwtParser.parse(anyString())).thenThrow(InvalidJwtTokenException.class);
+        when(mJwtParser.parse(anyString(), eq(false))).thenThrow(InvalidJwtTokenException.class);
 
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, false, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
 
         Assert.assertFalse(result.isPushEnabled());
@@ -91,7 +91,7 @@ public class SseAuthenticatorTest {
 
         when(mFetcher.execute(any(), any())).thenThrow(HttpFetcherException.class);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, false, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
 
         Assert.assertFalse(result.isPushEnabled());
@@ -108,7 +108,7 @@ public class SseAuthenticatorTest {
 
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, false, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
 
         Assert.assertFalse(result.isPushEnabled());
@@ -122,7 +122,7 @@ public class SseAuthenticatorTest {
         when(mResponse.isClientError()).thenReturn(false);
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, false, null);
         authenticator.registerKey("user1");
         authenticator.registerKey("user2");
         Map<String, Object> map = new HashMap<>();
@@ -141,7 +141,7 @@ public class SseAuthenticatorTest {
         when(mResponse.isClientError()).thenReturn(false);
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, false, null);
         authenticator.registerKey("user1");
         authenticator.registerKey("user2");
         authenticator.registerKey("user3");
@@ -162,7 +162,7 @@ public class SseAuthenticatorTest {
         when(mResponse.isClientError()).thenReturn(false);
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, "1.1");
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, false, "1.1");
 
         authenticator.authenticate(60L);
 
@@ -177,7 +177,7 @@ public class SseAuthenticatorTest {
     public void flagsSpecIsNotUsedInFetcherWhenNull() throws HttpFetcherException {
         when(mResponse.isClientError()).thenReturn(false);
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, false, null);
 
         authenticator.authenticate(60L);
 
@@ -191,7 +191,7 @@ public class SseAuthenticatorTest {
     public void flagsSpecIsNotUsedInFetcherWhenEmpty() throws HttpFetcherException {
         when(mResponse.isClientError()).thenReturn(false);
         when(mFetcher.execute(any(), any())).thenReturn(mResponse);
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, "");
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, false, "");
 
         authenticator.authenticate(60L);
 
@@ -206,7 +206,7 @@ public class SseAuthenticatorTest {
 
         when(mFetcher.execute(any(), any())).thenThrow(new HttpFetcherException("path", "error", 9009));
 
-        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
+        SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, false, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
 
         Assert.assertFalse(result.isPushEnabled());
