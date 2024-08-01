@@ -4,6 +4,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import io.split.android.client.localhost.LocalhostMySegmentsStorageContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
@@ -15,15 +16,18 @@ public class TelemetryStatsProviderImpl implements TelemetryStatsProvider {
     private final TelemetryStorageConsumer mTelemetryStorageConsumer;
     private final SplitsStorage mSplitsStorage;
     private final MySegmentsStorageContainer mMySegmentsStorageContainer;
+    private final MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
     private volatile Stats pendingStats = null;
     private final Object mLock = new Object();
 
     public TelemetryStatsProviderImpl(@NonNull TelemetryStorageConsumer telemetryStorageConsumer,
                                       @NonNull SplitsStorage splitsStorage,
-                                      @NonNull MySegmentsStorageContainer mySegmentsStorage) {
+                                      @NonNull MySegmentsStorageContainer mySegmentsStorage,
+                                      @NonNull MySegmentsStorageContainer myLargeSegmentsStorage) {
         mTelemetryStorageConsumer = checkNotNull(telemetryStorageConsumer);
         mSplitsStorage = checkNotNull(splitsStorage);
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorage);
+        mMyLargeSegmentsStorageContainer = myLargeSegmentsStorage;
     }
 
     @Override
@@ -52,6 +56,9 @@ public class TelemetryStatsProviderImpl implements TelemetryStatsProvider {
         stats.setTags(mTelemetryStorageConsumer.popTags());
         stats.setMethodLatencies(mTelemetryStorageConsumer.popLatencies());
         stats.setSegmentCount(mMySegmentsStorageContainer.getUniqueAmount());
+        if (mMyLargeSegmentsStorageContainer != null) {
+            stats.setLargeSegmentCount(mMyLargeSegmentsStorageContainer.getUniqueAmount());
+        }
         stats.setSessionLengthMs(mTelemetryStorageConsumer.getSessionLength());
         stats.setLastSynchronizations(mTelemetryStorageConsumer.getLastSynchronization());
         stats.setImpressionsDropped(mTelemetryStorageConsumer.getImpressionsStats(ImpressionsDataType.IMPRESSIONS_DROPPED));

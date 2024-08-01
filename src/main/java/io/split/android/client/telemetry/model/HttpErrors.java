@@ -12,6 +12,9 @@ public class HttpErrors {
     @SerializedName("ms")
     private Map<Long, Long> mySegmentSyncErrs;
 
+    @SerializedName("mls")
+    private Map<Long, Long> myLargeSegmentsSyncErrs;
+
     @SerializedName("im")
     private Map<Long, Long> impressionSyncErrs;
 
@@ -41,6 +44,14 @@ public class HttpErrors {
 
     public void setMySegmentSyncErrs(Map<Long, Long> mySegmentSyncErrs) {
         this.mySegmentSyncErrs = mySegmentSyncErrs;
+    }
+
+    public Map<Long, Long> getMyLargeSegmentsSyncErrs() {
+        return myLargeSegmentsSyncErrs;
+    }
+
+    public void setMyLargeSegmentsSyncErrs(Map<Long, Long> myLargeSegmentsSyncErrs) {
+        this.myLargeSegmentsSyncErrs = myLargeSegmentsSyncErrs;
     }
 
     public Map<Long, Long> getImpressionSyncErrs() {

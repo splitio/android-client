@@ -29,12 +29,13 @@ public class TelemetryTaskFactoryImpl implements TelemetryTaskFactory {
                                     @NonNull SplitClientConfig splitClientConfig,
                                     @NonNull SplitsStorage splitsStorage,
                                     @NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
+                                    MySegmentsStorageContainer myLargeSegmentsStorageContainer,
                                     int flagSetCount,
                                     int invalidFlagSetCount) {
         mTelemetryConfigRecorder = telemetryConfigRecorder;
         mTelemetryConfigProvider = new TelemetryConfigProviderImpl(telemetryStorage, splitClientConfig, flagSetCount, invalidFlagSetCount);
         mTelemetryStatsRecorder = telemetryStatsRecorder;
-        mTelemetryStatsProvider = new TelemetryStatsProviderImpl(telemetryStorage, splitsStorage, mySegmentsStorageContainer);
+        mTelemetryStatsProvider = new TelemetryStatsProviderImpl(telemetryStorage, splitsStorage, mySegmentsStorageContainer, myLargeSegmentsStorageContainer);
         mTelemetryRuntimeProducer = telemetryStorage;
     }
 

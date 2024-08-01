@@ -12,6 +12,9 @@ public class HttpLatencies {
     @SerializedName("ms")
     private List<Long> mySegments;
 
+    @SerializedName("mls")
+    private List<Long> myLargeSegments;
+
     @SerializedName("im")
     private List<Long> impressions;
 
@@ -41,6 +44,14 @@ public class HttpLatencies {
 
     public void setMySegments(List<Long> mySegments) {
         this.mySegments = mySegments;
+    }
+
+    public List<Long> getMyLargeSegments() {
+        return myLargeSegments;
+    }
+
+    public void setMyLargeSegments(List<Long> myLargeSegments) {
+        this.myLargeSegments = myLargeSegments;
     }
 
     public List<Long> getImpressions() {
