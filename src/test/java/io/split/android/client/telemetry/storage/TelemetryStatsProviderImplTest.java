@@ -8,14 +8,11 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
@@ -58,11 +55,11 @@ public class TelemetryStatsProviderImplTest {
         when(telemetryStorageConsumer.popTags()).thenReturn(Arrays.asList("tag1", "tag2"));
 
         Stats initialStats = telemetryStatsProvider.getTelemetryStats();
-        assertEquals(new HashSet<>(Arrays.asList("tag1", "tag2")), initialStats.getTags());
+        assertEquals(Arrays.asList("tag1", "tag2"), initialStats.getTags());
 
         when(telemetryStorageConsumer.popTags()).thenReturn(Collections.emptyList());
         telemetryStatsProvider.clearStats();
-        assertEquals(Collections.emptySet(), telemetryStatsProvider.getTelemetryStats().getTags());
+        assertEquals(Collections.emptyList(), telemetryStatsProvider.getTelemetryStats().getTags());
     }
 
     @Test
@@ -75,7 +72,7 @@ public class TelemetryStatsProviderImplTest {
         List<StreamingEvent> streamingEvents = Arrays.asList(
                 new OccupancyPriStreamingEvent(2, 23232323L),
                 new StreamingStatusStreamingEvent(StreamingStatusStreamingEvent.Status.ENABLED, 23232323L));
-        Set<String> tags = new HashSet<>(Arrays.asList("asd1", "asd2"));
+        List<String> tags = Arrays.asList("asd1", "asd2");
         MethodLatencies methodLatencies = new MethodLatencies();
         long sessionLength = 25250L;
         LastSync lastSync = new LastSync();
@@ -106,7 +103,7 @@ public class TelemetryStatsProviderImplTest {
         when(mySegmentsStorageContainer.getUniqueAmount()).thenReturn(mySegmentsUniqueCount);
         when(myLargeSegmentsStorageContainer.getUniqueAmount()).thenReturn(myLargeSegmentsUniqueCount);
         when(telemetryStorageConsumer.popStreamingEvents()).thenReturn(streamingEvents);
-        when(telemetryStorageConsumer.popTags()).thenReturn(new ArrayList<>(tags));
+        when(telemetryStorageConsumer.popTags()).thenReturn(tags);
         when(telemetryStorageConsumer.popLatencies()).thenReturn(methodLatencies);
         when(telemetryStorageConsumer.getSessionLength()).thenReturn(sessionLength);
         when(telemetryStorageConsumer.getLastSynchronization()).thenReturn(lastSync);
