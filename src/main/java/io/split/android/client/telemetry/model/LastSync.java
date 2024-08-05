@@ -5,25 +5,28 @@ import com.google.gson.annotations.SerializedName;
 public class LastSync {
 
     @SerializedName("sp")
-    private long lastSplitSync;
+    private Long lastSplitSync;
 
     @SerializedName("ms")
-    private long lastMySegmentSync;
+    private Long lastMySegmentSync;
+
+    @SerializedName("mls")
+    private Long lastMyLargeSegmentSync;
 
     @SerializedName("im")
-    private long lastImpressionSync;
+    private Long lastImpressionSync;
 
     @SerializedName("ic")
-    private long lastImpressionCountSync;
+    private Long lastImpressionCountSync;
 
     @SerializedName("ev")
-    private long lastEventSync;
+    private Long lastEventSync;
 
     @SerializedName("te")
-    private long lastTelemetrySync;
+    private Long lastTelemetrySync;
 
     @SerializedName("to")
-    private long lastTokenRefresh;
+    private Long lastTokenRefresh;
 
     public long getLastSplitSync() {
         return lastSplitSync;
@@ -39,6 +42,14 @@ public class LastSync {
 
     public void setLastMySegmentSync(long lastMySegmentSync) {
         this.lastMySegmentSync = lastMySegmentSync;
+    }
+
+    public long getLastMyLargeSegmentSync() {
+        return lastMyLargeSegmentSync;
+    }
+
+    public void setLastMyLargeSegmentSync(long lastMyLargeSegmentSync) {
+        this.lastMyLargeSegmentSync = lastMyLargeSegmentSync;
     }
 
     public long getLastImpressionSync() {

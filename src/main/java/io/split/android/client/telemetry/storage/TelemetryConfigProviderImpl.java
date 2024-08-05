@@ -52,6 +52,8 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
         config.setUserConsent(mSplitClientConfig.userConsent().intValue());
         config.setFlagSetsTotal(mValidFlagSetCount + mInvalidFlagSetCount);
         config.setFlagSetsInvalid(mInvalidFlagSetCount);
+        config.setLargeSegmentsEnabled(mSplitClientConfig.largeSegmentsEnabled());
+        config.setWaitForLargeSegments(mSplitClientConfig.waitForLargeSegments());
         if (mSplitClientConfig.impressionsMode() == ImpressionsMode.DEBUG) {
             config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.DEBUG.intValue());
         } else if (mSplitClientConfig.impressionsMode() == ImpressionsMode.OPTIMIZED) {
@@ -68,6 +70,7 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
         refreshRates.setTelemetry(splitClientConfig.telemetryRefreshRate());
         refreshRates.setSplits(splitClientConfig.featuresRefreshRate());
         refreshRates.setMySegments(splitClientConfig.segmentsRefreshRate());
+        refreshRates.setMyLargeSegments(splitClientConfig.largeSegmentsRefreshRate());
         refreshRates.setImpressions(splitClientConfig.impressionsRefreshRate());
         refreshRates.setEvents(splitClientConfig.eventFlushInterval());
 

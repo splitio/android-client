@@ -46,6 +46,9 @@ public class Stats {
     @SerializedName("seC")
     private long segmentCount;
 
+    @SerializedName("lseC")
+    private long largeSegmentCount;
+
     @SerializedName("skC")
     private final long segmentKeyCount = 1;
 
@@ -113,6 +116,10 @@ public class Stats {
 
     public void setSegmentCount(long segmentCount) {
         this.segmentCount = segmentCount;
+    }
+
+    public void setLargeSegmentCount(long largeSegmentCount) {
+        this.largeSegmentCount = largeSegmentCount;
     }
 
     public void setSessionLengthMs(long sessionLengthMs) {
@@ -205,6 +212,11 @@ public class Stats {
     @VisibleForTesting
     public long getSegmentCount() {
         return segmentCount;
+    }
+
+    @VisibleForTesting
+    public long getLargeSegmentCount() {
+        return largeSegmentCount;
     }
 
     @VisibleForTesting

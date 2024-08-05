@@ -224,6 +224,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 splitClientConfig,
                 mSplitsStorageContainer.getSplitsStorage(),
                 mSplitsStorageContainer.getMySegmentsStorageContainer(),
+                mSplitsStorageContainer.getMyLargeSegmentsStorageContainer(),
                 totalFlagSetCount,
                 invalidFlagSetCount);
         return mTelemetryTaskFactory;

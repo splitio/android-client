@@ -10,6 +10,9 @@ public class RefreshRates {
     @SerializedName("ms")
     private long mySegments;
 
+    @SerializedName("mls")
+    private long myLargeSegments;
+
     @SerializedName("im")
     private long impressions;
 
@@ -33,6 +36,14 @@ public class RefreshRates {
 
     public void setMySegments(long mySegments) {
         this.mySegments = mySegments;
+    }
+
+    public long getMyLargeSegments() {
+        return myLargeSegments;
+    }
+
+    public void setMyLargeSegments(long myLargeSegments) {
+        this.myLargeSegments = myLargeSegments;
     }
 
     public long getImpressions() {

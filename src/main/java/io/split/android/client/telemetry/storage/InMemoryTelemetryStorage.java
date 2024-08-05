@@ -181,6 +181,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         lastSync.setLastEventSync(lastSynchronizationData.get(OperationType.EVENTS).get());
         lastSync.setLastSplitSync(lastSynchronizationData.get(OperationType.SPLITS).get());
         lastSync.setLastMySegmentSync(lastSynchronizationData.get(OperationType.MY_SEGMENT).get());
+        lastSync.setLastMyLargeSegmentSync(lastSynchronizationData.get(OperationType.MY_LARGE_SEGMENT).get());
         lastSync.setLastTelemetrySync(lastSynchronizationData.get(OperationType.TELEMETRY).get());
         lastSync.setLastImpressionSync(lastSynchronizationData.get(OperationType.IMPRESSIONS).get());
         lastSync.setLastImpressionCountSync(lastSynchronizationData.get(OperationType.IMPRESSIONS_COUNT).get());
@@ -199,6 +200,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         errors.setImpressionSyncErrs(httpErrors.get(OperationType.IMPRESSIONS));
         errors.setSplitSyncErrs(httpErrors.get(OperationType.SPLITS));
         errors.setMySegmentSyncErrs(httpErrors.get(OperationType.MY_SEGMENT));
+        errors.setMyLargeSegmentsSyncErrs(httpErrors.get(OperationType.MY_LARGE_SEGMENT));
         errors.setTokenGetErrs(httpErrors.get(OperationType.TOKEN));
 
         initializeHttpErrors();
@@ -215,6 +217,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
             latencies.setEvents(popLatencies(OperationType.EVENTS));
             latencies.setSplits(popLatencies(OperationType.SPLITS));
             latencies.setMySegments(popLatencies(OperationType.MY_SEGMENT));
+            latencies.setMyLargeSegments(popLatencies(OperationType.MY_LARGE_SEGMENT));
             latencies.setToken(popLatencies(OperationType.TOKEN));
             latencies.setImpressions(popLatencies(OperationType.IMPRESSIONS));
             latencies.setImpressionsCount(popLatencies(OperationType.IMPRESSIONS_COUNT));
@@ -263,6 +266,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         synchronized (updatesFromSSELock) {
             long sCount = 0L;
             long mCount = 0L;
+            long lCount = 0L;
 
             AtomicLong splits = updatesFromSSE.get(UpdatesFromSSEEnum.SPLITS);
             if (splits != null) {
@@ -274,7 +278,12 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
                 mCount = mySegments.getAndSet(0L);
             }
 
-            return new UpdatesFromSSE(sCount, mCount);
+            AtomicLong myLargeSegments = updatesFromSSE.get(UpdatesFromSSEEnum.MY_LARGE_SEGMENTS);
+            if (myLargeSegments != null) {
+                lCount = myLargeSegments.getAndSet(0L);
+            }
+
+            return new UpdatesFromSSE(sCount, mCount, lCount);
         }
     }
 
@@ -421,6 +430,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         lastSynchronizationData.put(OperationType.TELEMETRY, new AtomicLong());
         lastSynchronizationData.put(OperationType.EVENTS, new AtomicLong());
         lastSynchronizationData.put(OperationType.MY_SEGMENT, new AtomicLong());
+        lastSynchronizationData.put(OperationType.MY_LARGE_SEGMENT, new AtomicLong());
         lastSynchronizationData.put(OperationType.SPLITS, new AtomicLong());
         lastSynchronizationData.put(OperationType.TOKEN, new AtomicLong());
     }
@@ -430,6 +440,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         httpErrors.put(OperationType.SPLITS, new ConcurrentHashMap<>());
         httpErrors.put(OperationType.TELEMETRY, new ConcurrentHashMap<>());
         httpErrors.put(OperationType.MY_SEGMENT, new ConcurrentHashMap<>());
+        httpErrors.put(OperationType.MY_LARGE_SEGMENT, new ConcurrentHashMap<>());
         httpErrors.put(OperationType.IMPRESSIONS_COUNT, new ConcurrentHashMap<>());
         httpErrors.put(OperationType.IMPRESSIONS, new ConcurrentHashMap<>());
         httpErrors.put(OperationType.TOKEN, new ConcurrentHashMap<>());
@@ -441,6 +452,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
         httpLatencies.put(OperationType.TELEMETRY, new BinarySearchLatencyTracker());
         httpLatencies.put(OperationType.IMPRESSIONS_COUNT, new BinarySearchLatencyTracker());
         httpLatencies.put(OperationType.MY_SEGMENT, new BinarySearchLatencyTracker());
+        httpLatencies.put(OperationType.MY_LARGE_SEGMENT, new BinarySearchLatencyTracker());
         httpLatencies.put(OperationType.SPLITS, new BinarySearchLatencyTracker());
         httpLatencies.put(OperationType.TOKEN, new BinarySearchLatencyTracker());
     }
@@ -453,6 +465,7 @@ public class InMemoryTelemetryStorage implements TelemetryStorage {
     private void initializeUpdatesFromSSE() {
         updatesFromSSE.put(UpdatesFromSSEEnum.SPLITS, new AtomicLong());
         updatesFromSSE.put(UpdatesFromSSEEnum.MY_SEGMENTS, new AtomicLong());
+        updatesFromSSE.put(UpdatesFromSSEEnum.MY_LARGE_SEGMENTS, new AtomicLong());
     }
 
     private List<Long> popLatencies(OperationType operationType) {

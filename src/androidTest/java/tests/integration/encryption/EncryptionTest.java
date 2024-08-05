@@ -151,7 +151,7 @@ public class EncryptionTest {
                 client.getTreatment("testing");
                 factory.destroy();
                 try {
-                    Thread.sleep(500);
+                    Thread.sleep(1000);
                     latch.countDown();
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
