@@ -21,6 +21,15 @@ public class EmptyMySegmentsStorage implements MySegmentsStorage{
     }
 
     @Override
+    public long getTill() {
+        return -1;
+    }
+
+    @Override
+    public void setTill(long till) {
+    }
+
+    @Override
     public void clear() {
     }
 }

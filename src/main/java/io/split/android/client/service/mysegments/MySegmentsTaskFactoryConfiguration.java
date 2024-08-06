@@ -4,16 +4,14 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import java.util.List;
-
-import io.split.android.client.dtos.MySegment;
+import io.split.android.client.dtos.SegmentResponse;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 
 public class MySegmentsTaskFactoryConfiguration {
 
-    private final HttpFetcher<List<MySegment>> mHttpFetcher;
+    private final HttpFetcher<? extends SegmentResponse> mHttpFetcher;
     private final MySegmentsStorage mStorage;
     private final SplitEventsManager mEventsManager;
     private final MySegmentsSyncTaskConfig mMySegmentsSyncTaskConfig;
@@ -21,7 +19,7 @@ public class MySegmentsTaskFactoryConfiguration {
     private final MySegmentsOverwriteTaskConfig mMySegmentsOverwriteTaskConfig;
     private final LoadMySegmentsTaskConfig mLoadMySegmentsTaskConfig;
 
-    private MySegmentsTaskFactoryConfiguration(@NonNull HttpFetcher<List<MySegment>> httpFetcher,
+    private MySegmentsTaskFactoryConfiguration(@NonNull HttpFetcher<? extends SegmentResponse> httpFetcher,
                                                @NonNull MySegmentsStorage storage,
                                                @NonNull SplitEventsManager eventsManager,
                                                @NonNull MySegmentsSyncTaskConfig mySegmentsSyncTaskConfig,
@@ -38,7 +36,7 @@ public class MySegmentsTaskFactoryConfiguration {
     }
 
     @NonNull
-    public HttpFetcher<List<MySegment>> getHttpFetcher() {
+    public HttpFetcher<? extends SegmentResponse> getHttpFetcher() {
         return mHttpFetcher;
     }
 
@@ -72,7 +70,7 @@ public class MySegmentsTaskFactoryConfiguration {
         return mLoadMySegmentsTaskConfig;
     }
 
-    public static MySegmentsTaskFactoryConfiguration getForMySegments(@NonNull HttpFetcher<List<MySegment>> httpFetcher,
+    public static MySegmentsTaskFactoryConfiguration getForMySegments(@NonNull HttpFetcher<? extends SegmentResponse> httpFetcher,
                                                                       @NonNull MySegmentsStorage storage,
                                                                       @NonNull SplitEventsManager eventsManager) {
         return new MySegmentsTaskFactoryConfiguration(httpFetcher,
@@ -84,7 +82,7 @@ public class MySegmentsTaskFactoryConfiguration {
                 LoadMySegmentsTaskConfig.getForMySegments());
     }
 
-    public static MySegmentsTaskFactoryConfiguration getForMyLargeSegments(@NonNull HttpFetcher<List<MySegment>> httpFetcher,
+    public static MySegmentsTaskFactoryConfiguration getForMyLargeSegments(@NonNull HttpFetcher<? extends SegmentResponse> httpFetcher,
                                                                            @NonNull MySegmentsStorage storage,
                                                                            @NonNull SplitEventsManager eventsManager) {
         return new MySegmentsTaskFactoryConfiguration(httpFetcher,

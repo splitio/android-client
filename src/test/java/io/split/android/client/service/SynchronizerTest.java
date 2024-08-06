@@ -41,7 +41,6 @@ import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.Impression;
@@ -164,7 +163,7 @@ public class SynchronizerTest {
         mTaskExecutor = taskExecutor;
         mSingleThreadedTaskExecutor = spy(new SplitTaskExecutorStub());
         HttpFetcher<SplitChange> splitsFetcher = Mockito.mock(HttpFetcher.class);
-        HttpFetcher<List<MySegment>> mySegmentsFetcher = Mockito.mock(HttpFetcher.class);
+        HttpFetcher mySegmentsFetcher = Mockito.mock(HttpFetcher.class);
         HttpRecorder<List<Event>> eventsRecorder = Mockito.mock(HttpRecorder.class);
         HttpRecorder<List<KeyImpression>> impressionsRecorder = Mockito.mock(HttpRecorder.class);
 

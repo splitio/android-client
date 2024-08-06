@@ -7,7 +7,7 @@ import java.util.List;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.MySegment;
+import io.split.android.client.dtos.SegmentResponse;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SdkTargetPath;
@@ -44,7 +44,7 @@ public class ServiceFactory {
                 new SplitChangeResponseParser());
     }
 
-    public static HttpFetcher<List<MySegment>> getMySegmentsFetcher(
+    public static HttpFetcher<? extends SegmentResponse> getMySegmentsFetcher(
             HttpClient httpClient,
             String endPoint,
             String key) throws URISyntaxException {
@@ -54,7 +54,7 @@ public class ServiceFactory {
                 new MySegmentsResponseParser());
     }
 
-    public static HttpFetcher<List<MySegment>> getMyLargeSegmentsFetcher(
+    public static HttpFetcher<? extends SegmentResponse> getMyLargeSegmentsFetcher(
             HttpClient httpClient,
             String endPoint,
             String key) throws URISyntaxException {

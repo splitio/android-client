@@ -7,7 +7,7 @@ import org.junit.Test;
 
 import java.util.List;
 
-import io.split.android.client.dtos.MySegment;
+import io.split.android.client.dtos.MyLargeSegmentsResponse;
 import io.split.android.client.service.http.HttpResponseParserException;
 
 public class MyLargeSegmentsResponseParserTest {
@@ -21,12 +21,14 @@ public class MyLargeSegmentsResponseParserTest {
 
     @Test
     public void parse() throws HttpResponseParserException {
-        String response = "{\"myLargeSegments\":[\"segment1\",\"segment2\"], \"changeNumber\":2000}";
+        String response = "{\"myLargeSegments\":[\"segment1\",\"segment2\"], \"till\":2000}";
 
-        List<MySegment> parse = mParser.parse(response);
+        MyLargeSegmentsResponse parse = mParser.parse(response);
 
-        assertEquals(2, parse.size());
-        assertEquals("segment1", parse.get(0).name);
-        assertEquals("segment2", parse.get(1).name);
+        List<String> segments = parse.getSegments();
+        assertEquals(2, segments.size());
+        assertEquals("segment1", segments.get(0));
+        assertEquals("segment2", segments.get(1));
+        assertEquals(2000, parse.getTill());
     }
 }

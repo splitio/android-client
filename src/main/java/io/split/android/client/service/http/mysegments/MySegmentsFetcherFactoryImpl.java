@@ -6,9 +6,8 @@ import androidx.annotation.NonNull;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
-import io.split.android.client.dtos.MySegment;
+import io.split.android.client.dtos.SegmentResponse;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherImpl;
@@ -19,12 +18,12 @@ public class MySegmentsFetcherFactoryImpl implements MySegmentsFetcherFactory {
 
     private final String mEndpoint;
     private final HttpClient mHttpClient;
-    private final HttpResponseParser<List<MySegment>> mMySegmentsResponseParser;
+    private final HttpResponseParser<? extends SegmentResponse> mMySegmentsResponseParser;
     private final UriBuilder mUriBuilder;
 
     public MySegmentsFetcherFactoryImpl(@NonNull HttpClient httpClient,
                                         @NonNull String endpoint,
-                                        @NonNull HttpResponseParser<List<MySegment>> responseParser,
+                                        @NonNull HttpResponseParser<? extends SegmentResponse> responseParser,
                                         @NonNull UriBuilder uriBuilder) {
         mHttpClient = checkNotNull(httpClient);
         mEndpoint = checkNotNull(endpoint);
@@ -33,7 +32,7 @@ public class MySegmentsFetcherFactoryImpl implements MySegmentsFetcherFactory {
     }
 
     @Override
-    public HttpFetcher<List<MySegment>> getFetcher(String matchingKey) {
+    public HttpFetcher<? extends SegmentResponse> getFetcher(String matchingKey) {
         return new HttpFetcherImpl<>(mHttpClient, buildTargetUrl(matchingKey), mMySegmentsResponseParser);
     }
 

@@ -9,17 +9,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 class MySegmentsStorageImpl implements MySegmentsStorage {
 
     private final String mMatchingKey;
     private final PersistentMySegmentsStorage mPersistentStorage;
     private final Set<String> mInMemoryMySegments;
+    private final AtomicLong mTill;
 
     public MySegmentsStorageImpl(@NonNull String matchingKey, @NonNull PersistentMySegmentsStorage persistentStorage) {
         mPersistentStorage = checkNotNull(persistentStorage);
         mMatchingKey = checkNotNull(matchingKey);
         mInMemoryMySegments = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        mTill = new AtomicLong(-1);
     }
 
     @Override
@@ -43,8 +46,19 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
     }
 
     @Override
+    public long getTill() {
+        return mTill.get();
+    }
+
+    @Override
+    public void setTill(long till) {
+        mTill.set(till);
+    }
+
+    @Override
     public void clear() {
         mInMemoryMySegments.clear();
         mPersistentStorage.set(mMatchingKey, new ArrayList<>());
+        mTill.set(-1);
     }
 }
