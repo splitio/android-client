@@ -33,7 +33,7 @@ class MySegmentsNotificationProcessorHelper {
         mConfiguration = configuration;
     }
 
-    void processUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, BlockingQueue<Long> notificationsQueue, long syncDelay) {
+    void processUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, Long changeNumber, BlockingQueue<Long> notificationsQueue, long syncDelay) {
         try {
             switch (updateStrategy) {
                 case UNBOUNDED_FETCH_REQUEST:
@@ -50,11 +50,11 @@ class MySegmentsNotificationProcessorHelper {
                     Logger.d("Received KeyList my segment fetch request");
                     updateSegments(mMySegmentsPayloadDecoder.decodeAsString(data,
                                     mCompressionProvider.get(compression)),
-                            segmentNames);
+                            segmentNames, changeNumber);
                     break;
                 case SEGMENT_REMOVAL:
                     Logger.d("Received Segment removal request");
-                    removeSegment(segmentNames);
+                    removeSegment(segmentNames, changeNumber);
                     break;
                 default:
                     Logger.i("Unknown my segment change v2 notification type: " + updateStrategy);
@@ -69,12 +69,12 @@ class MySegmentsNotificationProcessorHelper {
         notificationsQueue.offer(syncDelay);
     }
 
-    private void removeSegment(Set<String> segmentNames) {
+    private void removeSegment(Set<String> segmentNames, Long changeNumber) {
         // Shouldn't be null, some defensive code here
         if (segmentNames == null) {
             return;
         }
-        MySegmentsUpdateTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(false, segmentNames);
+        MySegmentsUpdateTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(false, segmentNames, changeNumber);
         mSplitTaskExecutor.submit(task, null);
     }
 
@@ -86,7 +86,7 @@ class MySegmentsNotificationProcessorHelper {
         }
     }
 
-    private void updateSegments(String keyListString, Set<String> segmentNames) {
+    private void updateSegments(String keyListString, Set<String> segmentNames, Long changeNumber) {
         // Shouldn't be null, some defensive code here
         if (segmentNames == null) {
             return;
@@ -99,7 +99,7 @@ class MySegmentsNotificationProcessorHelper {
             return;
         }
         Logger.d("Executing KeyList my segment fetch request: Adding = " + actionIsAdd);
-        MySegmentsUpdateTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(actionIsAdd, segmentNames);
+        MySegmentsUpdateTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(actionIsAdd, segmentNames, changeNumber);
         mSplitTaskExecutor.submit(task, null);
     }
 }

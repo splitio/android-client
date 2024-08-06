@@ -80,9 +80,9 @@ public class MySegmentsNotificationProcessorImplTest {
         when(mMySegmentsPayloadDecoder.hashKey(anyString())).thenReturn(mHashedUserKey);
         when(mIncomingNotification.getJsonData()).thenReturn("{}");
         when(mIncomingNotificationV2.getJsonData()).thenReturn("{}");
-        when(mSplitTaskFactory.createMySegmentsUpdateTask(anyBoolean(), anySet()))
+        when(mSplitTaskFactory.createMySegmentsUpdateTask(anyBoolean(), anySet(), changeNumber))
                 .thenReturn(mock(MySegmentsUpdateTask.class));
-        when(mSplitTaskFactory.createMySegmentsOverwriteTask(any()))
+        when(mSplitTaskFactory.createMySegmentsOverwriteTask(any(), notification.getChangeNumber()))
                 .thenReturn(mock(MySegmentsOverwriteTask.class));
         when(mSplitTaskFactory.createMySegmentsSyncTask(anyBoolean()))
                 .thenReturn(mock(MySegmentsSyncTask.class));
@@ -109,7 +109,7 @@ public class MySegmentsNotificationProcessorImplTest {
 
         mNotificationProcessor.processMySegmentsUpdate(mIncomingNotification);
 
-        verify(mSplitTaskFactory, times(1)).createMySegmentsOverwriteTask(any());
+        verify(mSplitTaskFactory, times(1)).createMySegmentsOverwriteTask(any(), notification.getChangeNumber());
         verify(mSplitTaskExecutor, times(1)).submit(any(), isNull());
     }
 
@@ -123,7 +123,7 @@ public class MySegmentsNotificationProcessorImplTest {
 
         mNotificationProcessor.processMySegmentsUpdate(mIncomingNotification);
 
-        verify(mSplitTaskFactory, times(1)).createMySegmentsOverwriteTask(any());
+        verify(mSplitTaskFactory, times(1)).createMySegmentsOverwriteTask(any(), notification.getChangeNumber());
         verify(mSplitTaskExecutor, times(1)).submit(any(), isNull());
     }
 
@@ -139,7 +139,7 @@ public class MySegmentsNotificationProcessorImplTest {
 
         mNotificationProcessor.processMySegmentsUpdate(mySegmentChangeNotification);
 
-        verify(mSplitTaskFactory, never()).createMySegmentsOverwriteTask(any());
+        verify(mSplitTaskFactory, never()).createMySegmentsOverwriteTask(any(), notification.getChangeNumber());
         ArgumentCaptor<Long> messageCaptor =
                 ArgumentCaptor.forClass(Long.class);
         verify(mMySegmentChangeQueue, times(1)).offer(messageCaptor.capture());
@@ -173,7 +173,7 @@ public class MySegmentsNotificationProcessorImplTest {
 
         ArgumentCaptor<Set> messageCaptor =
                 ArgumentCaptor.forClass(Set.class);
-        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(anyBoolean(), messageCaptor.capture());
+        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(anyBoolean(), messageCaptor.capture(), changeNumber);
 
         Assert.assertEquals(Collections.singleton(segmentName), messageCaptor.getValue());
     }
@@ -214,20 +214,20 @@ public class MySegmentsNotificationProcessorImplTest {
     public void mySegmentsUpdateV2KeyListNotificationAdd() {
         String segment = "TheSegment";
         mySegmentsUpdateV2KeyListNotification(segment, ADD);
-        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(true, Collections.singleton(segment));
+        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(true, Collections.singleton(segment), changeNumber);
     }
 
     @Test
     public void mySegmentsUpdateV2KeyListNotificationRemove() {
         String segment = "TheSegment";
         mySegmentsUpdateV2KeyListNotification(segment, REMOVE);
-        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(false, Collections.singleton(segment));
+        verify(mSplitTaskFactory, times(1)).createMySegmentsUpdateTask(false, Collections.singleton(segment), changeNumber);
     }
 
     @Test
     public void mySegmentsUpdateV2KeyListNotificationNone() {
         mySegmentsUpdateV2KeyListNotification("", NONE);
-        verify(mSplitTaskFactory, never()).createMySegmentsUpdateTask(anyBoolean(), anySet());
+        verify(mSplitTaskFactory, never()).createMySegmentsUpdateTask(anyBoolean(), anySet(), changeNumber);
     }
 
     @Test
@@ -279,7 +279,7 @@ public class MySegmentsNotificationProcessorImplTest {
 
         mNotificationProcessor.processMySegmentsUpdateV2(notification);
 
-        verify(helper).processUpdate(MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST, "dummy", CompressionType.GZIP, Collections.singleton("dummy"), mMySegmentChangeQueue, 0);
+        verify(helper).processUpdate(MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST, "dummy", CompressionType.GZIP, Collections.singleton("dummy"), notification.getChangeNumber(), mMySegmentChangeQueue, 0);
     }
 
     private void mySegmentsUpdateV2KeyListNotification(String segmentName, KeyList.Action action) {

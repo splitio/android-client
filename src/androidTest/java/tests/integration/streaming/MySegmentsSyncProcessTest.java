@@ -117,9 +117,9 @@ public class MySegmentsSyncProcessTest {
         thirdUpdateLatch.await(5, TimeUnit.SECONDS);
         MySegmentEntity mySegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
 
-        Assert.assertEquals("segment1,segment2,segment3", mySegmentEntity.getSegmentList());
-        Assert.assertEquals("segment1", mySegmentEntityPayload.getSegmentList());
-        Assert.assertEquals("", mySegmentEntityEmptyPayload.getSegmentList());
+        Assert.assertEquals("{\"segments\":[\"segment1\",\"segment2\",\"segment3\"],\"till\":-1}", mySegmentEntity.getSegmentList());
+        Assert.assertEquals("{\"segments\":[\"segment1\"],\"till\":1584647532812}", mySegmentEntityPayload.getSegmentList());
+        Assert.assertEquals("{\"segments\":[],\"till\":1584647532812}", mySegmentEntityEmptyPayload.getSegmentList());
     }
 
     @Test
@@ -187,13 +187,13 @@ public class MySegmentsSyncProcessTest {
         MySegmentEntity client1SegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity client2SegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 
-        Assert.assertEquals("segment1,segment2,segment3", client1SegmentEntity.getSegmentList());
-        Assert.assertEquals("segment1", client1SegmentEntityPayload.getSegmentList());
-        Assert.assertEquals("", client1SegmentEntityEmptyPayload.getSegmentList());
+        Assert.assertEquals("{\"segments\":[\"segment1\",\"segment2\",\"segment3\"],\"till\":-1}", client1SegmentEntity.getSegmentList());
+        Assert.assertEquals("{\"segments\":[\"segment1\"],\"till\":1584647532812}", client1SegmentEntityPayload.getSegmentList());
+        Assert.assertEquals("{\"segments\":[],\"till\":1584647532812}", client1SegmentEntityEmptyPayload.getSegmentList());
 
-        Assert.assertEquals("", client2SegmentEntity.getSegmentList());
-        Assert.assertEquals("", client2SegmentEntityPayload.getSegmentList());
-        Assert.assertEquals("", client2SegmentEntityEmptyPayload.getSegmentList());
+        Assert.assertEquals("{\"segments\":[],\"till\":-1}", client2SegmentEntity.getSegmentList());
+        Assert.assertEquals("{\"segments\":[],\"till\":-1}", client2SegmentEntityPayload.getSegmentList());
+        Assert.assertEquals("{\"segments\":[],\"till\":-1}", client2SegmentEntityEmptyPayload.getSegmentList());
     }
 
     private void testMySegmentsUpdate() throws InterruptedException {

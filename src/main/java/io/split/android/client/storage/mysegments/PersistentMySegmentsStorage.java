@@ -6,9 +6,9 @@ import java.util.List;
 
 public interface PersistentMySegmentsStorage {
 
-    void set(String userKey, @NonNull List<String> mySegments);
+    void set(String userKey, @NonNull List<String> mySegments, long till);
 
-    List<String> getSnapshot(String userKey);
+    SegmentChangeDTO getSnapshot(String userKey);
 
     void close();
 }

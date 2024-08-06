@@ -1,5 +1,7 @@
 package io.split.android.client.service.mysegments;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
@@ -15,11 +17,10 @@ import io.split.android.client.service.synchronizer.MySegmentsChangeChecker;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.utils.logger.Logger;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
-
 public class MySegmentsOverwriteTask implements SplitTask {
 
     private final List<String> mMySegments;
+    private final long mChangeNumber;
     private final MySegmentsStorage mMySegmentsStorage;
     private final SplitEventsManager mEventsManager;
     private MySegmentsChangeChecker mMySegmentsChangeChecker;
@@ -28,10 +29,12 @@ public class MySegmentsOverwriteTask implements SplitTask {
 
     public MySegmentsOverwriteTask(@NonNull MySegmentsStorage mySegmentsStorage,
                                    List<String> mySegments,
+                                   long changeNumber,
                                    SplitEventsManager eventsManager,
                                    MySegmentsOverwriteTaskConfig config) {
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mMySegments = mySegments;
+        mChangeNumber = changeNumber;
         mEventsManager = eventsManager;
         mMySegmentsChangeChecker = new MySegmentsChangeChecker();
         mTaskType = config.getTaskType();
@@ -48,7 +51,7 @@ public class MySegmentsOverwriteTask implements SplitTask {
             }
             List<String> oldSegments = new ArrayList<>(mMySegmentsStorage.getAll());
             if (mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, mMySegments)) {
-                mMySegmentsStorage.set(mMySegments);
+                mMySegmentsStorage.set(mMySegments, mChangeNumber);
                 mEventsManager.notifyInternalEvent(mUpdateEvent);
             }
         } catch (Exception e) {

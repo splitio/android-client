@@ -43,7 +43,7 @@ public class MySegmentsOverwriteTaskTest {
     @Test
     public void correctExecution() throws HttpFetcherException {
         List<String> segments = dummySegments();
-        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
+        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, changeNumber, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
         SplitTaskExecutionInfo result = mTask.execute();
 
         verify(mySegmentsStorage, times(1)).set(any());
@@ -55,7 +55,7 @@ public class MySegmentsOverwriteTaskTest {
     @Test
     public void storageException() {
         List<String> segments = dummySegments();
-        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
+        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, changeNumber, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
         doThrow(NullPointerException.class).when(mySegmentsStorage).set(segments);
 
         SplitTaskExecutionInfo result = mTask.execute();
@@ -66,7 +66,7 @@ public class MySegmentsOverwriteTaskTest {
     @Test
     public void nullParameter() {
 
-        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, null, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
+        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, null, changeNumber, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
 
         SplitTaskExecutionInfo result = mTask.execute();
 

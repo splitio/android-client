@@ -27,7 +27,9 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
 
     @Override
     public void loadLocal() {
-        mInMemoryMySegments.addAll(mPersistentStorage.getSnapshot(mMatchingKey));
+        SegmentChangeDTO snapshot = mPersistentStorage.getSnapshot(mMatchingKey);
+        mInMemoryMySegments.addAll(snapshot.getMySegments());
+        mTill.set(snapshot.getTill());
     }
 
     @Override
@@ -36,13 +38,14 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
     }
 
     @Override
-    public void set(@NonNull List<String> mySegments) {
+    public void set(@NonNull List<String> mySegments, long till) {
         if (mySegments == null) {
             return;
         }
         mInMemoryMySegments.clear();
         mInMemoryMySegments.addAll(mySegments);
-        mPersistentStorage.set(mMatchingKey, mySegments);
+        mTill.set(till);
+        mPersistentStorage.set(mMatchingKey, mySegments, till);
     }
 
     @Override
@@ -51,14 +54,9 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
     }
 
     @Override
-    public void setTill(long till) {
-        mTill.set(till);
-    }
-
-    @Override
     public void clear() {
         mInMemoryMySegments.clear();
-        mPersistentStorage.set(mMatchingKey, new ArrayList<>());
         mTill.set(-1);
+        mPersistentStorage.set(mMatchingKey, new ArrayList<>(), -1);
     }
 }

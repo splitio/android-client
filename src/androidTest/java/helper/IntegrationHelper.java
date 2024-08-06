@@ -159,7 +159,7 @@ public class IntegrationHelper {
     }
 
     public static String dummyMyLargeSegments() {
-        return "{\"myLargeSegments\":[\"large-segment1\", \"large-segment2\", \"large-segment3\"], \"changeNumber\": 9999999999999}";
+        return "{\"myLargeSegments\":[\"large-segment1\", \"large-segment2\", \"large-segment3\"], \"till\": 9999999999999}";
     }
 
     public static String emptyMySegments() {
@@ -167,13 +167,13 @@ public class IntegrationHelper {
     }
 
     public static String emptyMyLargeSegments() {
-        return "{\"mySegments\":[], \"changeNumber\": 9999999999999}";
+        return "{\"mySegments\":[], \"till\": 9999999999999}";
     }
 
     public static String randomizedMyLargeSegments() {
         int randIntOne = (int) (Math.random() * 100);
         int randIntTwo = (int) (Math.random() * 100);
-        return "{\"myLargeSegments\":[\"large-segment1\", \"large-random\", \"large-segment"+randIntOne+"\", \"large-segment"+randIntTwo+"\"], \"changeNumber\": 9999999999999}";
+        return "{\"myLargeSegments\":[\"large-segment1\", \"large-random\", \"large-segment"+randIntOne+"\", \"large-segment"+randIntTwo+"\"], \"till\": 9999999999999}";
     }
 
     public static String dummyApiKey() {

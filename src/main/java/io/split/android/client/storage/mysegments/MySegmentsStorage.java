@@ -11,11 +11,9 @@ public interface MySegmentsStorage {
 
     Set<String> getAll();
 
-    void set(@NonNull List<String> mySegments);
+    void set(@NonNull List<String> mySegments, long till);
 
     long getTill();
-
-    void setTill(long till);
 
     @VisibleForTesting
     void clear();

@@ -53,7 +53,7 @@ public class MyLargeSegmentsNotificationProcessorImplTest {
                 "dummy",
                 CompressionType.GZIP,
                 new HashSet<>(Arrays.asList("segment1", "segment2")),
-                mBlockingQueue,
+                notification.getChangeNumber(), mBlockingQueue,
                 25L);
     }
 

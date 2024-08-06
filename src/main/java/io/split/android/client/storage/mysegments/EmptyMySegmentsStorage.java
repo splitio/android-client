@@ -17,16 +17,12 @@ public class EmptyMySegmentsStorage implements MySegmentsStorage{
     }
 
     @Override
-    public void set(@NonNull List<String> mySegments) {
+    public void set(@NonNull List<String> mySegments, long till) {
     }
 
     @Override
     public long getTill() {
         return -1;
-    }
-
-    @Override
-    public void setTill(long till) {
     }
 
     @Override

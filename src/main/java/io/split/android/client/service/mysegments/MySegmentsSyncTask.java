@@ -71,8 +71,7 @@ public class MySegmentsSyncTask implements SplitTask {
             List<String> oldSegments = new ArrayList<>(mMySegmentsStorage.getAll());
             List<String> mySegments = response.getSegments();
 
-            mMySegmentsStorage.set(mySegments);
-            mMySegmentsStorage.setTill(response.getTill());
+            mMySegmentsStorage.set(mySegments, response.getTill());
 
             mTelemetryRuntimeProducer.recordSuccessfulSync(mTelemetryOperationType, now);
             fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments);

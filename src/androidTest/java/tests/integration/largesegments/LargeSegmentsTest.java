@@ -6,7 +6,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.concurrent.CountDownLatch;
@@ -21,6 +20,8 @@ import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.exceptions.SplitInstantiationException;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.mysegments.SegmentChangeDTO;
+import io.split.android.client.utils.Json;
 import tests.integration.shared.TestingHelper;
 
 public class LargeSegmentsTest extends LargeSegmentTestHelper {
@@ -82,7 +83,6 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
 
         boolean readyAwait = readyLatch.await(5, TimeUnit.SECONDS);
         boolean await = updateLatch.await(5, TimeUnit.SECONDS);
-
 
         assertTrue(readyAwait);
         assertTrue(await);
@@ -189,13 +189,14 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         SplitFactory factory = getFactory(true, true, null, null, testDatabase);
         getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
 
-        String[] largeSegments = testDatabase.myLargeSegmentDao()
+        SegmentChangeDTO largeSegments = Json.fromJson(testDatabase.myLargeSegmentDao()
                 .getByUserKey(IntegrationHelper.dummyUserKey().matchingKey())
-                .getSegmentList().split(",");
-        assertEquals(3, largeSegments.length);
-        assertEquals("large-segment1", largeSegments[0]);
-        assertEquals("large-segment2", largeSegments[1]);
-        assertEquals("large-segment3", largeSegments[2]);
+                .getSegmentList(), SegmentChangeDTO.class);
+        assertEquals(3, largeSegments.getMySegments().size());
+        assertEquals("large-segment1", largeSegments.getMySegments().get(0));
+        assertEquals("large-segment2", largeSegments.getMySegments().get(1));
+        assertEquals("large-segment3", largeSegments.getMySegments().get(2));
+        assertEquals(9999999999999L, largeSegments.getTill().longValue());
     }
 
     @Test
@@ -213,14 +214,16 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
 
         latch.await(10, TimeUnit.SECONDS);
 
-        String segmentList1 = testDatabase.myLargeSegmentDao().getByUserKey("CUSTOMER_ID").getSegmentList();
-        String segmentList2 = testDatabase.myLargeSegmentDao().getByUserKey("key2").getSegmentList();
+        SegmentChangeDTO segmentList1 = Json.fromJson(testDatabase.myLargeSegmentDao().getByUserKey("CUSTOMER_ID").getSegmentList(), SegmentChangeDTO.class);
+        SegmentChangeDTO segmentList2 = Json.fromJson(testDatabase.myLargeSegmentDao().getByUserKey("key2").getSegmentList(), SegmentChangeDTO.class);
 
         assertEquals(2, mEndpointHits.get("myLargeSegments").get());
-        assertEquals(4, segmentList1.split(",").length);
-        assertEquals(4, segmentList2.split(",").length);
+        assertEquals(4, segmentList1.getMySegments().size());
+        assertEquals(4, segmentList2.getMySegments().size());
         assertNotEquals(segmentList1,
                 segmentList2);
+        assertEquals(9999999999999L, segmentList1.getTill().longValue());
+        assertEquals(9999999999999L, segmentList2.getTill().longValue());
     }
 
     @Test
