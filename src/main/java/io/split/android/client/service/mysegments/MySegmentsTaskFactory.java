@@ -9,7 +9,7 @@ public interface MySegmentsTaskFactory {
 
     LoadMySegmentsTask createLoadMySegmentsTask();
 
-    MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments);
+    MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments, Long changeNumber);
 
-    MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, Set<String> segmentNames);
+    MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, Set<String> segmentNames, Long changeNumber);
 }

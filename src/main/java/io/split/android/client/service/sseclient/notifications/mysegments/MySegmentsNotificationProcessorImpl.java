@@ -47,7 +47,7 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
             mConfiguration.getMySegmentUpdateNotificationsQueue().offer(ServiceConstants.NO_INITIAL_DELAY);
         } else {
             List<String> segmentList = notification.getSegmentList() != null ? notification.getSegmentList() : new ArrayList<>();
-            MySegmentsOverwriteTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsOverwriteTask(segmentList);
+            MySegmentsOverwriteTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsOverwriteTask(segmentList, notification.getChangeNumber());
             mSplitTaskExecutor.submit(task, null);
         }
     }
@@ -58,7 +58,7 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
                 notification.getData(),
                 notification.getCompression(),
                 Collections.singleton(notification.getSegmentName()),
-                mConfiguration.getMySegmentUpdateNotificationsQueue(),
+                notification.getChangeNumber(), mConfiguration.getMySegmentUpdateNotificationsQueue(),
                 ServiceConstants.NO_INITIAL_DELAY);
     }
 }

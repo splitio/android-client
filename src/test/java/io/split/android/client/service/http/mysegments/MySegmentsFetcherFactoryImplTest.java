@@ -8,9 +8,8 @@ import org.junit.Test;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
-import io.split.android.client.dtos.MySegment;
+import io.split.android.client.dtos.SegmentResponse;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpResponseParser;
@@ -21,7 +20,7 @@ public class MySegmentsFetcherFactoryImplTest {
     public void getFetcherCallsUriBuilderImplementation() throws URISyntaxException {
         MySegmentsFetcherFactory.UriBuilder uriBuilder = mock(MySegmentsFetcherFactory.UriBuilder.class);
         when(uriBuilder.build("matchingKey")).thenReturn(mock(URI.class));
-        HttpFetcher<List<MySegment>> fetcher = new MySegmentsFetcherFactoryImpl(mock(HttpClient.class),
+        HttpFetcher<? extends SegmentResponse> fetcher = new MySegmentsFetcherFactoryImpl(mock(HttpClient.class),
                 "endpoint",
                 mock(HttpResponseParser.class),
                 uriBuilder).getFetcher("matchingKey");
@@ -33,7 +32,7 @@ public class MySegmentsFetcherFactoryImplTest {
     public void getFetcherDoesNotCrashWhenUriBuilderFails() throws URISyntaxException {
         MySegmentsFetcherFactory.UriBuilder uriBuilder = mock(MySegmentsFetcherFactory.UriBuilder.class);
         when(uriBuilder.build("matchingKey")).thenThrow(new URISyntaxException("test", "test"));
-        HttpFetcher<List<MySegment>> fetcher = new MySegmentsFetcherFactoryImpl(mock(HttpClient.class),
+        HttpFetcher<? extends SegmentResponse> fetcher = new MySegmentsFetcherFactoryImpl(mock(HttpClient.class),
                 "endpoint",
                 mock(HttpResponseParser.class),
                 uriBuilder).getFetcher("matchingKey");

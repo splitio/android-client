@@ -9,16 +9,15 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.Arrays;
 import java.util.List;
-import java.util.Set;
 
 import helper.DatabaseHelper;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
+import io.split.android.client.storage.mysegments.SegmentChangeDTO;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
 
 public class PersistentMyLargeSegmentStorageTest {
@@ -52,26 +51,28 @@ public class PersistentMyLargeSegmentStorageTest {
 
     @Test
     public void getMySegments() {
-        Set<String> snapshot = new HashSet<>(mPersistentMySegmentsStorage.getSnapshot(mUserKey));
+        SegmentChangeDTO snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
-        Assert.assertEquals(3, snapshot.size());
-        Assert.assertTrue(snapshot.contains("s1"));
-        Assert.assertTrue(snapshot.contains("s2"));
-        Assert.assertTrue(snapshot.contains("s3"));
+        Assert.assertEquals(3, snapshot.getMySegments().size());
+        Assert.assertTrue(snapshot.getMySegments().contains("s1"));
+        Assert.assertTrue(snapshot.getMySegments().contains("s2"));
+        Assert.assertTrue(snapshot.getMySegments().contains("s3"));
+        Assert.assertEquals(-1, snapshot.getTill().longValue());
     }
 
     @Test
     public void updateSegments() {
 
-        mPersistentMySegmentsStorage.set(mUserKey, Collections.singletonList("a1,a2,a3,a4"));
+        mPersistentMySegmentsStorage.set(mUserKey, Arrays.asList("a1","a2","a3","a4"), 2002012);
 
-        Set<String> snapshot = new HashSet<>(mPersistentMySegmentsStorage.getSnapshot(mUserKey));
+        SegmentChangeDTO snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
-        Assert.assertEquals(4, snapshot.size());
-        Assert.assertTrue(snapshot.contains("a1"));
-        Assert.assertTrue(snapshot.contains("a2"));
-        Assert.assertTrue(snapshot.contains("a3"));
-        Assert.assertTrue(snapshot.contains("a4"));
+        Assert.assertEquals(4, snapshot.getMySegments().size());
+        Assert.assertTrue(snapshot.getMySegments().contains("a1"));
+        Assert.assertTrue(snapshot.getMySegments().contains("a2"));
+        Assert.assertTrue(snapshot.getMySegments().contains("a3"));
+        Assert.assertTrue(snapshot.getMySegments().contains("a4"));
+        Assert.assertEquals(2002012, snapshot.getTill().longValue());
     }
 
     @Test
@@ -79,33 +80,37 @@ public class PersistentMyLargeSegmentStorageTest {
         mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
                 SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true), mRoomDb.myLargeSegmentDao(), MyLargeSegmentEntity.creator());
 
-        mPersistentMySegmentsStorage.set(mUserKey, Collections.singletonList("a1,a2,a3,a4"));
+        mPersistentMySegmentsStorage.set(mUserKey, Arrays.asList("a1","a2","a3","a4"), 2002012);
 
-        Set<String> snapshot = new HashSet<>(mPersistentMySegmentsStorage.getSnapshot(mUserKey));
+        SegmentChangeDTO snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
-        Assert.assertEquals(4, snapshot.size());
-        Assert.assertTrue(snapshot.contains("a1"));
-        Assert.assertTrue(snapshot.contains("a2"));
-        Assert.assertTrue(snapshot.contains("a3"));
-        Assert.assertTrue(snapshot.contains("a4"));
+        List<String> mySegments = snapshot.getMySegments();
+        Assert.assertEquals(4, mySegments.size());
+        Assert.assertTrue(mySegments.contains("a1"));
+        Assert.assertTrue(mySegments.contains("a2"));
+        Assert.assertTrue(mySegments.contains("a3"));
+        Assert.assertTrue(mySegments.contains("a4"));
+        Assert.assertEquals(2002012, snapshot.getTill().longValue());
     }
 
     @Test
     public void updateEmptyMySegment() {
 
-        mPersistentMySegmentsStorage.set(mUserKey, new ArrayList<>());
+        mPersistentMySegmentsStorage.set(mUserKey, new ArrayList<>(), 2002012);
 
-        List<String> snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
+        SegmentChangeDTO snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
-        Assert.assertEquals(0, snapshot.size());
+        Assert.assertEquals(0, snapshot.getMySegments().size());
+        Assert.assertEquals(2002012, snapshot.getTill().longValue());
     }
 
     @Test
     public void addNullMySegmentsList() {
-        mPersistentMySegmentsStorage.set(mUserKey, null);
+        mPersistentMySegmentsStorage.set(mUserKey, null, 2002012);
 
-        List<String> snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
+        SegmentChangeDTO snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
-        Assert.assertEquals(3, snapshot.size());
+        Assert.assertEquals(3, snapshot.getMySegments().size());
+        Assert.assertEquals(-1, snapshot.getTill().longValue());
     }
 }

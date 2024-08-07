@@ -51,6 +51,7 @@ public class MyLargeSegmentsNotificationProcessorImpl implements MyLargeSegments
                 notification.getData(),
                 notification.getCompression(),
                 notification.getLargeSegments(),
+                notification.getChangeNumber(),
                 mNotificationQueue,
                 syncDelay);
     }

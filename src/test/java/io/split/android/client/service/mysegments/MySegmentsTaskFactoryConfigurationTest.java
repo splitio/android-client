@@ -7,16 +7,14 @@ import static org.mockito.Mockito.mock;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.List;
-
-import io.split.android.client.dtos.MySegment;
+import io.split.android.client.dtos.SegmentResponse;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 
 public class MySegmentsTaskFactoryConfigurationTest {
 
-    private HttpFetcher<List<MySegment>> mHttpFetcher;
+    private HttpFetcher<? extends SegmentResponse> mHttpFetcher;
     private MySegmentsStorage mMySegmentsStorage;
     private SplitEventsManager mEventsManager;
 

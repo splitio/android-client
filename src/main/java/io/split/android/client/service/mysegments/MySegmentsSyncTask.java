@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.dtos.MySegment;
+import io.split.android.client.dtos.SegmentResponse;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
@@ -29,7 +29,7 @@ import io.split.android.client.utils.logger.Logger;
 
 public class MySegmentsSyncTask implements SplitTask {
 
-    private final HttpFetcher<List<MySegment>> mMySegmentsFetcher;
+    private final HttpFetcher<? extends SegmentResponse> mMySegmentsFetcher;
     private final MySegmentsStorage mMySegmentsStorage;
     private final boolean mAvoidCache;
     private final SplitEventsManager mEventsManager;
@@ -40,7 +40,7 @@ public class MySegmentsSyncTask implements SplitTask {
     private final SplitInternalEvent mFetchedEvent;
     private final OperationType mTelemetryOperationType;
 
-    public MySegmentsSyncTask(@NonNull HttpFetcher<List<MySegment>> mySegmentsFetcher,
+    public MySegmentsSyncTask(@NonNull HttpFetcher<? extends SegmentResponse> mySegmentsFetcher,
                               @NonNull MySegmentsStorage mySegmentsStorage,
                               boolean avoidCache,
                               SplitEventsManager eventsManager,
@@ -64,13 +64,14 @@ public class MySegmentsSyncTask implements SplitTask {
         long startTime = System.currentTimeMillis();
         long latency = 0;
         try {
-            List<MySegment> segments = mMySegmentsFetcher.execute(new HashMap<>(), getHeaders());
+            SegmentResponse response = mMySegmentsFetcher.execute(new HashMap<>(), getHeaders());
 
             long now = System.currentTimeMillis();
             latency = now - startTime;
             List<String> oldSegments = new ArrayList<>(mMySegmentsStorage.getAll());
-            List<String> mySegments = getNameList(segments);
-            mMySegmentsStorage.set(mySegments);
+            List<String> mySegments = response.getSegments();
+
+            mMySegmentsStorage.set(mySegments, response.getTill());
 
             mTelemetryRuntimeProducer.recordSuccessfulSync(mTelemetryOperationType, now);
             fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments);
@@ -100,14 +101,6 @@ public class MySegmentsSyncTask implements SplitTask {
 
     private void logError(String message) {
         Logger.e("Error while executing my segments sync task: " + message);
-    }
-
-    private List<String> getNameList(List<MySegment> mySegments) {
-        List<String> nameList = new ArrayList<String>();
-        for (MySegment segment : mySegments) {
-            nameList.add(segment.name);
-        }
-        return nameList;
     }
 
     private @Nullable Map<String, String> getHeaders() {

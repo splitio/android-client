@@ -37,6 +37,7 @@ import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.mysegments.SegmentChangeDTO;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import tests.integration.shared.TestingData;
@@ -88,8 +89,8 @@ public class LargeSegmentsStreamingTest {
         assertEquals(3, mEndpointHits.get(MY_LARGE_SEGMENTS).get());
         assertEquals(2, mEndpointHits.get(SPLIT_CHANGES).get());
         assertEquals(2, mEndpointHits.get(MY_SEGMENTS).get());
-        assertEquals("large-segment1,large-segment2,large-segment3", initialSegmentList);
-        assertEquals(4, testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList().split(",").length);
+        assertEquals("{\"segments\":[\"large-segment1\",\"large-segment2\",\"large-segment3\"],\"till\":9999999999999}", initialSegmentList);
+        assertEquals(4, Json.fromJson(testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList(), SegmentChangeDTO.class).getMySegments().size());
     }
 
     @Test
@@ -114,8 +115,8 @@ public class LargeSegmentsStreamingTest {
         assertTrue(splitsAwait);
         assertTrue(myLargeSegmentsAwait);
         assertTrue(updateAwait);
-        assertEquals("large-segment1,large-segment2,large-segment3", initialLargeSegmentsSize);
-        assertEquals("large-segment3", db.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList());
+        assertEquals("{\"segments\":[\"large-segment1\",\"large-segment2\",\"large-segment3\"],\"till\":9999999999999}", initialLargeSegmentsSize);
+        assertEquals("{\"segments\":[\"large-segment3\"],\"till\":1702507130121}", db.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList());
     }
 
     @Test

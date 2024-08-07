@@ -1,14 +1,13 @@
 package io.split.android.client.dtos;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
-public class MyLargeSegmentsResponse {
+public class MyLargeSegmentsResponse implements SegmentResponse {
 
     @SerializedName("myLargeSegments")
     private List<String> myLargeSegments;
@@ -16,14 +15,15 @@ public class MyLargeSegmentsResponse {
     @SerializedName("till")
     private Long till;
 
+    @Override
     @NonNull
-    public List<String> getMyLargeSegments() {
-        return myLargeSegments == null ? new ArrayList<>() :
+    public List<String> getSegments() {
+        return myLargeSegments == null ? Collections.emptyList() :
                 myLargeSegments;
     }
 
-    @Nullable
-    public Long getTill() {
-        return till;
+    @Override
+    public long getTill() {
+        return till == null ? -1 : till;
     }
 }

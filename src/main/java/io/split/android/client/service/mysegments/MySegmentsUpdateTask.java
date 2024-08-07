@@ -20,6 +20,7 @@ import io.split.android.client.utils.logger.Logger;
 public class MySegmentsUpdateTask implements SplitTask {
 
     private final Set<String> mSegmentNames;
+    private final Long mChangeNumber;
     private final MySegmentsStorage mMySegmentsStorage;
     private final SplitEventsManager mEventsManager;
     private final boolean mIsAddOperation;
@@ -31,11 +32,13 @@ public class MySegmentsUpdateTask implements SplitTask {
     public MySegmentsUpdateTask(@NonNull MySegmentsStorage mySegmentsStorage,
                                 boolean add,
                                 @NonNull Set<String> segmentName,
+                                Long changeNumber,
                                 @NonNull SplitEventsManager eventsManager,
                                 @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                                 @NonNull MySegmentsUpdateTaskConfig config) {
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mSegmentNames = checkNotNull(segmentName);
+        mChangeNumber = changeNumber == null ? -1 : changeNumber;
         mIsAddOperation = add;
         mEventsManager = checkNotNull(eventsManager);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
@@ -92,7 +95,7 @@ public class MySegmentsUpdateTask implements SplitTask {
     }
 
     private void updateAndNotify(Set<String> segments) {
-        mMySegmentsStorage.set(new ArrayList<>(segments));
+        mMySegmentsStorage.set(new ArrayList<>(segments), mChangeNumber);
         mEventsManager.notifyInternalEvent(mUpdateEvent);
     }
 

@@ -45,9 +45,9 @@ public class SqLitePersistentMySegmentsStorageTest {
 
         when(mSplitCipher.encrypt(anyString())).thenReturn(encryptedSegments);
 
-        mStorage.set(userKey, segments);
+        mStorage.set(userKey, segments, -1);
 
-        verify(mSplitCipher).encrypt("segment1,segment2,segment3");
+        verify(mSplitCipher).encrypt("{\"segments\":[\"segment1\",\"segment2\",\"segment3\"],\"till\":-1}");
         verify(mDao).update(any(MySegmentEntity.class));
     }
 
@@ -58,9 +58,9 @@ public class SqLitePersistentMySegmentsStorageTest {
 
         when(mSplitCipher.encrypt(anyString())).thenReturn(null);
 
-        mStorage.set(userKey, segments);
+        mStorage.set(userKey, segments, -1);
 
-        verify(mSplitCipher).encrypt("segment1,segment2,segment3");
+        verify(mSplitCipher).encrypt("{\"segments\":[\"segment1\",\"segment2\",\"segment3\"],\"till\":-1}");
         verifyNoInteractions(mDao);
     }
 
@@ -77,8 +77,8 @@ public class SqLitePersistentMySegmentsStorageTest {
         when(mSplitCipher.encrypt(userKey)).thenReturn("encrypted_user_key");
         when(mSplitCipher.decrypt(encryptedSegments)).thenReturn(decryptedSegments);
 
-        List<String> result = mStorage.getSnapshot(userKey);
+        SegmentChangeDTO result = mStorage.getSnapshot(userKey);
 
-        assertEquals(Arrays.asList("segment1", "segment2", "segment3"), result);
+        assertEquals(Arrays.asList("segment1", "segment2", "segment3"), result.getMySegments());
     }
 }

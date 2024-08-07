@@ -1,6 +1,8 @@
 package io.split.android.client.service;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -63,13 +65,13 @@ public class MySegmentsUpdateTaskTest {
 
     @Test
     public void correctExecution() throws HttpFetcherException {
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(mSegmentToRemove), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(mSegmentToRemove), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
 
         SplitTaskExecutionInfo result = mTask.execute();
 
-        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture());
+        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture(), anyLong());
         Assert.assertTrue(isSegmentRemoved(segmentsCaptor.getValue(), mSegmentToRemove));
         Assert.assertFalse(isSegmentRemoved(segmentsCaptor.getValue(), mCustomerSegment));
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
@@ -79,12 +81,12 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void correctExecutionToEraseNotInSegments() throws HttpFetcherException {
         String otherSegment = "OtherSegment";
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(otherSegment), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(otherSegment), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
         ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
 
         SplitTaskExecutionInfo result = mTask.execute();
 
-        verify(mySegmentsStorage, never()).set(any());
+        verify(mySegmentsStorage, never()).set(any(), anyLong());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
         Assert.assertEquals(SplitTaskType.MY_SEGMENTS_UPDATE, result.getTaskType());
     }
@@ -92,8 +94,8 @@ public class MySegmentsUpdateTaskTest {
     @Test
     public void storageException() {
 
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(mSegmentToRemove), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
-        doThrow(NullPointerException.class).when(mySegmentsStorage).set(any());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(mSegmentToRemove), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        doThrow(NullPointerException.class).when(mySegmentsStorage).set(any(), anyLong());
 
         SplitTaskExecutionInfo result = mTask.execute();
 
@@ -103,7 +105,7 @@ public class MySegmentsUpdateTaskTest {
 
     @Test
     public void successfulAddOperationIsRecordedInTelemetry() {
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, Collections.singleton(mSegmentToRemove), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, Collections.singleton(mSegmentToRemove), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         mTask.execute();
 
@@ -112,7 +114,7 @@ public class MySegmentsUpdateTaskTest {
 
     @Test
     public void successfulRemoveOperationIsRecordedInTelemetry() {
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(mSegmentToRemove), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(mSegmentToRemove), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         mTask.execute();
 
@@ -127,11 +129,11 @@ public class MySegmentsUpdateTaskTest {
 
         when(mySegmentsStorage.getAll()).thenReturn(oldSegments);
 
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, oldSegments, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, oldSegments, 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         SplitTaskExecutionInfo result = mTask.execute();
 
-        verify(mySegmentsStorage, never()).set(any());
+        verify(mySegmentsStorage, never()).set(any(), anyLong());
         verify(mEventsManager, never()).notifyInternalEvent(any());
     }
 
@@ -142,13 +144,13 @@ public class MySegmentsUpdateTaskTest {
 
         when(mySegmentsStorage.getAll()).thenReturn(oldSegments);
 
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, new HashSet<>(Arrays.asList(mCustomerSegment, mSegmentToRemove)), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, new HashSet<>(Arrays.asList(mCustomerSegment, mSegmentToRemove)), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
 
         SplitTaskExecutionInfo result = mTask.execute();
 
-        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture());
+        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture(), eq(25L));
         Assert.assertTrue(segmentsCaptor.getValue().contains(mSegmentToRemove));
         Assert.assertTrue(segmentsCaptor.getValue().contains(mCustomerSegment));
         Assert.assertEquals(2, segmentsCaptor.getValue().size());
@@ -165,13 +167,13 @@ public class MySegmentsUpdateTaskTest {
 
         when(mySegmentsStorage.getAll()).thenReturn(oldSegments);
 
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, new HashSet<>(Arrays.asList(mSegmentToRemove, "extra_segment")), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, new HashSet<>(Arrays.asList(mSegmentToRemove, "extra_segment")), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
 
         SplitTaskExecutionInfo result = mTask.execute();
 
-        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture());
+        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture(), eq(25L));
         Assert.assertFalse(segmentsCaptor.getValue().contains(mSegmentToRemove));
         Assert.assertFalse(segmentsCaptor.getValue().contains("extra_segment"));
         Assert.assertTrue(segmentsCaptor.getValue().contains(mCustomerSegment));
@@ -188,7 +190,7 @@ public class MySegmentsUpdateTaskTest {
 
         when(mySegmentsStorage.getAll()).thenReturn(oldSegments);
 
-        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton("extra_segment"), mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
+        mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton("extra_segment"), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
         SplitTaskExecutionInfo result = mTask.execute();
 
