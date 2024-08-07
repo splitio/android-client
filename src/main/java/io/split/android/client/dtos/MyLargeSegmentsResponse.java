@@ -13,8 +13,8 @@ public class MyLargeSegmentsResponse {
     @SerializedName("myLargeSegments")
     private List<String> myLargeSegments;
 
-    @SerializedName("changeNumber")
-    private Long changeNumber;
+    @SerializedName("till")
+    private Long till;
 
     @NonNull
     public List<String> getMyLargeSegments() {
@@ -23,7 +23,7 @@ public class MyLargeSegmentsResponse {
     }
 
     @Nullable
-    public Long getChangeNumber() {
-        return changeNumber;
+    public Long getTill() {
+        return till;
     }
 }

@@ -2,6 +2,8 @@ package io.split.android.client.telemetry.storage;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
+import android.os.Build;
+
 import androidx.annotation.NonNull;
 
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
@@ -9,6 +11,7 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.model.Stats;
+import io.split.android.client.utils.logger.Logger;
 
 public class TelemetryStatsProviderImpl implements TelemetryStatsProvider {
 
@@ -49,6 +52,7 @@ public class TelemetryStatsProviderImpl implements TelemetryStatsProvider {
 
     private Stats buildStats() {
         Stats stats = new Stats();
+        addDefaultTags();
 
         stats.setStreamingEvents(mTelemetryStorageConsumer.popStreamingEvents());
         stats.setSplitCount(mSplitsStorage.getAll().size());
@@ -73,5 +77,17 @@ public class TelemetryStatsProviderImpl implements TelemetryStatsProvider {
         stats.setUpdatesFromSSE(mTelemetryStorageConsumer.popUpdatesFromSSE());
 
         return stats;
+    }
+
+    private void addDefaultTags() {
+        try {
+            TelemetryRuntimeProducer producer = (TelemetryRuntimeProducer) mTelemetryStorageConsumer;
+            int sdkInt = Build.VERSION.SDK_INT;
+            if (sdkInt > 0) {
+                producer.addTag("av:" + sdkInt);
+            }
+        } catch (ClassCastException ex) {
+            Logger.d("Telemetry storage is not a producer");
+        }
     }
 }

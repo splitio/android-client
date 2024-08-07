@@ -2,6 +2,8 @@ package io.split.android.client.service.sseclient.notifications.mysegments;
 
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.service.sseclient.notifications.HashingAlgorithm;
+import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 import io.split.android.client.utils.MurmurHash3;
 
 class SyncDelayCalculatorImpl implements SyncDelayCalculator {
@@ -9,7 +11,13 @@ class SyncDelayCalculatorImpl implements SyncDelayCalculator {
     public static final long DEFAULT_SYNC_INTERVAL_MS = TimeUnit.SECONDS.toMillis(60);
 
     @Override
-    public long calculateSyncDelay(String key, Long updateIntervalMs, Integer algorithmSeed) {
+    public long calculateSyncDelay(String key, Long updateIntervalMs, Integer algorithmSeed, MySegmentUpdateStrategy updateStrategy, HashingAlgorithm hashingAlgorithm) {
+        boolean fetchNotification = updateStrategy == MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST ||
+                updateStrategy == MySegmentUpdateStrategy.BOUNDED_FETCH_REQUEST;
+        if (!fetchNotification || hashingAlgorithm == HashingAlgorithm.NONE) {
+            return 0L;
+        }
+
         if (updateIntervalMs == null || updateIntervalMs <= 0) {
             updateIntervalMs = DEFAULT_SYNC_INTERVAL_MS;
         }

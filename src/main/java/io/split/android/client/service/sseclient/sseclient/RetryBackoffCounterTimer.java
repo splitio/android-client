@@ -28,7 +28,7 @@ public class RetryBackoffCounterTimer implements SplitTaskExecutionListener {
     private Long mInitialDelayInSeconds;
     private SplitTask mTask;
     private SplitTaskExecutionListener mListener;
-    private String mTaskId;
+    private volatile String mTaskId;
 
     /**
      * Creates an instance which retries tasks indefinitely, using the strategy defined by backoffCounter.

@@ -1,6 +1,5 @@
 package io.split.android.client.service.sseclient.notifications.mysegments;
 
-import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -13,6 +12,7 @@ import java.util.HashSet;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.common.CompressionType;
+import io.split.android.client.service.sseclient.notifications.HashingAlgorithm;
 import io.split.android.client.service.sseclient.notifications.MyLargeSegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 
@@ -40,11 +40,12 @@ public class MyLargeSegmentsNotificationProcessorImplTest {
         MyLargeSegmentChangeNotification notification = mock(MyLargeSegmentChangeNotification.class);
         when(notification.getCompression()).thenReturn(CompressionType.GZIP);
         when(notification.getData()).thenReturn("dummy");
+        when(notification.getHashingAlgorithm()).thenReturn(HashingAlgorithm.MURMUR3_32);
         when(notification.getLargeSegments()).thenReturn(new HashSet<>(Arrays.asList("segment1", "segment2")));
         when(notification.getUpdateIntervalMs()).thenReturn(1000L);
         when(notification.getAlgorithmSeed()).thenReturn(1234);
         when(notification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.BOUNDED_FETCH_REQUEST);
-        when(mSyncDelayCalculator.calculateSyncDelay("key", 1000L, 1234)).thenReturn(25L);
+        when(mSyncDelayCalculator.calculateSyncDelay("key", 1000L, 1234, MySegmentUpdateStrategy.BOUNDED_FETCH_REQUEST, HashingAlgorithm.MURMUR3_32)).thenReturn(25L);
 
         mNotificationProcessor.process(notification);
 
@@ -61,10 +62,12 @@ public class MyLargeSegmentsNotificationProcessorImplTest {
         MyLargeSegmentChangeNotification notification = mock(MyLargeSegmentChangeNotification.class);
         when(notification.getUpdateIntervalMs()).thenReturn(1000L);
         when(notification.getAlgorithmSeed()).thenReturn(1234);
-        when(mSyncDelayCalculator.calculateSyncDelay("key", 1000L, 1234)).thenReturn(25L);
+        when(notification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST);
+        when(notification.getHashingAlgorithm()).thenReturn(HashingAlgorithm.MURMUR3_32);
+        when(mSyncDelayCalculator.calculateSyncDelay("key", 1000L, 1234, MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST, HashingAlgorithm.MURMUR3_32)).thenReturn(25L);
 
         mNotificationProcessor.process(notification);
 
-        verify(mSyncDelayCalculator).calculateSyncDelay("key", 1000L, 1234);
+        verify(mSyncDelayCalculator).calculateSyncDelay("key", 1000L, 1234, MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST, HashingAlgorithm.MURMUR3_32);
     }
 }

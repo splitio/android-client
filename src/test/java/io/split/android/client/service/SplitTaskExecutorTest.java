@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
@@ -130,7 +131,7 @@ public class SplitTaskExecutorTest {
         latch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(task.taskHasBeenCalled);
-        Assert.assertEquals(4, task.callCount);
+        Assert.assertEquals(4, task.callCount.get());
     }
 
     @Test
@@ -152,7 +153,7 @@ public class SplitTaskExecutorTest {
         for (int i = 0; i < taskCount; i++) {
             Assert.assertTrue(taskList.get(i).taskHasBeenCalled);
         }
-        Assert.assertTrue(4 < taskList.get(0).callCount);
+        Assert.assertTrue(4 < taskList.get(0).callCount.get());
     }
 
     @Test
@@ -192,8 +193,8 @@ public class SplitTaskExecutorTest {
         mTaskExecutor.schedule(
                 task1, 6L, 20, mock(SplitTaskExecutionListener.class));
         latch.await(5, TimeUnit.SECONDS);
-        int countBeforePause = task.callCount;
-        int count1BeforePause = task1.callCount;
+        int countBeforePause = task.callCount.get();
+        int count1BeforePause = task1.callCount.get();
 
         mTaskExecutor.pause();
 
@@ -201,13 +202,13 @@ public class SplitTaskExecutorTest {
         // then resumes task executor
         // and wait for task 1 latch
         sleep(3);
-        int countAfterPause = task.callCount;
-        int count1AfterPause = task1.callCount;
+        int countAfterPause = task.callCount.get();
+        int count1AfterPause = task1.callCount.get();
 
         mTaskExecutor.resume();
         latch1.await(5, TimeUnit.SECONDS);
 
-        int count1AfterResume = task1.callCount;
+        int count1AfterResume = task1.callCount.get();
 
         Assert.assertEquals(3, countBeforePause);
         Assert.assertEquals(0, count1BeforePause);
@@ -250,7 +251,7 @@ public class SplitTaskExecutorTest {
         latch.await(10, TimeUnit.SECONDS);
 
         Assert.assertTrue(task.taskHasBeenCalled);
-        Assert.assertEquals(4, task.callCount);
+        Assert.assertEquals(4, task.callCount.get());
     }
 
     @Test
@@ -278,7 +279,7 @@ public class SplitTaskExecutorTest {
 
         assertTrue(task.taskHasBeenCalled);
         assertTrue(testListener.taskExecutedCalled);
-        assertEquals(2, task.callCount);
+        assertEquals(2, task.callCount.get());
     }
 
     @Test
@@ -293,7 +294,7 @@ public class SplitTaskExecutorTest {
         listenerLatch.await(2L, TimeUnit.SECONDS);
         assertTrue(task.taskHasBeenCalled);
         assertTrue(testListener.taskExecutedCalled);
-        assertEquals(1, task.callCount);
+        assertEquals(1, task.callCount.get());
     }
 
     @Test
@@ -314,7 +315,7 @@ public class SplitTaskExecutorTest {
 
         assertTrue(task.taskHasBeenCalled);
         assertTrue(testListener.taskExecutedCalled);
-        assertEquals(2, task.callCount);
+        assertEquals(2, task.callCount.get());
         assertFalse(newTask.taskHasBeenCalled);
     }
 
@@ -338,13 +339,13 @@ public class SplitTaskExecutorTest {
         }
 
         public boolean shouldThrowException = false;
-        public int callCount = 0;
+        public AtomicInteger callCount = new AtomicInteger(0);
         public boolean taskHasBeenCalled = false;
 
         @NonNull
         @Override
         public SplitTaskExecutionInfo execute() {
-            callCount++;
+            callCount.incrementAndGet();
             taskHasBeenCalled = true;
             latch.countDown();
             if (shouldThrowException) {

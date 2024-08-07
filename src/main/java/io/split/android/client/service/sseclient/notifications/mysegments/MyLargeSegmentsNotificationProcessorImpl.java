@@ -40,8 +40,13 @@ public class MyLargeSegmentsNotificationProcessorImpl implements MyLargeSegments
     }
 
     @Override
-    public void process(MyLargeSegmentChangeNotification notification) {
-        long syncDelay = mSyncDelayCalculator.calculateSyncDelay(mUserKey, notification.getUpdateIntervalMs(), notification.getAlgorithmSeed());
+    public void process(@NonNull MyLargeSegmentChangeNotification notification) {
+        long syncDelay = mSyncDelayCalculator.calculateSyncDelay(mUserKey,
+                notification.getUpdateIntervalMs(),
+                notification.getAlgorithmSeed(),
+                notification.getUpdateStrategy(),
+                notification.getHashingAlgorithm());
+
         mProcessorHelper.processUpdate(notification.getUpdateStrategy(),
                 notification.getData(),
                 notification.getCompression(),
