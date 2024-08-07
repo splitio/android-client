@@ -55,8 +55,8 @@ public class MySegmentsStorageContainerImplTest {
         MySegmentsStorage storageForKey = mContainer.getStorageForKey(userKey);
         MySegmentsStorage storageForKey2 = mContainer.getStorageForKey(userKey2);
 
-        storageForKey.set(Arrays.asList("s1", "s2"));
-        storageForKey2.set(Arrays.asList("s2", "s4", "s6"));
+        storageForKey.set(Arrays.asList("s1", "s2"), -1);
+        storageForKey2.set(Arrays.asList("s2", "s4", "s6"), -1);
 
         long distinctAmount = mContainer.getUniqueAmount();
 

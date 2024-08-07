@@ -3,6 +3,7 @@ package io.split.android.client.storage.mysegments;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -54,6 +55,7 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
     }
 
     @Override
+    @VisibleForTesting
     public void clear() {
         mInMemoryMySegments.clear();
         mTill.set(-1);

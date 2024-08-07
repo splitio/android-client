@@ -83,7 +83,7 @@ public class MySegmentsSyncTaskTest {
         ArgumentCaptor<Map<String, String>> headersCaptor = ArgumentCaptor.forClass(Map.class);
         verify(mMySegmentsFetcher).execute(any(), headersCaptor.capture());
         verify(mMySegmentsFetcher, times(1)).execute(noParams, null);
-        verify(mySegmentsStorage, times(1)).set(any());
+        verify(mySegmentsStorage, times(1)).set(any(), anyLong());
 
         Assert.assertNull(headersCaptor.getValue());
     }
@@ -99,7 +99,7 @@ public class MySegmentsSyncTaskTest {
 
         ArgumentCaptor<Map<String, String>> headersCaptor = ArgumentCaptor.forClass(Map.class);
         verify(mMySegmentsFetcher, times(1)).execute(any(), headersCaptor.capture());
-        verify(mySegmentsStorage, times(1)).set(any());
+        verify(mySegmentsStorage, times(1)).set(any(), anyLong());
         Assert.assertEquals(SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE, headersCaptor.getValue().get(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER));
     }
 
@@ -110,7 +110,7 @@ public class MySegmentsSyncTaskTest {
         mTask.execute();
 
         verify(mMySegmentsFetcher, times(1)).execute(noParams, null);
-        verify(mySegmentsStorage, never()).set(any());
+        verify(mySegmentsStorage, never()).set(any(), anyLong());
     }
 
     @Test
@@ -121,18 +121,18 @@ public class MySegmentsSyncTaskTest {
         mTask.execute();
 
         verify(mMySegmentsFetcher, times(1)).execute(noParams, null);
-        verify(mySegmentsStorage, never()).set(any());
+        verify(mySegmentsStorage, never()).set(any(), anyLong());
     }
 
     @Test
     public void storageException() throws HttpFetcherException {
         when(mMySegmentsFetcher.execute(noParams, null)).thenAnswer((Answer<MySegmentsResponse>) invocation -> mMySegments);
-        doThrow(NullPointerException.class).when(mySegmentsStorage).set(any());
+        doThrow(NullPointerException.class).when(mySegmentsStorage).set(any(), anyLong());
 
         mTask.execute();
 
         verify(mMySegmentsFetcher, times(1)).execute(noParams, null);
-        verify(mySegmentsStorage, times(1)).set(any());
+        verify(mySegmentsStorage, times(1)).set(any(), anyLong());
     }
 
     @Test

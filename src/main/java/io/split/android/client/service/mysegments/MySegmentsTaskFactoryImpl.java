@@ -36,7 +36,7 @@ public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
     }
 
     @Override
-    public MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments, long changeNumber) {
+    public MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments, Long changeNumber) {
         return new MySegmentsOverwriteTask(mConfiguration.getStorage(), segments, changeNumber, mConfiguration.getEventsManager(), mConfiguration.getMySegmentsOverwriteTaskConfig());
     }
 

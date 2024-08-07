@@ -38,7 +38,7 @@ public class MySegmentsUpdateTask implements SplitTask {
                                 @NonNull MySegmentsUpdateTaskConfig config) {
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mSegmentNames = checkNotNull(segmentName);
-        mChangeNumber = changeNumber;
+        mChangeNumber = changeNumber == null ? -1 : changeNumber;
         mIsAddOperation = add;
         mEventsManager = checkNotNull(eventsManager);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
@@ -95,7 +95,7 @@ public class MySegmentsUpdateTask implements SplitTask {
     }
 
     private void updateAndNotify(Set<String> segments) {
-        mMySegmentsStorage.set(new ArrayList<>(segments), (mChangeNumber == null) ? -1 : mChangeNumber);
+        mMySegmentsStorage.set(new ArrayList<>(segments), mChangeNumber);
         mEventsManager.notifyInternalEvent(mUpdateEvent);
     }
 

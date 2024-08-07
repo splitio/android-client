@@ -33,7 +33,6 @@ import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.service.impressions.ImpressionsMode;
-import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.ImpressionsCountEntity;
@@ -236,7 +235,7 @@ public class EncryptionTest {
                 fail("Segment user key not encrypted, it was " + segmentEntity.getUserKey());
             }
 
-            boolean bodyCondition = segmentEntity.getSegmentList().trim().endsWith("=");
+            boolean bodyCondition = !segmentEntity.getSegmentList().trim().endsWith("}");
             if (!bodyCondition) {
                 fail("Segment list not encrypted, it was " + segmentEntity.getSegmentList());
             }

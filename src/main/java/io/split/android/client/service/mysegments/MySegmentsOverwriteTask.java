@@ -29,12 +29,12 @@ public class MySegmentsOverwriteTask implements SplitTask {
 
     public MySegmentsOverwriteTask(@NonNull MySegmentsStorage mySegmentsStorage,
                                    List<String> mySegments,
-                                   long changeNumber,
+                                   Long changeNumber,
                                    SplitEventsManager eventsManager,
                                    MySegmentsOverwriteTaskConfig config) {
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mMySegments = mySegments;
-        mChangeNumber = changeNumber;
+        mChangeNumber = changeNumber == null ? -1 : changeNumber;
         mEventsManager = eventsManager;
         mMySegmentsChangeChecker = new MySegmentsChangeChecker();
         mTaskType = config.getTaskType();
