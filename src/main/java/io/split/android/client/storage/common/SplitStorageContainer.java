@@ -1,8 +1,11 @@
 package io.split.android.client.storage.common;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import io.split.android.client.service.impressions.observer.PersistentImpressionsObserverCacheStorage;
+import io.split.android.client.service.synchronizer.LastUpdateTimestampProvider;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.AttributesStorageContainer;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
@@ -17,8 +20,6 @@ import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
-
-import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class SplitStorageContainer {
 
@@ -36,6 +37,7 @@ public class SplitStorageContainer {
     private final TelemetryStorage mTelemetryStorage;
     private final PersistentImpressionsUniqueStorage mPersistentImpressionsUniqueStorage;
     private final PersistentImpressionsObserverCacheStorage mPersistentImpressionsObserverCacheStorage;
+    private final LastUpdateTimestampProvider mLastUpdateTimestampProvider;
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
                                  @NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
@@ -50,7 +52,8 @@ public class SplitStorageContainer {
                                  @NonNull AttributesStorageContainer attributesStorageContainer,
                                  @NonNull PersistentAttributesStorage persistentAttributesStorage,
                                  @NonNull TelemetryStorage telemetryStorage,
-                                 @NonNull PersistentImpressionsObserverCacheStorage persistentImpressionsObserverCacheStorage) {
+                                 @NonNull PersistentImpressionsObserverCacheStorage persistentImpressionsObserverCacheStorage,
+                                 @NonNull LastUpdateTimestampProvider lastUpdateTimestampProvider) {
 
         mSplitStorage = checkNotNull(splitStorage);
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
@@ -66,6 +69,7 @@ public class SplitStorageContainer {
         mTelemetryStorage = checkNotNull(telemetryStorage);
         mPersistentImpressionsUniqueStorage = checkNotNull(persistentImpressionsUniqueStorage);
         mPersistentImpressionsObserverCacheStorage = checkNotNull(persistentImpressionsObserverCacheStorage);
+        mLastUpdateTimestampProvider = checkNotNull(lastUpdateTimestampProvider);
     }
 
     public SplitsStorage getSplitsStorage() {
@@ -134,5 +138,9 @@ public class SplitStorageContainer {
 
     public PersistentImpressionsObserverCacheStorage getImpressionsObserverCachePersistentStorage() {
         return mPersistentImpressionsObserverCacheStorage;
+    }
+
+    public LastUpdateTimestampProvider getLastUpdateTimestampProvider() {
+        return mLastUpdateTimestampProvider;
     }
 }

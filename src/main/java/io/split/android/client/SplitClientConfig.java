@@ -511,6 +511,10 @@ public class SplitClientConfig {
         return mLargeSegmentsEnabled && mWaitForLargeSegments;
     }
 
+    public boolean forceCacheExpiration() {
+        return false; // TODO
+    }
+
     public static final class Builder {
 
         static final int PROXY_PORT_DEFAULT = 80;

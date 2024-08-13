@@ -82,12 +82,14 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
 
     @Override
     public void start() {
+        mSynchronizer.validateCache();
         mSynchronizer.loadAndSynchronizeSplits();
         mSynchronizer.loadMySegmentsFromCache();
+        if (mSplitClientConfig.largeSegmentsEnabled()) mSynchronizer.loadMyLargeSegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
+
         mSynchronizer.synchronizeMySegments();
         if (mSplitClientConfig.largeSegmentsEnabled()) {
-            mSynchronizer.loadMyLargeSegmentsFromCache();
             mSynchronizer.synchronizeMyLargeSegments();
         }
         if (mSplitClientConfig.userConsent() == UserConsent.GRANTED) {

@@ -17,4 +17,6 @@ public interface FeatureFlagsSynchronizer {
     void stopSynchronization();
 
     void submitLoadingTask(SplitTaskExecutionListener listener);
+
+    void expireCache();
 }

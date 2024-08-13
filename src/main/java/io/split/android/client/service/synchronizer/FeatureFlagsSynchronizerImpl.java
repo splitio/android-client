@@ -134,6 +134,11 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                 listener);
     }
 
+    @Override
+    public void expireCache() {
+        mTaskExecutor.submit(mSplitTaskFactory.createExpireSplitsTask(), null);
+    }
+
     private void scheduleSplitsFetcherTask() {
         if (mSplitsFetcherTaskId != null) {
             mSplitsTaskExecutor.stopTask(mSplitsFetcherTaskId);

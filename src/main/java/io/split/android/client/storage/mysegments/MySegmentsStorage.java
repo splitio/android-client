@@ -1,7 +1,6 @@
 package io.split.android.client.storage.mysegments;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.VisibleForTesting;
 
 import java.util.List;
 import java.util.Set;
@@ -15,6 +14,6 @@ public interface MySegmentsStorage {
 
     long getTill();
 
-    @VisibleForTesting
+//    @VisibleForTesting
     void clear();
 }
