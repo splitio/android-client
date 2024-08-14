@@ -75,7 +75,7 @@ public class SynchronizerImplTelemetryTest {
 
         SplitTaskFactory mTaskFactory = mock(SplitTaskFactory.class);
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(eventsRecorderTask);
-        when(mTaskFactory.createSplitsSyncTask(anyBoolean())).thenReturn(mock(SplitsSyncTask.class));
+        when(mTaskFactory.createSplitsSyncTask(anyBoolean(), eq(false))).thenReturn(mock(SplitsSyncTask.class));
 
         SplitTaskExecutor mTaskExecutor = mock(SplitTaskExecutor.class);
         SplitTaskExecutor mSingleThreadTaskExecutor = mock(SplitTaskExecutor.class);

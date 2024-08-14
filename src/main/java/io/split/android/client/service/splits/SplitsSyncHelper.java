@@ -184,14 +184,11 @@ public class SplitsSyncHelper {
     }
 
     public boolean cacheHasExpired(long storedChangeNumber, long updateTimestamp, long cacheExpirationInSeconds) {
-        long elapsed = now() - updateTimestamp;
+        long elapsed = TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis()) - TimeUnit.MILLISECONDS.toSeconds(updateTimestamp);
+
         return storedChangeNumber > -1
                 && updateTimestamp > 0
                 && (elapsed > cacheExpirationInSeconds);
-    }
-
-    private long now() {
-        return System.currentTimeMillis() / 1000;
     }
 
     private void logError(String message) {

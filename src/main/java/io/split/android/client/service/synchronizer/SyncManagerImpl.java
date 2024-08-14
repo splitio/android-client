@@ -84,10 +84,11 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
     public void start() {
         mSynchronizer.loadAndSynchronizeSplits();
         mSynchronizer.loadMySegmentsFromCache();
+        if (mSplitClientConfig.largeSegmentsEnabled()) mSynchronizer.loadMyLargeSegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
+
         mSynchronizer.synchronizeMySegments();
         if (mSplitClientConfig.largeSegmentsEnabled()) {
-            mSynchronizer.loadMyLargeSegmentsFromCache();
             mSynchronizer.synchronizeMyLargeSegments();
         }
         if (mSplitClientConfig.userConsent() == UserConsent.GRANTED) {

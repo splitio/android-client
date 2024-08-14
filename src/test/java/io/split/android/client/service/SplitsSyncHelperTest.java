@@ -194,7 +194,7 @@ public class SplitsSyncHelperTest {
         // only when cache expired
 
         long cacheExpInSeconds = 10000;
-        long updateTimestamp = System.currentTimeMillis() / 1000 - cacheExpInSeconds + 1000;
+        long updateTimestamp = System.currentTimeMillis() - cacheExpInSeconds + 1000;
         boolean expired = mSplitsSyncHelper.cacheHasExpired(100, updateTimestamp, cacheExpInSeconds);
 
         Assert.assertFalse(expired);

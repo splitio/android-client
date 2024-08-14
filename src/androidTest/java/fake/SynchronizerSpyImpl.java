@@ -145,4 +145,5 @@ public class SynchronizerSpyImpl implements SynchronizerSpy, MySegmentsSynchroni
     public void unregisterMySegmentsSynchronizer(String userKey) {
         ((MySegmentsSynchronizerRegistry) mSynchronizer).unregisterMySegmentsSynchronizer(userKey);
     }
+
 }

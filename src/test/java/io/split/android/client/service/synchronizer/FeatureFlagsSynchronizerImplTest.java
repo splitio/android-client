@@ -97,7 +97,7 @@ public class FeatureFlagsSynchronizerImplTest {
 
         SplitsSyncTask mockSplitSyncTask = mock(SplitsSyncTask.class);
         when(mockSplitSyncTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
-        when(mTaskFactory.createSplitsSyncTask(true)).thenReturn(mockSplitSyncTask);
+        when(mTaskFactory.createSplitsSyncTask(true, false)).thenReturn(mockSplitSyncTask);
 
         when(mRetryBackoffCounterFactory.create(any(), anyInt()))
                 .thenReturn(mRetryTimerSplitsSync)
@@ -116,7 +116,7 @@ public class FeatureFlagsSynchronizerImplTest {
     @Test
     public void splitExecutorSchedule() {
         SplitsSyncTask mockTask = mock(SplitsSyncTask.class);
-        when(mTaskFactory.createSplitsSyncTask(false)).thenReturn(mockTask);
+        when(mTaskFactory.createSplitsSyncTask(false, false)).thenReturn(mockTask);
         mFeatureFlagsSynchronizer.startPeriodicFetching();
         verify(mSingleThreadTaskExecutor).schedule(
                 eq(mockTask), anyLong(), anyLong(),
@@ -142,7 +142,7 @@ public class FeatureFlagsSynchronizerImplTest {
     @Test
     public void stopPeriodicFetching() {
         SplitsSyncTask mockTask = mock(SplitsSyncTask.class);
-        when(mTaskFactory.createSplitsSyncTask(false)).thenReturn(mockTask);
+        when(mTaskFactory.createSplitsSyncTask(false, false)).thenReturn(mockTask);
         when(mSingleThreadTaskExecutor.schedule(eq(mockTask), anyLong(), anyLong(), any())).thenReturn("12");
 
         // start periodic fetching to populate task id
@@ -156,7 +156,7 @@ public class FeatureFlagsSynchronizerImplTest {
     public void startPeriodicFetchingCancelsPreviousTaskIfExecutedSequentially() {
         SplitsSyncTask mockTask = mock(SplitsSyncTask.class);
         SplitsSyncTask mockTask2 = mock(SplitsSyncTask.class);
-        when(mTaskFactory.createSplitsSyncTask(false))
+        when(mTaskFactory.createSplitsSyncTask(false, false))
                 .thenReturn(mockTask)
                 .thenReturn(mockTask2);
         when(mSingleThreadTaskExecutor.schedule(eq(mockTask), anyLong(), anyLong(), any()))
@@ -174,7 +174,7 @@ public class FeatureFlagsSynchronizerImplTest {
     @Test
     public void splitsSyncTaskIsStoppedWhenTaskResultIsDoNotRetry() throws InterruptedException {
         SplitsSyncTask mockTask = mock(SplitsSyncTask.class);
-        when(mTaskFactory.createSplitsSyncTask(false)).thenReturn(mockTask);
+        when(mTaskFactory.createSplitsSyncTask(false, false)).thenReturn(mockTask);
         when(mockTask.execute()).thenReturn(SplitTaskExecutionInfo.error(
                 SplitTaskType.SPLITS_SYNC,
                 Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true)));
@@ -208,7 +208,7 @@ public class FeatureFlagsSynchronizerImplTest {
     @Test
     public void splitsSyncTaskIsNotRestartedWhenTaskResultIsDoNotRetry() throws InterruptedException {
         SplitsSyncTask mockTask = mock(SplitsSyncTask.class);
-        when(mTaskFactory.createSplitsSyncTask(false)).thenReturn(mockTask);
+        when(mTaskFactory.createSplitsSyncTask(false, false)).thenReturn(mockTask);
         when(mockTask.execute()).thenReturn(SplitTaskExecutionInfo.error(
                 SplitTaskType.SPLITS_SYNC,
                 Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true)));
