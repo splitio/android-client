@@ -4,6 +4,7 @@ package io.split.android.client;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
@@ -138,6 +139,7 @@ public class SplitClientConfig {
     private final boolean mLargeSegmentsEnabled;
     private final int mLargeSegmentsRefreshRate;
     private final boolean mWaitForLargeSegments;
+    private final ForcedCacheExpirationMode mCacheExpirationMode;
 
     public static Builder builder() {
         return new Builder();
@@ -195,7 +197,8 @@ public class SplitClientConfig {
                               long impressionsDedupeTimeInterval,
                               boolean largeSegmentsEnabled,
                               int largeSegmentsRefreshRate,
-                              boolean waitForLargeSegments) {
+                              boolean waitForLargeSegments,
+                              ForcedCacheExpirationMode forceCacheExpiration) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -256,6 +259,7 @@ public class SplitClientConfig {
         mLargeSegmentsEnabled = largeSegmentsEnabled;
         mLargeSegmentsRefreshRate = largeSegmentsRefreshRate;
         mWaitForLargeSegments = waitForLargeSegments;
+        mCacheExpirationMode = forceCacheExpiration;
     }
 
     public String trafficType() {
@@ -511,8 +515,8 @@ public class SplitClientConfig {
         return mLargeSegmentsEnabled && mWaitForLargeSegments;
     }
 
-    public boolean forceCacheExpiration() {
-        return true; // TODO
+    public ForcedCacheExpirationMode forceCacheExpiration() {
+        return mCacheExpirationMode;
     }
 
     public static final class Builder {
@@ -596,6 +600,8 @@ public class SplitClientConfig {
         private int mLargeSegmentsRefreshRate = DEFAULT_LARGE_SEGMENTS_REFRESH_RATE_SECS;
 
         private boolean mWaitForLargeSegments = DEFAULT_WAIT_FOR_LARGE_SEGMENTS;
+
+        private ForcedCacheExpirationMode mCacheExpirationMode = ForcedCacheExpirationMode.DEFAULT;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -1169,6 +1175,11 @@ public class SplitClientConfig {
             return this;
         }
 
+        public Builder forceCacheExpiration(@Nullable ForcedCacheExpirationMode cacheExpirationMode) {
+            mCacheExpirationMode = cacheExpirationMode;
+            return this;
+        }
+
         public SplitClientConfig build() {
             Logger.instance().setLevel(mLogLevel);
 
@@ -1309,7 +1320,8 @@ public class SplitClientConfig {
                     mImpressionsDedupeTimeInterval,
                     mLargeSegmentsEnabled,
                     mLargeSegmentsRefreshRate,
-                    mWaitForLargeSegments);
+                    mWaitForLargeSegments,
+                    mCacheExpirationMode);
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {

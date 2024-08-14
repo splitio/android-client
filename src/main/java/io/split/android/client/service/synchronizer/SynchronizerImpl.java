@@ -10,6 +10,7 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.split.android.client.ForcedCacheExpirationMode;
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
@@ -57,6 +58,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
     private final AtomicBoolean mIsSynchronizingEvents = new AtomicBoolean(true);
     private final SplitTaskExecutionListener mEventsTaskExecutionListener;
+    @Nullable
     private final RolloutCacheManager mRolloutCacheManager;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
@@ -71,8 +73,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull ImpressionManager impressionManager,
                             @NonNull StoragePusher<Event> eventsStorage,
                             @NonNull ISplitEventsManager eventsManagerCoordinator,
-                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster,
-                            @NonNull LastUpdateTimestampProvider lastUpdateTimestampProvider) {
+                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster) {
         this(splitClientConfig,
                 taskExecutor,
                 splitSingleThreadTaskExecutor,
@@ -90,8 +91,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                         retryBackoffCounterTimerFactory,
                         pushManagerEventBroadcaster
                 ),
-                eventsStorage,
-                lastUpdateTimestampProvider);
+                eventsStorage);
     }
 
     @VisibleForTesting
@@ -106,8 +106,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull MySegmentsSynchronizerRegistryImpl mySegmentsSynchronizerRegistry,
                             @NonNull ImpressionManager impressionManager,
                             @NonNull FeatureFlagsSynchronizer featureFlagsSynchronizer,
-                            @NonNull StoragePusher<Event> eventsStorage,
-                            @NonNull LastUpdateTimestampProvider lastUpdateTimestampProvider) {
+                            @NonNull StoragePusher<Event> eventsStorage) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSingleThreadTaskExecutor = checkNotNull(splitSingleThreadTaskExecutor);
@@ -142,17 +141,23 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
             workManagerWrapper.removeWork();
         }
 
-        mRolloutCacheManager = new RolloutCacheManagerImpl(
-                lastUpdateTimestampProvider,
-                mFeatureFlagsSynchronizer,
-                mMySegmentsSynchronizerRegistry,
-                mSplitClientConfig.forceCacheExpiration(),
-                mSplitClientConfig.cacheExpirationInSeconds());
+        if (mSplitClientConfig.forceCacheExpiration() == ForcedCacheExpirationMode.HARD) {
+            mRolloutCacheManager = new RolloutCacheManagerImpl(
+                    mFeatureFlagsSynchronizer,
+                    mMySegmentsSynchronizerRegistry);
+        } else {
+            mRolloutCacheManager = null;
+        }
     }
 
     @Override
-    public void validateCache() {
-        mRolloutCacheManager.validateCache();
+    public void clearRolloutCaches() {
+        if (mRolloutCacheManager != null) {
+            Logger.v("Validating cache expiration");
+            mRolloutCacheManager.clearRolloutCaches();
+        } else {
+            Logger.v("No cache expiration validation needed");
+        }
     }
 
     @Override

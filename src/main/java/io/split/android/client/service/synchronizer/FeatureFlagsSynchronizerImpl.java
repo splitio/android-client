@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.split.android.client.ForcedCacheExpirationMode;
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.ISplitEventsManager;
@@ -82,7 +83,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                 }
             };
         }
-        mForceCacheExpiration.set(mSplitClientConfig.forceCacheExpiration());
+        mForceCacheExpiration.set(mSplitClientConfig.forceCacheExpiration() != ForcedCacheExpirationMode.DEFAULT);
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true, mForceCacheExpiration.get()), mSplitsSyncListener);
         mLoadLocalSplitsListener = new LoadLocalDataListener(
                 splitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
