@@ -57,6 +57,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
     private final AtomicBoolean mIsSynchronizingEvents = new AtomicBoolean(true);
     private final SplitTaskExecutionListener mEventsTaskExecutionListener;
+    private final RolloutCacheManager mRolloutCacheManager;
 
     public SynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                             @NonNull SplitTaskExecutor taskExecutor,
@@ -70,7 +71,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull ImpressionManager impressionManager,
                             @NonNull StoragePusher<Event> eventsStorage,
                             @NonNull ISplitEventsManager eventsManagerCoordinator,
-                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster) {
+                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                            @NonNull LastUpdateTimestampProvider lastUpdateTimestampProvider) {
         this(splitClientConfig,
                 taskExecutor,
                 splitSingleThreadTaskExecutor,
@@ -88,7 +90,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                         retryBackoffCounterTimerFactory,
                         pushManagerEventBroadcaster
                 ),
-                eventsStorage);
+                eventsStorage,
+                lastUpdateTimestampProvider);
     }
 
     @VisibleForTesting
@@ -103,7 +106,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull MySegmentsSynchronizerRegistryImpl mySegmentsSynchronizerRegistry,
                             @NonNull ImpressionManager impressionManager,
                             @NonNull FeatureFlagsSynchronizer featureFlagsSynchronizer,
-                            @NonNull StoragePusher<Event> eventsStorage) {
+                            @NonNull StoragePusher<Event> eventsStorage,
+                            @NonNull LastUpdateTimestampProvider lastUpdateTimestampProvider) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSingleThreadTaskExecutor = checkNotNull(splitSingleThreadTaskExecutor);
@@ -137,6 +141,18 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
         } else {
             workManagerWrapper.removeWork();
         }
+
+        mRolloutCacheManager = new RolloutCacheManagerImpl(
+                lastUpdateTimestampProvider,
+                mFeatureFlagsSynchronizer,
+                mMySegmentsSynchronizerRegistry,
+                mSplitClientConfig.forceCacheExpiration(),
+                mSplitClientConfig.cacheExpirationInSeconds());
+    }
+
+    @Override
+    public void validateCache() {
+        mRolloutCacheManager.validateCache();
     }
 
     @Override

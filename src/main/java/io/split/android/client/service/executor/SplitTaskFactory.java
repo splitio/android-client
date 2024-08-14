@@ -16,7 +16,7 @@ public interface SplitTaskFactory extends TelemetryTaskFactory, ImpressionsTaskF
 
     EventsRecorderTask createEventsRecorderTask();
 
-    SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration);
+    SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration, boolean forceCacheExpiration);
 
     LoadSplitsTask createLoadSplitsTask();
 
@@ -29,4 +29,6 @@ public interface SplitTaskFactory extends TelemetryTaskFactory, ImpressionsTaskF
     FilterSplitsInCacheTask createFilterSplitsInCacheTask();
 
     CleanUpDatabaseTask createCleanUpDatabaseTask(long maxTimestamp);
+
+    SplitTask createExpireSplitsTask();
 }

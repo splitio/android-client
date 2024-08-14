@@ -9,6 +9,7 @@ public interface MySegmentsSynchronizerRegistry {
     void unregisterMySegmentsSynchronizer(String userKey);
 
     interface Tasks {
+
         enum SegmentType {
             SEGMENT,
             LARGE_SEGMENT
@@ -27,5 +28,7 @@ public interface MySegmentsSynchronizerRegistry {
         void submitMySegmentsLoadingTask(SegmentType segmentType);
 
         void stopPeriodicFetching();
+
+        void expireCache();
     }
 }

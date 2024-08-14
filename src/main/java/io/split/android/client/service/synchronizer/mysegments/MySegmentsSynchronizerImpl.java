@@ -104,6 +104,11 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
         submitMySegmentsLoadingTask(null);
     }
 
+    @Override
+    public void expireCache() {
+        mTaskExecutor.submit(mSplitTaskFactory.createExpireMySegmentsTask(), null);
+    }
+
     private void submitMySegmentsLoadingTask(SplitTaskExecutionListener executionListener) {
         mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(), executionListener);
     }

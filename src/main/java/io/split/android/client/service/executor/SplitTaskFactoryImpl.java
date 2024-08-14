@@ -47,6 +47,7 @@ import io.split.android.client.service.telemetry.TelemetryTaskFactoryImpl;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
+import io.split.android.client.utils.logger.Logger;
 
 public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
@@ -124,9 +125,10 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration) {
+    public SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration, boolean forceCacheExpiration) {
         return SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), checkCacheExpiration,
-                mSplitClientConfig.cacheExpirationInSeconds(), mSplitsFilterQueryStringFromConfig, mEventsManager, mSplitsStorageContainer.getTelemetryStorage());
+                mSplitClientConfig.cacheExpirationInSeconds(), mSplitsFilterQueryStringFromConfig, mEventsManager, mSplitsStorageContainer.getTelemetryStorage(),
+                forceCacheExpiration);
     }
 
     @Override
@@ -228,5 +230,18 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                 totalFlagSetCount,
                 invalidFlagSetCount);
         return mTelemetryTaskFactory;
+    }
+
+    @Override
+    public SplitTask createExpireSplitsTask() {
+        return new SplitTask() {
+            @NonNull
+            @Override
+            public SplitTaskExecutionInfo execute() {
+                Logger.e("EXPIRING CACHE OF FLAGS");
+                mSplitsStorageContainer.getSplitsStorage().clear();
+                return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
+            }
+        };
     }
 }

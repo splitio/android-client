@@ -7,6 +7,8 @@ import androidx.annotation.RestrictTo;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.observer.PersistentImpressionsObserverCacheStorage;
 import io.split.android.client.service.impressions.observer.SqlitePersistentImpressionsObserverCacheStorage;
+import io.split.android.client.service.synchronizer.LastUpdateTimestampProvider;
+import io.split.android.client.service.synchronizer.LastUpdateTimestampProviderImpl;
 import io.split.android.client.storage.attributes.AttributesStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorageContainerImpl;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
@@ -145,5 +147,9 @@ public class StorageFactory {
 
     public static PersistentImpressionsObserverCacheStorage getImpressionsObserverCachePersistentStorage(SplitRoomDatabase splitRoomDatabase, long expirationPeriod) {
         return new SqlitePersistentImpressionsObserverCacheStorage(splitRoomDatabase.impressionsObserverCacheDao(), expirationPeriod);
+    }
+
+    public static LastUpdateTimestampProvider getLastUpdateTimestampProvider(SplitRoomDatabase splitRoomDatabase) {
+        return new LastUpdateTimestampProviderImpl(splitRoomDatabase.generalInfoDao());
     }
 }

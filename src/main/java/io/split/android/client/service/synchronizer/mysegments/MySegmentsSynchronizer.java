@@ -15,4 +15,6 @@ public interface MySegmentsSynchronizer {
     void submitMySegmentsLoadingTask();
 
     void stopPeriodicFetching();
+
+    void expireCache();
 }

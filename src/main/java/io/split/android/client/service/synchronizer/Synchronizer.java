@@ -4,7 +4,7 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.lifecycle.SplitLifecycleAware;
 
-public interface Synchronizer extends SplitLifecycleAware {
+public interface Synchronizer extends SplitLifecycleAware, RolloutCacheManager {
 
     void loadAndSynchronizeSplits();
 

@@ -89,6 +89,11 @@ public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronize
         mStoppedPeriodicFetching.set(true);
     }
 
+    @Override
+    public void expireCache() {
+        executeForAll(MySegmentsSynchronizer::expireCache);
+    }
+
     private void triggerPendingActions(MySegmentsSynchronizer mySegmentsSynchronizer) {
         if (mLoadedFromCache.get()) {
             mySegmentsSynchronizer.loadMySegmentsFromCache();

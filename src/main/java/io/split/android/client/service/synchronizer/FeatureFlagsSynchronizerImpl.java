@@ -39,6 +39,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     @Nullable
     private final SplitTaskExecutionListener mSplitsSyncListener;
     private final AtomicBoolean mIsSynchronizing = new AtomicBoolean(true);
+    private final AtomicBoolean mForceCacheExpiration = new AtomicBoolean(false);
 
     public FeatureFlagsSynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
                                         @NonNull SplitTaskExecutor taskExecutor,
@@ -62,6 +63,10 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                 public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
                     if (taskInfo.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
                         pushManagerEventBroadcaster.pushMessage(new PushStatusEvent(PushStatusEvent.EventType.SUCCESSFUL_SYNC));
+
+                        if (mForceCacheExpiration.compareAndSet(true, false)) {
+                            mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(false, false), mSplitsSyncListener);
+                        }
                     } else {
                         avoidRetries(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
                     }
@@ -77,8 +82,8 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                 }
             };
         }
-
-        mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), mSplitsSyncListener);
+        mForceCacheExpiration.set(mSplitClientConfig.forceCacheExpiration());
+        mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true, mForceCacheExpiration.get()), mSplitsSyncListener);
         mLoadLocalSplitsListener = new LoadLocalDataListener(
                 splitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
     }
@@ -134,13 +139,18 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                 listener);
     }
 
+    @Override
+    public void expireCache() {
+        mTaskExecutor.submit(mSplitTaskFactory.createExpireSplitsTask(), null);
+    }
+
     private void scheduleSplitsFetcherTask() {
         if (mSplitsFetcherTaskId != null) {
             mSplitsTaskExecutor.stopTask(mSplitsFetcherTaskId);
         }
 
         mSplitsFetcherTaskId = mSplitsTaskExecutor.schedule(
-                mSplitTaskFactory.createSplitsSyncTask(false),
+                mSplitTaskFactory.createSplitsSyncTask(false, false),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitsSyncListener);

@@ -2,6 +2,8 @@ package io.split.android.client.events;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
+import android.os.SystemClock;
+
 import androidx.annotation.VisibleForTesting;
 
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     private final SplitTaskExecutor mSplitTaskExecutor;
     private final AtomicBoolean mLargeSegmentsEnabled;
     private final AtomicBoolean mWaitForLargeSegments;
+    private final long mStartTime;
 
     public SplitEventsManager(SplitClientConfig config, SplitTaskExecutor splitTaskExecutor) {
         this(splitTaskExecutor, config.blockUntilReady(), config.largeSegmentsEnabled(), config.waitForLargeSegments());
@@ -36,6 +39,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
     public SplitEventsManager(SplitTaskExecutor splitTaskExecutor, final int blockUntilReady, boolean largeSegmentsEnabled, boolean waitForLargeSegments) {
         super();
+        mStartTime = SystemClock.uptimeMillis();
         mSplitTaskExecutor = splitTaskExecutor;
         mSubscriptions = new ConcurrentHashMap<>();
         mExecutionTimes = new ConcurrentHashMap<>();
@@ -222,7 +226,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
             // If executionTimes is grater than zero, maximum executions decrease 1
         } else if (mExecutionTimes.get(event) > 0) {
             if (event != null) {
-                Logger.d(event.name() + " event triggered");
+                Logger.d(event.name() + " event triggered in " + (SystemClock.uptimeMillis() - mStartTime) + " ms");
             }
             mExecutionTimes.put(event, mExecutionTimes.get(event) - 1);
         } //If executionTimes is lower than zero, execute it without limitation

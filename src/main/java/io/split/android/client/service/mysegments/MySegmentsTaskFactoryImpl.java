@@ -7,7 +7,11 @@ import androidx.annotation.NonNull;
 import java.util.List;
 import java.util.Set;
 
+import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.utils.logger.Logger;
 
 public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
 
@@ -43,5 +47,18 @@ public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
     @Override
     public MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, Set<String> segmentNames, Long changeNumber) {
         return new MySegmentsUpdateTask(mConfiguration.getStorage(), add, segmentNames, changeNumber, mConfiguration.getEventsManager(), mTelemetryRuntimeProducer, mConfiguration.getMySegmentsUpdateTaskConfig());
+    }
+
+    @Override
+    public SplitTask createExpireMySegmentsTask() {
+        return new SplitTask() {
+            @NonNull
+            @Override
+            public SplitTaskExecutionInfo execute() {
+                Logger.e("EXPIRING SEGMENTS CACHE");
+                mConfiguration.getStorage().clear();
+                return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
+            }
+        };
     }
 }

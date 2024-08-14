@@ -511,6 +511,10 @@ public class SplitClientConfig {
         return mLargeSegmentsEnabled && mWaitForLargeSegments;
     }
 
+    public boolean forceCacheExpiration() {
+        return true; // TODO
+    }
+
     public static final class Builder {
 
         static final int PROXY_PORT_DEFAULT = 80;
@@ -1168,11 +1172,11 @@ public class SplitClientConfig {
         public SplitClientConfig build() {
             Logger.instance().setLevel(mLogLevel);
 
-            if (mFeaturesRefreshRate < MIN_FEATURES_REFRESH_RATE) {
-                Logger.w("Features refresh rate is lower than allowed. " +
-                        "Setting to default value.");
-                mFeaturesRefreshRate = DEFAULT_FEATURES_REFRESH_RATE_SECS;
-            }
+// TODO            if (mFeaturesRefreshRate < MIN_FEATURES_REFRESH_RATE) {
+// TODO                Logger.w("Features refresh rate is lower than allowed. " +
+// TODO                        "Setting to default value.");
+// TODO                mFeaturesRefreshRate = DEFAULT_FEATURES_REFRESH_RATE_SECS;
+// TODO            }
 
             if (mSegmentsRefreshRate < MIN_MY_SEGMENTS_REFRESH_RATE) {
                 Logger.w("Segments refresh rate is lower than allowed. " +

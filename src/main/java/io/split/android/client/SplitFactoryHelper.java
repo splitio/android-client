@@ -176,7 +176,8 @@ class SplitFactoryHelper {
                 StorageFactory.getAttributesStorage(),
                 StorageFactory.getPersistentAttributesStorage(splitRoomDatabase, splitCipher),
                 getTelemetryStorage(shouldRecordTelemetry, telemetryStorage),
-                StorageFactory.getImpressionsObserverCachePersistentStorage(splitRoomDatabase, observerCacheExpirationPeriod));
+                StorageFactory.getImpressionsObserverCachePersistentStorage(splitRoomDatabase, observerCacheExpirationPeriod),
+                StorageFactory.getLastUpdateTimestampProvider(splitRoomDatabase));
     }
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
