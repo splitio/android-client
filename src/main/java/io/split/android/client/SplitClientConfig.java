@@ -512,7 +512,7 @@ public class SplitClientConfig {
     }
 
     public boolean forceCacheExpiration() {
-        return false; // TODO
+        return true; // TODO
     }
 
     public static final class Builder {

@@ -82,7 +82,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
 
     @Override
     public void start() {
-        mSynchronizer.validateCache();
+//        mSynchronizer.validateCache();
         mSynchronizer.loadAndSynchronizeSplits();
         mSynchronizer.loadMySegmentsFromCache();
         if (mSplitClientConfig.largeSegmentsEnabled()) mSynchronizer.loadMyLargeSegmentsFromCache();

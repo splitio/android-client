@@ -33,9 +33,9 @@ class RolloutCacheManagerImpl implements RolloutCacheManager {
 
         if (mForceCacheExpiration || TimeUnit.MILLISECONDS.toSeconds(elapsedTime) > mCacheExpirationPeriod) {
             if (mForceCacheExpiration) {
-                Logger.e("Forcing cache expiration");
+                Logger.v("Forcing cache expiration");
             } else {
-                Logger.e("Cache expired due to time");
+                Logger.v("Cache expired due to time");
             }
             clearCache();
         }
