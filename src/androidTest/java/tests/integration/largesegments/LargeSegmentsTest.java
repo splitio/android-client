@@ -27,8 +27,8 @@ import tests.integration.shared.TestingHelper;
 public class LargeSegmentsTest extends LargeSegmentTestHelper {
 
     @Test
-    public void sdkReadyIsEmittedAfterLargeSegmentsAreSyncedWhenWaitForLargeSegmentsIsTrue() {
-        SplitFactory factory = getFactory(true, true);
+    public void sdkReadyIsEmittedAfterLargeSegmentsAreSynced() {
+        SplitFactory factory = getFactory();
 
         SplitClient readyClient = getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
 
@@ -38,11 +38,11 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
     }
 
     @Test
-    public void sdkReadyTimeoutIsEmittedWhenWaitForLargeSegmentsIsTrueAndSyncFails() throws InterruptedException {
+    public void sdkReadyTimeoutIsEmittedWhenLargeSegmentsSyncFails() throws InterruptedException {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         CountDownLatch sdkReadyTimeoutLatch = new CountDownLatch(1);
         mMyLargeSegmentsStatusCode.set(500);
-        SplitFactory factory = getFactory(true, true, null, 2500, null);
+        SplitFactory factory = getFactory(null, 2500, null);
 
         SplitClient client = factory.client();
         client.on(SplitEvent.SDK_READY, TestingHelper.testTask(countDownLatch));
@@ -60,7 +60,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
     @Test
     public void sdkReadyIsEmittedAfterLargeSegmentsAreSyncedWhenWaitForLargeSegmentsIsFalse() {
         mMyLargeSegmentsDelay.set(4000);
-        SplitFactory factory = getFactory(true, false);
+        SplitFactory factory = getFactory();
         getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
 
 
@@ -75,7 +75,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         mMyLargeSegmentsDelay.set(0L);
         CountDownLatch updateLatch = new CountDownLatch(3);
         CountDownLatch readyLatch = new CountDownLatch(1);
-        SplitFactory factory = getFactory(true, true, 1, null, null);
+        SplitFactory factory = getFactory(1, null, null);
 
         SplitClient client = factory.client();
         client.on(SplitEvent.SDK_READY, TestingHelper.testTask(readyLatch));
@@ -89,25 +89,11 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
     }
 
     @Test
-    public void noHitsToMyLargeSegmentsEndpointWhenLargeSegmentsAreDisabled() throws InterruptedException {
-        mMyLargeSegmentsDelay.set(0L);
-        SplitFactory factory = getFactory(false, true, 1, null, null);
-
-        SplitClient readyClient = getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
-        Thread.sleep(5000);
-
-
-        assertEquals(1, mEndpointHits.get("splitChanges").get());
-        assertEquals(1, mEndpointHits.get("mySegments").get());
-        assertNull(mEndpointHits.get("myLargeSegments"));
-    }
-
-    @Test
     public void onlyOneHitToLargeSegmentsWhenPollingIsEnabledAndEndpointFailsWith403() throws InterruptedException {
         mMyLargeSegmentsDelay.set(0L);
         mMyLargeSegmentsStatusCode.set(403);
 
-        SplitFactory factory = getFactory(true, false, 3, null, null);
+        SplitFactory factory = getFactory(3, null, null);
 
         SplitClient readyClient = getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
         Thread.sleep(5000);
@@ -120,7 +106,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         CountDownLatch countDownLatch = new CountDownLatch(1);
         CountDownLatch sdkReadyTimeoutLatch = new CountDownLatch(1);
         mMyLargeSegmentsStatusCode.set(403);
-        SplitFactory factory = getFactory(true, true, null, 2500, null);
+        SplitFactory factory = getFactory(null, 2500, null);
         SplitClient client = factory.client();
         client.on(SplitEvent.SDK_READY, TestingHelper.testTask(countDownLatch));
         client.on(SplitEvent.SDK_READY_TIMED_OUT, TestingHelper.testTask(sdkReadyTimeoutLatch));
@@ -139,7 +125,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         mMyLargeSegmentsDelay.set(0L);
         mMyLargeSegmentsStatusCode.set(500);
 
-        SplitFactory factory = getFactory(true, false, null, null, null);
+        SplitFactory factory = getFactory(null, null, null);
 
         SplitClient readyClient = getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
         mMyLargeSegmentsStatusCode.set(200);
@@ -152,10 +138,10 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
     }
 
     @Test
-    public void sdkReadyFromCacheIsEmittedAfterLargeSegmentsAreSyncedWhenWaitForLargeSegmentsIsTrue() throws InterruptedException {
+    public void sdkReadyFromCacheIsEmittedAfterLargeSegmentsAreSynced() throws InterruptedException {
         SplitRoomDatabase testDatabase = DatabaseHelper.getTestDatabase(mContext);
         // first, prepopulate local cache
-        SplitFactory factory = getFactory(true, true, null, null, testDatabase);
+        SplitFactory factory = getFactory(null, null, testDatabase);
         SplitClient readyClient = getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
 
         String firstEval = readyClient.getTreatment("ls_split");
@@ -163,7 +149,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         // make all api requests fail, we only want sdk_ready_from_cache
         mBrokenApi.set(true);
 
-        factory = getFactory(true, false, null, 1000, testDatabase);
+        factory = getFactory(null, 1000, testDatabase);
         CountDownLatch fromCacheLatch = new CountDownLatch(1);
         CountDownLatch timeoutLatch = new CountDownLatch(1);
         SplitClient client = factory.client();
@@ -186,7 +172,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
     public void successfulSyncOfLargeSegmentsContainsSegmentsInDatabase() {
         SplitRoomDatabase testDatabase = DatabaseHelper.getTestDatabase(mContext);
 
-        SplitFactory factory = getFactory(true, true, null, null, testDatabase);
+        SplitFactory factory = getFactory(null, null, testDatabase);
         getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
 
         SegmentChangeDTO largeSegments = Json.fromJson(testDatabase.myLargeSegmentDao()
@@ -203,7 +189,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
     public void syncOfLargeSegmentsForMultiClient() throws InterruptedException {
         mRandomizeMyLargeSegments.set(true);
         SplitRoomDatabase testDatabase = DatabaseHelper.getTestDatabase(mContext);
-        SplitFactory factory = getFactory(true, true, 10, null, testDatabase);
+        SplitFactory factory = getFactory(10, null, testDatabase);
 
         SplitClient client1 = factory.client();
         SplitClient client2 = factory.client("key2");
@@ -230,7 +216,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
     public void emptyMyLargeSegmentsSdkIsReady() throws InterruptedException {
         mMyLargeSegmentsDelay.set(0L);
         mEmptyMyLargeSegments.set(true);
-        SplitFactory factory = getFactory(true, true, null, null, null);
+        SplitFactory factory = getFactory(null, null, null);
         SplitClient client = factory.client();
         CountDownLatch readyLatch = new CountDownLatch(1);
         client.on(SplitEvent.SDK_READY, TestingHelper.testTask(readyLatch));
@@ -245,10 +231,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
     @Test
     public void localhostModeIsReadyWhenWaitForLargeSegmentsIsTrue() throws SplitInstantiationException, InterruptedException {
         SplitFactory factory = SplitFactoryBuilder.build("localhost", IntegrationHelper.dummyUserKey(),
-                new TestableSplitConfigBuilder()
-                        .largeSegmentsEnabled(true)
-                        .waitForLargeSegments(true)
-                        .build(), mContext);
+                new TestableSplitConfigBuilder().build(), mContext);
 
         CountDownLatch readyLatch = new CountDownLatch(1);
         factory.client().on(SplitEvent.SDK_READY, TestingHelper.testTask(readyLatch));

@@ -290,30 +290,14 @@ public class SyncManagerTest {
     }
 
     @Test
-    public void startDoesNotCallSynchronizeMyLargeSegmentsByDefault() {
-        mSyncManager.start();
-
-        verify(mSynchronizer, never()).synchronizeMyLargeSegments();
-    }
-
-    @Test
-    public void startDoesNotLoadLargeSegmentsFromCacheByDefault() {
-        mSyncManager.start();
-
-        verify(mSynchronizer, never()).loadMyLargeSegmentsFromCache();
-    }
-
-    @Test
-    public void startWithLargeSegmentsEnabledLoadsLargeSegmentsFromCache() {
-        when(mConfig.largeSegmentsEnabled()).thenReturn(true);
+    public void startLoadsLargeSegmentsFromCache() {
         mSyncManager.start();
 
         verify(mSynchronizer).loadMyLargeSegmentsFromCache();
     }
 
     @Test
-    public void startWithLargeSegmentsEnabledSynchronizesLargeSegments() {
-        when(mConfig.largeSegmentsEnabled()).thenReturn(true);
+    public void startSynchronizesLargeSegments() {
         mSyncManager.start();
 
         verify(mSynchronizer).synchronizeMyLargeSegments();

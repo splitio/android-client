@@ -216,7 +216,7 @@ public class SynchronizerTest {
 
         verify(mFeatureFlagsSynchronizer).startPeriodicFetching();
         verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask(SegmentType.SEGMENT);
-        verify(mMySegmentsSynchronizerRegistry, times(0)).scheduleSegmentsSyncTask(SegmentType.LARGE_SEGMENT);
+        verify(mMySegmentsSynchronizerRegistry, times(1)).scheduleSegmentsSyncTask(SegmentType.LARGE_SEGMENT);
         verify(mTaskExecutor).schedule(
                 any(EventsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
@@ -249,11 +249,10 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void startPeriodicRecordingSchedulesLargeSegmentsSyncTaskWhenLargeSegmentsIsEnabled() {
+    public void startPeriodicRecordingSchedulesLargeSegmentsSyncTask() {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)
                 .userConsent(UserConsent.GRANTED)
-                .largeSegmentsEnabled(true)
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
@@ -559,10 +558,9 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void loadLocalDataWithLargeSegmentsEnabledLoadsLargeSegments() {
+    public void loadLocalDataWithLargeSegmentsLoadsLargeSegments() {
         SplitClientConfig config = SplitClientConfig.builder()
                 .synchronizeInBackground(false)
-                .largeSegmentsEnabled(true)
                 .build();
         setup(config);
 

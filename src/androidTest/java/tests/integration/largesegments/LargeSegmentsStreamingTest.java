@@ -1,8 +1,6 @@
 package tests.integration.largesegments;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -35,7 +33,6 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.mysegments.SegmentChangeDTO;
 import io.split.android.client.utils.Json;
@@ -119,32 +116,6 @@ public class LargeSegmentsStreamingTest {
         assertEquals("{\"segments\":[\"large-segment3\"],\"till\":1702507130121}", db.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList());
     }
 
-    @Test
-    public void notificationIsIgnoredWhenLargeSegmentsIsDisabled() throws IOException, InterruptedException {
-        TestSetup testSetup = getTestSetup(false);
-
-        boolean mySegmentsAwait = mLatches.get(MY_SEGMENTS).await(10, TimeUnit.SECONDS);
-        boolean splitsAwait = mLatches.get(SPLIT_CHANGES).await(10, TimeUnit.SECONDS);
-        boolean myLargeSegmentsAwait = mLatches.get(MY_LARGE_SEGMENTS).await(3, TimeUnit.SECONDS);
-        MyLargeSegmentEntity myLargeSegmentEntity = testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey());
-        mRandomizeMyLargeSegments.set(true);
-
-        pushMyLargeSegmentsMessage(TestingData.largeSegmentsUnboundedNoCompression("100"));
-        boolean updateAwait = testSetup.updateLatch.await(3, TimeUnit.SECONDS);
-
-        assertTrue(testSetup.await);
-        assertTrue(testSetup.authAwait);
-        assertTrue(mySegmentsAwait);
-        assertTrue(splitsAwait);
-        assertFalse(myLargeSegmentsAwait);
-        assertFalse(updateAwait);
-        assertNull(mEndpointHits.get(MY_LARGE_SEGMENTS));
-        assertEquals(2, mEndpointHits.get(SPLIT_CHANGES).get());
-        assertEquals(2, mEndpointHits.get(MY_SEGMENTS).get());
-        assertNull(myLargeSegmentEntity);
-        assertNull(testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()));
-    }
-
     @NonNull
     private TestSetup getTestSetup(boolean largeSegmentsEnabled) throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
@@ -174,8 +145,6 @@ public class LargeSegmentsStreamingTest {
             database = DatabaseHelper.getTestDatabase(mContext);
         }
         TestableSplitConfigBuilder configBuilder = new TestableSplitConfigBuilder()
-                .largeSegmentsEnabled(largeSegmentsEnabled)
-                .waitForLargeSegments(waitForLargeSegments)
                 .streamingEnabled(true)
                 .enableDebug();
 

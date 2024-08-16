@@ -86,10 +86,8 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
         mSynchronizer.loadMySegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
         mSynchronizer.synchronizeMySegments();
-        if (mSplitClientConfig.largeSegmentsEnabled()) {
-            mSynchronizer.loadMyLargeSegmentsFromCache();
-            mSynchronizer.synchronizeMyLargeSegments();
-        }
+        mSynchronizer.loadMyLargeSegmentsFromCache();
+        mSynchronizer.synchronizeMyLargeSegments(); // TODO
         if (mSplitClientConfig.userConsent() == UserConsent.GRANTED) {
             Logger.v("User consent granted. Recording started");
             mSynchronizer.startPeriodicRecording();
@@ -197,9 +195,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
                 Logger.d("Push Subsystem Up event message received.");
                 mSynchronizer.synchronizeSplits();
                 mSynchronizer.synchronizeMySegments();
-                if (mSplitClientConfig.largeSegmentsEnabled()) {
-                    mSynchronizer.synchronizeMyLargeSegments();
-                }
+                mSynchronizer.synchronizeMyLargeSegments(); // TODO
                 mSynchronizer.stopPeriodicFetching();
                 mStreamingReconnectTimer.cancel();
                 mIsPollingEnabled.set(false);

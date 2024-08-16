@@ -58,12 +58,12 @@ public class WorkManagerWrapperTest {
 
         when(mWorkManager.getWorkInfosByTagLiveData(any())).thenReturn(mock(LiveData.class));
 
-        SplitClientConfig splitClientConfig = buildConfig(false, true);
+        SplitClientConfig splitClientConfig = buildConfig(true);
 
         mWrapper = getWrapper(splitClientConfig);
     }
 
-    private static @NonNull SplitClientConfig buildConfig(boolean largeSegmentsEnabled, boolean useCertificatePinning) {
+    private static @NonNull SplitClientConfig buildConfig(boolean useCertificatePinning) {
         SplitClientConfig.Builder configBuilder = new SplitClientConfig.Builder()
                 .serviceEndpoints(
                         ServiceEndpoints.builder()
@@ -73,7 +73,6 @@ public class WorkManagerWrapperTest {
                                 .telemetryServiceEndpoint("https://test.split.io/telemetry")
                                 .build()
                 )
-                .largeSegmentsEnabled(largeSegmentsEnabled)
                 .synchronizeInBackgroundPeriod(5263)
                 .eventsPerPush(526)
                 .impressionsPerPush(256)
@@ -252,7 +251,7 @@ public class WorkManagerWrapperTest {
 
     @Test
     public void scheduleMySegmentsWorkSchedulesWorkWhenLargeSegmentsIsEnabled() {
-        mWrapper = getWrapper(buildConfig(true, true));
+        mWrapper = getWrapper(buildConfig(true));
 
         HashSet<String> keys = new HashSet<>();
         keys.add("key1");
@@ -287,7 +286,7 @@ public class WorkManagerWrapperTest {
 
     @Test
     public void schedulingWithoutCertificatePinning() {
-        SplitClientConfig splitClientConfig = buildConfig(false, false);
+        SplitClientConfig splitClientConfig = buildConfig(false);
         LinkedList<String> logs = new LinkedList<>();
         mWrapper = getWrapper(splitClientConfig);
         Logger.instance().setLevel(SplitLogLevel.ERROR);

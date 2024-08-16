@@ -56,8 +56,8 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
         config.setUserConsent(mSplitClientConfig.userConsent().intValue());
         config.setFlagSetsTotal(mValidFlagSetCount + mInvalidFlagSetCount);
         config.setFlagSetsInvalid(mInvalidFlagSetCount);
-        config.setLargeSegmentsEnabled(mSplitClientConfig.largeSegmentsEnabled());
-        config.setWaitForLargeSegments(mSplitClientConfig.waitForLargeSegments());
+//        config.setLargeSegmentsEnabled(mSplitClientConfig.largeSegmentsEnabled()); // TODO: remove
+//        config.setWaitForLargeSegments(mSplitClientConfig.waitForLargeSegments()); // TODO: remove
         if (mSplitClientConfig.impressionsMode() == ImpressionsMode.DEBUG) {
             config.setImpressionsMode(io.split.android.client.telemetry.model.ImpressionsMode.DEBUG.intValue());
         } else if (mSplitClientConfig.impressionsMode() == ImpressionsMode.OPTIMIZED) {
@@ -74,7 +74,7 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
         refreshRates.setTelemetry(splitClientConfig.telemetryRefreshRate());
         refreshRates.setSplits(splitClientConfig.featuresRefreshRate());
         refreshRates.setMySegments(splitClientConfig.segmentsRefreshRate());
-        refreshRates.setMyLargeSegments(splitClientConfig.largeSegmentsRefreshRate());
+//        refreshRates.setMyLargeSegments(splitClientConfig.largeSegmentsRefreshRate()); // TODO: remove
         refreshRates.setImpressions(splitClientConfig.impressionsRefreshRate());
         refreshRates.setEvents(splitClientConfig.eventFlushInterval());
 

@@ -42,30 +42,7 @@ public class EventsManagerTest {
 
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-
-
-        boolean shouldStop = false;
-        long maxExecutionTime = System.currentTimeMillis() + 10000;
-        long intervalExecutionTime = 200;
-
-        execute(shouldStop, intervalExecutionTime, maxExecutionTime, eventManager, SplitEvent.SDK_READY);
-
-        assertTrue(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
-        assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
-    }
-
-
-    @Test
-    public void eventOnReadyWithLargeSegmentsEnabled() {
-
-        SplitClientConfig cfg = SplitClientConfig.builder()
-                .largeSegmentsEnabled(true)
-                .build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
-
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_FETCHED);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
 
         boolean shouldStop = false;
         long maxExecutionTime = System.currentTimeMillis() + 10000;
@@ -75,28 +52,6 @@ public class EventsManagerTest {
 
         assertTrue(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
         assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
-    }
-
-    @Test
-    public void eventOnReadyWithLargeSegmentsEnabledAndWaitForLargeSegmentsFalse() {
-
-            SplitClientConfig cfg = SplitClientConfig.builder()
-                    .largeSegmentsEnabled(true)
-                    .waitForLargeSegments(false)
-                    .build();
-            SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
-
-            eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-            eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-
-            boolean shouldStop = false;
-            long maxExecutionTime = System.currentTimeMillis() + 10000;
-            long intervalExecutionTime = 200;
-
-            execute(shouldStop, intervalExecutionTime, maxExecutionTime, eventManager, SplitEvent.SDK_READY);
-
-            assertTrue(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
-            assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
     }
 
     @Test
@@ -117,30 +72,6 @@ public class EventsManagerTest {
     @Test
     public void eventOnReadyTimedOutWithLargeSegmentsEnabled() {
         SplitClientConfig cfg = SplitClientConfig.builder()
-                .largeSegmentsEnabled(true)
-                .ready(2000)
-                .build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
-
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
-
-        boolean shouldStop = false;
-        long maxExecutionTime = System.currentTimeMillis() + 10000;
-        long intervalExecutionTime = 200;
-
-        execute(shouldStop, intervalExecutionTime, maxExecutionTime, eventManager, SplitEvent.SDK_READY_TIMED_OUT);
-
-        assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
-        assertTrue(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
-    }
-
-    @Test
-    public void eventOnReadyTimedOutWithLargeSegmentsEnabledAndWaitForLargeSegmentsTrue() {
-        SplitClientConfig cfg = SplitClientConfig.builder()
-                .largeSegmentsEnabled(true)
-                .waitForLargeSegments(true)
                 .ready(2000)
                 .build();
         SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
@@ -176,6 +107,7 @@ public class EventsManagerTest {
         //But if after timeout event, the Splits and MySegments are ready, SDK_READY should be triggered
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
 
         shouldStop = false;
         maxExecutionTime = System.currentTimeMillis() + 10000;
@@ -194,6 +126,7 @@ public class EventsManagerTest {
         eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+        eventList.add(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList, SplitClientConfig.builder().build());
     }
 
@@ -204,6 +137,7 @@ public class EventsManagerTest {
         eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+        eventList.add(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList, SplitClientConfig.builder().build());
     }
 
@@ -214,6 +148,7 @@ public class EventsManagerTest {
         eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+        eventList.add(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList, SplitClientConfig.builder().build());
     }
 
@@ -224,6 +159,7 @@ public class EventsManagerTest {
         eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        eventList.add(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList, SplitClientConfig.builder().build());
     }
 
@@ -236,79 +172,31 @@ public class EventsManagerTest {
         eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
         eventOnReadyFromCache(eventList, SplitClientConfig.builder()
-                .largeSegmentsEnabled(true)
-                .build());
-    }
-
-    @Test
-    public void eventOnReadyFromCacheMyLargeSegmentsNotEnabled() {
-        List<SplitInternalEvent> eventList = new ArrayList<>();
-        eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
-        eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-        eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
-        eventList.add(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
-        eventOnReadyFromCache(eventList, SplitClientConfig.builder()
-                .largeSegmentsEnabled(false)
                 .build());
     }
 
     @Test
     public void sdkUpdateWithFeatureFlags() throws InterruptedException {
-        sdkUpdateTest(SplitInternalEvent.SPLITS_UPDATED, false, true, false);
+        sdkUpdateTest(SplitInternalEvent.SPLITS_UPDATED, false);
     }
 
     @Test
     public void sdkUpdateWithMySegments() throws InterruptedException {
-        sdkUpdateTest(SplitInternalEvent.MY_SEGMENTS_UPDATED, false, true, false);
-    }
-
-    @Test
-    public void sdkUpdateWithLargeSegmentsAndConfigDisabledDoesNotEmitEvent() throws InterruptedException {
-        sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, false, true, true);
+        sdkUpdateTest(SplitInternalEvent.MY_SEGMENTS_UPDATED, false);
     }
 
     @Test
     public void sdkUpdateWithLargeSegmentsAndConfigEnabledEmitsEvent() throws InterruptedException {
-        sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, true, true, false);
+        sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, false);
     }
 
     @Test
     public void sdkUpdateWithLargeSegmentsAndConfigEnabledAndWaitForLargeSegmentsFalseEmitsEvent() throws InterruptedException {
-        sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, true, false, false);
+        sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, false);
     }
 
-    @Test
-    public void disableLargeSegmentsAtRuntime() {
-        SplitClientConfig cfg = SplitClientConfig.builder()
-                .largeSegmentsEnabled(true)
-                .waitForLargeSegments(true)
-                .ready(2000)
-                .build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
-
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
-
-        boolean shouldStop = false;
-        long maxExecutionTime = System.currentTimeMillis() + 10000;
-        long intervalExecutionTime = 100;
-
-        assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
-        assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
-
-        eventManager.disableLargeSegments();
-
-        execute(shouldStop, intervalExecutionTime, maxExecutionTime, eventManager, SplitEvent.SDK_READY_TIMED_OUT);
-
-        assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
-        assertTrue(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
-    }
-
-    private static void sdkUpdateTest(SplitInternalEvent eventToCheck, boolean largeSegmentsEnabled, boolean waitForLargeSegments, boolean negate) throws InterruptedException {
+    private static void sdkUpdateTest(SplitInternalEvent eventToCheck, boolean negate) throws InterruptedException {
         SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder()
-                .largeSegmentsEnabled(largeSegmentsEnabled)
-                .waitForLargeSegments(waitForLargeSegments)
                 .build(), new SplitTaskExecutorStub());
 
         CountDownLatch updateLatch = new CountDownLatch(1);
@@ -328,9 +216,7 @@ public class EventsManagerTest {
 
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
-        if (largeSegmentsEnabled && waitForLargeSegments) {
-            eventManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_FETCHED);
-        }
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_FETCHED);
         boolean readyAwait = readyLatch.await(3, TimeUnit.SECONDS);
 
         eventManager.notifyInternalEvent(eventToCheck);

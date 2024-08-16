@@ -81,10 +81,10 @@ public class ClientComponentsRegisterImplTest {
 
         when(mMySegmentsSynchronizerFactory.getSynchronizer(mMySegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, 1800))
                 .thenReturn(mMySegmentsSynchronizer);
-        when(mMySegmentsSynchronizerFactory.getSynchronizer(mMyLargeSegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, 60))
+        when(mMySegmentsSynchronizerFactory.getSynchronizer(mMyLargeSegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, 1800))
                 .thenReturn(mMyLargeSegmentsSynchronizer);
 
-        register = getRegister(false);
+        register = getRegister();
     }
 
     @Test
@@ -132,10 +132,10 @@ public class ClientComponentsRegisterImplTest {
 
     @Test
     public void myLargeSegmentsSynchronizerIsRegisteredWhenLargeSegmentsIsEnabledAndTaskFactoryIsNotNull() {
-        register = getRegister(true);
+        register = getRegister();
         register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
 
-        verify(mMySegmentsSynchronizerFactory).getSynchronizer(mMyLargeSegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, 60);
+        verify(mMySegmentsSynchronizerFactory).getSynchronizer(mMyLargeSegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, 1800);
         verify(mMySegmentsSynchronizerRegistry).registerMyLargeSegmentsSynchronizer("matching_key", mMyLargeSegmentsSynchronizer);
     }
 
@@ -151,11 +151,9 @@ public class ClientComponentsRegisterImplTest {
     }
 
     @NonNull
-    private ClientComponentsRegisterImpl getRegister(boolean largeSegmentsEnabled) {
+    private ClientComponentsRegisterImpl getRegister() {
         return new ClientComponentsRegisterImpl(
-                new SplitClientConfig.Builder()
-                        .largeSegmentsEnabled(largeSegmentsEnabled)
-                        .build(),
+                new SplitClientConfig.Builder().build(),
                 mMySegmentsSynchronizerFactory,
                 mStorageContainer,
                 mAttributesSynchronizerFactory,

@@ -297,9 +297,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     private void scheduleMySegmentsFetcherTask() {
         mMySegmentsSynchronizerRegistry.scheduleSegmentsSyncTask(SEGMENT);
-        if (mSplitClientConfig.largeSegmentsEnabled()) {
-            mMySegmentsSynchronizerRegistry.scheduleSegmentsSyncTask(LARGE_SEGMENT);
-        }
+        mMySegmentsSynchronizerRegistry.scheduleSegmentsSyncTask(LARGE_SEGMENT); // TODO: remove
     }
 
     private void scheduleEventsRecorderTask() {

@@ -18,7 +18,6 @@ public class SseJwtParser {
 
     private static final String PUBLISHERS_CHANNEL_METADATA = "channel-metadata:publishers";
     private static final String PUBLISHERS_CHANNEL_PREFIX = "[?occupancy=metrics.publishers]";
-    private static final String MY_LARGE_SEGMENTS_CHANNEL = "mylargesegments";
 
     static final Type ALL_TOKEN_TYPE = new TypeToken<Map<String, Object>>() {
     }.getType();
@@ -26,7 +25,7 @@ public class SseJwtParser {
     private static final Type CHANNEL_TYPE = new TypeToken<Map<String, List<String>>>() {
     }.getType();
 
-    public SseJwtToken parse(String rawToken, boolean largeSegmentsEnabled) throws InvalidJwtTokenException {
+    public SseJwtToken parse(String rawToken) throws InvalidJwtTokenException {
 
         if (rawToken == null) {
             Logger.e("Error: JWT is null.");
@@ -71,15 +70,11 @@ public class SseJwtParser {
 
         List<String> processedChannels = new ArrayList<>();
         for (String channel : channels.keySet()) {
-            boolean filterLargeSegmentsChannel = !largeSegmentsEnabled &&
-                    channel.toLowerCase().contains(MY_LARGE_SEGMENTS_CHANNEL);
-            if (!filterLargeSegmentsChannel) {
-                List<String> channelInfo = channels.get(channel);
-                if (channelInfo != null && channelInfo.contains(PUBLISHERS_CHANNEL_METADATA)) {
-                    processedChannels.add(PUBLISHERS_CHANNEL_PREFIX + channel);
-                } else {
-                    processedChannels.add(channel);
-                }
+            List<String> channelInfo = channels.get(channel);
+            if (channelInfo != null && channelInfo.contains(PUBLISHERS_CHANNEL_METADATA)) {
+                processedChannels.add(PUBLISHERS_CHANNEL_PREFIX + channel);
+            } else {
+                processedChannels.add(channel);
             }
         }
 
