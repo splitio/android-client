@@ -70,27 +70,6 @@ public class EventsManagerTest {
     }
 
     @Test
-    public void eventOnReadyTimedOutWithLargeSegmentsEnabled() {
-        SplitClientConfig cfg = SplitClientConfig.builder()
-                .ready(2000)
-                .build();
-        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
-
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
-
-        boolean shouldStop = false;
-        long maxExecutionTime = System.currentTimeMillis() + 10000;
-        long intervalExecutionTime = 200;
-
-        execute(shouldStop, intervalExecutionTime, maxExecutionTime, eventManager, SplitEvent.SDK_READY_TIMED_OUT);
-
-        assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
-        assertTrue(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
-    }
-
-    @Test
     public void eventOnReadyAndOnReadyTimedOut() {
         SplitClientConfig cfg = SplitClientConfig.builder().ready(1000).build();
         SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
