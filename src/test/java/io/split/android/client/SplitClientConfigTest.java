@@ -4,8 +4,6 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
 
-import static org.junit.Assert.assertTrue;
-
 import androidx.annotation.NonNull;
 
 import org.junit.Test;
@@ -224,68 +222,6 @@ public class SplitClientConfigTest {
         assertEquals(TimeUnit.HOURS.toMillis(5), config.observerCacheExpirationPeriod());
         assertEquals(TimeUnit.HOURS.toMillis(24), config2.observerCacheExpirationPeriod());
         assertEquals(TimeUnit.HOURS.toMillis(4), config3.observerCacheExpirationPeriod());
-    }
-
-    @Test
-    public void defaultLargeSegmentsEnabledIsFalse() {
-        SplitClientConfig config = SplitClientConfig.builder().build();
-
-        assertFalse(config.largeSegmentsEnabled());
-    }
-
-    @Test
-    public void defaultLargeSegmentsRefreshRateIs60() {
-        SplitClientConfig config = SplitClientConfig.builder().build();
-
-        assertEquals(60, config.largeSegmentsRefreshRate());
-    }
-
-    @Test
-    public void defaultWaitForLargeSegmentsIsFalseWhenLargeSegmentsEnabledIsFalse() {
-        SplitClientConfig config = SplitClientConfig.builder().build();
-
-        assertFalse(config.waitForLargeSegments());
-    }
-
-    @Test
-    public void defaultWaitForLargeSegmentsIsTrueWhenLargeSegmentsEnabledIsTrue() {
-        SplitClientConfig config = SplitClientConfig.builder()
-                .largeSegmentsEnabled(true)
-                .build();
-
-        assertTrue(config.waitForLargeSegments());
-    }
-
-    @Test
-    public void largeSegmentsEnabledIsTrueWhenSetToTrue() {
-        SplitClientConfig config = SplitClientConfig.builder()
-                .largeSegmentsEnabled(true)
-                .build();
-
-        assertTrue(config.largeSegmentsEnabled());
-    }
-
-    @Test
-    public void waitForLargeSegmentsIsFalseWhenSetToFalseAndLargeSegmentsEnabledIsTrue() {
-        SplitClientConfig config = SplitClientConfig.builder()
-                .largeSegmentsEnabled(true)
-                .waitForLargeSegments(false)
-                .build();
-
-        assertFalse(config.waitForLargeSegments());
-    }
-
-    @Test
-    public void largeSegmentsRefreshRateCannotBeLessThan60() {
-        Queue<String> logMessages = getLogMessagesQueue();
-        SplitClientConfig config = SplitClientConfig.builder()
-                .largeSegmentsRefreshRate(59)
-                .logLevel(SplitLogLevel.WARNING)
-                .build();
-
-        assertEquals(60, config.largeSegmentsRefreshRate());
-        assertEquals(1, logMessages.size());
-        assertEquals("Large segments refresh rate is lower than allowed. Setting to default value.", logMessages.poll());
     }
 
     @NonNull

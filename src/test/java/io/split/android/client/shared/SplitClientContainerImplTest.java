@@ -209,8 +209,7 @@ public class SplitClientContainerImplTest {
     }
 
     @Test
-    public void myLargeSegmentsTaskFactoryIsNotNullWhenLargeSegmentsIsEnabled() {
-        when(mConfig.largeSegmentsEnabled()).thenReturn(true);
+    public void myLargeSegmentsTaskFactoryIsNotNull() {
         when(mMySegmentsTaskFactoryProvider.getFactory(any())).thenReturn(mock(MySegmentsTaskFactory.class));
         Key key = new Key("matching_key");
         SplitClient clientMock = mock(SplitClient.class);

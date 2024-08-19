@@ -192,32 +192,6 @@ public class MySegmentsSyncTaskTest {
         Assert.assertEquals(result.getStatus(), SplitTaskExecutionStatus.SUCCESS);
     }
 
-    @Test
-    public void disableLargeSegmentsIsCalledOnEventsManagerWhenResponseIs403AndTaskTypeIsMyLargeSegments() throws HttpFetcherException {
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.getForMyLargeSegments());
-
-        when(mMySegmentsFetcher.execute(any(), any())).thenThrow(new HttpFetcherException("", "", 403));
-
-        SplitTaskExecutionInfo result = mTask.execute();
-
-        Assert.assertEquals(Boolean.TRUE, result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
-        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
-        verify(mEventsManager).disableLargeSegments();
-    }
-
-    @Test
-    public void disableLargeSegmentsIsNotCalledOnEventsManagerWhenResponseIs403AndTaskTypeIsNotMyLargeSegments() throws HttpFetcherException {
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.getForMySegments());
-
-        when(mMySegmentsFetcher.execute(any(), any())).thenThrow(new HttpFetcherException("", "", 403));
-
-        SplitTaskExecutionInfo result = mTask.execute();
-
-        Assert.assertEquals(Boolean.TRUE, result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
-        Assert.assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
-        verify(mEventsManager, never()).disableLargeSegments();
-    }
-
     private void loadMySegments() {
         if (mMySegments == null) {
             List<MySegment> segments = new ArrayList<>();

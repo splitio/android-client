@@ -328,7 +328,6 @@ public class EncryptionTest {
                 .trafficType("client")
                 .impressionsMode(impressionsMode)
                 .impressionsRefreshRate(1000)
-                .largeSegmentsEnabled(true)
                 .impressionsCountersRefreshRate(1000)
                 .streamingEnabled(false)
                 .eventFlushInterval(1000)

@@ -8,7 +8,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.executors.SplitEventExecutor;
@@ -27,21 +26,17 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     private final Map<SplitEvent, Integer> mExecutionTimes;
 
     private final SplitTaskExecutor mSplitTaskExecutor;
-    private final AtomicBoolean mLargeSegmentsEnabled;
-    private final AtomicBoolean mWaitForLargeSegments;
 
     public SplitEventsManager(SplitClientConfig config, SplitTaskExecutor splitTaskExecutor) {
-        this(splitTaskExecutor, config.blockUntilReady(), config.largeSegmentsEnabled(), config.waitForLargeSegments());
+        this(splitTaskExecutor, config.blockUntilReady());
     }
 
-    public SplitEventsManager(SplitTaskExecutor splitTaskExecutor, final int blockUntilReady, boolean largeSegmentsEnabled, boolean waitForLargeSegments) {
+    public SplitEventsManager(SplitTaskExecutor splitTaskExecutor, final int blockUntilReady) {
         super();
         mSplitTaskExecutor = splitTaskExecutor;
         mSubscriptions = new ConcurrentHashMap<>();
         mExecutionTimes = new ConcurrentHashMap<>();
         mResources = new SplitEventExecutorResourcesImpl();
-        mLargeSegmentsEnabled = new AtomicBoolean(largeSegmentsEnabled);
-        mWaitForLargeSegments = new AtomicBoolean(waitForLargeSegments);
         registerMaxAllowedExecutionTimesPerEvent();
 
         Runnable SDKReadyTimeout = new Runnable() {
@@ -68,12 +63,6 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     @VisibleForTesting
     public void setExecutionResources(SplitEventExecutorResources resources) {
         mResources = resources;
-    }
-
-    public void disableLargeSegments() {
-        mLargeSegmentsEnabled.set(false);
-        mWaitForLargeSegments.set(false);
-        triggerSdkReadyIfNeeded();
     }
 
     /**
@@ -144,14 +133,8 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
             switch (event) {
                 case SPLITS_UPDATED:
                 case MY_SEGMENTS_UPDATED:
-                    if (isTriggered(SplitEvent.SDK_READY)) {
-                        trigger(SplitEvent.SDK_UPDATE);
-                        return;
-                    }
-                    triggerSdkReadyIfNeeded();
-                    break;
                 case MY_LARGE_SEGMENTS_UPDATED:
-                    if (mLargeSegmentsEnabled.get() && isTriggered(SplitEvent.SDK_READY)) {
+                    if (isTriggered(SplitEvent.SDK_READY)) {
                         trigger(SplitEvent.SDK_UPDATE);
                         return;
                     }
@@ -176,7 +159,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
                             wasTriggered(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE) &&
                             wasTriggered(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE) &&
                             wasTriggered(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE) &&
-                            (!mLargeSegmentsEnabled.get() || wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE))) {
+                            wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE)) {
                         trigger(SplitEvent.SDK_READY_FROM_CACHE);
                     }
                     break;
@@ -209,7 +192,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     private void triggerSdkReadyIfNeeded() {
         if ((wasTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_SEGMENTS_FETCHED)) &&
                 (wasTriggered(SplitInternalEvent.SPLITS_UPDATED) || wasTriggered(SplitInternalEvent.SPLITS_FETCHED)) &&
-                (!mWaitForLargeSegments.get() || wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_FETCHED)) &&
+//                (wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_FETCHED)) && TODO: Uncomment this line
                 !isTriggered(SplitEvent.SDK_READY)) {
             trigger(SplitEvent.SDK_READY);
         }

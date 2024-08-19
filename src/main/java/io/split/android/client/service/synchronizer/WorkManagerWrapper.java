@@ -276,6 +276,6 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
     }
 
     private boolean isLargeSegmentsEnabled() {
-        return mSplitClientConfig.largeSegmentsEnabled();
+        return true; // TODO
     }
 }

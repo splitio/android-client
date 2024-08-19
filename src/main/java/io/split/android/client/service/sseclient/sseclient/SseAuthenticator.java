@@ -26,18 +26,15 @@ public class SseAuthenticator {
     private final HttpFetcher<SseAuthenticationResponse> mAuthFetcher;
     private final Set<String> mUserKeys;
     private final SseJwtParser mJwtParser;
-    private final boolean mLargeSegmentsEnabled;
     private final String mFlagsSpec;
 
     public SseAuthenticator(@NonNull HttpFetcher<SseAuthenticationResponse> authFetcher,
                             @NonNull SseJwtParser jwtParser,
-                            boolean largeSegmentsEnabled,
                             @Nullable String flagsSpec) {
         mAuthFetcher = checkNotNull(authFetcher);
         mUserKeys = Collections.newSetFromMap(new ConcurrentHashMap<>());
         mJwtParser = checkNotNull(jwtParser);
         mFlagsSpec = flagsSpec;
-        mLargeSegmentsEnabled = largeSegmentsEnabled;
     }
 
     public SseAuthenticationResult authenticate(long defaultSseConnectionDelaySecs) {
@@ -81,7 +78,7 @@ public class SseAuthenticator {
             long sseConnectionDelay = authResponse.getSseConnectionDelay() != null ? authResponse.getSseConnectionDelay() : defaultSseConnectionDelaySecs;
             Logger.d("SSE token parsed successfully");
             return new SseAuthenticationResult(true, true, true,
-                    sseConnectionDelay, mJwtParser.parse(authResponse.getToken(), mLargeSegmentsEnabled));
+                    sseConnectionDelay, mJwtParser.parse(authResponse.getToken()));
         } catch (InvalidJwtTokenException e) {
             Logger.e("Error while parsing Jwt");
         }

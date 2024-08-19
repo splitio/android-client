@@ -6,9 +6,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.EventsTracker;
@@ -19,7 +16,6 @@ import io.split.android.client.SplitClientFactory;
 import io.split.android.client.SplitClientFactoryImpl;
 import io.split.android.client.SplitFactoryImpl;
 import io.split.android.client.api.Key;
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.ServiceConstants;
@@ -28,8 +24,6 @@ import io.split.android.client.service.executor.SplitClientEventTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.http.HttpFetcher;
-import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryConfiguration;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProvider;
@@ -40,7 +34,6 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsBackgroundSyncScheduleTask;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkManagerWrapper;
 import io.split.android.client.storage.common.SplitStorageContainer;
-import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.ValidationMessageLogger;
@@ -178,14 +171,10 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
 
     @Nullable
     private MySegmentsTaskFactory getMyLargeSegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
-        if (mConfig.largeSegmentsEnabled()) {
-            return mMySegmentsTaskFactoryProvider.getFactory(MySegmentsTaskFactoryConfiguration.getForMyLargeSegments(
-                    mSplitApiFacade.getMyLargeSegmentsFetcher(key.matchingKey()),
-                    mStorageContainer.getMyLargeSegmentsStorage(key.matchingKey()),
-                    eventsManager));
-        } else {
-            return null;
-        }
+        return mMySegmentsTaskFactoryProvider.getFactory(MySegmentsTaskFactoryConfiguration.getForMyLargeSegments(
+                mSplitApiFacade.getMyLargeSegmentsFetcher(key.matchingKey()),
+                mStorageContainer.getMyLargeSegmentsStorage(key.matchingKey()),
+                eventsManager));
     }
 
     private void connectToStreaming() {

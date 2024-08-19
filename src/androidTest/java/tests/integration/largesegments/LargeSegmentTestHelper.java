@@ -123,17 +123,13 @@ public class LargeSegmentTestHelper {
         }
     }
 
-    protected SplitFactory getFactory(boolean largeSegmentsEnabled, boolean waitForLargeSegments) {
-        return getFactory(largeSegmentsEnabled, waitForLargeSegments, null, 2500, null);
+    protected SplitFactory getFactory() {
+        return getFactory(null, 2500, null);
     }
 
-    protected SplitFactory getFactory(boolean largeSegmentsEnabled,
-                                      boolean waitForLargeSegments,
-                                      Integer largeSegmentsRefreshRate,
+    protected SplitFactory getFactory(Integer largeSegmentsRefreshRate,
                                       Integer ready, SplitRoomDatabase database) {
         TestableSplitConfigBuilder configBuilder = new TestableSplitConfigBuilder()
-                .largeSegmentsEnabled(largeSegmentsEnabled)
-                .waitForLargeSegments(waitForLargeSegments)
                 .enableDebug()
                 .serviceEndpoints(ServiceEndpoints.builder()
                         .apiEndpoint("http://" + mWebServer.getHostName() + ":" + mWebServer.getPort())
@@ -141,7 +137,6 @@ public class LargeSegmentTestHelper {
 
         if (largeSegmentsRefreshRate != null) {
             configBuilder.streamingEnabled(false);
-            configBuilder.largeSegmentsRefreshRate(largeSegmentsRefreshRate);
         }
         if (ready != null) {
             configBuilder.ready(ready);
