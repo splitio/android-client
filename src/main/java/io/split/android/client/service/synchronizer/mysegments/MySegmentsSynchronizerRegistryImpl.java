@@ -14,17 +14,10 @@ public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronize
     private final AtomicBoolean mScheduledSegmentsSyncTask = new AtomicBoolean(false);
     private final AtomicBoolean mStoppedPeriodicFetching = new AtomicBoolean(false);
     private final ConcurrentMap<String, MySegmentsSynchronizer> mMySegmentsSynchronizers = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, MySegmentsSynchronizer> mMyLargeSegmentsSynchronizers = new ConcurrentHashMap<>();
 
     @Override
     public synchronized void registerMySegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
         mMySegmentsSynchronizers.put(userKey, mySegmentsSynchronizer);
-        triggerPendingActions(mySegmentsSynchronizer);
-    }
-
-    @Override
-    public synchronized void registerMyLargeSegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
-        mMyLargeSegmentsSynchronizers.put(userKey, mySegmentsSynchronizer);
         triggerPendingActions(mySegmentsSynchronizer);
     }
 
@@ -36,32 +29,26 @@ public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronize
             mySegmentsSynchronizer.destroy();
         }
 
-        MySegmentsSynchronizer myLargeSegmentsSynchronizer = mMyLargeSegmentsSynchronizers.get(userKey);
-        if (myLargeSegmentsSynchronizer != null) {
-            myLargeSegmentsSynchronizer.stopPeriodicFetching();
-            myLargeSegmentsSynchronizer.destroy();
-        }
-
         mMySegmentsSynchronizers.remove(userKey);
     }
 
     @Override
-    public synchronized void loadMySegmentsFromCache(SegmentType segmentType) {
-        executeForAll(MySegmentsSynchronizer::loadMySegmentsFromCache, segmentType);
+    public synchronized void loadMySegmentsFromCache() {
+        executeForAll(MySegmentsSynchronizer::loadMySegmentsFromCache);
 
         mLoadedFromCache.set(true);
     }
 
     @Override
-    public void synchronizeMySegments(SegmentType segmentType) {
-        executeForAll(MySegmentsSynchronizer::synchronizeMySegments, segmentType);
+    public void synchronizeMySegments() {
+        executeForAll(MySegmentsSynchronizer::synchronizeMySegments);
 
         mSynchronizedSegments.set(true);
     }
 
     @Override
-    public void forceMySegmentsSync(SegmentType segmentType, Long syncDelay) {
-        executeForAll(mySegmentsSynchronizer -> mySegmentsSynchronizer.forceMySegmentsSync(syncDelay), segmentType);
+    public void forceMySegmentsSync(Long syncDelay) {
+        executeForAll(mySegmentsSynchronizer -> mySegmentsSynchronizer.forceMySegmentsSync(syncDelay));
     }
 
     @Override
@@ -70,15 +57,15 @@ public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronize
     }
 
     @Override
-    public synchronized void scheduleSegmentsSyncTask(SegmentType segmentType) {
-        executeForAll(MySegmentsSynchronizer::scheduleSegmentsSyncTask, segmentType);
+    public synchronized void scheduleSegmentsSyncTask() {
+        executeForAll(MySegmentsSynchronizer::scheduleSegmentsSyncTask);
 
         mScheduledSegmentsSyncTask.set(true);
     }
 
     @Override
-    public void submitMySegmentsLoadingTask(SegmentType segmentType) {
-        executeForAll(MySegmentsSynchronizer::submitMySegmentsLoadingTask, segmentType);
+    public void submitMySegmentsLoadingTask() {
+        executeForAll(MySegmentsSynchronizer::submitMySegmentsLoadingTask);
     }
 
     @Override
@@ -104,15 +91,7 @@ public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronize
     }
 
     private void executeForAll(Consumer<MySegmentsSynchronizer> consumer) {
-        executeForAll(consumer, SegmentType.SEGMENT);
-        executeForAll(consumer, SegmentType.LARGE_SEGMENT);
-    }
-
-    private void executeForAll(Consumer<MySegmentsSynchronizer> consumer, SegmentType segmentType) {
-        ConcurrentMap<String, MySegmentsSynchronizer> synchronizers = segmentType == SegmentType.SEGMENT ?
-                mMySegmentsSynchronizers : mMyLargeSegmentsSynchronizers;
-
-        for (MySegmentsSynchronizer mySegmentsSynchronizer : synchronizers.values()) {
+        for (MySegmentsSynchronizer mySegmentsSynchronizer : mMySegmentsSynchronizers.values()) {
             consumer.accept(mySegmentsSynchronizer);
         }
     }

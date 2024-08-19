@@ -282,7 +282,8 @@ public class MySegmentsNotificationProcessorImplTest {
 
         mNotificationProcessor.processMySegmentsUpdateV2(notification);
 
-        verify(helper).processUpdate(MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST, "dummy", CompressionType.GZIP, Collections.singleton("dummy"), 267L, mMySegmentChangeQueue, 0);
+        verify(helper).processMySegmentsUpdate(MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST, "dummy", CompressionType.GZIP, Collections.singleton("dummy"), 267L, mMySegmentChangeQueue, 0);
+        verify(helper, times(0)).processMyLargeSegmentsUpdate(any(), any(), any(), any(), any(), any(), anyLong());
     }
 
     private void mySegmentsUpdateV2KeyListNotification(String segmentName, KeyList.Action action) {

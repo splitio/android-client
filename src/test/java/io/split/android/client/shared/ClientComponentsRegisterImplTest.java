@@ -2,7 +2,6 @@ package io.split.android.client.shared;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -61,13 +60,9 @@ public class ClientComponentsRegisterImplTest {
     @Mock
     private MySegmentsTaskFactory mMySegmentsTaskFactory;
     @Mock
-    private MySegmentsTaskFactory mMyLargeSegmentsTaskFactory;
-    @Mock
     private SplitEventsManager mSplitEventsManager;
     @Mock
     private MySegmentsSynchronizer mMySegmentsSynchronizer;
-    @Mock
-    private MySegmentsSynchronizer mMyLargeSegmentsSynchronizer;
 
     private final Key mMatchingKey = new Key("matching_key", "bucketing_key");
 
@@ -81,62 +76,43 @@ public class ClientComponentsRegisterImplTest {
 
         when(mMySegmentsSynchronizerFactory.getSynchronizer(mMySegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, 1800))
                 .thenReturn(mMySegmentsSynchronizer);
-        when(mMySegmentsSynchronizerFactory.getSynchronizer(mMyLargeSegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, 1800))
-                .thenReturn(mMyLargeSegmentsSynchronizer);
 
         register = getRegister();
     }
 
     @Test
     public void attributesSynchronizerIsRegistered() {
-        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
+        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory);
 
         verify(mAttributesSynchronizerRegistry).registerAttributesSynchronizer(eq("matching_key"), any());
     }
 
     @Test
     public void mySegmentsSynchronizerIsRegistered() {
-        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
+        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory);
 
         verify(mMySegmentsSynchronizerRegistry).registerMySegmentsSynchronizer("matching_key", mMySegmentsSynchronizer);
     }
 
     @Test
     public void mySegmentsUpdateWorkerIsRegistered() {
-        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
+        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory);
 
         verify(mMySegmentsUpdateWorkerRegistry).registerMySegmentsUpdateWorker(eq("matching_key"), any());
     }
 
     @Test
     public void mySegmentsNotificationProcessorIsRegistered() {
-        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
+        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory);
 
         verify(mMySegmentsNotificationProcessorRegistry).registerMySegmentsProcessor(eq("matching_key"), any());
     }
 
     @Test
     public void eventsManagerIsRegistered() {
-        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
+        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory);
 
         verify(mEventsManagerRegistry).registerEventsManager(mMatchingKey, mSplitEventsManager);
-    }
-
-    @Test
-    public void myLargeSegmentsSynchronizerIsNotRegisteredWhenLargeSegmentsIsNotEnabled() {
-        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
-
-        verify(mMySegmentsSynchronizerFactory, times(0)).getSynchronizer(mMyLargeSegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, 60);
-        verify(mMySegmentsSynchronizerRegistry, times(0)).registerMyLargeSegmentsSynchronizer("matching_key", mMySegmentsSynchronizer);
-    }
-
-    @Test
-    public void myLargeSegmentsSynchronizerIsRegisteredWhenLargeSegmentsIsEnabledAndTaskFactoryIsNotNull() {
-        register = getRegister();
-        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory, mMyLargeSegmentsTaskFactory);
-
-        verify(mMySegmentsSynchronizerFactory).getSynchronizer(mMyLargeSegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, 1800);
-        verify(mMySegmentsSynchronizerRegistry).registerMyLargeSegmentsSynchronizer("matching_key", mMyLargeSegmentsSynchronizer);
     }
 
     @Test

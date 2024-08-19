@@ -6,19 +6,13 @@ import androidx.annotation.NonNull;
 import androidx.work.WorkerParameters;
 
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
 
 import io.split.android.client.network.HttpClient;
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.ServiceFactory;
-import io.split.android.client.service.mysegments.MySegmentsBulkSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTaskConfig;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
-import io.split.android.client.utils.logger.Logger;
 
 public class MySegmentsSyncWorker extends BaseSegmentsSyncWorker {
 
@@ -38,6 +32,6 @@ public class MySegmentsSyncWorker extends BaseSegmentsSyncWorker {
                 false,
                 null,
                 StorageFactory.getTelemetryStorage(shouldRecordTelemetry),
-                MySegmentsSyncTaskConfig.getForMySegments());
+                MySegmentsSyncTaskConfig.get());
     }
 }

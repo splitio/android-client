@@ -47,7 +47,8 @@ public class MyLargeSegmentsNotificationProcessorImpl implements MyLargeSegments
                 notification.getUpdateStrategy(),
                 notification.getHashingAlgorithm());
 
-        mProcessorHelper.processUpdate(notification.getUpdateStrategy(),
+        mProcessorHelper.processMyLargeSegmentsUpdate(
+                notification.getUpdateStrategy(),
                 notification.getData(),
                 notification.getCompression(),
                 notification.getLargeSegments(),

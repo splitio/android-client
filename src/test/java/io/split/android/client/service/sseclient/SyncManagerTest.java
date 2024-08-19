@@ -289,20 +289,6 @@ public class SyncManagerTest {
         verify(mSynchronizer).synchronizeMySegments();
     }
 
-    @Test
-    public void startLoadsLargeSegmentsFromCache() {
-        mSyncManager.start();
-
-        verify(mSynchronizer).loadMyLargeSegmentsFromCache();
-    }
-
-    @Test
-    public void startSynchronizesLargeSegments() {
-        mSyncManager.start();
-
-        verify(mSynchronizer).synchronizeMyLargeSegments();
-    }
-
     private void testStartUserConsentNotGranted(UserConsent userConsent) {
         when(mConfig.userConsent()).thenReturn(userConsent);
         mSyncManager.start();

@@ -16,12 +16,4 @@ public class MySegmentsOverwriteTaskConfigTest {
         assertEquals(config.getTaskType(), SplitTaskType.MY_SEGMENTS_OVERWRITE);
         assertEquals(config.getInternalEvent(), SplitInternalEvent.MY_SEGMENTS_UPDATED);
     }
-
-    @Test
-    public void getForMyLargeSegments() {
-        MySegmentsOverwriteTaskConfig config = MySegmentsOverwriteTaskConfig.getForMyLargeSegments();
-
-        assertEquals(config.getTaskType(), SplitTaskType.MY_LARGE_SEGMENTS_OVERWRITE);
-        assertEquals(config.getInternalEvent(), SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
-    }
 }

@@ -13,11 +13,6 @@ public class MySegmentsSyncTaskConfig {
             SplitInternalEvent.MY_SEGMENTS_UPDATED,
             SplitInternalEvent.MY_SEGMENTS_FETCHED,
             OperationType.MY_SEGMENT);
-    private static final MySegmentsSyncTaskConfig MY_LARGE_SEGMENTS_TASK_CONFIG = new MySegmentsSyncTaskConfig(
-            SplitTaskType.MY_LARGE_SEGMENT_SYNC,
-            SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED,
-            SplitInternalEvent.MY_LARGE_SEGMENTS_FETCHED,
-            OperationType.MY_LARGE_SEGMENT);
     private final SplitTaskType mTaskType;
     private final SplitInternalEvent mUpdateEvent;
     private final SplitInternalEvent mFetchedEvent;
@@ -50,12 +45,7 @@ public class MySegmentsSyncTaskConfig {
     }
 
     @NonNull
-    public static MySegmentsSyncTaskConfig getForMySegments() {
+    public static MySegmentsSyncTaskConfig get() {
         return MY_SEGMENTS_TASK_CONFIG;
-    }
-
-    @NonNull
-    public static MySegmentsSyncTaskConfig getForMyLargeSegments() {
-        return MY_LARGE_SEGMENTS_TASK_CONFIG;
     }
 }

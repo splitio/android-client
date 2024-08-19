@@ -11,6 +11,7 @@ import io.split.android.client.service.sseclient.notifications.KeyList;
 import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
+import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.utils.logger.Logger;
 
 class MySegmentsNotificationProcessorHelper {
@@ -33,7 +34,15 @@ class MySegmentsNotificationProcessorHelper {
         mConfiguration = configuration;
     }
 
-    void processUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, Long changeNumber, BlockingQueue<Long> notificationsQueue, long syncDelay) {
+    void processMySegmentsUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, Long changeNumber, BlockingQueue<Long> notificationsQueue, long syncDelay) {
+        processUpdate(NotificationType.MY_SEGMENTS_UPDATE_V2, updateStrategy, data, compression, segmentNames, changeNumber, notificationsQueue, syncDelay);
+    }
+
+    void processMyLargeSegmentsUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, Long changeNumber, BlockingQueue<Long> notificationsQueue, long syncDelay) {
+        processUpdate(NotificationType.MY_LARGE_SEGMENT_UPDATE, updateStrategy, data, compression, segmentNames, changeNumber, notificationsQueue, syncDelay);
+    }
+
+    private void processUpdate(NotificationType notificationType, MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, Long changeNumber, BlockingQueue<Long> notificationsQueue, long syncDelay) {
         try {
             switch (updateStrategy) {
                 case UNBOUNDED_FETCH_REQUEST:
@@ -48,19 +57,19 @@ class MySegmentsNotificationProcessorHelper {
                     break;
                 case KEY_LIST:
                     Logger.d("Received KeyList my segment fetch request");
-                    updateSegments(mMySegmentsPayloadDecoder.decodeAsString(data,
+                    updateSegments(notificationType, mMySegmentsPayloadDecoder.decodeAsString(data,
                                     mCompressionProvider.get(compression)),
                             segmentNames, changeNumber);
                     break;
                 case SEGMENT_REMOVAL:
                     Logger.d("Received Segment removal request");
-                    removeSegment(segmentNames, changeNumber);
+                    removeSegment(notificationType, segmentNames, changeNumber);
                     break;
                 default:
                     Logger.i("Unknown my segment change v2 notification type: " + updateStrategy);
             }
         } catch (Exception e) {
-            Logger.e("Executing unbounded fetch because an error has occurred processing my segmentV2 notification: " + e.getLocalizedMessage());
+            Logger.e("Executing unbounded fetch because an error has occurred processing my "+(notificationType == NotificationType.MY_LARGE_SEGMENT_UPDATE ? "large" : "")+" segment notification: " + e.getLocalizedMessage());
             notifyMySegmentRefreshNeeded(notificationsQueue, syncDelay);
         }
     }
@@ -69,12 +78,14 @@ class MySegmentsNotificationProcessorHelper {
         notificationsQueue.offer(syncDelay);
     }
 
-    private void removeSegment(Set<String> segmentNames, Long changeNumber) {
+    private void removeSegment(NotificationType notificationType, Set<String> segmentNames, Long changeNumber) {
         // Shouldn't be null, some defensive code here
         if (segmentNames == null) {
             return;
         }
-        MySegmentsUpdateTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(false, segmentNames, changeNumber);
+        MySegmentsUpdateTask task = (notificationType == NotificationType.MY_LARGE_SEGMENT_UPDATE) ?
+                mConfiguration.getMySegmentsTaskFactory().createMyLargeSegmentsUpdateTask(false, segmentNames, changeNumber) :
+                mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(false, segmentNames, changeNumber);
         mSplitTaskExecutor.submit(task, null);
     }
 
@@ -86,7 +97,7 @@ class MySegmentsNotificationProcessorHelper {
         }
     }
 
-    private void updateSegments(String keyListString, Set<String> segmentNames, Long changeNumber) {
+    private void updateSegments(NotificationType notificationType, String keyListString, Set<String> segmentNames, Long changeNumber) {
         // Shouldn't be null, some defensive code here
         if (segmentNames == null) {
             return;
@@ -98,8 +109,11 @@ class MySegmentsNotificationProcessorHelper {
         if (action == KeyList.Action.NONE) {
             return;
         }
-        Logger.d("Executing KeyList my segment fetch request: Adding = " + actionIsAdd);
-        MySegmentsUpdateTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(actionIsAdd, segmentNames, changeNumber);
+
+        boolean largeSegmentsUpdate = notificationType == NotificationType.MY_LARGE_SEGMENT_UPDATE;
+        Logger.d("Executing KeyList my "+ (largeSegmentsUpdate ? "large " : "") +"segment fetch request: Adding = " + actionIsAdd);
+        MySegmentsUpdateTask task = largeSegmentsUpdate ? mConfiguration.getMySegmentsTaskFactory().createMyLargeSegmentsUpdateTask(actionIsAdd, segmentNames, changeNumber) :
+            mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(actionIsAdd, segmentNames, changeNumber);
         mSplitTaskExecutor.submit(task, null);
     }
 }

@@ -4,8 +4,6 @@ public interface MySegmentsSynchronizerRegistry {
 
     void registerMySegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer);
 
-    void registerMyLargeSegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer);
-
     void unregisterMySegmentsSynchronizer(String userKey);
 
     interface Tasks {
@@ -14,17 +12,17 @@ public interface MySegmentsSynchronizerRegistry {
             LARGE_SEGMENT
         }
 
-        void loadMySegmentsFromCache(SegmentType segmentType);
+        void loadMySegmentsFromCache();
 
-        void synchronizeMySegments(SegmentType segmentType);
+        void synchronizeMySegments();
 
-        void forceMySegmentsSync(SegmentType segmentType, Long syncDelay);
+        void forceMySegmentsSync(Long syncDelay);
 
         void destroy();
 
-        void scheduleSegmentsSyncTask(SegmentType segmentType);
+        void scheduleSegmentsSyncTask();
 
-        void submitMySegmentsLoadingTask(SegmentType segmentType);
+        void submitMySegmentsLoadingTask();
 
         void stopPeriodicFetching();
     }

@@ -76,7 +76,6 @@ import io.split.android.client.service.synchronizer.attributes.AttributesSynchro
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizerRegistryImpl;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
-import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry.Tasks.SegmentType;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.common.SplitStorageContainer;
@@ -215,8 +214,7 @@ public class SynchronizerTest {
         mSynchronizer.startPeriodicRecording();
 
         verify(mFeatureFlagsSynchronizer).startPeriodicFetching();
-        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask(SegmentType.SEGMENT);
-        verify(mMySegmentsSynchronizerRegistry, times(1)).scheduleSegmentsSyncTask(SegmentType.LARGE_SEGMENT);
+        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask();
         verify(mTaskExecutor).schedule(
                 any(EventsRecorderTask.class), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
@@ -259,8 +257,7 @@ public class SynchronizerTest {
 
         mSynchronizer.startPeriodicFetching();
 
-        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask(SegmentType.SEGMENT);
-        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask(SegmentType.LARGE_SEGMENT);
+        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask();
     }
 
     @Test
@@ -531,7 +528,7 @@ public class SynchronizerTest {
         setup(config);
 
         List<SplitTaskExecutionInfo> list = new ArrayList<>();
-        list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS));
+        list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SEGMENTS));
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_ATTRIBUTES));
         SplitTaskExecutor executor = new SplitTaskExecutorSub(list);
@@ -544,7 +541,7 @@ public class SynchronizerTest {
                 mFeatureFlagsSynchronizer, mSplitStorageContainer.getEventsStorage());
 
         LoadMySegmentsTask loadMySegmentsTask = mock(LoadMySegmentsTask.class);
-        when(loadMySegmentsTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS));
+        when(loadMySegmentsTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SEGMENTS));
         when(mMySegmentsTaskFactory.createLoadMySegmentsTask()).thenReturn(loadMySegmentsTask);
 
         ((MySegmentsSynchronizerRegistry) mSynchronizer).registerMySegmentsSynchronizer("", mMySegmentsSynchronizer);
@@ -553,20 +550,8 @@ public class SynchronizerTest {
         mSynchronizer.loadMySegmentsFromCache();
         mSynchronizer.loadAttributesFromCache();
         verify(mFeatureFlagsSynchronizer).loadAndSynchronize();
-        verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache(SegmentType.SEGMENT);
+        verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache();
         verify(mAttributesSynchronizerRegistry).loadAttributesFromCache();
-    }
-
-    @Test
-    public void loadLocalDataWithLargeSegmentsLoadsLargeSegments() {
-        SplitClientConfig config = SplitClientConfig.builder()
-                .synchronizeInBackground(false)
-                .build();
-        setup(config);
-
-        mSynchronizer.loadMyLargeSegmentsFromCache();
-
-        verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache(SegmentType.LARGE_SEGMENT);
     }
 
     @Test
@@ -624,7 +609,7 @@ public class SynchronizerTest {
 
         mSynchronizer.loadMySegmentsFromCache();
 
-        verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache(SegmentType.SEGMENT);
+        verify(mMySegmentsSynchronizerRegistry).loadMySegmentsFromCache();
     }
 
     @Test
@@ -633,16 +618,7 @@ public class SynchronizerTest {
 
         mSynchronizer.synchronizeMySegments();
 
-        verify(mMySegmentsSynchronizerRegistry).synchronizeMySegments(SegmentType.SEGMENT);
-    }
-
-    @Test
-    public void synchronizeMyLargeSegmentsDelegatesToRegistry() {
-        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
-
-        mSynchronizer.synchronizeMyLargeSegments();
-
-        verify(mMySegmentsSynchronizerRegistry).synchronizeMySegments(SegmentType.LARGE_SEGMENT);
+        verify(mMySegmentsSynchronizerRegistry).synchronizeMySegments();
     }
 
     @Test
@@ -660,7 +636,7 @@ public class SynchronizerTest {
 
         mSynchronizer.startPeriodicFetching();
 
-        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask(SegmentType.SEGMENT);
+        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask();
     }
 
     @Test
@@ -713,21 +689,12 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void beignNotifiedOfMySegmentsSyncTriggersMySegmentsLoad() {
+    public void beingNotifiedOfMySegmentsSyncTriggersMySegmentsLoad() {
         setup(SplitClientConfig.builder().build());
 
         mSynchronizer.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_SYNC));
 
-        verify(mMySegmentsSynchronizerRegistry).submitMySegmentsLoadingTask(SegmentType.SEGMENT);
-    }
-
-    @Test
-    public void beingNotifiedOfMyLargeSegmentsSyncTriggersMyLargeSegmentsLoad() {
-        setup(SplitClientConfig.builder().build());
-
-        mSynchronizer.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.MY_LARGE_SEGMENT_SYNC));
-
-        verify(mMySegmentsSynchronizerRegistry).submitMySegmentsLoadingTask(SegmentType.LARGE_SEGMENT);
+        verify(mMySegmentsSynchronizerRegistry).submitMySegmentsLoadingTask();
     }
 
     @Test
@@ -811,15 +778,6 @@ public class SynchronizerTest {
         mSynchronizer.registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
 
         verify(mMySegmentsSynchronizerRegistry).registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
-    }
-
-    @Test
-    public void registerMyLargeSegmentsSynchronizerDelegatesToRegistry() {
-        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
-
-        mSynchronizer.registerMyLargeSegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
-
-        verify(mMySegmentsSynchronizerRegistry).registerMyLargeSegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
     }
 
     @Test

@@ -22,16 +22,4 @@ public class MySegmentsUriBuildersTest {
             mockedStatic.verify(() -> SdkTargetPath.mySegments("https://sdk.split.io/api/", "some_key"));
         }
     }
-
-    @Test
-    public void myLargeSegmentsUriBuilderUsesSdkTargetPath() throws URISyntaxException {
-        try (MockedStatic<SdkTargetPath> mockedStatic = mockStatic(SdkTargetPath.class)) {
-
-            SplitFactoryHelper.MyLargeSegmentsUriBuilder builder = new SplitFactoryHelper.MyLargeSegmentsUriBuilder(
-                    "https://sdk.split.io/api/");
-            builder.build("some_key");
-
-            mockedStatic.verify(() -> SdkTargetPath.myLargeSegments("https://sdk.split.io/api/", "some_key"));
-        }
-    }
 }

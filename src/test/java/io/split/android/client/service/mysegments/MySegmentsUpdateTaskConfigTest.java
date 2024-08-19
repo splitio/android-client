@@ -18,13 +18,4 @@ public class MySegmentsUpdateTaskConfigTest {
         assertEquals(config.getUpdateEvent(), SplitInternalEvent.MY_SEGMENTS_UPDATED);
         assertEquals(config.getTelemetrySSEKey(), UpdatesFromSSEEnum.MY_SEGMENTS);
     }
-
-    @Test
-    public void getForMyLargeSegments() {
-        MySegmentsUpdateTaskConfig config = MySegmentsUpdateTaskConfig.getForMyLargeSegments();
-
-        assertEquals(config.getTaskType(), SplitTaskType.MY_LARGE_SEGMENTS_UPDATE);
-        assertEquals(config.getUpdateEvent(), SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
-        assertEquals(config.getTelemetrySSEKey(), UpdatesFromSSEEnum.MY_LARGE_SEGMENTS);
-    }
 }

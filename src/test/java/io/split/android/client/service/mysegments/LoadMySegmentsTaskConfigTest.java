@@ -10,15 +10,8 @@ public class LoadMySegmentsTaskConfigTest {
 
     @Test
     public void getForMySegments() {
-        LoadMySegmentsTaskConfig config = LoadMySegmentsTaskConfig.getForMySegments();
+        LoadMySegmentsTaskConfig config = LoadMySegmentsTaskConfig.get();
 
-        assertEquals(config.getTaskType(), SplitTaskType.LOAD_LOCAL_MY_SYGMENTS);
-    }
-
-    @Test
-    public void getForMyLargeSegments() {
-        LoadMySegmentsTaskConfig config = LoadMySegmentsTaskConfig.getForMyLargeSegments();
-
-        assertEquals(config.getTaskType(), SplitTaskType.LOAD_LOCAL_MY_LARGE_SEGMENTS);
+        assertEquals(config.getTaskType(), SplitTaskType.LOAD_LOCAL_MY_SEGMENTS);
     }
 }
