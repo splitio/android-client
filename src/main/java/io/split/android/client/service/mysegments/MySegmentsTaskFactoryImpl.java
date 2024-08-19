@@ -24,6 +24,7 @@ public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
     public MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache) {
         return new MySegmentsSyncTask(mConfiguration.getHttpFetcher(),
                 mConfiguration.getMySegmentsStorage(),
+                mConfiguration.getMyLargeSegmentsStorage(),
                 avoidCache,
                 mConfiguration.getEventsManager(),
                 mTelemetryRuntimeProducer,

@@ -34,7 +34,7 @@ import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryI
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyConfig;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
 import io.split.android.client.service.impressions.strategy.ProcessStrategy;
-import io.split.android.client.service.mysegments.MySegmentsResponseParser;
+import io.split.android.client.service.mysegments.MySegmentsV2ResponseParser;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
@@ -186,7 +186,7 @@ class SplitFactoryHelper {
                 ServiceFactory.getSplitsFetcher(httpClient,
                         splitClientConfig.endpoint(), splitsFilterQueryString),
                 new MySegmentsFetcherFactoryImpl(httpClient,
-                        splitClientConfig.endpoint(), new MySegmentsResponseParser(),
+                        splitClientConfig.endpoint(), new MySegmentsV2ResponseParser(),
                         new MySegmentsUriBuilder(splitClientConfig.endpoint())),
                 ServiceFactory.getSseAuthenticationFetcher(httpClient,
                         splitClientConfig.authServiceUrl()),

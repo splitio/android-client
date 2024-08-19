@@ -11,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.dtos.SegmentResponse;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
@@ -29,8 +28,9 @@ import io.split.android.client.utils.logger.Logger;
 
 public class MySegmentsSyncTask implements SplitTask {
 
-    private final HttpFetcher<? extends SegmentResponse> mMySegmentsFetcher;
+    private final HttpFetcher<? extends SegmentResponseV2> mMySegmentsFetcher;
     private final MySegmentsStorage mMySegmentsStorage;
+    private final MySegmentsStorage mMyLargeSegmentsStorage;
     private final boolean mAvoidCache;
     private final SplitEventsManager mEventsManager;
     private final MySegmentsChangeChecker mMySegmentsChangeChecker;
@@ -40,14 +40,16 @@ public class MySegmentsSyncTask implements SplitTask {
     private final SplitInternalEvent mFetchedEvent;
     private final OperationType mTelemetryOperationType;
 
-    public MySegmentsSyncTask(@NonNull HttpFetcher<? extends SegmentResponse> mySegmentsFetcher,
+    public MySegmentsSyncTask(@NonNull HttpFetcher<? extends SegmentResponseV2> mySegmentsFetcher,
                               @NonNull MySegmentsStorage mySegmentsStorage,
+                              @NonNull MySegmentsStorage myLargeSegmentsStorage,
                               boolean avoidCache,
                               SplitEventsManager eventsManager,
                               @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                               @NonNull MySegmentsSyncTaskConfig config) {
         mMySegmentsFetcher = checkNotNull(mySegmentsFetcher);
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
+        mMyLargeSegmentsStorage = checkNotNull(myLargeSegmentsStorage);
         mAvoidCache = avoidCache;
         mEventsManager = eventsManager;
         mMySegmentsChangeChecker = new MySegmentsChangeChecker();
@@ -64,17 +66,22 @@ public class MySegmentsSyncTask implements SplitTask {
         long startTime = System.currentTimeMillis();
         long latency = 0;
         try {
-            SegmentResponse response = mMySegmentsFetcher.execute(new HashMap<>(), getHeaders());
+            SegmentResponseV2 response = mMySegmentsFetcher.execute(new HashMap<>(), getHeaders());
 
             long now = System.currentTimeMillis();
             latency = now - startTime;
             List<String> oldSegments = new ArrayList<>(mMySegmentsStorage.getAll());
-            List<String> mySegments = response.getSegments();
+            List<String> mySegments = new ArrayList<>(response.getSegments());
+            mMySegmentsStorage.set(mySegments, response.getSegmentsTill());
 
-            mMySegmentsStorage.set(mySegments, response.getTill());
+            List<String> oldLargeSegments = new ArrayList<>(mMyLargeSegmentsStorage.getAll());
+            List<String> myLargeSegments = new ArrayList<>(response.getLargeSegments());
+            mMyLargeSegmentsStorage.set(myLargeSegments, response.getLargeSegmentsTill());
 
             mTelemetryRuntimeProducer.recordSuccessfulSync(mTelemetryOperationType, now);
+
             fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments);
+            fireMyLargeSegmentsUpdatedIfNeeded(oldLargeSegments, myLargeSegments);
         } catch (HttpFetcherException e) {
             logError("Network error while retrieving my segments: " + e.getLocalizedMessage());
             mTelemetryRuntimeProducer.recordSyncError(mTelemetryOperationType, e.getHttpStatus());
@@ -110,14 +117,20 @@ public class MySegmentsSyncTask implements SplitTask {
         if (mEventsManager == null) {
             return;
         }
-        mEventsManager.notifyInternalEvent(getInternalEvent(oldSegments, newSegments));
+        if (mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, newSegments)) {
+            mEventsManager.notifyInternalEvent(mUpdateEvent);
+        } else {
+            mEventsManager.notifyInternalEvent(mFetchedEvent);
+        }
     }
 
-    private SplitInternalEvent getInternalEvent(List<String> oldSegments, List<String> newSegments) {
-        boolean haveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, newSegments);
-        if (haveChanged) {
-            return mUpdateEvent;
+    private void fireMyLargeSegmentsUpdatedIfNeeded(List<String> oldLargeSegments, List<String> myLargeSegments) {
+        if (mEventsManager == null) {
+            return;
         }
-        return mFetchedEvent;
+        boolean haveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(oldLargeSegments, myLargeSegments);
+        if (haveChanged) {
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
+        }
     }
 }
