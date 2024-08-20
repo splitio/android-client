@@ -80,8 +80,9 @@ public class MySegmentsSyncTask implements SplitTask {
 
             mTelemetryRuntimeProducer.recordSuccessfulSync(mTelemetryOperationType, now);
 
-            fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments);
-            fireMyLargeSegmentsUpdatedIfNeeded(oldLargeSegments, myLargeSegments);
+            Logger.v("New segments fetched: " + String.join(", ", mySegments));
+            Logger.v("New large segments fetched: " + String.join(", ", myLargeSegments));
+            fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments, oldLargeSegments, myLargeSegments);
         } catch (HttpFetcherException e) {
             logError("Network error while retrieving my segments: " + e.getLocalizedMessage());
             mTelemetryRuntimeProducer.recordSyncError(mTelemetryOperationType, e.getHttpStatus());
@@ -113,24 +114,19 @@ public class MySegmentsSyncTask implements SplitTask {
         return null;
     }
 
-    private void fireMySegmentsUpdatedIfNeeded(List<String> oldSegments, List<String> newSegments) {
+    private void fireMySegmentsUpdatedIfNeeded(List<String> oldSegments, List<String> newSegments, List<String> oldLargeSegments, List<String> newLargeSegments) {
         if (mEventsManager == null) {
             return;
         }
         if (mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, newSegments)) {
             mEventsManager.notifyInternalEvent(mUpdateEvent);
         } else {
-            mEventsManager.notifyInternalEvent(mFetchedEvent);
-        }
-    }
-
-    private void fireMyLargeSegmentsUpdatedIfNeeded(List<String> oldLargeSegments, List<String> myLargeSegments) {
-        if (mEventsManager == null) {
-            return;
-        }
-        boolean haveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(oldLargeSegments, myLargeSegments);
-        if (haveChanged) {
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
+            boolean largeSegmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(oldLargeSegments, newLargeSegments);
+            if (largeSegmentsHaveChanged) {
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
+            } else {
+                mEventsManager.notifyInternalEvent(mFetchedEvent);
+            }
         }
     }
 }

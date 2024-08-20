@@ -44,7 +44,6 @@ public class LargeSegmentsStreamingTest {
 
     public static final String SPLIT_CHANGES = "splitChanges";
     public static final String MY_SEGMENTS = "mySegments";
-    public static final String MY_LARGE_SEGMENTS = "myLargeSegments";
     public static final String AUTH = "v2/auth";
     public static final String SSE = "sse";
     private final FileHelper mFileHelper = new FileHelper();
@@ -66,37 +65,33 @@ public class LargeSegmentsStreamingTest {
 
     @Test
     public void unboundedLargeSegmentsUpdateTriggersSdkUpdate() throws IOException, InterruptedException {
-        TestSetup testSetup = getTestSetup(true);
+        TestSetup testSetup = getTestSetup();
 
         boolean mySegmentsAwait = mLatches.get(MY_SEGMENTS).await(10, TimeUnit.SECONDS);
         boolean splitsAwait = mLatches.get(SPLIT_CHANGES).await(10, TimeUnit.SECONDS);
-        boolean myLargeSegmentsAwait = mLatches.get(MY_LARGE_SEGMENTS).await(10, TimeUnit.SECONDS);
         String initialSegmentList = testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList();
         mRandomizeMyLargeSegments.set(true);
 
         pushMyLargeSegmentsMessage(TestingData.largeSegmentsUnboundedNoCompression("100"));
-        boolean updateAwait = testSetup.updateLatch.await(10, TimeUnit.SECONDS);
+        boolean updateAwait = testSetup.updateLatch.await(15, TimeUnit.SECONDS);
 
         assertTrue(testSetup.await);
         assertTrue(testSetup.authAwait);
         assertTrue(mySegmentsAwait);
         assertTrue(splitsAwait);
-        assertTrue(myLargeSegmentsAwait);
         assertTrue(updateAwait);
-        assertEquals(3, mEndpointHits.get(MY_LARGE_SEGMENTS).get());
         assertEquals(2, mEndpointHits.get(SPLIT_CHANGES).get());
-        assertEquals(2, mEndpointHits.get(MY_SEGMENTS).get());
+        assertEquals(3, mEndpointHits.get(MY_SEGMENTS).get());
         assertEquals("{\"segments\":[\"large-segment1\",\"large-segment2\",\"large-segment3\"],\"till\":9999999999999}", initialSegmentList);
-        assertEquals(4, Json.fromJson(testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList(), SegmentChangeDTO.class).getMySegments().size());
+        assertEquals(2, Json.fromJson(testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList(), SegmentChangeDTO.class).getMySegments().size());
     }
 
     @Test
     public void segmentRemovalTriggersSdkUpdateAndRemovesSegmentFromStorage() throws IOException, InterruptedException {
-        TestSetup testSetup = getTestSetup(true);
+        TestSetup testSetup = getTestSetup();
 
         boolean mySegmentsAwait = mLatches.get(MY_SEGMENTS).await(10, TimeUnit.SECONDS);
         boolean splitsAwait = mLatches.get(SPLIT_CHANGES).await(10, TimeUnit.SECONDS);
-        boolean myLargeSegmentsAwait = mLatches.get(MY_LARGE_SEGMENTS).await(10, TimeUnit.SECONDS);
 
         SplitRoomDatabase db = testSetup.database;
         String initialLargeSegmentsSize = db.myLargeSegmentDao()
@@ -110,18 +105,17 @@ public class LargeSegmentsStreamingTest {
         assertTrue(testSetup.authAwait);
         assertTrue(mySegmentsAwait);
         assertTrue(splitsAwait);
-        assertTrue(myLargeSegmentsAwait);
         assertTrue(updateAwait);
         assertEquals("{\"segments\":[\"large-segment1\",\"large-segment2\",\"large-segment3\"],\"till\":9999999999999}", initialLargeSegmentsSize);
         assertEquals("{\"segments\":[\"large-segment3\"],\"till\":1702507130121}", db.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList());
     }
 
     @NonNull
-    private TestSetup getTestSetup(boolean largeSegmentsEnabled) throws IOException, InterruptedException {
+    private TestSetup getTestSetup() throws IOException, InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
         CountDownLatch updateLatch = new CountDownLatch(1);
         SplitRoomDatabase database = DatabaseHelper.getTestDatabase(mContext);
-        SplitFactory factory = getFactory(largeSegmentsEnabled, true, database);
+        SplitFactory factory = getFactory(database);
 
         SplitClient client = factory.client();
         client.on(SplitEvent.SDK_READY, TestingHelper.testTask(latch));
@@ -138,9 +132,7 @@ public class LargeSegmentsStreamingTest {
         return new TestSetup(updateLatch, database, await, authAwait);
     }
 
-    private SplitFactory getFactory(boolean largeSegmentsEnabled,
-                                      boolean waitForLargeSegments,
-                                      SplitRoomDatabase database) throws IOException {
+    private SplitFactory getFactory(SplitRoomDatabase database) throws IOException {
         if (database == null) {
             database = DatabaseHelper.getTestDatabase(mContext);
         }
@@ -166,17 +158,12 @@ public class LargeSegmentsStreamingTest {
         String key = IntegrationHelper.dummyUserKey().matchingKey();
         responses.put("mySegments/" + key, (path, query, body) -> {
             updateEndpointHit(MY_SEGMENTS);
-            return new HttpResponseMock(200, IntegrationHelper.dummyMySegments());
-        });
-
-        responses.put("myLargeSegments/" + key, (path, query, body) -> {
-            updateEndpointHit(MY_LARGE_SEGMENTS);
             if (mMyLargeSegmentsStatusCode.get() != 200) {
                 return new HttpResponseMock(mMyLargeSegmentsStatusCode.get());
             } else {
-                String responseBody = IntegrationHelper.dummyMyLargeSegments();
+                String responseBody = IntegrationHelper.dummyMyUnifiedSegments();
                 if (mRandomizeMyLargeSegments.get()) {
-                    responseBody = IntegrationHelper.randomizedMyLargeSegments();
+                    responseBody = IntegrationHelper.randomizedMyUnifiedSegments();
                 }
                 return new HttpResponseMock(200, responseBody);
             }
@@ -184,7 +171,7 @@ public class LargeSegmentsStreamingTest {
 
         responses.put(AUTH, (path, query, body) -> {
             try {
-                return new HttpResponseMock(200, IntegrationHelper.streamingEnabledTokenLargeSegments());
+                return new HttpResponseMock(200, IntegrationHelper.streamingEnabledToken());
             } finally {
                 updateEndpointHit(AUTH);
             }
@@ -206,7 +193,6 @@ public class LargeSegmentsStreamingTest {
         mLatches = new ConcurrentHashMap<>();
         mLatches.put(SPLIT_CHANGES, new CountDownLatch(2));
         mLatches.put(MY_SEGMENTS, new CountDownLatch(2));
-        mLatches.put(MY_LARGE_SEGMENTS, new CountDownLatch(2));
         mLatches.put(AUTH, new CountDownLatch(1));
         mLatches.put(SSE, new CountDownLatch(1));
     }
