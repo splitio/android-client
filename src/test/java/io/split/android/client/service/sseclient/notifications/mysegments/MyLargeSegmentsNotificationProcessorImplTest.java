@@ -1,6 +1,9 @@
 package io.split.android.client.service.sseclient.notifications.mysegments;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -49,12 +52,13 @@ public class MyLargeSegmentsNotificationProcessorImplTest {
 
         mNotificationProcessor.process(notification);
 
-        verify(mHelper).processUpdate(MySegmentUpdateStrategy.BOUNDED_FETCH_REQUEST,
+        verify(mHelper).processMyLargeSegmentsUpdate(MySegmentUpdateStrategy.BOUNDED_FETCH_REQUEST,
                 "dummy",
                 CompressionType.GZIP,
                 new HashSet<>(Arrays.asList("segment1", "segment2")),
                 notification.getChangeNumber(), mBlockingQueue,
                 25L);
+        verify(mHelper, times(0)).processMySegmentsUpdate(any(), any(), any(), any(), any(), any(), anyLong());
     }
 
     @Test

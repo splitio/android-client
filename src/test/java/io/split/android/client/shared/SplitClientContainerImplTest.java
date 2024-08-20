@@ -8,8 +8,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNotNull;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -39,7 +37,6 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
-import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactoryProvider;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManagerDeferredStartTask;
@@ -80,7 +77,6 @@ public class SplitClientContainerImplTest {
         MockitoAnnotations.openMocks(this);
         when(mSplitApiFacade.getMySegmentsFetcher(any())).thenReturn(mock(HttpFetcher.class));
         when(mStorageContainer.getMySegmentsStorage(any())).thenReturn(mock(MySegmentsStorage.class));
-        when(mSplitApiFacade.getMyLargeSegmentsFetcher(any())).thenReturn(mock(HttpFetcher.class));
         when(mStorageContainer.getMyLargeSegmentsStorage(any())).thenReturn(mock(MySegmentsStorage.class));
         mClientContainer = getSplitClientContainer(mDefaultMatchingKey, true);
     }
@@ -205,18 +201,7 @@ public class SplitClientContainerImplTest {
         when(mSplitClientFactory.getClient(eq(key), any(), any(), anyBoolean())).thenReturn(clientMock);
         mClientContainer.getClient(key);
 
-        verify(mClientComponentsRegister).registerComponents(eq(key), any(), any(), isNull());
-    }
-
-    @Test
-    public void myLargeSegmentsTaskFactoryIsNotNull() {
-        when(mMySegmentsTaskFactoryProvider.getFactory(any())).thenReturn(mock(MySegmentsTaskFactory.class));
-        Key key = new Key("matching_key");
-        SplitClient clientMock = mock(SplitClient.class);
-        when(mSplitClientFactory.getClient(eq(key), any(), any(), anyBoolean())).thenReturn(clientMock);
-
-        mClientContainer.getClient(key);
-        verify(mClientComponentsRegister).registerComponents(eq(key), any(), any(), isNotNull());
+        verify(mClientComponentsRegister).registerComponents(eq(key), any(), any());
     }
 
     @Test

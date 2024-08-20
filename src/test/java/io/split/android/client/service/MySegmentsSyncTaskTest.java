@@ -61,7 +61,7 @@ public class MySegmentsSyncTaskTest {
     @Before
     public void setup() {
         mAutoCloseable = MockitoAnnotations.openMocks(this);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.getForMySegments());
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get());
         loadMySegments();
     }
 
@@ -92,7 +92,7 @@ public class MySegmentsSyncTaskTest {
     public void correctExecutionNoCache() throws HttpFetcherException {
         Map<String, String> headers = new HashMap<>();
         headers.put(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER, SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true, null, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.getForMySegments());
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, true, null, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get());
         when(mMySegmentsFetcher.execute(noParams, headers)).thenAnswer((Answer<MySegmentsResponse>) invocation -> mMySegments);
 
         mTask.execute();
@@ -115,7 +115,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void fetcherOtherExceptionRetryOn() throws HttpFetcherException {
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.getForMySegments());
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get());
         when(mMySegmentsFetcher.execute(noParams, null)).thenThrow(IllegalStateException.class);
 
         mTask.execute();

@@ -76,15 +76,11 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     }
 
     @Override
-    public void registerComponents(Key key, SplitEventsManager eventsManager, MySegmentsTaskFactory mySegmentsTaskFactory, @Nullable MySegmentsTaskFactory myLargeSegmentsTaskFactory) {
+    public void registerComponents(Key key, SplitEventsManager eventsManager, MySegmentsTaskFactory mySegmentsTaskFactory) {
         registerEventsManager(key, eventsManager);
 
         MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(mySegmentsTaskFactory, eventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, mSplitConfig.segmentsRefreshRate());
         registerMySegmentsSynchronizer(key, mySegmentsSynchronizer);
-
-        MySegmentsSynchronizer myLargeSegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(myLargeSegmentsTaskFactory, eventsManager, SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE, mSplitConfig.segmentsRefreshRate());
-            mMySegmentsSynchronizerRegistry.registerMyLargeSegmentsSynchronizer(key.matchingKey(),
-                    myLargeSegmentsSynchronizer);
 
         registerAttributesSynchronizer(key, eventsManager);
 
@@ -94,9 +90,8 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
             registerMySegmentsNotificationProcessor(key, mySegmentsTaskFactory, mySegmentsNotificationQueue);
             registerMySegmentsUpdateWorker(key, mySegmentsSynchronizer, mySegmentsNotificationQueue);
 
-            LinkedBlockingDeque<Long> myLargeSegmentsNotificationQueue = new LinkedBlockingDeque<>();
-            registerMyLargeSegmentsNotificationProcessor(key, myLargeSegmentsTaskFactory, myLargeSegmentsNotificationQueue);
-            registerMyLargeSegmentsUpdateWorker(key, myLargeSegmentsSynchronizer, myLargeSegmentsNotificationQueue);
+            registerMyLargeSegmentsNotificationProcessor(key, mySegmentsTaskFactory, mySegmentsNotificationQueue);
+            registerMyLargeSegmentsUpdateWorker(key, mySegmentsSynchronizer, mySegmentsNotificationQueue);
         }
     }
 

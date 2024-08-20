@@ -143,7 +143,6 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
                 case SPLITS_FETCHED:
                 case MY_SEGMENTS_FETCHED:
-                case MY_LARGE_SEGMENTS_FETCHED:
                     if (isTriggered(SplitEvent.SDK_READY)) {
                         return;
                     }
@@ -152,14 +151,12 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
                 case SPLITS_LOADED_FROM_STORAGE:
                 case MY_SEGMENTS_LOADED_FROM_STORAGE:
-                case MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE:
                 case ATTRIBUTES_LOADED_FROM_STORAGE:
                 case ENCRYPTION_MIGRATION_DONE:
                     if (wasTriggered(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE) &&
                             wasTriggered(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE) &&
                             wasTriggered(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE) &&
-                            wasTriggered(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE) &&
-                            wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE)) {
+                            wasTriggered(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE)) {
                         trigger(SplitEvent.SDK_READY_FROM_CACHE);
                     }
                     break;
@@ -192,7 +189,6 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     private void triggerSdkReadyIfNeeded() {
         if ((wasTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_SEGMENTS_FETCHED)) &&
                 (wasTriggered(SplitInternalEvent.SPLITS_UPDATED) || wasTriggered(SplitInternalEvent.SPLITS_FETCHED)) &&
-//                (wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_FETCHED)) && TODO: Uncomment this line
                 !isTriggered(SplitEvent.SDK_READY)) {
             trigger(SplitEvent.SDK_READY);
         }

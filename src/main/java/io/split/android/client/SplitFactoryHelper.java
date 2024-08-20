@@ -34,7 +34,6 @@ import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryI
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyConfig;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
 import io.split.android.client.service.impressions.strategy.ProcessStrategy;
-import io.split.android.client.service.mysegments.MyLargeSegmentsResponseParser;
 import io.split.android.client.service.mysegments.MySegmentsResponseParser;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
@@ -189,9 +188,6 @@ class SplitFactoryHelper {
                 new MySegmentsFetcherFactoryImpl(httpClient,
                         splitClientConfig.endpoint(), new MySegmentsResponseParser(),
                         new MySegmentsUriBuilder(splitClientConfig.endpoint())),
-                new MySegmentsFetcherFactoryImpl(httpClient,
-                        splitClientConfig.endpoint(), new MyLargeSegmentsResponseParser(),
-                        new MyLargeSegmentsUriBuilder(splitClientConfig.endpoint())),
                 ServiceFactory.getSseAuthenticationFetcher(httpClient,
                         splitClientConfig.authServiceUrl()),
                 ServiceFactory.getEventsRecorder(httpClient,
@@ -486,19 +482,6 @@ class SplitFactoryHelper {
         @Override
         public URI build(String matchingKey) throws URISyntaxException {
             return SdkTargetPath.mySegments(mEndpoint, matchingKey);
-        }
-    }
-
-    static class MyLargeSegmentsUriBuilder implements MySegmentsFetcherFactory.UriBuilder {
-        private final String mEndpoint;
-
-        public MyLargeSegmentsUriBuilder(String endpoint) {
-            mEndpoint = endpoint;
-        }
-
-        @Override
-        public URI build(String matchingKey) throws URISyntaxException {
-            return SdkTargetPath.myLargeSegments(mEndpoint, matchingKey);
         }
     }
 }

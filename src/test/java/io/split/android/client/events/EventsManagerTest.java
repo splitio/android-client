@@ -105,7 +105,6 @@ public class EventsManagerTest {
         eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
-        eventList.add(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList, SplitClientConfig.builder().build());
     }
 
@@ -116,7 +115,6 @@ public class EventsManagerTest {
         eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
-        eventList.add(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList, SplitClientConfig.builder().build());
     }
 
@@ -127,7 +125,6 @@ public class EventsManagerTest {
         eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
-        eventList.add(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList, SplitClientConfig.builder().build());
     }
 
@@ -138,14 +135,12 @@ public class EventsManagerTest {
         eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-        eventList.add(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE);
         eventOnReadyFromCache(eventList, SplitClientConfig.builder().build());
     }
 
     @Test
     public void eventOnReadyFromCacheMyLargeSegmentsFirst() {
         List<SplitInternalEvent> eventList = new ArrayList<>();
-        eventList.add(SplitInternalEvent.MY_LARGE_SEGMENTS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
         eventList.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
@@ -195,7 +190,6 @@ public class EventsManagerTest {
 
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_FETCHED);
         boolean readyAwait = readyLatch.await(3, TimeUnit.SECONDS);
 
         eventManager.notifyInternalEvent(eventToCheck);

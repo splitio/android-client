@@ -10,7 +10,6 @@ import io.split.android.client.utils.Utils;
 public class SdkTargetPath {
     public static final String SPLIT_CHANGES = "/splitChanges";
     public static final String MY_SEGMENTS = "/mySegments";
-    public static final String MY_LARGE_SEGMENTS = "/myLargeSegments";//"/myLargeSegments";
     public static final String EVENTS = "/events/bulk";
     public static final String IMPRESSIONS = "/testImpressions/bulk";
     public static final String IMPRESSIONS_COUNT = "/testImpressions/count";
@@ -25,10 +24,6 @@ public class SdkTargetPath {
 
     public static URI mySegments(String baseUrl, String key) throws URISyntaxException {
         return buildUrl(baseUrl, MY_SEGMENTS + "/" + getUrlEncodedKey(key));
-    }
-
-    public static URI myLargeSegments(String baseUrl, String key) throws URISyntaxException {
-        return buildUrl(baseUrl, MY_LARGE_SEGMENTS + "/" + getUrlEncodedKey(key));
     }
 
     public static URI events(String baseUrl) throws URISyntaxException {

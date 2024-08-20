@@ -36,11 +36,6 @@ public class SynchronizerSpyImpl implements SynchronizerSpy, MySegmentsSynchroni
     }
 
     @Override
-    public void loadMyLargeSegmentsFromCache() {
-        mSynchronizer.loadMyLargeSegmentsFromCache();
-    }
-
-    @Override
     public void loadAttributesFromCache() {
         mSynchronizer.loadAttributesFromCache();
     }
@@ -58,11 +53,6 @@ public class SynchronizerSpyImpl implements SynchronizerSpy, MySegmentsSynchroni
     @Override
     public void synchronizeMySegments() {
         mSynchronizer.synchronizeMySegments();
-    }
-
-    @Override
-    public void synchronizeMyLargeSegments() {
-        mSynchronizer.synchronizeMyLargeSegments();
     }
 
     @Override
@@ -134,11 +124,6 @@ public class SynchronizerSpyImpl implements SynchronizerSpy, MySegmentsSynchroni
     @Override
     public void registerMySegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
         ((MySegmentsSynchronizerRegistry) mSynchronizer).registerMySegmentsSynchronizer(userKey, mySegmentsSynchronizer);
-    }
-
-    @Override
-    public void registerMyLargeSegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
-        ((MySegmentsSynchronizerRegistry) mSynchronizer).registerMyLargeSegmentsSynchronizer(userKey, mySegmentsSynchronizer);
     }
 
     @Override

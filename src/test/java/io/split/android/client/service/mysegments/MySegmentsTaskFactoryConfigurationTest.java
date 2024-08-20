@@ -16,44 +16,31 @@ public class MySegmentsTaskFactoryConfigurationTest {
 
     private HttpFetcher<? extends SegmentResponse> mHttpFetcher;
     private MySegmentsStorage mMySegmentsStorage;
+    private MySegmentsStorage mMyLargeSegmentsStorage;
     private SplitEventsManager mEventsManager;
 
     @Before
     public void setUp() {
         mHttpFetcher = mock(HttpFetcher.class);
         mMySegmentsStorage = mock(MySegmentsStorage.class);
+        mMyLargeSegmentsStorage = mock(MySegmentsStorage.class);
         mEventsManager = mock(SplitEventsManager.class);
     }
 
     @Test
     public void getForMySegments() {
-        MySegmentsTaskFactoryConfiguration config = MySegmentsTaskFactoryConfiguration.getForMySegments(
+        MySegmentsTaskFactoryConfiguration config = MySegmentsTaskFactoryConfiguration.get(
                 mHttpFetcher,
                 mMySegmentsStorage,
+                mMyLargeSegmentsStorage,
                 mEventsManager);
 
         assertSame(mHttpFetcher, config.getHttpFetcher());
-        assertSame(mMySegmentsStorage, config.getStorage());
+        assertSame(mMySegmentsStorage, config.getMySegmentsStorage());
         assertSame(mEventsManager, config.getEventsManager());
-        assertEquals(MySegmentsSyncTaskConfig.getForMySegments(), config.getMySegmentsSyncTaskConfig());
+        assertEquals(MySegmentsSyncTaskConfig.get(), config.getMySegmentsSyncTaskConfig());
         assertEquals(MySegmentsUpdateTaskConfig.getForMySegments(), config.getMySegmentsUpdateTaskConfig());
         assertEquals(MySegmentsOverwriteTaskConfig.getForMySegments(), config.getMySegmentsOverwriteTaskConfig());
-        assertEquals(LoadMySegmentsTaskConfig.getForMySegments(), config.getLoadMySegmentsTaskConfig());
-    }
-
-    @Test
-    public void getForMyLargeSegments() {
-        MySegmentsTaskFactoryConfiguration config = MySegmentsTaskFactoryConfiguration.getForMyLargeSegments(
-                mHttpFetcher,
-                mMySegmentsStorage,
-                mEventsManager);
-
-        assertSame(mHttpFetcher, config.getHttpFetcher());
-        assertSame(mMySegmentsStorage, config.getStorage());
-        assertSame(mEventsManager, config.getEventsManager());
-        assertEquals(MySegmentsSyncTaskConfig.getForMyLargeSegments(), config.getMySegmentsSyncTaskConfig());
-        assertEquals(MySegmentsUpdateTaskConfig.getForMyLargeSegments(), config.getMySegmentsUpdateTaskConfig());
-        assertEquals(MySegmentsOverwriteTaskConfig.getForMyLargeSegments(), config.getMySegmentsOverwriteTaskConfig());
-        assertEquals(LoadMySegmentsTaskConfig.getForMyLargeSegments(), config.getLoadMySegmentsTaskConfig());
+        assertEquals(LoadMySegmentsTaskConfig.get(), config.getLoadMySegmentsTaskConfig());
     }
 }

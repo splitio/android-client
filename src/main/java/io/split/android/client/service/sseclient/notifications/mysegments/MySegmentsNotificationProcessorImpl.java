@@ -54,7 +54,7 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
 
     @Override
     public void processMySegmentsUpdateV2(MySegmentChangeV2Notification notification) {
-        mProcessorHelper.processUpdate(notification.getUpdateStrategy(),
+        mProcessorHelper.processMySegmentsUpdate(notification.getUpdateStrategy(),
                 notification.getData(),
                 notification.getCompression(),
                 Collections.singleton(notification.getSegmentName()),

@@ -144,11 +144,10 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     public void createNewClient(Key key) {
         SplitEventsManager eventsManager = new SplitEventsManager(mConfig, mSplitClientEventTaskExecutor);
         MySegmentsTaskFactory mySegmentsTaskFactory = getMySegmentsTaskFactory(key, eventsManager);
-        MySegmentsTaskFactory myLargeSegmentsTaskFactory = getMyLargeSegmentsTaskFactory(key, eventsManager);
 
         SplitClient client = mSplitClientFactory.getClient(key, mySegmentsTaskFactory, eventsManager, mDefaultMatchingKey.equals(key.matchingKey()));
         trackNewClient(key, client);
-        mClientComponentsRegister.registerComponents(key, eventsManager, mySegmentsTaskFactory, myLargeSegmentsTaskFactory);
+        mClientComponentsRegister.registerComponents(key, eventsManager, mySegmentsTaskFactory);
 
         if (mConfig.syncEnabled() && mStreamingEnabled) {
             connectToStreaming();
@@ -163,18 +162,11 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     @NonNull
     private MySegmentsTaskFactory getMySegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
         return mMySegmentsTaskFactoryProvider.getFactory(
-                MySegmentsTaskFactoryConfiguration.getForMySegments(
+                MySegmentsTaskFactoryConfiguration.get(
                         mSplitApiFacade.getMySegmentsFetcher(key.matchingKey()),
                         mStorageContainer.getMySegmentsStorage(key.matchingKey()),
+                        mStorageContainer.getMyLargeSegmentsStorage(key.matchingKey()),
                         eventsManager));
-    }
-
-    @Nullable
-    private MySegmentsTaskFactory getMyLargeSegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
-        return mMySegmentsTaskFactoryProvider.getFactory(MySegmentsTaskFactoryConfiguration.getForMyLargeSegments(
-                mSplitApiFacade.getMyLargeSegmentsFetcher(key.matchingKey()),
-                mStorageContainer.getMyLargeSegmentsStorage(key.matchingKey()),
-                eventsManager));
     }
 
     private void connectToStreaming() {

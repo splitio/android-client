@@ -1,7 +1,5 @@
 package io.split.android.client.service.synchronizer;
 
-import static io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry.Tasks.SegmentType.LARGE_SEGMENT;
-import static io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry.Tasks.SegmentType.SEGMENT;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
@@ -141,12 +139,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void loadMySegmentsFromCache() {
-        mMySegmentsSynchronizerRegistry.loadMySegmentsFromCache(SEGMENT);
-    }
-
-    @Override
-    public void loadMyLargeSegmentsFromCache() {
-        mMySegmentsSynchronizerRegistry.loadMySegmentsFromCache(LARGE_SEGMENT);
+        mMySegmentsSynchronizerRegistry.loadMySegmentsFromCache();
     }
 
     @Override
@@ -171,12 +164,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeMySegments() {
-        mMySegmentsSynchronizerRegistry.synchronizeMySegments(SEGMENT);
-    }
-
-    @Override
-    public void synchronizeMyLargeSegments() {
-        mMySegmentsSynchronizerRegistry.synchronizeMySegments(LARGE_SEGMENT);
+        mMySegmentsSynchronizerRegistry.synchronizeMySegments();
     }
 
     @Override
@@ -276,11 +264,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     @Override
-    public void registerMyLargeSegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
-        mMySegmentsSynchronizerRegistry.registerMyLargeSegmentsSynchronizer(userKey, mySegmentsSynchronizer);
-    }
-
-    @Override
     public void unregisterMySegmentsSynchronizer(String userKey) {
         mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(userKey);
     }
@@ -296,8 +279,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     private void scheduleMySegmentsFetcherTask() {
-        mMySegmentsSynchronizerRegistry.scheduleSegmentsSyncTask(SEGMENT);
-        mMySegmentsSynchronizerRegistry.scheduleSegmentsSyncTask(LARGE_SEGMENT); // TODO: remove
+        mMySegmentsSynchronizerRegistry.scheduleSegmentsSyncTask();
     }
 
     private void scheduleEventsRecorderTask() {
@@ -320,11 +302,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                 break;
             case MY_SEGMENTS_SYNC:
                 Logger.d("Loading my segments updated in background");
-                mMySegmentsSynchronizerRegistry.submitMySegmentsLoadingTask(SEGMENT);
-                break;
-            case MY_LARGE_SEGMENT_SYNC:
-                Logger.d("Loading my large segments updated in background");
-                mMySegmentsSynchronizerRegistry.submitMySegmentsLoadingTask(LARGE_SEGMENT);
+                mMySegmentsSynchronizerRegistry.submitMySegmentsLoadingTask();
                 break;
         }
     }
