@@ -205,6 +205,9 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
             }
             mExecutionTimes.put(event, mExecutionTimes.get(event) - 1);
         } //If executionTimes is lower than zero, execute it without limitation
+        if (event != null) {
+            Logger.d(event.name() + " event triggered");
+        }
         if (mSubscriptions.containsKey(event)) {
             List<SplitEventTask> toExecute = mSubscriptions.get(event);
             if (toExecute != null) {
