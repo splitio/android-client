@@ -1,7 +1,6 @@
-package io.split.android.client.service.mysegments;
+package io.split.android.client.dtos;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -9,41 +8,42 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
+
+import io.split.android.client.service.mysegments.MembershipsResponse;
 
 public class MembershipsResponseImpl implements MembershipsResponse {
 
     public static final int DEFAULT_TILL = -1;
     @SerializedName("ms")
-    private MySegments mMySegments;
+    private MyMemberships mMySegments;
 
     @SerializedName("ls")
-    private MySegments mMyLargeSegments;
+    private MyMemberships mMyLargeSegments;
 
     // TODO legacy endpoint support
     public MembershipsResponseImpl(List<String> mySegments) {
-        mMySegments = new MySegments();
+        mMySegments = new MyMemberships();
         Set<Membership> memberships = new HashSet<>();
         for (String segment : mySegments) {
             Membership membership = new Membership();
-            membership.mName = segment;
+            membership.setName(segment);
             memberships.add(membership);
         }
-        mMySegments.mMySegments = memberships;
+        mMySegments.setMemberships(memberships);
     }
 
     @NonNull
     @Override
     public Set<String> getSegments() {
         return mMySegments == null ? Collections.emptySet() :
-                mMySegments.getSegments();
+                toNames(mMySegments.getMemberships());
     }
 
     @NonNull
     @Override
     public Set<String> getLargeSegments() {
         return mMyLargeSegments == null ? Collections.emptySet() :
-                mMyLargeSegments.getSegments();
+                toNames(mMyLargeSegments.getMemberships());
     }
 
     @Override
@@ -56,36 +56,14 @@ public class MembershipsResponseImpl implements MembershipsResponse {
         return mMyLargeSegments == null ? DEFAULT_TILL : (mMyLargeSegments.getChangeNumber() == null ? DEFAULT_TILL : mMyLargeSegments.getChangeNumber());
     }
 
-    private static class MySegments {
-        @SerializedName("k")
-        private Set<Membership> mMySegments;
-
-        @SerializedName("cn")
-        private Long mChangeNumber;
-
-        Set<String> getSegments() {
-            Set<String> names = new TreeSet<>();
-            if (mMySegments != null) {
-                for (Membership membership : mMySegments) {
-                    names.add(membership.getName());
-                }
-            }
-
-            return names;
+    private static Set<String> toNames(Set<Membership> memberships) {
+        if (memberships == null) {
+            return Collections.emptySet();
         }
-
-        @Nullable
-        Long getChangeNumber() {
-            return mChangeNumber;
+        Set<String> names = new HashSet<>();
+        for (Membership membership : memberships) {
+            names.add(membership.getName());
         }
-    }
-
-    private static class Membership {
-        @SerializedName("n")
-        private String mName;
-
-        String getName() {
-            return mName;
-        }
+        return names;
     }
 }

@@ -82,7 +82,7 @@ public class LargeSegmentsStreamingTest {
         assertTrue(updateAwait);
         assertEquals(2, mEndpointHits.get(SPLIT_CHANGES).get());
         assertEquals(3, mEndpointHits.get(MY_SEGMENTS).get());
-        assertEquals("{\"segments\":[\"large-segment1\",\"large-segment2\",\"large-segment3\"],\"till\":9999999999999}", initialSegmentList);
+        assertTrue(initialSegmentList.contains("large-segment1") && initialSegmentList.contains("large-segment2") && initialSegmentList.contains("large-segment3"));
         assertEquals(2, Json.fromJson(testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList(), SegmentChangeDTO.class).getMySegments().size());
     }
 
@@ -106,7 +106,7 @@ public class LargeSegmentsStreamingTest {
         assertTrue(mySegmentsAwait);
         assertTrue(splitsAwait);
         assertTrue(updateAwait);
-        assertEquals("{\"segments\":[\"large-segment1\",\"large-segment2\",\"large-segment3\"],\"till\":9999999999999}", initialLargeSegmentsSize);
+        assertTrue(initialLargeSegmentsSize.contains("large-segment1") && initialLargeSegmentsSize.contains("large-segment2") && initialLargeSegmentsSize.contains("large-segment3"));
         assertEquals("{\"segments\":[\"large-segment3\"],\"till\":1702507130121}", db.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList());
     }
 

@@ -36,7 +36,7 @@ import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTaskConfig;
 import io.split.android.client.service.mysegments.MembershipsResponse;
-import io.split.android.client.service.mysegments.MembershipsResponseImpl;
+import io.split.android.client.dtos.MembershipsResponseImpl;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;

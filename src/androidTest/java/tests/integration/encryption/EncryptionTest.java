@@ -247,13 +247,13 @@ public class EncryptionTest {
     private static void verifyLargeSegments(SplitRoomDatabase testDatabase) {
         List<MyLargeSegmentEntity> all = testDatabase.myLargeSegmentDao().getAll();
         for (MyLargeSegmentEntity segmentEntity : all) {
-            boolean nameCondition = segmentEntity.getUserKey().trim().endsWith("=");
+            boolean nameCondition = segmentEntity.getUserKey().trim().contains("=");
             if (!nameCondition) {
                 fail("Large segment user key not encrypted, it was " + segmentEntity.getUserKey());
             }
 
-            boolean bodyCondition = segmentEntity.getSegmentList().trim().endsWith("=");
-            if (!bodyCondition) {
+            boolean bodyCondition = segmentEntity.getSegmentList().trim().contains("large-segment");
+            if (bodyCondition) {
                 fail("Large segment list not encrypted, it was " + segmentEntity.getSegmentList());
             }
         }
@@ -352,7 +352,6 @@ public class EncryptionTest {
         responses.put("mySegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.dummyMySegments()));
         responses.put("events/bulk", (uri, httpMethod, body) -> new HttpResponseMock(404, ""));
         responses.put("testImpressions/bulk", (uri, httpMethod, body) -> new HttpResponseMock(404, ""));
-        responses.put("myLargeSegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.randomizedMyLargeSegments()));
         return responses;
     }
 

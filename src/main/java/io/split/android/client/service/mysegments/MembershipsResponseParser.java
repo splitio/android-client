@@ -2,6 +2,7 @@ package io.split.android.client.service.mysegments;
 
 import com.google.gson.JsonSyntaxException;
 
+import io.split.android.client.dtos.MembershipsResponseImpl;
 import io.split.android.client.service.http.HttpResponseParser;
 import io.split.android.client.service.http.HttpResponseParserException;
 import io.split.android.client.utils.Json;
@@ -14,7 +15,7 @@ public class MembershipsResponseParser implements HttpResponseParser<Memberships
             // TODO legacy endpoint support
 //            try {
 //                MySegmentsResponse mySegmentsResponse = Json.fromJson(responseData, MySegmentsResponse.class);
-//                return new SegmentResponseV2Impl(mySegmentsResponse.getSegments());
+//                return new MembershipsResponseImpl(mySegmentsResponse.getSegments());
 //            } catch (Exception e) {
                 // This will used when the new DTO is defined
                 MembershipsResponseImpl mySegmentsResponse = Json.fromJson(responseData, MembershipsResponseImpl.class);

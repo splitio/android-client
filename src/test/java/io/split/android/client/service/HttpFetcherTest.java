@@ -280,7 +280,7 @@ public class HttpFetcherTest {
         params.put("since", "-1");
         params.put("sets", "flag_set1,flagset2");
 
-            fetcher.execute(params, null);
+        fetcher.execute(params, null);
 
         verifyQuery("s=1.1&since=-1&sets=flag_set1,flagset2");
     }
@@ -364,6 +364,6 @@ public class HttpFetcherTest {
     }
 
     private String dummyMySegmentsResponse() {
-        return "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id2\", \"name\":\"segment2\"}]}";
+        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":99999},\"ls\":{\"k\":[{\"n\":\"large-segment1\"},{\"n\":\"large-segment2\"},{\"n\":\"large-segment3\"}],\"cn\":9999999999999}}";
     }
 }

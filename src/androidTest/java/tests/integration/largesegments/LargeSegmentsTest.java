@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -105,10 +106,9 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         SegmentChangeDTO largeSegments = Json.fromJson(testDatabase.myLargeSegmentDao()
                 .getByUserKey(IntegrationHelper.dummyUserKey().matchingKey())
                 .getSegmentList(), SegmentChangeDTO.class);
-        assertEquals(3, largeSegments.getMySegments().size());
-        assertEquals("large-segment1", largeSegments.getMySegments().get(0));
-        assertEquals("large-segment2", largeSegments.getMySegments().get(1));
-        assertEquals("large-segment3", largeSegments.getMySegments().get(2));
+        List<String> mySegments = largeSegments.getMySegments();
+        assertEquals(3, mySegments.size());
+        assertTrue(mySegments.contains("large-segment1") && mySegments.contains("large-segment2") && mySegments.contains("large-segment3"));
         assertEquals(9999999999999L, largeSegments.getTill().longValue());
     }
 

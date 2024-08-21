@@ -156,43 +156,30 @@ public class IntegrationHelper {
 
     @Deprecated
     public static String dummyMySegments() {
-        return "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}";
-    }
-
-    @Deprecated
-    public static String dummyMyLargeSegments() {
-        return "{\"mySegments\":{\"mySegments\":[{\"id\":\"id1\",\"name\":\"segment1\"},{\"id\":\"id1\",\"name\":\"segment2\"}],\"till\":999999999},\"myLargeSegments\":{\"myLargeSegments\":[\"large-segment1\",\"large-segment2\",\"large-segment3\"],\"till\":999999999}}";
+        return dummyMyUnifiedSegments();
     }
 
     @Deprecated
     public static String emptyMySegments() {
-        return "{\"mySegments\":[]}";
-    }
-
-    @Deprecated
-    public static String emptyMyLargeSegments() {
-        return "{\"mySegments\":[], \"till\": 9999999999999}";
-    }
-
-    @Deprecated
-    public static String randomizedMyLargeSegments() {
-        int randIntOne = (int) (Math.random() * 100);
-        int randIntTwo = (int) (Math.random() * 100);
-        return "{\"myLargeSegments\":[\"large-segment1\", \"large-random\", \"large-segment"+randIntOne+"\", \"large-segment"+randIntTwo+"\"], \"till\": 9999999999999}";
+        return emptyMyUnifiedSegments();
     }
 
     public static String emptyMyUnifiedSegments() {
-        return "{\"ms\":{\"k\":[],\"cn\":99999},\"ls\":{\"k\":[],\"cn\":9999999999999}}";
+        return "{\"ms\":{\"k\":[],\"cn\":null},\"ls\":{\"k\":[],\"cn\":9999999999999}}";
     }
 
     public static String dummyMyUnifiedSegments() {
-        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":99999},\"ls\":{\"k\":[{\"n\":\"large-segment1\"},{\"n\":\"large-segment2\"},{\"n\":\"large-segment3\"}],\"cn\":9999999999999}}";
+        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment1\"},{\"n\":\"large-segment2\"},{\"n\":\"large-segment3\"}],\"cn\":9999999999999}}";
     }
 
     public static String randomizedMyUnifiedSegments() {
         int randIntOne = (int) (Math.random() * 100);
         int randIntTwo = (int) (Math.random() * 100);
-        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":99999},\"ls\":{\"k\":[{\"n\":\"large-segment"+randIntOne+"\"},{\"n\":\"large-segment"+randIntTwo+"\"}],\"cn\":9999999999999}}";
+        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment"+randIntOne+"\"},{\"n\":\"large-segment"+randIntTwo+"\"}],\"cn\":9999999999999}}";
+    }
+
+    public static String dummySingleSegment(String segment) {
+        return "{\"ms\":{\"k\":[{\"n\":\"" + segment + "\"}],\"cn\":null},\"ls\":{\"k\":[],\"cn\":9999999999999}}";
     }
 
     public static String dummyApiKey() {
