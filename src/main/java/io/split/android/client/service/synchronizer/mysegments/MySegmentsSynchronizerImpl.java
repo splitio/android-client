@@ -83,7 +83,8 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
     public void scheduleSegmentsSyncTask() {
         if (mIsSynchronizing.get()) {
             if (mMySegmentsFetcherTaskId != null) {
-                mTaskExecutor.stopTask(mMySegmentsFetcherTaskId);
+                // if a fetch task is already scheduled, we don't need to schedule another one
+                return;
             }
 
             mMySegmentsFetcherTaskId = mTaskExecutor.schedule(

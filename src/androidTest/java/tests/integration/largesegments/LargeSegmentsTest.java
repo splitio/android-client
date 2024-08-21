@@ -1,9 +1,7 @@
 package tests.integration.largesegments;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -34,45 +32,23 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
 
         assertEquals(1, mEndpointHits.get("splitChanges").get());
         assertEquals(1, mEndpointHits.get("mySegments").get());
-        assertEquals(1, mEndpointHits.get("myLargeSegments").get());
-    }
-
-    @Test
-    public void sdkReadyTimeoutIsEmittedWhenLargeSegmentsSyncFails() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        CountDownLatch sdkReadyTimeoutLatch = new CountDownLatch(1);
-        mMyLargeSegmentsStatusCode.set(500);
-        SplitFactory factory = getFactory(null, 2500, null);
-
-        SplitClient client = factory.client();
-        client.on(SplitEvent.SDK_READY, TestingHelper.testTask(countDownLatch));
-        client.on(SplitEvent.SDK_READY_TIMED_OUT, TestingHelper.testTask(sdkReadyTimeoutLatch));
-        boolean readyAwait = countDownLatch.await(5, TimeUnit.SECONDS);
-        boolean sdkReadyTimeoutAwait = sdkReadyTimeoutLatch.await(5, TimeUnit.SECONDS);
-
-        assertFalse(readyAwait);
-        assertTrue(sdkReadyTimeoutAwait);
-        assertEquals(1, mEndpointHits.get("splitChanges").get());
-        assertEquals(1, mEndpointHits.get("mySegments").get());
-        assertEquals(2, mEndpointHits.get("myLargeSegments").get());
     }
 
     @Test
     public void sdkReadyIsEmittedAfterLargeSegmentsAreSyncedWhenWaitForLargeSegmentsIsFalse() {
-        mMyLargeSegmentsDelay.set(4000);
+        mMySegmentsDelay.set(4000);
         SplitFactory factory = getFactory();
         getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
 
 
         assertEquals(1, mEndpointHits.get("splitChanges").get());
         assertEquals(1, mEndpointHits.get("mySegments").get());
-        assertNull(mEndpointHits.get("myLargeSegments"));
     }
 
     @Test
     public void sdkUpdateIsEmittedForLargeSegmentsWhenLargeSegmentsChange() throws InterruptedException {
+        mMySegmentsDelay.set(0L);
         mRandomizeMyLargeSegments.set(true);
-        mMyLargeSegmentsDelay.set(0L);
         CountDownLatch updateLatch = new CountDownLatch(3);
         CountDownLatch readyLatch = new CountDownLatch(1);
         SplitFactory factory = getFactory(1, null, null);
@@ -86,55 +62,6 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
 
         assertTrue(readyAwait);
         assertTrue(await);
-    }
-
-    @Test
-    public void onlyOneHitToLargeSegmentsWhenPollingIsEnabledAndEndpointFailsWith403() throws InterruptedException {
-        mMyLargeSegmentsDelay.set(0L);
-        mMyLargeSegmentsStatusCode.set(403);
-
-        SplitFactory factory = getFactory(3, null, null);
-
-        SplitClient readyClient = getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
-        Thread.sleep(5000);
-
-        assertEquals(1, mEndpointHits.get("myLargeSegments").get());
-    }
-
-    @Test
-    public void sdkReadyIsEmittedWhenWaitForLargeSegmentsIsTrueAndSyncFailsWith403Code() throws InterruptedException {
-        CountDownLatch countDownLatch = new CountDownLatch(1);
-        CountDownLatch sdkReadyTimeoutLatch = new CountDownLatch(1);
-        mMyLargeSegmentsStatusCode.set(403);
-        SplitFactory factory = getFactory(null, 2500, null);
-        SplitClient client = factory.client();
-        client.on(SplitEvent.SDK_READY, TestingHelper.testTask(countDownLatch));
-        client.on(SplitEvent.SDK_READY_TIMED_OUT, TestingHelper.testTask(sdkReadyTimeoutLatch));
-        boolean readyAwait = countDownLatch.await(5, TimeUnit.SECONDS);
-        boolean sdkReadyTimeoutAwait = sdkReadyTimeoutLatch.await(5, TimeUnit.SECONDS);
-        assertEquals(1, mEndpointHits.get("splitChanges").get());
-        assertEquals(1, mEndpointHits.get("mySegments").get());
-        assertEquals(1, mEndpointHits.get("myLargeSegments").get());
-        assertTrue(readyAwait);
-        assertFalse(sdkReadyTimeoutAwait);
-    }
-
-    @Test
-    public void multipleHitsToLargeSegmentsWhenWhenEndpointFailsWithErrorCodeDifferentThan403() throws InterruptedException {
-        mLatches.put("myLargeSegments", new CountDownLatch(2));
-        mMyLargeSegmentsDelay.set(0L);
-        mMyLargeSegmentsStatusCode.set(500);
-
-        SplitFactory factory = getFactory(null, null, null);
-
-        SplitClient readyClient = getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
-        mMyLargeSegmentsStatusCode.set(200);
-        boolean hitsAwait = mLatches.get("myLargeSegments").await(10, TimeUnit.SECONDS);
-
-        assertEquals(1, mEndpointHits.get("splitChanges").get());
-        assertEquals(1, mEndpointHits.get("mySegments").get());
-        assertEquals(2, mEndpointHits.get("myLargeSegments").get());
-        assertTrue(hitsAwait);
     }
 
     @Test
@@ -203,9 +130,8 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         SegmentChangeDTO segmentList1 = Json.fromJson(testDatabase.myLargeSegmentDao().getByUserKey("CUSTOMER_ID").getSegmentList(), SegmentChangeDTO.class);
         SegmentChangeDTO segmentList2 = Json.fromJson(testDatabase.myLargeSegmentDao().getByUserKey("key2").getSegmentList(), SegmentChangeDTO.class);
 
-        assertEquals(2, mEndpointHits.get("myLargeSegments").get());
-        assertEquals(4, segmentList1.getMySegments().size());
-        assertEquals(4, segmentList2.getMySegments().size());
+        assertEquals(2, segmentList1.getMySegments().size());
+        assertEquals(2, segmentList2.getMySegments().size());
         assertNotEquals(segmentList1,
                 segmentList2);
         assertEquals(9999999999999L, segmentList1.getTill().longValue());
@@ -214,7 +140,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
 
     @Test
     public void emptyMyLargeSegmentsSdkIsReady() throws InterruptedException {
-        mMyLargeSegmentsDelay.set(0L);
+        mMySegmentsDelay.set(0L);
         mEmptyMyLargeSegments.set(true);
         SplitFactory factory = getFactory(null, null, null);
         SplitClient client = factory.client();
@@ -224,7 +150,6 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
 
         assertEquals(1, mEndpointHits.get("splitChanges").get());
         assertEquals(1, mEndpointHits.get("mySegments").get());
-        assertEquals(1, mEndpointHits.get("myLargeSegments").get());
         assertTrue(readyAwait);
     }
 

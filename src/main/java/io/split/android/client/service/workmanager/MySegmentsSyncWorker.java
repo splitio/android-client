@@ -29,6 +29,7 @@ public class MySegmentsSyncWorker extends BaseSegmentsSyncWorker {
                 ServiceFactory.getMySegmentsFetcher(httpClient,
                         endPoint, key),
                 StorageFactory.getMySegmentsStorageForWorker(database, apiKey, isEncryptionEnabled).getStorageForKey(key),
+                StorageFactory.getMyLargeSegmentsStorageForWorker(database, apiKey, isEncryptionEnabled).getStorageForKey(key),
                 false,
                 null,
                 StorageFactory.getTelemetryStorage(shouldRecordTelemetry),

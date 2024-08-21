@@ -142,8 +142,8 @@ public class MySegmentsSynchronizerImplTest {
         mMySegmentsSynchronizer.scheduleSegmentsSyncTask();
 
         verify(mSplitTaskExecutor).schedule(eq(mockTask), eq(1L), eq(1L), notNull());
-        verify(mSplitTaskExecutor).stopTask("TaskID");
-        verify(mSplitTaskExecutor).schedule(eq(mockTask2), eq(1L), eq(1L), notNull());
+        verify(mSplitTaskExecutor, times(0)).stopTask("TaskID");
+        verify(mSplitTaskExecutor, times(0)).schedule(eq(mockTask2), eq(1L), eq(1L), notNull());
         verify(mSplitTaskExecutor, times(0)).stopTask("TaskID2");
     }
 

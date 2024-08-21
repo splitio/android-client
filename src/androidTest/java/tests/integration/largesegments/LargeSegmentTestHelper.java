@@ -41,8 +41,6 @@ public class LargeSegmentTestHelper {
     protected Map<String, AtomicInteger> mEndpointHits;
     protected Map<String, CountDownLatch> mLatches;
     protected final AtomicLong mMySegmentsDelay = new AtomicLong(0L);
-    protected final AtomicLong mMyLargeSegmentsDelay = new AtomicLong(1000L);
-    protected final AtomicInteger mMyLargeSegmentsStatusCode = new AtomicInteger(200);
     protected final AtomicBoolean mRandomizeMyLargeSegments = new AtomicBoolean(false);
     protected final AtomicBoolean mEmptyMyLargeSegments = new AtomicBoolean(false);
     protected final AtomicBoolean mBrokenApi = new AtomicBoolean(false);
@@ -51,8 +49,6 @@ public class LargeSegmentTestHelper {
     public void setUp() throws IOException {
         mEndpointHits = new ConcurrentHashMap<>();
         mMySegmentsDelay.set(0L);
-        mMyLargeSegmentsDelay.set(1000L);
-        mMyLargeSegmentsStatusCode.set(200);
         mRandomizeMyLargeSegments.set(false);
         mEmptyMyLargeSegments.set(false);
         mBrokenApi.set(false);
@@ -74,23 +70,13 @@ public class LargeSegmentTestHelper {
                 } else if (request.getRequestUrl().encodedPathSegments().contains("mySegments")) {
                     Thread.sleep(mMySegmentsDelay.get());
                     updateEndpointHit("mySegments");
-                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyMySegments());
-                } else if (request.getRequestUrl().encodedPathSegments().contains("myLargeSegments")) {
 
-                    Thread.sleep(mMyLargeSegmentsDelay.get());
-                    updateEndpointHit("myLargeSegments");
-                    if (mMyLargeSegmentsStatusCode.get() != 200) {
-                        return new MockResponse().setResponseCode(mMyLargeSegmentsStatusCode.get());
-                    } else {
-
-                        String body = (mEmptyMyLargeSegments.get()) ? IntegrationHelper.emptyMyLargeSegments() : IntegrationHelper.dummyMyLargeSegments();
-                        if (mRandomizeMyLargeSegments.get()) {
-                            body = IntegrationHelper.randomizedMyLargeSegments();
-                        }
-
-                        return new MockResponse().setResponseCode(200).setBody(body);
+                    String body = (mEmptyMyLargeSegments.get()) ? IntegrationHelper.emptyMyUnifiedSegments() : IntegrationHelper.dummyMyUnifiedSegments();
+                    if (mRandomizeMyLargeSegments.get()) {
+                        body = IntegrationHelper.randomizedMyUnifiedSegments();
                     }
 
+                    return new MockResponse().setResponseCode(200).setBody(body);
                 } else {
                     return new MockResponse().setResponseCode(404);
                 }
@@ -108,7 +94,6 @@ public class LargeSegmentTestHelper {
         mLatches = new ConcurrentHashMap<>();
         mLatches.put("splitChanges", new CountDownLatch(1));
         mLatches.put("mySegments", new CountDownLatch(1));
-        mLatches.put("myLargeSegments", new CountDownLatch(1));
     }
 
     private void updateEndpointHit(String splitChanges) {
@@ -127,7 +112,7 @@ public class LargeSegmentTestHelper {
         return getFactory(null, 2500, null);
     }
 
-    protected SplitFactory getFactory(Integer largeSegmentsRefreshRate,
+    protected SplitFactory getFactory(Integer segmentsRefreshRate,
                                       Integer ready, SplitRoomDatabase database) {
         TestableSplitConfigBuilder configBuilder = new TestableSplitConfigBuilder()
                 .enableDebug()
@@ -135,8 +120,9 @@ public class LargeSegmentTestHelper {
                         .apiEndpoint("http://" + mWebServer.getHostName() + ":" + mWebServer.getPort())
                         .build());
 
-        if (largeSegmentsRefreshRate != null) {
+        if (segmentsRefreshRate != null) {
             configBuilder.streamingEnabled(false);
+            configBuilder.segmentsRefreshRate(segmentsRefreshRate);
         }
         if (ready != null) {
             configBuilder.ready(ready);

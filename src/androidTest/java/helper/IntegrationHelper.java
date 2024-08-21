@@ -154,26 +154,45 @@ public class IntegrationHelper {
         return factory;
     }
 
+    @Deprecated
     public static String dummyMySegments() {
         return "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}";
     }
 
+    @Deprecated
     public static String dummyMyLargeSegments() {
-        return "{\"myLargeSegments\":[\"large-segment1\", \"large-segment2\", \"large-segment3\"], \"till\": 9999999999999}";
+        return "{\"mySegments\":{\"mySegments\":[{\"id\":\"id1\",\"name\":\"segment1\"},{\"id\":\"id1\",\"name\":\"segment2\"}],\"till\":999999999},\"myLargeSegments\":{\"myLargeSegments\":[\"large-segment1\",\"large-segment2\",\"large-segment3\"],\"till\":999999999}}";
     }
 
+    @Deprecated
     public static String emptyMySegments() {
         return "{\"mySegments\":[]}";
     }
 
+    @Deprecated
     public static String emptyMyLargeSegments() {
         return "{\"mySegments\":[], \"till\": 9999999999999}";
     }
 
+    @Deprecated
     public static String randomizedMyLargeSegments() {
         int randIntOne = (int) (Math.random() * 100);
         int randIntTwo = (int) (Math.random() * 100);
         return "{\"myLargeSegments\":[\"large-segment1\", \"large-random\", \"large-segment"+randIntOne+"\", \"large-segment"+randIntTwo+"\"], \"till\": 9999999999999}";
+    }
+
+    public static String emptyMyUnifiedSegments() {
+        return "{\"mySegments\":{\"mySegments\":[],\"till\":99999},\"myLargeSegments\":{\"myLargeSegments\":[],\"till\":9999999999999}}";
+    }
+
+    public static String dummyMyUnifiedSegments() {
+        return "{\"mySegments\":{\"mySegments\":[\"segment1\",\"segment2\"],\"till\":99999},\"myLargeSegments\":{\"myLargeSegments\":[\"large-segment1\",\"large-segment2\",\"large-segment3\"],\"till\":9999999999999}}";
+    }
+
+    public static String randomizedMyUnifiedSegments() {
+        int randIntOne = (int) (Math.random() * 100);
+        int randIntTwo = (int) (Math.random() * 100);
+        return "{\"mySegments\":{\"mySegments\":[\"segment1\",\"segment2\"],\"till\":99999},\"myLargeSegments\":{\"myLargeSegments\":[\"large-segment"+randIntOne+"\",\"large-segment2"+randIntTwo+"\"],\"till\":9999999999999}}";
     }
 
     public static String dummyApiKey() {
@@ -259,6 +278,7 @@ public class IntegrationHelper {
 
     }
 
+    @Deprecated
     public static String streamingEnabledTokenLargeSegments() {
         return "{" +
                 "    \"pushEnabled\": true," +
