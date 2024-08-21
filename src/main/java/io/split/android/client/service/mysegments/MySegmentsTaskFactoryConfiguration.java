@@ -10,7 +10,7 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 
 public class MySegmentsTaskFactoryConfiguration {
 
-    private final HttpFetcher<? extends SegmentResponseV2> mHttpFetcher;
+    private final HttpFetcher<? extends MembershipsResponse> mHttpFetcher;
     private final MySegmentsStorage mMySegmentsStorage;
     private final SplitEventsManager mEventsManager;
     private final MySegmentsSyncTaskConfig mMySegmentsSyncTaskConfig;
@@ -20,7 +20,7 @@ public class MySegmentsTaskFactoryConfiguration {
     private final LoadMySegmentsTaskConfig mLoadMySegmentsTaskConfig;
     private final MySegmentsStorage mMyLargeSegmentsStorage;
 
-    private MySegmentsTaskFactoryConfiguration(@NonNull HttpFetcher<? extends SegmentResponseV2> httpFetcher,
+    private MySegmentsTaskFactoryConfiguration(@NonNull HttpFetcher<? extends MembershipsResponse> httpFetcher,
                                                @NonNull MySegmentsStorage storage,
                                                @NonNull MySegmentsStorage myLargeSegmentsStorage,
                                                @NonNull SplitEventsManager eventsManager,
@@ -41,7 +41,7 @@ public class MySegmentsTaskFactoryConfiguration {
     }
 
     @NonNull
-    public HttpFetcher<? extends SegmentResponseV2> getHttpFetcher() {
+    public HttpFetcher<? extends MembershipsResponse> getHttpFetcher() {
         return mHttpFetcher;
     }
 
@@ -85,7 +85,7 @@ public class MySegmentsTaskFactoryConfiguration {
         return mLoadMySegmentsTaskConfig;
     }
 
-    public static MySegmentsTaskFactoryConfiguration get(@NonNull HttpFetcher<? extends SegmentResponseV2> httpFetcher,
+    public static MySegmentsTaskFactoryConfiguration get(@NonNull HttpFetcher<? extends MembershipsResponse> httpFetcher,
                                                          @NonNull MySegmentsStorage mySegmentsStorage,
                                                          @NonNull MySegmentsStorage myLargeSegmentsStorage,
                                                          @NonNull SplitEventsManager eventsManager) {

@@ -13,7 +13,7 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 
 public class MySegmentsTaskFactoryConfigurationTest {
 
-    private HttpFetcher<? extends SegmentResponseV2> mHttpFetcher;
+    private HttpFetcher<? extends MembershipsResponse> mHttpFetcher;
     private MySegmentsStorage mMySegmentsStorage;
     private MySegmentsStorage mMyLargeSegmentsStorage;
     private SplitEventsManager mEventsManager;

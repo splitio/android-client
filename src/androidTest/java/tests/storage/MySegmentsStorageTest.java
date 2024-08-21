@@ -69,7 +69,7 @@ public class MySegmentsStorageTest {
     }
 
     @Test
-    public void getMySegments() {
+    public void getSegments() {
         mMySegmentsStorage.loadLocal();
         Set<String> snapshot = new HashSet(mMySegmentsStorage.getAll());
 

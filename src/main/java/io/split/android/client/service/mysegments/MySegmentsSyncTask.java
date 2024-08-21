@@ -28,7 +28,7 @@ import io.split.android.client.utils.logger.Logger;
 
 public class MySegmentsSyncTask implements SplitTask {
 
-    private final HttpFetcher<? extends SegmentResponseV2> mMySegmentsFetcher;
+    private final HttpFetcher<? extends MembershipsResponse> mMySegmentsFetcher;
     private final MySegmentsStorage mMySegmentsStorage;
     private final MySegmentsStorage mMyLargeSegmentsStorage;
     private final boolean mAvoidCache;
@@ -40,7 +40,7 @@ public class MySegmentsSyncTask implements SplitTask {
     private final SplitInternalEvent mFetchedEvent;
     private final OperationType mTelemetryOperationType;
 
-    public MySegmentsSyncTask(@NonNull HttpFetcher<? extends SegmentResponseV2> mySegmentsFetcher,
+    public MySegmentsSyncTask(@NonNull HttpFetcher<? extends MembershipsResponse> mySegmentsFetcher,
                               @NonNull MySegmentsStorage mySegmentsStorage,
                               @NonNull MySegmentsStorage myLargeSegmentsStorage,
                               boolean avoidCache,
@@ -66,7 +66,7 @@ public class MySegmentsSyncTask implements SplitTask {
         long startTime = System.currentTimeMillis();
         long latency = 0;
         try {
-            SegmentResponseV2 response = mMySegmentsFetcher.execute(new HashMap<>(), getHeaders());
+            MembershipsResponse response = mMySegmentsFetcher.execute(new HashMap<>(), getHeaders());
 
             long now = System.currentTimeMillis();
             latency = now - startTime;

@@ -4,7 +4,7 @@ import androidx.annotation.NonNull;
 
 import java.util.Set;
 
-public interface SegmentResponseV2 {
+public interface MembershipsResponse {
 
     @NonNull
     Set<String> getSegments();

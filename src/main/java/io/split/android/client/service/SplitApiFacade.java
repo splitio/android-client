@@ -14,7 +14,7 @@ import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactory;
 import io.split.android.client.service.impressions.ImpressionsCount;
 import io.split.android.client.service.impressions.unique.MTK;
-import io.split.android.client.service.mysegments.SegmentResponseV2;
+import io.split.android.client.service.mysegments.MembershipsResponse;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.telemetry.model.Stats;
@@ -54,7 +54,7 @@ public class SplitApiFacade {
         return mSplitFetcher;
     }
 
-    public HttpFetcher<? extends SegmentResponseV2> getMySegmentsFetcher(String matchingKey) {
+    public HttpFetcher<? extends MembershipsResponse> getMySegmentsFetcher(String matchingKey) {
         return mMySegmentsFetcherFactory.getFetcher(matchingKey);
     }
 

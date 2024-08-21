@@ -35,8 +35,8 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTaskConfig;
-import io.split.android.client.service.mysegments.SegmentResponseV2;
-import io.split.android.client.service.mysegments.SegmentResponseV2Impl;
+import io.split.android.client.service.mysegments.MembershipsResponse;
+import io.split.android.client.service.mysegments.MembershipsResponseImpl;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -46,7 +46,7 @@ public class MySegmentsSyncTaskTest {
     Map<String, Object> noParams = Collections.emptyMap();
 
     @Mock
-    HttpFetcher<? extends SegmentResponseV2> mMySegmentsFetcher;
+    HttpFetcher<? extends MembershipsResponse> mMySegmentsFetcher;
     @Mock
     MySegmentsStorage mySegmentsStorage;
     @Mock
@@ -56,7 +56,7 @@ public class MySegmentsSyncTaskTest {
     @Mock
     TelemetryRuntimeProducer mTelemetryRuntimeProducer;
 
-    SegmentResponseV2Impl mMySegments = null;
+    MembershipsResponseImpl mMySegments = null;
 
     MySegmentsSyncTask mTask;
     private AutoCloseable mAutoCloseable;
@@ -79,7 +79,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void correctExecution() throws HttpFetcherException {
-        when(mMySegmentsFetcher.execute(noParams, null)).thenAnswer((Answer<SegmentResponseV2Impl>) invocation -> mMySegments);
+        when(mMySegmentsFetcher.execute(noParams, null)).thenAnswer((Answer<MembershipsResponseImpl>) invocation -> mMySegments);
 
         mTask.execute();
 
@@ -96,7 +96,7 @@ public class MySegmentsSyncTaskTest {
         Map<String, String> headers = new HashMap<>();
         headers.put(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER, SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE);
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, true, null, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get());
-        when(mMySegmentsFetcher.execute(noParams, headers)).thenAnswer((Answer<SegmentResponseV2Impl>) invocation -> mMySegments);
+        when(mMySegmentsFetcher.execute(noParams, headers)).thenAnswer((Answer<MembershipsResponseImpl>) invocation -> mMySegments);
 
         mTask.execute();
 
@@ -129,7 +129,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void storageException() throws HttpFetcherException {
-        when(mMySegmentsFetcher.execute(noParams, null)).thenAnswer((Answer<SegmentResponseV2Impl>) invocation -> mMySegments);
+        when(mMySegmentsFetcher.execute(noParams, null)).thenAnswer((Answer<MembershipsResponseImpl>) invocation -> mMySegments);
         doThrow(NullPointerException.class).when(mySegmentsStorage).set(any(), anyLong());
 
         mTask.execute();
@@ -149,7 +149,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void latencyIsTrackedInTelemetry() throws HttpFetcherException {
-        when(mMySegmentsFetcher.execute(noParams, null)).thenAnswer((Answer<SegmentResponseV2Impl>) invocation -> mMySegments);
+        when(mMySegmentsFetcher.execute(noParams, null)).thenAnswer((Answer<MembershipsResponseImpl>) invocation -> mMySegments);
 
         mTask.execute();
 
@@ -158,7 +158,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void successIsTrackedInTelemetry() throws HttpFetcherException {
-        when(mMySegmentsFetcher.execute(noParams, null)).thenAnswer((Answer<SegmentResponseV2Impl>) invocation -> mMySegments);
+        when(mMySegmentsFetcher.execute(noParams, null)).thenAnswer((Answer<MembershipsResponseImpl>) invocation -> mMySegments);
 
         mTask.execute();
 
@@ -187,7 +187,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void successfulCallToExecuteReturnsNullDoNotRetry() throws HttpFetcherException {
-        when(mMySegmentsFetcher.execute(any(), any())).thenAnswer((Answer<SegmentResponseV2Impl>) invocation -> mMySegments);
+        when(mMySegmentsFetcher.execute(any(), any())).thenAnswer((Answer<MembershipsResponseImpl>) invocation -> mMySegments);
 
         SplitTaskExecutionInfo result = mTask.execute();
 
@@ -205,7 +205,7 @@ public class MySegmentsSyncTaskTest {
                 segments.add(s);
             }
             // TODO legacy endpoint support
-            mMySegments = new SegmentResponseV2Impl(segments.stream().map(s -> s.name).collect(Collectors.toList()));
+            mMySegments = new MembershipsResponseImpl(segments.stream().map(s -> s.name).collect(Collectors.toList()));
         }
     }
 }

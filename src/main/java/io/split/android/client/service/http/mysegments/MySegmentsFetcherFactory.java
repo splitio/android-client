@@ -4,11 +4,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 import io.split.android.client.service.http.HttpFetcher;
-import io.split.android.client.service.mysegments.SegmentResponseV2;
+import io.split.android.client.service.mysegments.MembershipsResponse;
 
 public interface MySegmentsFetcherFactory {
 
-    HttpFetcher<? extends SegmentResponseV2> getFetcher(String userKey);
+    HttpFetcher<? extends MembershipsResponse> getFetcher(String userKey);
 
     interface UriBuilder {
 
