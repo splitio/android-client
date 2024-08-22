@@ -19,7 +19,6 @@ import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.exceptions.SplitInstantiationException;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.storage.mysegments.SegmentChangeDTO;
 import io.split.android.client.utils.Json;
 import tests.integration.shared.TestingHelper;
 

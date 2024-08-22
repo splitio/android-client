@@ -1,17 +1,17 @@
 package io.split.android.client.storage.mysegments;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
-import java.util.List;
 import java.util.Set;
+
+import io.split.android.client.dtos.SegmentsChange;
 
 public interface MySegmentsStorage {
     void loadLocal();
 
     Set<String> getAll();
 
-    void set(@NonNull List<String> mySegments, long till);
+    void set(SegmentsChange segmentsChange);
 
     long getTill();
 

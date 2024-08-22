@@ -5,11 +5,12 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
@@ -46,8 +47,9 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
         if (!notification.isIncludesPayload()) {
             mConfiguration.getMySegmentUpdateNotificationsQueue().offer(ServiceConstants.NO_INITIAL_DELAY);
         } else {
-            List<String> segmentList = notification.getSegmentList() != null ? notification.getSegmentList() : new ArrayList<>();
-            MySegmentsOverwriteTask task = mConfiguration.getMySegmentsTaskFactory().createMySegmentsOverwriteTask(segmentList, notification.getChangeNumber());
+            Set<String> segmentList = notification.getSegmentList() != null ? new HashSet<>(notification.getSegmentList()) : new HashSet<>();
+            MySegmentsOverwriteTask task = mConfiguration.getMySegmentsTaskFactory()
+                    .createMySegmentsOverwriteTask(SegmentsChange.create(segmentList, notification.getChangeNumber()));
             mSplitTaskExecutor.submit(task, null);
         }
     }

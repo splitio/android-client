@@ -17,7 +17,6 @@ import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
-import io.split.android.client.storage.mysegments.SegmentChangeDTO;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
 
 public class PersistentMySegmentStorageTest {

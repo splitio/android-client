@@ -3,17 +3,21 @@ package io.split.android.client.storage.mysegments;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
+import io.split.android.client.dtos.Segment;
+import io.split.android.client.dtos.SegmentsChange;
+
 class MySegmentsStorageImpl implements MySegmentsStorage {
 
+    public static final int DEFAULT_CHANGE_NUMBER = -1;
     private final String mMatchingKey;
     private final PersistentMySegmentsStorage mPersistentStorage;
     private final Set<String> mInMemoryMySegments;
@@ -23,14 +27,14 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
         mPersistentStorage = checkNotNull(persistentStorage);
         mMatchingKey = checkNotNull(matchingKey);
         mInMemoryMySegments = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        mTill = new AtomicLong(-1);
+        mTill = new AtomicLong(DEFAULT_CHANGE_NUMBER);
     }
 
     @Override
     public void loadLocal() {
-        SegmentChangeDTO snapshot = mPersistentStorage.getSnapshot(mMatchingKey);
-        mInMemoryMySegments.addAll(snapshot.getMySegments());
-        mTill.set(snapshot.getTill());
+        SegmentsChange snapshot = mPersistentStorage.getSnapshot(mMatchingKey);
+        mInMemoryMySegments.addAll(toNames(snapshot.getSegments()));
+        mTill.set(getOrDefault(snapshot.getChangeNumber()));
     }
 
     @Override
@@ -39,14 +43,14 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
     }
 
     @Override
-    public void set(@NonNull List<String> mySegments, long till) {
-        if (mySegments == null) {
+    public void set(@NonNull SegmentsChange segmentsChange) {
+        if (segmentsChange == null) {
             return;
         }
         mInMemoryMySegments.clear();
-        mInMemoryMySegments.addAll(mySegments);
-        mTill.set(till);
-        mPersistentStorage.set(mMatchingKey, mySegments, till);
+        mInMemoryMySegments.addAll(toNames(segmentsChange.getSegments()));
+        mTill.set(getOrDefault(segmentsChange.getChangeNumber()));
+        mPersistentStorage.set(mMatchingKey, segmentsChange);
     }
 
     @Override
@@ -58,7 +62,26 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
     @VisibleForTesting
     public void clear() {
         mInMemoryMySegments.clear();
-        mTill.set(-1);
-        mPersistentStorage.set(mMatchingKey, new ArrayList<>(), -1);
+        mTill.set(DEFAULT_CHANGE_NUMBER);
+        mPersistentStorage.set(mMatchingKey, SegmentsChange.createEmpty());
+    }
+
+    @NonNull
+    private synchronized static Set<String> toNames(Set<Segment> segments) {
+        if (segments == null) {
+            return Collections.emptySet();
+        }
+
+        Set<String> names = new HashSet<>();
+        for (Segment segment : segments) {
+            names.add(segment.getName());
+        }
+
+        return names;
+    }
+
+    @NonNull
+    private static Long getOrDefault(@Nullable Long changeNumber) {
+        return changeNumber == null ? DEFAULT_CHANGE_NUMBER : changeNumber;
     }
 }

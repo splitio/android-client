@@ -2,12 +2,12 @@ package io.split.android.client.dtos;
 
 import com.google.gson.annotations.SerializedName;
 
-public class Membership {
+public class Segment {
 
     @SerializedName("n")
     private String mName;
 
-    String getName() {
+    public String getName() {
         return mName;
     }
 

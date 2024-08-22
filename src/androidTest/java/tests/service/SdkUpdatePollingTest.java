@@ -32,8 +32,7 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
-import io.split.android.client.dtos.MembershipsResponseImpl;
-import io.split.android.client.dtos.MySegment;
+import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
@@ -298,7 +297,7 @@ public class SdkUpdatePollingTest {
                     for (int i = 0; i <= hit; i++) {
                         mySegments.add("segment" + i);
                     }
-                    String json = Json.toJson(new MembershipsResponseImpl(mySegments));
+                    String json = Json.toJson(new AllSegmentsChange(mySegments));
                     return createResponse(200, json);
                 } else if (uri.getPath().contains("/splitChanges")) {
 

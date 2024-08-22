@@ -29,7 +29,7 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
-import io.split.android.client.dtos.MembershipsResponseImpl;
+import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.network.HttpMethod;
@@ -304,7 +304,7 @@ public class MySegmentsSyncProcessTest {
     }
 
     private String updatedMySegments() {
-        return Json.toJson(new MembershipsResponseImpl(Arrays.asList("segment1", "segment2", "segment3")));
+        return Json.toJson(new AllSegmentsChange(Arrays.asList("segment1", "segment2", "segment3")));
     }
 
 }

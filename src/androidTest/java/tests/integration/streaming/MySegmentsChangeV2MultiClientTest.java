@@ -39,7 +39,6 @@ import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.MySegmentDao;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.storage.mysegments.SegmentChangeDTO;
 import io.split.android.client.telemetry.storage.InMemoryTelemetryStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;

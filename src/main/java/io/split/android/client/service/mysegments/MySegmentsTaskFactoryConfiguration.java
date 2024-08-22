@@ -4,13 +4,14 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 
 public class MySegmentsTaskFactoryConfiguration {
 
-    private final HttpFetcher<? extends MembershipsResponse> mHttpFetcher;
+    private final HttpFetcher<AllSegmentsChange> mHttpFetcher;
     private final MySegmentsStorage mMySegmentsStorage;
     private final SplitEventsManager mEventsManager;
     private final MySegmentsSyncTaskConfig mMySegmentsSyncTaskConfig;
@@ -20,7 +21,7 @@ public class MySegmentsTaskFactoryConfiguration {
     private final LoadMySegmentsTaskConfig mLoadMySegmentsTaskConfig;
     private final MySegmentsStorage mMyLargeSegmentsStorage;
 
-    private MySegmentsTaskFactoryConfiguration(@NonNull HttpFetcher<? extends MembershipsResponse> httpFetcher,
+    private MySegmentsTaskFactoryConfiguration(@NonNull HttpFetcher<AllSegmentsChange> httpFetcher,
                                                @NonNull MySegmentsStorage storage,
                                                @NonNull MySegmentsStorage myLargeSegmentsStorage,
                                                @NonNull SplitEventsManager eventsManager,
@@ -41,7 +42,7 @@ public class MySegmentsTaskFactoryConfiguration {
     }
 
     @NonNull
-    public HttpFetcher<? extends MembershipsResponse> getHttpFetcher() {
+    public HttpFetcher<AllSegmentsChange> getHttpFetcher() {
         return mHttpFetcher;
     }
 
@@ -85,7 +86,7 @@ public class MySegmentsTaskFactoryConfiguration {
         return mLoadMySegmentsTaskConfig;
     }
 
-    public static MySegmentsTaskFactoryConfiguration get(@NonNull HttpFetcher<? extends MembershipsResponse> httpFetcher,
+    public static MySegmentsTaskFactoryConfiguration get(@NonNull HttpFetcher<AllSegmentsChange> httpFetcher,
                                                          @NonNull MySegmentsStorage mySegmentsStorage,
                                                          @NonNull MySegmentsStorage myLargeSegmentsStorage,
                                                          @NonNull SplitEventsManager eventsManager) {

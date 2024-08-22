@@ -34,7 +34,6 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.storage.mysegments.SegmentChangeDTO;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import tests.integration.shared.TestingData;

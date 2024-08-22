@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import java.util.List;
 
+import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.SplitChange;
@@ -14,7 +15,6 @@ import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactory;
 import io.split.android.client.service.impressions.ImpressionsCount;
 import io.split.android.client.service.impressions.unique.MTK;
-import io.split.android.client.service.mysegments.MembershipsResponse;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.telemetry.model.Stats;
@@ -54,7 +54,7 @@ public class SplitApiFacade {
         return mSplitFetcher;
     }
 
-    public HttpFetcher<? extends MembershipsResponse> getMySegmentsFetcher(String matchingKey) {
+    public HttpFetcher<AllSegmentsChange> getMySegmentsFetcher(String matchingKey) {
         return mMySegmentsFetcherFactory.getFetcher(matchingKey);
     }
 

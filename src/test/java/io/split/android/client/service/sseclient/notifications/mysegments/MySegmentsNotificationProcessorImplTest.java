@@ -84,7 +84,7 @@ public class MySegmentsNotificationProcessorImplTest {
         when(mIncomingNotificationV2.getJsonData()).thenReturn("{}");
         when(mSplitTaskFactory.createMySegmentsUpdateTask(anyBoolean(), anySet(), anyLong()))
                 .thenReturn(mock(MySegmentsUpdateTask.class));
-        when(mSplitTaskFactory.createMySegmentsOverwriteTask(any(), anyLong()))
+        when(mSplitTaskFactory.createMySegmentsOverwriteTask(any()))
                 .thenReturn(mock(MySegmentsOverwriteTask.class));
         when(mSplitTaskFactory.createMySegmentsSyncTask(anyBoolean()))
                 .thenReturn(mock(MySegmentsSyncTask.class));
@@ -111,7 +111,7 @@ public class MySegmentsNotificationProcessorImplTest {
 
         mNotificationProcessor.processMySegmentsUpdate(mIncomingNotification);
 
-        verify(mSplitTaskFactory, times(1)).createMySegmentsOverwriteTask(any(), anyLong());
+        verify(mSplitTaskFactory, times(1)).createMySegmentsOverwriteTask(any());
         verify(mSplitTaskExecutor, times(1)).submit(any(), isNull());
     }
 
@@ -125,7 +125,7 @@ public class MySegmentsNotificationProcessorImplTest {
 
         mNotificationProcessor.processMySegmentsUpdate(mIncomingNotification);
 
-        verify(mSplitTaskFactory, times(1)).createMySegmentsOverwriteTask(any(), anyLong());
+        verify(mSplitTaskFactory, times(1)).createMySegmentsOverwriteTask(any());
         verify(mSplitTaskExecutor, times(1)).submit(any(), isNull());
     }
 
@@ -141,7 +141,7 @@ public class MySegmentsNotificationProcessorImplTest {
 
         mNotificationProcessor.processMySegmentsUpdate(mySegmentChangeNotification);
 
-        verify(mSplitTaskFactory, never()).createMySegmentsOverwriteTask(any(), anyLong());
+        verify(mSplitTaskFactory, never()).createMySegmentsOverwriteTask(any());
         ArgumentCaptor<Long> messageCaptor =
                 ArgumentCaptor.forClass(Long.class);
         verify(mMySegmentChangeQueue, times(1)).offer(messageCaptor.capture());

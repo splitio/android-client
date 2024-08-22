@@ -1,8 +1,6 @@
 package io.split.android.client.service;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -25,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -67,13 +66,13 @@ public class MySegmentsUpdateTaskTest {
     public void correctExecution() throws HttpFetcherException {
         mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(mSegmentToRemove), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
-        ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<SegmentsChange> segmentsCaptor = ArgumentCaptor.forClass(SegmentsChange.class);
 
         SplitTaskExecutionInfo result = mTask.execute();
 
-        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture(), anyLong());
-        Assert.assertTrue(isSegmentRemoved(segmentsCaptor.getValue(), mSegmentToRemove));
-        Assert.assertFalse(isSegmentRemoved(segmentsCaptor.getValue(), mCustomerSegment));
+        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture());
+        Assert.assertTrue(isSegmentRemoved(segmentsCaptor.getValue().getNames(), mSegmentToRemove));
+        Assert.assertFalse(isSegmentRemoved(segmentsCaptor.getValue().getNames(), mCustomerSegment));
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
         Assert.assertEquals(SplitTaskType.MY_SEGMENTS_UPDATE, result.getTaskType());
     }
@@ -86,7 +85,7 @@ public class MySegmentsUpdateTaskTest {
 
         SplitTaskExecutionInfo result = mTask.execute();
 
-        verify(mySegmentsStorage, never()).set(any(), anyLong());
+        verify(mySegmentsStorage, never()).set(any());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
         Assert.assertEquals(SplitTaskType.MY_SEGMENTS_UPDATE, result.getTaskType());
     }
@@ -95,7 +94,7 @@ public class MySegmentsUpdateTaskTest {
     public void storageException() {
 
         mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, Collections.singleton(mSegmentToRemove), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
-        doThrow(NullPointerException.class).when(mySegmentsStorage).set(any(), anyLong());
+        doThrow(NullPointerException.class).when(mySegmentsStorage).set(any());
 
         SplitTaskExecutionInfo result = mTask.execute();
 
@@ -133,7 +132,7 @@ public class MySegmentsUpdateTaskTest {
 
         SplitTaskExecutionInfo result = mTask.execute();
 
-        verify(mySegmentsStorage, never()).set(any(), anyLong());
+        verify(mySegmentsStorage, never()).set(any());
         verify(mEventsManager, never()).notifyInternalEvent(any());
     }
 
@@ -146,14 +145,14 @@ public class MySegmentsUpdateTaskTest {
 
         mTask = new MySegmentsUpdateTask(mySegmentsStorage, true, new HashSet<>(Arrays.asList(mCustomerSegment, mSegmentToRemove)), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
-        ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<SegmentsChange> segmentsCaptor = ArgumentCaptor.forClass(SegmentsChange.class);
 
         SplitTaskExecutionInfo result = mTask.execute();
 
-        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture(), eq(25L));
-        Assert.assertTrue(segmentsCaptor.getValue().contains(mSegmentToRemove));
-        Assert.assertTrue(segmentsCaptor.getValue().contains(mCustomerSegment));
-        Assert.assertEquals(2, segmentsCaptor.getValue().size());
+        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture());
+        Assert.assertTrue(segmentsCaptor.getValue().getNames().contains(mSegmentToRemove));
+        Assert.assertTrue(segmentsCaptor.getValue().getNames().contains(mCustomerSegment));
+        Assert.assertEquals(2, segmentsCaptor.getValue().getNames().size());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
         Assert.assertEquals(SplitTaskType.MY_SEGMENTS_UPDATE, result.getTaskType());
     }
@@ -169,15 +168,16 @@ public class MySegmentsUpdateTaskTest {
 
         mTask = new MySegmentsUpdateTask(mySegmentsStorage, false, new HashSet<>(Arrays.asList(mSegmentToRemove, "extra_segment")), 25L, mEventsManager, mTelemetryRuntimeProducer, MySegmentsUpdateTaskConfig.getForMySegments());
 
-        ArgumentCaptor<List<String>> segmentsCaptor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<SegmentsChange> segmentsCaptor = ArgumentCaptor.forClass(SegmentsChange.class);
 
         SplitTaskExecutionInfo result = mTask.execute();
 
-        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture(), eq(25L));
-        Assert.assertFalse(segmentsCaptor.getValue().contains(mSegmentToRemove));
-        Assert.assertFalse(segmentsCaptor.getValue().contains("extra_segment"));
-        Assert.assertTrue(segmentsCaptor.getValue().contains(mCustomerSegment));
-        Assert.assertEquals(1, segmentsCaptor.getValue().size());
+        verify(mySegmentsStorage, times(1)).set(segmentsCaptor.capture());
+        SegmentsChange captorValue = segmentsCaptor.getValue();
+        Assert.assertFalse(captorValue.getNames().contains(mSegmentToRemove));
+        Assert.assertFalse(captorValue.getNames().contains("extra_segment"));
+        Assert.assertTrue(captorValue.getNames().contains(mCustomerSegment));
+        Assert.assertEquals(1, captorValue.getNames().size());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
         verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
     }

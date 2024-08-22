@@ -11,6 +11,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.dtos.AllSegmentsChange;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
@@ -28,7 +30,7 @@ import io.split.android.client.utils.logger.Logger;
 
 public class MySegmentsSyncTask implements SplitTask {
 
-    private final HttpFetcher<? extends MembershipsResponse> mMySegmentsFetcher;
+    private final HttpFetcher<AllSegmentsChange> mMySegmentsFetcher;
     private final MySegmentsStorage mMySegmentsStorage;
     private final MySegmentsStorage mMyLargeSegmentsStorage;
     private final boolean mAvoidCache;
@@ -40,7 +42,7 @@ public class MySegmentsSyncTask implements SplitTask {
     private final SplitInternalEvent mFetchedEvent;
     private final OperationType mTelemetryOperationType;
 
-    public MySegmentsSyncTask(@NonNull HttpFetcher<? extends MembershipsResponse> mySegmentsFetcher,
+    public MySegmentsSyncTask(@NonNull HttpFetcher<AllSegmentsChange> mySegmentsFetcher,
                               @NonNull MySegmentsStorage mySegmentsStorage,
                               @NonNull MySegmentsStorage myLargeSegmentsStorage,
                               boolean avoidCache,
@@ -66,17 +68,28 @@ public class MySegmentsSyncTask implements SplitTask {
         long startTime = System.currentTimeMillis();
         long latency = 0;
         try {
-            MembershipsResponse response = mMySegmentsFetcher.execute(new HashMap<>(), getHeaders());
+            AllSegmentsChange response = mMySegmentsFetcher.execute(new HashMap<>(), getHeaders());
 
             long now = System.currentTimeMillis();
             latency = now - startTime;
-            List<String> oldSegments = new ArrayList<>(mMySegmentsStorage.getAll());
-            List<String> mySegments = new ArrayList<>(response.getSegments());
-            mMySegmentsStorage.set(mySegments, response.getSegmentsTill());
 
-            List<String> oldLargeSegments = new ArrayList<>(mMyLargeSegmentsStorage.getAll());
-            List<String> myLargeSegments = new ArrayList<>(response.getLargeSegments());
-            mMyLargeSegmentsStorage.set(myLargeSegments, response.getLargeSegmentsTill());
+            List<String> oldSegments = new ArrayList<>();
+            List<String> mySegments = new ArrayList<>();
+            SegmentsChange segmentsChange = response.getSegmentsChange();
+            if (segmentsChange != null) {
+                oldSegments = new ArrayList<>(mMySegmentsStorage.getAll());
+                mySegments = segmentsChange.getNames();
+                mMySegmentsStorage.set(segmentsChange);
+            }
+
+            List<String> oldLargeSegments = new ArrayList<>();
+            List<String> myLargeSegments = new ArrayList<>();
+            SegmentsChange largeSegmentsChange = response.getLargeSegmentsChange();
+            if (largeSegmentsChange != null) {
+                myLargeSegments = largeSegmentsChange.getNames();
+                oldSegments = new ArrayList<>(mMyLargeSegmentsStorage.getAll());
+                mMyLargeSegmentsStorage.set(largeSegmentsChange);
+            }
 
             mTelemetryRuntimeProducer.recordSuccessfulSync(mTelemetryOperationType, now);
 

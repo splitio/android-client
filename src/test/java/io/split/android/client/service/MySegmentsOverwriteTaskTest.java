@@ -1,7 +1,6 @@
 package io.split.android.client.service;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
@@ -14,9 +13,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -43,11 +43,12 @@ public class MySegmentsOverwriteTaskTest {
 
     @Test
     public void correctExecution() throws HttpFetcherException {
-        List<String> segments = dummySegments();
-        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, 25L, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
+        SegmentsChange segments = dummySegments();
+        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
         SplitTaskExecutionInfo result = mTask.execute();
 
-        verify(mySegmentsStorage, times(1)).set(any(), eq(25L));
+        verify(mySegmentsStorage, times(1)).set(argThat(argument -> argument.getSegments().size() == 3 &&
+                argument.getChangeNumber() == -1L));
 
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
         Assert.assertEquals(SplitTaskType.MY_SEGMENTS_OVERWRITE, result.getTaskType());
@@ -55,9 +56,10 @@ public class MySegmentsOverwriteTaskTest {
 
     @Test
     public void storageException() {
-        List<String> segments = dummySegments();
-        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, 25L, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
-        doThrow(NullPointerException.class).when(mySegmentsStorage).set(segments, 25L);
+        SegmentsChange segments = dummySegments();
+        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, segments, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
+        doThrow(NullPointerException.class).when(mySegmentsStorage).set(argThat(argument -> argument.getSegments().size() == 3 &&
+                argument.getChangeNumber() == -1L));
 
         SplitTaskExecutionInfo result = mTask.execute();
 
@@ -67,7 +69,7 @@ public class MySegmentsOverwriteTaskTest {
     @Test
     public void nullParameter() {
 
-        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, null, 25L, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
+        mTask = new MySegmentsOverwriteTask(mySegmentsStorage, null, mEventsManager, MySegmentsOverwriteTaskConfig.getForMySegments());
 
         SplitTaskExecutionInfo result = mTask.execute();
 
@@ -79,11 +81,11 @@ public class MySegmentsOverwriteTaskTest {
         reset(mySegmentsStorage);
     }
 
-    private List<String> dummySegments() {
-        List<String> segments = new ArrayList<>();
+    private SegmentsChange dummySegments() {
+        Set<String> segments = new HashSet<>();
         for (int i = 0; i < 3; i++) {
             segments.add("segment" + i);
         }
-        return segments;
+        return SegmentsChange.create(segments, -1L);
     }
 }
