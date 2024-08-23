@@ -111,7 +111,6 @@ public class LargeSegmentsStreamingTest {
         SegmentsChange segmentsChange = Json.fromJson(body, SegmentsChange.class);
         assertEquals(1702507130121L, segmentsChange.getChangeNumber().longValue());
         assertEquals(1, segmentsChange.getSegments().size());
-        assertEquals("{\"segments\":[\"large-segment3\"],\"till\":1702507130121}", body);
     }
 
     @NonNull

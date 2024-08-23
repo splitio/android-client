@@ -67,7 +67,7 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
     }
 
     @NonNull
-    private synchronized static Set<String> toNames(Set<Segment> segments) {
+    private static Set<String> toNames(Set<Segment> segments) {
         if (segments == null) {
             return Collections.emptySet();
         }

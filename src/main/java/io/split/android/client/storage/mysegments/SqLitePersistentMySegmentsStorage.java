@@ -32,7 +32,7 @@ public class SqLitePersistentMySegmentsStorage<T extends SegmentEntity> implemen
 
     @Override
     public void set(String userKey, SegmentsChange segmentsChange) {
-        if (segmentsChange == null) {
+        if (segmentsChange == null || segmentsChange.getSegments() == null) {
             return;
         }
 

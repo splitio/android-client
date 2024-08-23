@@ -26,6 +26,7 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
     private final SplitTaskExecutionListener mMySegmentsSyncListener;
     private final AtomicBoolean mIsSynchronizing = new AtomicBoolean(true);
     private String mMySegmentsFetcherTaskId;
+    private final AtomicBoolean mIsDelayedFetchScheduled = new AtomicBoolean(false);
 
     public MySegmentsSynchronizerImpl(@NonNull RetryBackoffCounterTimer retryBackoffCounterTimer,
                                       @NonNull SplitTaskExecutor taskExecutor,
@@ -42,6 +43,7 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
         mMySegmentsSyncListener = new SplitTaskExecutionListener() {
             @Override
             public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                mIsDelayedFetchScheduled.set(false);
                 if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
                     if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
                         mIsSynchronizing.compareAndSet(true, false);
@@ -67,8 +69,7 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
 
     @Override
     public void forceMySegmentsSync(Long syncDelay) {
-        if (mIsSynchronizing.get()) {
-            mMySegmentsSyncRetryTimer.stop();
+        if (mIsSynchronizing.get() && mIsDelayedFetchScheduled.compareAndSet(false, true)) {
             mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), syncDelay, mMySegmentsSyncListener);
             mMySegmentsSyncRetryTimer.start();
         }
@@ -82,11 +83,6 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
     @Override
     public void scheduleSegmentsSyncTask() {
         if (mIsSynchronizing.get()) {
-            if (mMySegmentsFetcherTaskId != null) {
-                // if a fetch task is already scheduled, we don't need to schedule another one
-                return;
-            }
-
             mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
                     mSplitTaskFactory.createMySegmentsSyncTask(false),
                     mSegmentsRefreshRate,

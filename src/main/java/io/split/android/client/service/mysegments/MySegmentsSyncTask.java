@@ -87,7 +87,7 @@ public class MySegmentsSyncTask implements SplitTask {
             SegmentsChange largeSegmentsChange = response.getLargeSegmentsChange();
             if (largeSegmentsChange != null) {
                 myLargeSegments = largeSegmentsChange.getNames();
-                oldSegments = new ArrayList<>(mMyLargeSegmentsStorage.getAll());
+                oldLargeSegments = new ArrayList<>(mMyLargeSegmentsStorage.getAll());
                 mMyLargeSegmentsStorage.set(largeSegmentsChange);
             }
 

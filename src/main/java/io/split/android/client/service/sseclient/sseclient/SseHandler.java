@@ -1,5 +1,7 @@
 package io.split.android.client.service.sseclient.sseclient;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
@@ -21,8 +23,6 @@ import io.split.android.client.telemetry.model.streaming.AblyErrorStreamingEvent
 import io.split.android.client.telemetry.model.streaming.SseConnectionErrorStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
-
-import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class SseHandler {
 
@@ -64,7 +64,7 @@ public class SseHandler {
     public void handleIncomingMessage(Map<String, String> values) {
 
         String messageData = values.get(EventStreamParser.DATA_FIELD);
-
+Logger.e("INCOMING MESSAGE " + messageData);
         if (messageData != null) {
             if (mNotificationParser.isError(values)) {
                 handleError(messageData);

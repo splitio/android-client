@@ -166,8 +166,8 @@ public class MySegmentsChangeV2MultiClientTest {
 
         SegmentsChange mySegmentEntity = Json.fromJson(getByKey(userKey, mDb).getSegmentList(), SegmentsChange.class);
         SegmentsChange mySegmentEntity2 = Json.fromJson(getByKey(userKey2, mDb).getSegmentList(), SegmentsChange.class);
-        Assert.assertTrue(mySegmentEntity.getSegments().contains("new_segment_added"));
-        Assert.assertFalse(mySegmentEntity.getSegments().contains("segment1"));
+        Assert.assertTrue(mySegmentEntity.getNames().contains("new_segment_added"));
+        Assert.assertFalse(mySegmentEntity.getNames().contains("segment1"));
 
         Assert.assertEquals(1, mySegmentEntity2.getSegments().size());
         Assert.assertEquals("new_segment_added", mySegmentEntity2.getNames().get(0));

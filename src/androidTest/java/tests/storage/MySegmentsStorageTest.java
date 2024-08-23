@@ -45,13 +45,13 @@ public class MySegmentsStorageTest {
 
         MySegmentEntity entity = new MySegmentEntity();
         entity.setUserKey(mUserKey);
-        entity.setSegmentList("{\"segments\": [\"s1\",\"s2\",\"s3\"],\"till\":-1}");
+        entity.setSegmentList("{\"k\":[{\"n\":\"s1\"},{\"n\":\"s2\"},{\"n\":\"s3\"}],\"cn\":-1}");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
         entity = new MySegmentEntity();
         entity.setUserKey("userkey-2");
-        entity.setSegmentList("{\"segments\": [\"s10\",\"s20\"],\"till\":-1}");
+        entity.setSegmentList("{\"k\":[{\"n\":\"s10\"},{\"n\":\"s20\"}],\"cn\":-1}");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
@@ -69,7 +69,7 @@ public class MySegmentsStorageTest {
     }
 
     @Test
-    public void getMemberships() {
+    public void getSegments() {
         mMySegmentsStorage.loadLocal();
         Set<String> snapshot = new HashSet(mMySegmentsStorage.getAll());
 

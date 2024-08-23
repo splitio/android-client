@@ -34,14 +34,14 @@ public class PersistentMySegmentStorageTest {
 
         MySegmentEntity entity = new MySegmentEntity();
         entity.setUserKey(mUserKey);
-        entity.setSegmentList("s1,s2,s3");
+        entity.setSegmentList("{\"k\":[{\"n\":\"s1\"},{\"n\":\"s2\"},{\"n\":\"s3\"}],\"cn\":null}");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
         entity = new MySegmentEntity();
         String mUserKey2 = "userkey-2";
         entity.setUserKey(mUserKey2);
-        entity.setSegmentList("s10,s20");
+        entity.setSegmentList("{\"k\":[{\"n\":\"s10\"},{\"n\":\"s20\"}],\"cn\":-1}");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
@@ -113,6 +113,6 @@ public class PersistentMySegmentStorageTest {
         SegmentsChange snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
         Assert.assertEquals(3, snapshot.getNames().size());
-        Assert.assertEquals(-1, snapshot.getChangeNumber().longValue());
+        Assert.assertNull(snapshot.getChangeNumber());
     }
 }

@@ -34,14 +34,14 @@ public class PersistentMyLargeSegmentStorageTest {
 
         MyLargeSegmentEntity entity = new MyLargeSegmentEntity();
         entity.setUserKey(mUserKey);
-        entity.setSegmentList("s1,s2,s3");
+        entity.setSegmentList("{\"k\":[{\"n\":\"s1\"},{\"n\":\"s2\"},{\"n\":\"s3\"}],\"cn\":null}");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.myLargeSegmentDao().update(entity);
 
         entity = new MyLargeSegmentEntity();
         String mUserKey2 = "userkey-2";
         entity.setUserKey(mUserKey2);
-        entity.setSegmentList("s10,s20");
+        entity.setSegmentList("{\"k\":[{\"n\":\"s10\"},{\"n\":\"s20\"}],\"cn\":-1}");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.myLargeSegmentDao().update(entity);
 
@@ -57,7 +57,7 @@ public class PersistentMyLargeSegmentStorageTest {
         Assert.assertTrue(snapshot.getNames().contains("s1"));
         Assert.assertTrue(snapshot.getNames().contains("s2"));
         Assert.assertTrue(snapshot.getNames().contains("s3"));
-        Assert.assertEquals(-1, snapshot.getChangeNumber().longValue());
+        Assert.assertNull(snapshot.getChangeNumber());
     }
 
     @Test
@@ -111,6 +111,6 @@ public class PersistentMyLargeSegmentStorageTest {
         SegmentsChange snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
         Assert.assertEquals(3, snapshot.getNames().size());
-        Assert.assertEquals(-1, snapshot.getChangeNumber().longValue());
+        Assert.assertNull(snapshot.getChangeNumber());
     }
 }
