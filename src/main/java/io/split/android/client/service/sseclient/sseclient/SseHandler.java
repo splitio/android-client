@@ -64,7 +64,6 @@ public class SseHandler {
     public void handleIncomingMessage(Map<String, String> values) {
 
         String messageData = values.get(EventStreamParser.DATA_FIELD);
-Logger.e("INCOMING MESSAGE " + messageData);
         if (messageData != null) {
             if (mNotificationParser.isError(values)) {
                 handleError(messageData);

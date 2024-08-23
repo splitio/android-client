@@ -93,8 +93,13 @@ public class MySegmentsSyncTask implements SplitTask {
 
             mTelemetryRuntimeProducer.recordSuccessfulSync(mTelemetryOperationType, now);
 
-            Logger.v("New segments fetched: " + String.join(", ", mySegments));
-            Logger.v("New large segments fetched: " + String.join(", ", myLargeSegments));
+
+            if (!mySegments.isEmpty()) {
+                Logger.v("New segments fetched: " + String.join(", ", mySegments));
+            }
+            if (!myLargeSegments.isEmpty()) {
+                Logger.v("New large segments fetched: " + String.join(", ", myLargeSegments));
+            }
             fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments, oldLargeSegments, myLargeSegments);
         } catch (HttpFetcherException e) {
             logError("Network error while retrieving my segments: " + e.getLocalizedMessage());
@@ -131,13 +136,18 @@ public class MySegmentsSyncTask implements SplitTask {
         if (mEventsManager == null) {
             return;
         }
+
+        // MY_SEGMENTS_UPDATED event when segments have changed
         if (mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, newSegments)) {
             mEventsManager.notifyInternalEvent(mUpdateEvent);
         } else {
+
             boolean largeSegmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(oldLargeSegments, newLargeSegments);
+            // MY_LARGE_SEGMENTS_UPDATED event when large segments have changed
             if (largeSegmentsHaveChanged) {
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
             } else {
+                // otherwise, MY_SEGMENTS_FETCHED event
                 mEventsManager.notifyInternalEvent(mFetchedEvent);
             }
         }
