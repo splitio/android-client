@@ -1,7 +1,8 @@
 package io.split.android.client.service.mysegments;
 
-import java.util.List;
 import java.util.Set;
+
+import io.split.android.client.dtos.SegmentsChange;
 
 public interface MySegmentsTaskFactory {
 
@@ -10,7 +11,7 @@ public interface MySegmentsTaskFactory {
     LoadMySegmentsTask createLoadMySegmentsTask();
 
     // only used for mySegments v1
-    MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments, Long changeNumber);
+    MySegmentsOverwriteTask createMySegmentsOverwriteTask(SegmentsChange segmentsChange);
 
     MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, Set<String> segmentNames, Long changeNumber);
 

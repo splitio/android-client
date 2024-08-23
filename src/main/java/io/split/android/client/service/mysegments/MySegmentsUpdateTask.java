@@ -4,9 +4,9 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import java.util.ArrayList;
 import java.util.Set;
 
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTask;
@@ -95,7 +95,7 @@ public class MySegmentsUpdateTask implements SplitTask {
     }
 
     private void updateAndNotify(Set<String> segments) {
-        mMySegmentsStorage.set(new ArrayList<>(segments), mChangeNumber);
+        mMySegmentsStorage.set(SegmentsChange.create(segments, mChangeNumber));
         mEventsManager.notifyInternalEvent(mUpdateEvent);
     }
 

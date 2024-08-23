@@ -31,10 +31,10 @@ import helper.IntegrationHelper;
 import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.storage.mysegments.SegmentChangeDTO;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import tests.integration.shared.TestingData;
@@ -82,8 +82,8 @@ public class LargeSegmentsStreamingTest {
         assertTrue(updateAwait);
         assertEquals(2, mEndpointHits.get(SPLIT_CHANGES).get());
         assertEquals(3, mEndpointHits.get(MY_SEGMENTS).get());
-        assertEquals("{\"segments\":[\"large-segment1\",\"large-segment2\",\"large-segment3\"],\"till\":9999999999999}", initialSegmentList);
-        assertEquals(2, Json.fromJson(testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList(), SegmentChangeDTO.class).getMySegments().size());
+        assertTrue(initialSegmentList.contains("large-segment1") && initialSegmentList.contains("large-segment2") && initialSegmentList.contains("large-segment3"));
+        assertEquals(2, Json.fromJson(testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList(), SegmentsChange.class).getSegments().size());
     }
 
     @Test
@@ -106,8 +106,11 @@ public class LargeSegmentsStreamingTest {
         assertTrue(mySegmentsAwait);
         assertTrue(splitsAwait);
         assertTrue(updateAwait);
-        assertEquals("{\"segments\":[\"large-segment1\",\"large-segment2\",\"large-segment3\"],\"till\":9999999999999}", initialLargeSegmentsSize);
-        assertEquals("{\"segments\":[\"large-segment3\"],\"till\":1702507130121}", db.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList());
+        assertTrue(initialLargeSegmentsSize.contains("large-segment1") && initialLargeSegmentsSize.contains("large-segment2") && initialLargeSegmentsSize.contains("large-segment3"));
+        String body = db.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList();
+        SegmentsChange segmentsChange = Json.fromJson(body, SegmentsChange.class);
+        assertEquals(1702507130121L, segmentsChange.getChangeNumber().longValue());
+        assertEquals(1, segmentsChange.getSegments().size());
     }
 
     @NonNull

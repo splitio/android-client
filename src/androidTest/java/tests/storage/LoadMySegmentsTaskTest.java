@@ -73,7 +73,7 @@ public class LoadMySegmentsTaskTest {
         mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
         mMyLargeSegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMyLargeSegmentsStorage);
         mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
-        mMyLargeSegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
+        mMyLargeSegmentsStorage = mMyLargeSegmentsStorageContainer.getStorageForKey(mUserKey);
     }
 
     @Test

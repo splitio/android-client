@@ -2,17 +2,25 @@ package io.split.android.client.service.mysegments;
 
 import com.google.gson.JsonSyntaxException;
 
-import io.split.android.client.dtos.MyLargeSegmentsResponse;
+import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.service.http.HttpResponseParser;
 import io.split.android.client.service.http.HttpResponseParserException;
 import io.split.android.client.utils.Json;
 
-public class MyLargeSegmentsResponseParser implements HttpResponseParser<MyLargeSegmentsResponse> {
+public class AllSegmentsResponseParser implements HttpResponseParser<AllSegmentsChange> {
 
     @Override
-    public MyLargeSegmentsResponse parse(String responseData) throws HttpResponseParserException {
+    public AllSegmentsChange parse(String responseData) throws HttpResponseParserException {
         try {
-            return Json.fromJson(responseData, MyLargeSegmentsResponse.class);
+            // TODO legacy endpoint support
+//            try {
+//                MySegmentsResponse mySegmentsResponse = Json.fromJson(responseData, MySegmentsResponse.class);
+//                return new AllSegmentsChange(mySegmentsResponse.getSegments());
+//            } catch (Exception e) {
+
+            return Json.fromJson(responseData, AllSegmentsChange.class);
+//            }
+
         } catch (JsonSyntaxException e) {
             throw new HttpResponseParserException("Syntax error parsing my large segments http response: " + e.getLocalizedMessage());
         } catch (Exception e) {

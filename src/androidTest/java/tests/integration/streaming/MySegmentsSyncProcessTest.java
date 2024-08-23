@@ -12,6 +12,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -28,11 +29,14 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
+import io.split.android.client.dtos.AllSegmentsChange;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import tests.integration.shared.TestingHelper;
 
@@ -117,9 +121,12 @@ public class MySegmentsSyncProcessTest {
         thirdUpdateLatch.await(5, TimeUnit.SECONDS);
         MySegmentEntity mySegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
 
-        Assert.assertEquals("{\"segments\":[\"segment1\",\"segment2\",\"segment3\"],\"till\":-1}", mySegmentEntity.getSegmentList());
-        Assert.assertEquals("{\"segments\":[\"segment1\"],\"till\":1584647532812}", mySegmentEntityPayload.getSegmentList());
-        Assert.assertEquals("{\"segments\":[],\"till\":1584647532812}", mySegmentEntityEmptyPayload.getSegmentList());
+        Assert.assertTrue(mySegmentEntity.getSegmentList().contains("segment1") && mySegmentEntity.getSegmentList().contains("segment2") && mySegmentEntity.getSegmentList().contains("segment3"));
+        String body = mySegmentEntityPayload.getSegmentList();
+        SegmentsChange segmentsChange = Json.fromJson(body, SegmentsChange.class);
+        Assert.assertEquals(Arrays.asList("segment1"), segmentsChange.getNames());
+        Assert.assertEquals(1584647532812L, segmentsChange.getChangeNumber().longValue());
+        Assert.assertEquals("{\"cn\":1584647532812,\"k\":[]}", mySegmentEntityEmptyPayload.getSegmentList());
     }
 
     @Test
@@ -187,13 +194,13 @@ public class MySegmentsSyncProcessTest {
         MySegmentEntity client1SegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity client2SegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 
-        Assert.assertEquals("{\"segments\":[\"segment1\",\"segment2\",\"segment3\"],\"till\":-1}", client1SegmentEntity.getSegmentList());
-        Assert.assertEquals("{\"segments\":[\"segment1\"],\"till\":1584647532812}", client1SegmentEntityPayload.getSegmentList());
-        Assert.assertEquals("{\"segments\":[],\"till\":1584647532812}", client1SegmentEntityEmptyPayload.getSegmentList());
+        Assert.assertTrue(client1SegmentEntity.getSegmentList().contains("segment1") && client1SegmentEntity.getSegmentList().contains("segment2") && client1SegmentEntity.getSegmentList().contains("segment3"));
+        Assert.assertEquals("{\"cn\":1584647532812,\"k\":[{\"n\":\"segment1\"}]}", client1SegmentEntityPayload.getSegmentList());
+        Assert.assertEquals("{\"cn\":1584647532812,\"k\":[]}", client1SegmentEntityEmptyPayload.getSegmentList());
 
-        Assert.assertEquals("{\"segments\":[],\"till\":-1}", client2SegmentEntity.getSegmentList());
-        Assert.assertEquals("{\"segments\":[],\"till\":-1}", client2SegmentEntityPayload.getSegmentList());
-        Assert.assertEquals("{\"segments\":[],\"till\":-1}", client2SegmentEntityEmptyPayload.getSegmentList());
+        Assert.assertEquals("{\"cn\":null,\"k\":[]}", client2SegmentEntity.getSegmentList());
+        Assert.assertEquals("{\"cn\":null,\"k\":[]}", client2SegmentEntityPayload.getSegmentList());
+        Assert.assertEquals("{\"cn\":null,\"k\":[]}", client2SegmentEntityEmptyPayload.getSegmentList());
     }
 
     private void testMySegmentsUpdate() throws InterruptedException {
@@ -301,9 +308,7 @@ public class MySegmentsSyncProcessTest {
     }
 
     private String updatedMySegments() {
-        return "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, " +
-                " { \"id\":\"id1\", \"name\":\"segment2\"}, " +
-                "{ \"id\":\"id3\", \"name\":\"segment3\"}]}";
+        return Json.toJson(new AllSegmentsChange(Arrays.asList("segment1", "segment2", "segment3")));
     }
 
 }

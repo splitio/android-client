@@ -1,7 +1,6 @@
 package tests.integration.streaming;
 
 import static junit.framework.Assert.assertTrue;
-import static junit.framework.TestCase.assertEquals;
 import static java.lang.Thread.sleep;
 
 import android.content.Context;
@@ -24,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import fake.HttpStreamResponseMock;
 import fake.SynchronizerSpyImpl;
 import helper.DatabaseHelper;
 import helper.FileHelper;
@@ -43,7 +43,6 @@ import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamin
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
-import fake.HttpStreamResponseMock;
 import tests.integration.shared.TestingHelper;
 
 public class ControlTest {
@@ -89,7 +88,6 @@ public class ControlTest {
         SynchronizerSpyImpl synchronizerSpy = new SynchronizerSpyImpl();
         SplitRoomDatabase db = DatabaseHelper.getTestDatabase(mContext);
         db.clearAllTables();
-
 
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch updateLatch = new CountDownLatch(3);

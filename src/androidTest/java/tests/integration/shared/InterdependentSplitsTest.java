@@ -9,7 +9,6 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import helper.IntegrationHelper;
-import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
@@ -32,7 +31,7 @@ public class InterdependentSplitsTest extends BaseSharedClientsTest {
                 if (request.getPath().contains("/mySegments/key1")) {
                     return new MockResponse()
                             .setResponseCode(200)
-                            .setBody("{\"mySegments\":[{ \"id\":\"id0\", \"name\":\"android_test\"}]}");
+                            .setBody(IntegrationHelper.dummySingleSegment("android_test"));
                 } else if (request.getPath().contains("/mySegments/key2")) {
                     return new MockResponse()
                             .setResponseCode(200)

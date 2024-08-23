@@ -4,9 +4,9 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import java.util.List;
 import java.util.Set;
 
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
@@ -37,8 +37,8 @@ public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
     }
 
     @Override
-    public MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments, Long changeNumber) {
-        return new MySegmentsOverwriteTask(mConfiguration.getMySegmentsStorage(), segments, changeNumber, mConfiguration.getEventsManager(), mConfiguration.getMySegmentsOverwriteTaskConfig());
+    public MySegmentsOverwriteTask createMySegmentsOverwriteTask(SegmentsChange segmentsChange) {
+        return new MySegmentsOverwriteTask(mConfiguration.getMySegmentsStorage(), segmentsChange, mConfiguration.getEventsManager(), mConfiguration.getMySegmentsOverwriteTaskConfig());
     }
 
     @Override

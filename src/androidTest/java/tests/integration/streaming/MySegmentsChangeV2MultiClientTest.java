@@ -34,12 +34,12 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.MySegmentDao;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.storage.mysegments.SegmentChangeDTO;
 import io.split.android.client.telemetry.storage.InMemoryTelemetryStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
@@ -164,13 +164,13 @@ public class MySegmentsChangeV2MultiClientTest {
         pushMessage(TestingData.SEGMENT_REMOVAL_NOTIFICATION);
         l1.await(5, TimeUnit.SECONDS);
 
-        SegmentChangeDTO mySegmentEntity = Json.fromJson(getByKey(userKey, mDb).getSegmentList(), SegmentChangeDTO.class);
-        SegmentChangeDTO mySegmentEntity2 = Json.fromJson(getByKey(userKey2, mDb).getSegmentList(), SegmentChangeDTO.class);
-        Assert.assertTrue(mySegmentEntity.getMySegments().contains("new_segment_added"));
-        Assert.assertFalse(mySegmentEntity.getMySegments().contains("segment1"));
+        SegmentsChange mySegmentEntity = Json.fromJson(getByKey(userKey, mDb).getSegmentList(), SegmentsChange.class);
+        SegmentsChange mySegmentEntity2 = Json.fromJson(getByKey(userKey2, mDb).getSegmentList(), SegmentsChange.class);
+        Assert.assertTrue(mySegmentEntity.getNames().contains("new_segment_added"));
+        Assert.assertFalse(mySegmentEntity.getNames().contains("segment1"));
 
-        Assert.assertEquals(1, mySegmentEntity2.getMySegments().size());
-        Assert.assertEquals("new_segment_added", mySegmentEntity2.getMySegments().get(0));
+        Assert.assertEquals(1, mySegmentEntity2.getSegments().size());
+        Assert.assertEquals("new_segment_added", mySegmentEntity2.getNames().get(0));
         Assert.assertEquals(4, mTelemetryStorage.popUpdatesFromSSE().getMySegments());
     }
 

@@ -1,6 +1,6 @@
 package io.split.android.client.storage.mysegments;
 
-import static io.split.android.client.storage.mysegments.SegmentChangeDTO.createEmpty;
+import static io.split.android.client.dtos.SegmentsChange.createEmpty;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
@@ -8,8 +8,9 @@ import androidx.annotation.NonNull;
 import com.google.gson.JsonParseException;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.HashSet;
 
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.SegmentDao;
 import io.split.android.client.storage.db.SegmentEntity;
@@ -30,13 +31,13 @@ public class SqLitePersistentMySegmentsStorage<T extends SegmentEntity> implemen
     }
 
     @Override
-    public void set(String userKey, @NonNull List<String> mySegments, long till) {
-        if (mySegments == null) {
+    public void set(String userKey, SegmentsChange segmentsChange) {
+        if (segmentsChange == null || segmentsChange.getSegments() == null) {
             return;
         }
 
         String encryptedUserKey = mSplitCipher.encrypt(userKey);
-        String dto = Json.toJson(new SegmentChangeDTO(mySegments, till));
+        String dto = Json.toJson(segmentsChange);
         String encryptedDto = mSplitCipher.encrypt(dto);
         if (encryptedUserKey == null || encryptedDto == null) {
             Logger.e("Error encrypting my segments");
@@ -47,7 +48,7 @@ public class SqLitePersistentMySegmentsStorage<T extends SegmentEntity> implemen
     }
 
     @Override
-    public SegmentChangeDTO getSnapshot(String userKey) {
+    public SegmentsChange getSnapshot(String userKey) {
         String encryptedUserKey = mSplitCipher.encrypt(userKey);
         return getMySegmentsFromEntity(mDao.getByUserKey(encryptedUserKey));
     }
@@ -56,7 +57,7 @@ public class SqLitePersistentMySegmentsStorage<T extends SegmentEntity> implemen
     public void close() {
     }
 
-    private SegmentChangeDTO getMySegmentsFromEntity(SegmentEntity entity) {
+    private SegmentsChange getMySegmentsFromEntity(SegmentEntity entity) {
         if (entity == null || Utils.isNullOrEmpty(entity.getSegmentList())) {
             return createEmpty();
         }
@@ -66,9 +67,9 @@ public class SqLitePersistentMySegmentsStorage<T extends SegmentEntity> implemen
             return createEmpty();
         }
 
-        SegmentChangeDTO dto;
+        SegmentsChange dto;
         try {
-            dto = Json.fromJson(storedJson, SegmentChangeDTO.class);
+            dto = Json.fromJson(storedJson, SegmentsChange.class);
 
             Logger.v("Returning segments from DTO");
             return dto;
@@ -76,7 +77,7 @@ public class SqLitePersistentMySegmentsStorage<T extends SegmentEntity> implemen
             Logger.v("Parsing of segments DTO failed, returning as legacy");
             String[] segments = storedJson.split(",");
 
-            return new SegmentChangeDTO(Arrays.asList(segments), -1L);
+            return SegmentsChange.create(new HashSet<>(Arrays.asList(segments)), null);
         }
     }
 }
