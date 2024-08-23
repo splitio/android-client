@@ -1,6 +1,7 @@
 package io.split.android.client.dtos;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -42,6 +43,11 @@ public class SegmentsChange {
 
     public static SegmentsChange createEmpty() {
         return new SegmentsChange(Collections.emptySet(), null);
+    }
+
+    @VisibleForTesting
+    public static SegmentsChange create(Set<String> segments, long changeNumber) {
+        return create(segments, Long.valueOf(changeNumber));
     }
 
     public static SegmentsChange create(Set<String> segments, @Nullable Long changeNumber) {

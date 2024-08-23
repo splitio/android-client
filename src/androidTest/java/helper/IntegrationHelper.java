@@ -3,6 +3,7 @@ package helper;
 import android.content.Context;
 import android.util.Base64;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
@@ -20,8 +21,10 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 
@@ -175,7 +178,7 @@ public class IntegrationHelper {
     public static String randomizedMyUnifiedSegments() {
         int randIntOne = (int) (Math.random() * 100);
         int randIntTwo = (int) (Math.random() * 100);
-        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment"+randIntOne+"\"},{\"n\":\"large-segment"+randIntTwo+"\"}],\"cn\":9999999999999}}";
+        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment" + randIntOne + "\"},{\"n\":\"large-segment" + randIntTwo + "\"}],\"cn\":9999999999999}}";
     }
 
     public static String dummySingleSegment(String segment) {
@@ -306,13 +309,13 @@ public class IntegrationHelper {
     public static String splitChangeV2(String changeNumber, String previousChangeNumber, String compressionType, String compressedPayload) {
         return "id: vQQ61wzBRO:0:0\n" +
                 "event: message\n" +
-                "data: {\"id\":\"m2T85LA4fQ:0:0\",\"clientId\":\"pri:NzIyNjY1MzI4\",\"timestamp\":"+System.currentTimeMillis()+",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\":"+changeNumber+",\\\"pcn\\\":"+previousChangeNumber+",\\\"c\\\":"+compressionType+",\\\"d\\\":\\\""+compressedPayload+"\\\"}\"}\n";
+                "data: {\"id\":\"m2T85LA4fQ:0:0\",\"clientId\":\"pri:NzIyNjY1MzI4\",\"timestamp\":" + System.currentTimeMillis() + ",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"pcn\\\":" + previousChangeNumber + ",\\\"c\\\":" + compressionType + ",\\\"d\\\":\\\"" + compressedPayload + "\\\"}\"}\n";
     }
 
     public static String splitKill(String changeNumber, String splitName) {
         return "id:cf74eb42-f687-48e4-ad18-af2125110aac\n" +
                 "event:message\n" +
-                "data:{\"id\":\"-OT-rGuSwz:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:NDIxNjU0NTUyNw==\",\"timestamp\":"+System.currentTimeMillis()+",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_KILL\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"defaultTreatment\\\":\\\"off\\\",\\\"splitName\\\":\\\"" + splitName + "\\\"}\"}\n";
+                "data:{\"id\":\"-OT-rGuSwz:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:NDIxNjU0NTUyNw==\",\"timestamp\":" + System.currentTimeMillis() + ",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_KILL\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"defaultTreatment\\\":\\\"off\\\",\\\"splitName\\\":\\\"" + splitName + "\\\"}\"}\n";
     }
 
     public static String loadSplitChanges(Context context, String fileName) {
@@ -340,7 +343,7 @@ public class IntegrationHelper {
     /**
      * Builds a dispatcher with the given responses.
      *
-     * @param responses          The responses to be returned by the dispatcher. The keys are url paths.
+     * @param responses      The responses to be returned by the dispatcher. The keys are url paths.
      * @param streamingQueue The streaming responses to be returned by the dispatcher.
      * @return The dispatcher to be used in {@link HttpClientMock}
      */
@@ -422,5 +425,16 @@ public class IntegrationHelper {
      */
     public interface StreamingResponseClosure {
         HttpStreamResponseMock onResponse(URI uri);
+    }
+
+    @NonNull
+    public static <T> Set<T> asSet(T... elements) {
+        if (elements.length == 0) {
+            return Collections.emptySet();
+        }
+        Set<T> result = new HashSet<>();
+        Collections.addAll(result, elements);
+
+        return result;
     }
 }

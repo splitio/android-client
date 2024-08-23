@@ -16,6 +16,7 @@ import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFactoryBuilder;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.exceptions.SplitInstantiationException;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -102,13 +103,13 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         SplitFactory factory = getFactory(null, null, testDatabase);
         getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
 
-        SegmentChangeDTO largeSegments = Json.fromJson(testDatabase.myLargeSegmentDao()
+        SegmentsChange largeSegments = Json.fromJson(testDatabase.myLargeSegmentDao()
                 .getByUserKey(IntegrationHelper.dummyUserKey().matchingKey())
-                .getSegmentList(), SegmentChangeDTO.class);
-        List<String> mySegments = largeSegments.getMySegments();
+                .getSegmentList(), SegmentsChange.class);
+        List<String> mySegments = largeSegments.getNames();
         assertEquals(3, mySegments.size());
         assertTrue(mySegments.contains("large-segment1") && mySegments.contains("large-segment2") && mySegments.contains("large-segment3"));
-        assertEquals(9999999999999L, largeSegments.getTill().longValue());
+        assertEquals(9999999999999L, largeSegments.getChangeNumber().longValue());
     }
 
     @Test
@@ -126,15 +127,15 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
 
         latch.await(10, TimeUnit.SECONDS);
 
-        SegmentChangeDTO segmentList1 = Json.fromJson(testDatabase.myLargeSegmentDao().getByUserKey("CUSTOMER_ID").getSegmentList(), SegmentChangeDTO.class);
-        SegmentChangeDTO segmentList2 = Json.fromJson(testDatabase.myLargeSegmentDao().getByUserKey("key2").getSegmentList(), SegmentChangeDTO.class);
+        SegmentsChange segmentList1 = Json.fromJson(testDatabase.myLargeSegmentDao().getByUserKey("CUSTOMER_ID").getSegmentList(), SegmentsChange.class);
+        SegmentsChange segmentList2 = Json.fromJson(testDatabase.myLargeSegmentDao().getByUserKey("key2").getSegmentList(), SegmentsChange.class);
 
-        assertEquals(2, segmentList1.getMySegments().size());
-        assertEquals(2, segmentList2.getMySegments().size());
+        assertEquals(2, segmentList1.getNames().size());
+        assertEquals(2, segmentList2.getNames().size());
         assertNotEquals(segmentList1,
                 segmentList2);
-        assertEquals(9999999999999L, segmentList1.getTill().longValue());
-        assertEquals(9999999999999L, segmentList2.getTill().longValue());
+        assertEquals(9999999999999L, segmentList1.getChangeNumber().longValue());
+        assertEquals(9999999999999L, segmentList2.getChangeNumber().longValue());
     }
 
     @Test

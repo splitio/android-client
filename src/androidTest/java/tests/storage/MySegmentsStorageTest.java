@@ -10,15 +10,15 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import helper.DatabaseHelper;
+import helper.IntegrationHelper;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -82,7 +82,7 @@ public class MySegmentsStorageTest {
     @Test
     public void updateSegments() {
         mMySegmentsStorage.loadLocal();
-        mMySegmentsStorage.set(Arrays.asList("a1", "a2", "a3", "a4"), 2222222);
+        mMySegmentsStorage.set(SegmentsChange.create(IntegrationHelper.asSet("a1", "a2", "a3", "a4"), 2222222L));
         MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
 
@@ -109,7 +109,7 @@ public class MySegmentsStorageTest {
     @Test
     public void updateEmptyMySegment() {
         mMySegmentsStorage.loadLocal();
-        mMySegmentsStorage.set(new ArrayList<>(), 11124442);
+        mMySegmentsStorage.set(SegmentsChange.create(Collections.emptySet(), 11124442L));
 
         MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
@@ -125,7 +125,7 @@ public class MySegmentsStorageTest {
     @Test
     public void addNullMySegmentsList() {
 
-        mPersistentMySegmentsStorage.set(mUserKey, null, -1); // till will be ignored
+        mPersistentMySegmentsStorage.set(mUserKey, SegmentsChange.create(null, -1)); // till will be ignored
         mMySegmentsStorage.loadLocal();
         MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
@@ -160,7 +160,7 @@ public class MySegmentsStorageTest {
         mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
         mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
 
-        mMySegmentsStorage.set(Arrays.asList("a1", "a2", "a3", "a4"), 999820);
+        mMySegmentsStorage.set(SegmentsChange.create(IntegrationHelper.asSet("a1", "a2", "a3", "a4"), 999820));
         MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
 
@@ -182,7 +182,7 @@ public class MySegmentsStorageTest {
             @Override
             public void run() {
                 for (int j = 1000; j < 1200; j += 10) {
-                    List<String> segments = new ArrayList<>();
+                    Set<String> segments = new HashSet<>();
 
                     for (int i = 0; i < 10; i++) {
                         segments.add("segment_" + j + "_" + i);
@@ -191,7 +191,7 @@ public class MySegmentsStorageTest {
                         Thread.sleep(80);
                     } catch (InterruptedException e) {
                     }
-                    mMySegmentsStorage.set(segments, 112421 + j);
+                    mMySegmentsStorage.set(SegmentsChange.create(segments, 112421 + j));
                 }
                 latch.countDown();
             }
@@ -202,14 +202,14 @@ public class MySegmentsStorageTest {
             public void run() {
 
                 for (int j = 0; j < 200; j += 10) {
-                    List<String> segments = new ArrayList<>();
+                    Set<String> segments = new HashSet<>();
 
                     for (int i = 0; i < 10; i++) {
                         segments.add("segment_" + j + "_" + i);
                     }
                     try {
                         Thread.sleep(80);
-                        mMySegmentsStorage.set(segments, 112421 + j);
+                        mMySegmentsStorage.set(SegmentsChange.create(segments, 112421 + j));
                         Thread.sleep(80);
                     } catch (InterruptedException e) {
                     }

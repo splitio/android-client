@@ -15,7 +15,7 @@ public class AllMySegmentsResponseParser implements HttpResponseParser<AllSegmen
             // TODO legacy endpoint support
 //            try {
 //                MySegmentsResponse mySegmentsResponse = Json.fromJson(responseData, MySegmentsResponse.class);
-//                return new MembershipsResponseImpl(mySegmentsResponse.getSegments());
+//                return new AllSegmentsChange(mySegmentsResponse.getSegments());
 //            } catch (Exception e) {
                 // This will used when the new DTO is defined
                 AllSegmentsChange mySegmentsResponse = Json.fromJson(responseData, AllSegmentsChange.class);

@@ -17,6 +17,7 @@ public class AllSegmentsChange {
     private SegmentsChange mMyLargeSegmentsChange;
 
     // TODO legacy endpoint support during development
+    @Deprecated
     public AllSegmentsChange(List<String> mySegments) {
         Set<Segment> segments = new HashSet<>();
         for (String name : mySegments) {

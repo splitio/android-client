@@ -45,6 +45,7 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
     }
 
     public void process(IncomingNotification incomingNotification) {
+        Logger.e("PROCESS NOTIFICATION");
         try {
             String notificationJson = incomingNotification.getJsonData();
             switch (incomingNotification.getType()) {
