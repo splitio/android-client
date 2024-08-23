@@ -38,7 +38,7 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpFetcherImpl;
 import io.split.android.client.service.http.HttpResponseParser;
-import io.split.android.client.service.mysegments.AllMySegmentsResponseParser;
+import io.split.android.client.service.mysegments.AllSegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 
 public class HttpFetcherTest {
@@ -52,7 +52,7 @@ public class HttpFetcherTest {
     URI mSplitChangesUrl;
     URI mMySegmentsUrl;
     HttpResponseParser<SplitChange> mSplitChangeResponseParser = new SplitChangeResponseParser();
-    HttpResponseParser<AllSegmentsChange> mMySegmentsResponseParser = new AllMySegmentsResponseParser();
+    HttpResponseParser<AllSegmentsChange> mMySegmentsResponseParser = new AllSegmentsResponseParser();
 
     @Before
     public void setup() throws URISyntaxException {

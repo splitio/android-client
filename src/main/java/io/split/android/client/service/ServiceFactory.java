@@ -22,7 +22,7 @@ import io.split.android.client.service.impressions.ImpressionsCountRequestBodySe
 import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.service.impressions.unique.MTK;
 import io.split.android.client.service.impressions.unique.MTKRequestBodySerializer;
-import io.split.android.client.service.mysegments.AllMySegmentsResponseParser;
+import io.split.android.client.service.mysegments.AllSegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.service.sseauthentication.SseAuthenticationResponseParser;
 import io.split.android.client.telemetry.TelemetryConfigBodySerializer;
@@ -50,7 +50,7 @@ public class ServiceFactory {
 
         return new HttpFetcherImpl<>(httpClient,
                 SdkTargetPath.mySegments(endPoint, key),
-                new AllMySegmentsResponseParser());
+                new AllSegmentsResponseParser());
     }
 
     public static HttpRecorder<List<Event>> getEventsRecorder(

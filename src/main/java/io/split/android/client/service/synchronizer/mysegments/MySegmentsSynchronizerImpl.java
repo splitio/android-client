@@ -62,6 +62,7 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
     @Override
     public void synchronizeMySegments() {
         if (mIsSynchronizing.get()) {
+            mMySegmentsSyncRetryTimer.stop();
             mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(false), mMySegmentsSyncListener);
             mMySegmentsSyncRetryTimer.start();
         }
@@ -70,6 +71,7 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
     @Override
     public void forceMySegmentsSync(Long syncDelay) {
         if (mIsSynchronizing.get() && mIsDelayedFetchScheduled.compareAndSet(false, true)) {
+            mMySegmentsSyncRetryTimer.stop();
             mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), syncDelay, mMySegmentsSyncListener);
             mMySegmentsSyncRetryTimer.start();
         }
@@ -83,6 +85,10 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
     @Override
     public void scheduleSegmentsSyncTask() {
         if (mIsSynchronizing.get()) {
+            if (mMySegmentsFetcherTaskId != null) {
+                mTaskExecutor.stopTask(mMySegmentsFetcherTaskId);
+            }
+
             mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
                     mSplitTaskFactory.createMySegmentsSyncTask(false),
                     mSegmentsRefreshRate,

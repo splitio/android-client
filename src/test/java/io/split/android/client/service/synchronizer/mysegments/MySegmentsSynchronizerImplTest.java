@@ -90,17 +90,20 @@ public class MySegmentsSynchronizerImplTest {
     }
 
     @Test
-    public void forceMySegmentsSyncStopsPreviouslyRunningTask() {
+    public void forceMySegmentsSyncDoesNotStopPreviouslyRunningTask() {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
-        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(true)).thenReturn(mockTask);
+        MySegmentsSyncTask mockTask2 = mock(MySegmentsSyncTask.class);
+        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(true))
+                .thenReturn(mockTask)
+                .thenReturn(mockTask2);
 
         mMySegmentsSynchronizer.forceMySegmentsSync(1000L);
         mMySegmentsSynchronizer.forceMySegmentsSync(0L);
 
         verify(mRetryBackoffCounterTimer).setTask(eq(mockTask), eq(1000L), any());
-        verify(mRetryBackoffCounterTimer).setTask(eq(mockTask), eq(0L), any());
-        verify(mRetryBackoffCounterTimer, times(2)).stop();
-        verify(mRetryBackoffCounterTimer, times(2)).start();
+        verify(mRetryBackoffCounterTimer, times(0)).setTask(eq(mockTask2), eq(0L), any());
+        verify(mRetryBackoffCounterTimer, times(1)).stop();
+        verify(mRetryBackoffCounterTimer, times(1)).start();
     }
 
     @Test
@@ -135,16 +138,15 @@ public class MySegmentsSynchronizerImplTest {
         when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false))
                 .thenReturn(mockTask)
                 .thenReturn(mockTask2);
-        when(mSplitTaskExecutor.schedule(eq(mockTask), eq(1L), eq(1L), notNull())).thenReturn("TaskID");
-        when(mSplitTaskExecutor.schedule(eq(mockTask2), eq(1L), eq(1L), notNull())).thenReturn("TaskID2");
+        when(mSplitTaskExecutor.schedule(eq(mockTask), anyLong(), anyLong(), notNull())).thenReturn("TaskID");
+        when(mSplitTaskExecutor.schedule(eq(mockTask2), anyLong(), anyLong(), notNull())).thenReturn("TaskID2");
 
         mMySegmentsSynchronizer.scheduleSegmentsSyncTask();
         mMySegmentsSynchronizer.scheduleSegmentsSyncTask();
 
         verify(mSplitTaskExecutor).schedule(eq(mockTask), eq(1L), eq(1L), notNull());
-        verify(mSplitTaskExecutor, times(0)).stopTask("TaskID");
-        verify(mSplitTaskExecutor, times(0)).schedule(eq(mockTask2), eq(1L), eq(1L), notNull());
-        verify(mSplitTaskExecutor, times(0)).stopTask("TaskID2");
+        verify(mSplitTaskExecutor).stopTask("TaskID");
+        verify(mSplitTaskExecutor).schedule(eq(mockTask2), eq(1L), eq(1L), notNull());
     }
 
     @Test
