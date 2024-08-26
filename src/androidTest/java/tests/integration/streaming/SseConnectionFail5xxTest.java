@@ -1,5 +1,7 @@
 package tests.integration.streaming;
 
+import static java.lang.Thread.sleep;
+
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -18,8 +20,8 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
-import helper.DatabaseHelper;
 import fake.HttpStreamResponseMock;
+import helper.DatabaseHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;
@@ -29,8 +31,6 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.utils.logger.Logger;
 import tests.integration.shared.TestingHelper;
-
-import static java.lang.Thread.sleep;
 
 public class SseConnectionFail5xxTest {
     Context mContext;
@@ -130,14 +130,14 @@ public class SseConnectionFail5xxTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Logger.i("** My segments hit: " + mMySegmentsHitsCountHit);
                     if (!mIsStreamingConnected) {
                         mMySegmentsHitsCountHit++;
                     } else {
                         mMySegmentsHitsCountHitAfterSseConn++;
                     }
-                    return createResponse(200, IntegrationHelper.dummyMySegments());
+                    return createResponse(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     Logger.i("** Split Changes hit: " + mSplitsHitsCountHit);
                     if (!mIsStreamingConnected) {

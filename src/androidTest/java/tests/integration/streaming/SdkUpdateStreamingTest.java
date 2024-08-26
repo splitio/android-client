@@ -34,6 +34,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.Partition;
+import io.split.android.client.dtos.Segment;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
@@ -270,9 +271,10 @@ public class SdkUpdateStreamingTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                Logger.e("PATH IS " + uri.getPath());
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Logger.i("NO CHANGWES MY S");
-                    return createResponse(200, IntegrationHelper.dummyMySegments());
+                    return createResponse(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     Logger.i("NO CHANGES changes");
                     return createResponse(200, IntegrationHelper.emptySplitChanges(99999, 99999));
@@ -301,8 +303,8 @@ public class SdkUpdateStreamingTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
-                    return createResponse(200, IntegrationHelper.dummyMySegments());
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return createResponse(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     mSplitChangesHitCount++;
                     if(mSplitsPushLatch != null) {
@@ -333,19 +335,21 @@ public class SdkUpdateStreamingTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                Logger.e("PATH IS " + uri.getPath());
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     mMySegmentsHitCount++;
                     int hit = mMySegmentsHitCount;
-                    String json = IntegrationHelper.emptyMySegments();
+                    String json = IntegrationHelper.emptyAllSegments();
                     if (mMySegmentsHitCount > 2) {
-                        List<MySegment> mySegments = new ArrayList<>();
+                        StringBuilder mySegments = new StringBuilder();
+                        mySegments.append("{\"ms\":\"k\":[");
+                        List<String> segmentList = new ArrayList<>();
                         for (int i = 0; i <= hit; i++) {
-                            MySegment segment = new MySegment();
-                            segment.id = "s" + i;
-                            segment.name = "segment" + i;
-                            mySegments.add(segment);
+                            segmentList.add("{\"n\":\"" + "s" + i + "\"}");
                         }
-                        json = "{\"mySegments\": " + Json.toJson(mySegments) + "}";
+                        mySegments.append(String.join(",", segmentList));
+                        mySegments.append("],\"cn\":99999}");
+                        json = "{\"ms\": " + mySegments + "}";
                     }
                     if(mMySegmentsPushLatch != null) {
                         mMySegmentsPushLatch.countDown();

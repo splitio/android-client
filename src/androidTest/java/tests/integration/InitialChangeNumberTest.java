@@ -62,8 +62,8 @@ public class InitialChangeNumberTest {
 
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                if (request.getPath().contains("/mySegments")) {
-                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
                 } else if (request.getPath().contains("/splitChanges")) {
 
                     long changeNumber = -1;

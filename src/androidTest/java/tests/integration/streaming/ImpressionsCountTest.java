@@ -195,8 +195,8 @@ public class ImpressionsCountTest {
             boolean first = true;
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
-                    return createResponse(200, IntegrationHelper.dummyMySegments());
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return createResponse(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     if (first) {
                         first = false;

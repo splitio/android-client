@@ -92,9 +92,9 @@ public class ProxyFactoryTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 String requestLine = request.getRequestLine();
-                if (requestLine.contains("/mySegments")) {
+                if (requestLine.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     mySegmentsHit.set(true);
-                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
                 } else if (requestLine.contains("splitChanges")) {
                     splitChangesHit.set(true);
                     return new MockResponse().setResponseCode(200).setBody(mSplitChanges);
@@ -198,9 +198,9 @@ public class ProxyFactoryTest {
                 if (request.getHeader("Proxy-Authorization") != null) {
                     proxyAuthorizationHeaderLatch.countDown();
                 }
-                if (requestLine.contains("/mySegments")) {
+                if (requestLine.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     mySegmentsHit.set(true);
-                    return new MockResponse().setResponseCode((request.getHeader("Proxy-Authorization") != null) ? 200 : 407).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                    return new MockResponse().setResponseCode((request.getHeader("Proxy-Authorization") != null) ? 200 : 407).setBody(IntegrationHelper.dummyAllSegments());
                 } else if (requestLine.contains("splitChanges")) {
                     splitChangesHit.set(true);
                     return new MockResponse().setResponseCode((request.getHeader("Proxy-Authorization") != null) ? 200 : 407).setBody(mSplitChanges);
