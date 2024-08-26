@@ -1,13 +1,11 @@
 name: Instrumented tests
 
 on:
-  push:
-    branches:
-      - 'SDKS-8765' # TODO
   pull_request:
     branches:
       - 'development'
       - 'master'
+      - '*_baseline'
 
 jobs:
   test:
