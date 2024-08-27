@@ -152,19 +152,15 @@ public class MySegmentsSyncTask implements SplitTask {
             }
 
             if (isStaleResponse(response)) {
-                Logger.v("Got stale response");
                 long waitMillis = TimeUnit.SECONDS.toMillis(mBackoffCounter.getNextRetryTime());
-                Logger.v("Will sleep for " + waitMillis + " millis");
                 Thread.sleep(waitMillis);
                 remainingRetries--;
             } else {
-                Logger.v("Response is valid");
                 updateStorage(response);
                 return;
             }
         }
 
-        Logger.v("Fetching my segments bypassing CDN");
         AllSegmentsChange response = mMySegmentsFetcher.execute(getParams(true), getHeaders());
         if (response == null) {
             throw new HttpFetcherException("", "Response is null");
@@ -191,18 +187,10 @@ public class MySegmentsSyncTask implements SplitTask {
         boolean largeSegmentsTargetMatched = !checkLargeSegments ||
                 response.getLargeSegmentsChange() != null && mTargetLargeSegmentsChangeNumber.equals(response.getLargeSegmentsChange().getChangeNumber());
 
-        if (!checkSegments) {
-            Logger.v("No target segments change number");
-        }
-        if (!checkLargeSegments) {
-            Logger.v("No target large segments change number");
-        }
-
         return !segmentsTargetMatched || !largeSegmentsTargetMatched;
     }
 
     private void updateStorage(AllSegmentsChange response) {
-        Logger.v("Updating segments storage");
         List<String> oldSegments = new ArrayList<>();
         List<String> mySegments = new ArrayList<>();
         SegmentsChange segmentsChange = response.getSegmentsChange();
