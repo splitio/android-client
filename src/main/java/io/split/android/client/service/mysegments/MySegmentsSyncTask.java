@@ -82,17 +82,17 @@ public class MySegmentsSyncTask implements SplitTask {
     }
 
     @VisibleForTesting
-    MySegmentsSyncTask(@NonNull HttpFetcher<AllSegmentsChange> mySegmentsFetcher,
-                       @NonNull MySegmentsStorage mySegmentsStorage,
-                       @NonNull MySegmentsStorage myLargeSegmentsStorage,
-                       boolean avoidCache,
-                       SplitEventsManager eventsManager,
-                       @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
-                       @NonNull MySegmentsSyncTaskConfig config,
-                       @Nullable Long targetSegmentsChangeNumber,
-                       @Nullable Long targetLargeSegmentsChangeNumber,
-                       BackoffCounter backoffCounter,
-                       int onDemandFetchBackoffMaxRetries) {
+    public MySegmentsSyncTask(@NonNull HttpFetcher<AllSegmentsChange> mySegmentsFetcher,
+                              @NonNull MySegmentsStorage mySegmentsStorage,
+                              @NonNull MySegmentsStorage myLargeSegmentsStorage,
+                              boolean avoidCache,
+                              SplitEventsManager eventsManager,
+                              @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                              @NonNull MySegmentsSyncTaskConfig config,
+                              @Nullable Long targetSegmentsChangeNumber,
+                              @Nullable Long targetLargeSegmentsChangeNumber,
+                              BackoffCounter backoffCounter,
+                              int onDemandFetchBackoffMaxRetries) {
         mMySegmentsFetcher = checkNotNull(mySegmentsFetcher);
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mMyLargeSegmentsStorage = checkNotNull(myLargeSegmentsStorage);
@@ -144,6 +144,7 @@ public class MySegmentsSyncTask implements SplitTask {
 
     private void fetch(int initialRetries) throws HttpFetcherException, InterruptedException {
         int remainingRetries = initialRetries;
+        mBackoffCounter.resetCounter();
         while (remainingRetries > 0) {
             AllSegmentsChange response = mMySegmentsFetcher.execute(getParams(false), getHeaders());
             if (response == null) {

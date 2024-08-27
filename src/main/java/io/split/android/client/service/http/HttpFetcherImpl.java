@@ -49,6 +49,7 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
                 uriBuilder.addParameter(param.getKey(), value != null ? value.toString() : "");
             }
             URI builtUri = uriBuilder.build();
+
             HttpResponse response = mClient.request(builtUri, HttpMethod.GET, null, headers).execute();
             if (builtUri != null && response != null) {
                 Logger.v("Received from: " + builtUri + " -> " + response.getData());

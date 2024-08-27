@@ -434,6 +434,6 @@ public class IntegrationHelper {
     }
 
     public static class ServicePath {
-        public static final String MEMBERSHIPS = "memberships";
+        public static final String MEMBERSHIPS = "membership";
     }
 }

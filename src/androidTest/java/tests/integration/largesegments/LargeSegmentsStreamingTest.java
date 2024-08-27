@@ -81,9 +81,9 @@ public class LargeSegmentsStreamingTest {
         assertTrue(splitsAwait);
         assertTrue(updateAwait);
         assertEquals(2, mEndpointHits.get(SPLIT_CHANGES).get());
-        assertEquals(3, mEndpointHits.get(MY_SEGMENTS).get());
         assertTrue(initialSegmentList.contains("large-segment1") && initialSegmentList.contains("large-segment2") && initialSegmentList.contains("large-segment3"));
         assertEquals(2, Json.fromJson(testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList(), SegmentsChange.class).getSegments().size());
+        assertEquals(3, mEndpointHits.get(MY_SEGMENTS).get());
     }
 
     @Test
