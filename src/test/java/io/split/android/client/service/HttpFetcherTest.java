@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.dtos.AllSegmentsChange;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
@@ -45,14 +46,14 @@ public class HttpFetcherTest {
 
     private final static String TEST_URL = "http://testurl.com";
     private final static String SPLIT_CHANGES_TEST_URL = TEST_URL + SdkTargetPath.SPLIT_CHANGES;
-    private final static String MY_SEGMENTS_TEST_URL = TEST_URL + SdkTargetPath.MY_SEGMENTS;
+    private final static String MY_SEGMENTS_TEST_URL = TEST_URL + SdkTargetPath.MEMBERSHIPS;
 
-    HttpClient mClientMock;
-    URI mUrl;
-    URI mSplitChangesUrl;
-    URI mMySegmentsUrl;
-    HttpResponseParser<SplitChange> mSplitChangeResponseParser = new SplitChangeResponseParser();
-    HttpResponseParser<AllSegmentsChange> mMySegmentsResponseParser = new AllSegmentsResponseParser();
+    private HttpClient mClientMock;
+    private URI mUrl;
+    private URI mSplitChangesUrl;
+    private URI mMySegmentsUrl;
+    private final HttpResponseParser<SplitChange> mSplitChangeResponseParser = new SplitChangeResponseParser();
+    private final HttpResponseParser<AllSegmentsChange> mMySegmentsResponseParser = new AllSegmentsResponseParser();
 
     @Before
     public void setup() throws URISyntaxException {
@@ -196,7 +197,8 @@ public class HttpFetcherTest {
         HttpFetcher<AllSegmentsChange> fetcher = new HttpFetcherImpl<>(mClientMock, mMySegmentsUrl, mMySegmentsResponseParser);
         List<String> mySegments = null;
         try {
-            mySegments = fetcher.execute(new HashMap<>(), null).getSegmentsChange().getNames();
+            SegmentsChange segmentsChange = fetcher.execute(new HashMap<>(), null).getSegmentsChange();
+            mySegments = segmentsChange.getNames();
         } catch (HttpFetcherException e) {
             exceptionWasThrown = true;
         }

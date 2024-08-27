@@ -110,7 +110,7 @@ public class ImpressionsRequestTest {
         });
 
         responses.put("splitChanges", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(9999, 9999)));
-        responses.put("mySegments/key1", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
+        responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "key1", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
         responses.put("v2/auth", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.streamingEnabledToken()));
 
         return responses;

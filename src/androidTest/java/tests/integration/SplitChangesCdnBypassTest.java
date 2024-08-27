@@ -116,9 +116,8 @@ public class SplitChangesCdnBypassTest {
             @Override
 
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
-                    return new HttpResponseMock(200, "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, " +
-                            "{ \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new HttpResponseMock(200, IntegrationHelper.dummyAllSegments());
 
                 } else if (uri.getPath().contains("/splitChanges")) {
                     System.out.println("URL HIT: " + uri.getPath());

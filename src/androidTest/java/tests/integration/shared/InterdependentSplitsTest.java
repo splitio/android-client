@@ -28,11 +28,11 @@ public class InterdependentSplitsTest extends BaseSharedClientsTest {
         return new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                if (request.getPath().contains("/mySegments/key1")) {
+                if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS + "/key1")) {
                     return new MockResponse()
                             .setResponseCode(200)
                             .setBody(IntegrationHelper.dummySingleSegment("android_test"));
-                } else if (request.getPath().contains("/mySegments/key2")) {
+                } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS + "/key2")) {
                     return new MockResponse()
                             .setResponseCode(200)
                             .setBody(IntegrationHelper.emptyMySegments());

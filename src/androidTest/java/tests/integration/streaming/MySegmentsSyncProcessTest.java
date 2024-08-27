@@ -242,7 +242,7 @@ public class MySegmentsSyncProcessTest {
                     Thread.sleep(800);
                     if (uri.getPath().contains("auth")) {
                         return createResponse(200, IntegrationHelper.streamingEnabledV1Token());
-                    } else if (uri.getPath().contains("/mySegments/key1")) {
+                    } else if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS + "/key1")) {
                         mMySegmentsHitCount++;
                         Logger.i("** My segments hit: " + mMySegmentsHitCount);
                         mMySegmentsSyncLatch.countDown();
@@ -253,9 +253,9 @@ public class MySegmentsSyncProcessTest {
                             return createResponse(200, updatedMySegments());
                         }
                         Logger.d("DUMMY SEGMENTS");
-                        return createResponse(200, IntegrationHelper.dummyMySegments());
-                    } else if (uri.getPath().contains("/mySegments/key2")) {
-                        return createResponse(200, IntegrationHelper.emptyMySegments());
+                        return createResponse(200, IntegrationHelper.dummyAllSegments());
+                    } else if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS + "/key2")) {
+                        return createResponse(200, IntegrationHelper.emptyAllSegments());
                     } else if (uri.getPath().contains("/splitChanges")) {
                         Logger.i("** Split Changes hit");
                         String data = IntegrationHelper.emptySplitChanges(-1, 1000);

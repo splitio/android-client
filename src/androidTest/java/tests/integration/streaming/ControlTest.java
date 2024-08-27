@@ -231,9 +231,9 @@ public class ControlTest {
 
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Logger.i("** My segments hit");
-                    return createResponse(200, IntegrationHelper.emptyMySegments());
+                    return createResponse(200, IntegrationHelper.emptyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
 
                     Logger.i("** Split Changes hit");

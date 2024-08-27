@@ -158,24 +158,19 @@ public class IntegrationHelper {
     }
 
     @Deprecated
-    public static String dummyMySegments() {
-        return dummyMyUnifiedSegments();
-    }
-
-    @Deprecated
     public static String emptyMySegments() {
-        return emptyMyUnifiedSegments();
+        return emptyAllSegments();
     }
 
-    public static String emptyMyUnifiedSegments() {
+    public static String emptyAllSegments() {
         return "{\"ms\":{\"k\":[],\"cn\":null},\"ls\":{\"k\":[],\"cn\":9999999999999}}";
     }
 
-    public static String dummyMyUnifiedSegments() {
+    public static String dummyAllSegments() {
         return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment1\"},{\"n\":\"large-segment2\"},{\"n\":\"large-segment3\"}],\"cn\":9999999999999}}";
     }
 
-    public static String randomizedMyUnifiedSegments() {
+    public static String randomizedAllSegments() {
         int randIntOne = (int) (Math.random() * 100);
         int randIntTwo = (int) (Math.random() * 100);
         return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment" + randIntOne + "\"},{\"n\":\"large-segment" + randIntTwo + "\"}],\"cn\":9999999999999}}";
@@ -384,6 +379,17 @@ public class IntegrationHelper {
         return Base64.encodeToString(digest.digest(encoded), Base64.NO_WRAP);
     }
 
+    @NonNull
+    public static <T> Set<T> asSet(T... elements) {
+        if (elements.length == 0) {
+            return Collections.emptySet();
+        }
+        Set<T> result = new HashSet<>();
+        Collections.addAll(result, elements);
+
+        return result;
+    }
+
     /**
      * A simple interface to allow us to define the response for a given path
      */
@@ -427,14 +433,7 @@ public class IntegrationHelper {
         HttpStreamResponseMock onResponse(URI uri);
     }
 
-    @NonNull
-    public static <T> Set<T> asSet(T... elements) {
-        if (elements.length == 0) {
-            return Collections.emptySet();
-        }
-        Set<T> result = new HashSet<>();
-        Collections.addAll(result, elements);
-
-        return result;
+    public static class ServicePath {
+        public static final String MEMBERSHIPS = "memberships";
     }
 }

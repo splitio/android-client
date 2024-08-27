@@ -279,7 +279,7 @@ public class SingleSyncTest {
 
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 System.out.println("Path is " + uri.getPath());
-                if (uri.getPath().contains("/mySegments")) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     mMySegmentsHitCount++;
                     return new HttpResponseMock(200, IntegrationHelper.emptyMySegments());
                 } else if (uri.getPath().contains("/splitChanges")) {

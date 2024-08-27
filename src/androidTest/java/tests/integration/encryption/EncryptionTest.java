@@ -349,7 +349,7 @@ public class EncryptionTest {
     private Map<String, IntegrationHelper.ResponseClosure> getResponses() {
         Map<String, IntegrationHelper.ResponseClosure> responses = new HashMap<>();
         responses.put("splitChanges", (uri, httpMethod, body) -> new HttpResponseMock(200, loadSplitChanges()));
-        responses.put("mySegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.dummyMySegments()));
+        responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.dummyAllSegments()));
         responses.put("events/bulk", (uri, httpMethod, body) -> new HttpResponseMock(404, ""));
         responses.put("testImpressions/bulk", (uri, httpMethod, body) -> new HttpResponseMock(404, ""));
         return responses;

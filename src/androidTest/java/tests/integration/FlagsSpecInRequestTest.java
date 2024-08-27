@@ -156,7 +156,7 @@ public class FlagsSpecInRequestTest {
             }
         });
 
-        responses.put("mySegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
+        responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
 
         responses.put("v2/auth", (uri, httpMethod, body) -> {
             mAuthUrl.set(uri);

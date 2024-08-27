@@ -1,8 +1,6 @@
 package io.split.android.client.service.impressions.observer;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
@@ -297,8 +295,8 @@ public class DedupeIntegrationTest {
             }
         });
 
-        responses.put("mySegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
-        responses.put("mySegments/key2", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
+        responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
+        responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "/key2", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
 
         return IntegrationHelper.buildDispatcher(responses);
     }

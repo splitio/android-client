@@ -85,7 +85,7 @@ public class MySegmentsServerErrorTest {
 
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                if (request.getPath().contains("/mySegments")) {
+                if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
 
                     int code = 200;
                     String data = null;

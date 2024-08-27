@@ -67,13 +67,13 @@ public class LargeSegmentTestHelper {
                 if (request.getRequestUrl().encodedPathSegments().contains("splitChanges")) {
                     updateEndpointHit("splitChanges");
                     return new MockResponse().setResponseCode(200).setBody(splitChangesLargeSegments(1602796638344L, 1602796638344L));
-                } else if (request.getRequestUrl().encodedPathSegments().contains("mySegments")) {
+                } else if (request.getRequestUrl().encodedPathSegments().contains(IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Thread.sleep(mMySegmentsDelay.get());
-                    updateEndpointHit("mySegments");
+                    updateEndpointHit(IntegrationHelper.ServicePath.MEMBERSHIPS);
 
-                    String body = (mEmptyMyLargeSegments.get()) ? IntegrationHelper.emptyMyUnifiedSegments() : IntegrationHelper.dummyMyUnifiedSegments();
+                    String body = (mEmptyMyLargeSegments.get()) ? IntegrationHelper.emptyAllSegments() : IntegrationHelper.dummyAllSegments();
                     if (mRandomizeMyLargeSegments.get()) {
-                        body = IntegrationHelper.randomizedMyUnifiedSegments();
+                        body = IntegrationHelper.randomizedAllSegments();
                     }
 
                     return new MockResponse().setResponseCode(200).setBody(body);
@@ -93,7 +93,7 @@ public class LargeSegmentTestHelper {
     private void initializeLatches() {
         mLatches = new ConcurrentHashMap<>();
         mLatches.put("splitChanges", new CountDownLatch(1));
-        mLatches.put("mySegments", new CountDownLatch(1));
+        mLatches.put(IntegrationHelper.ServicePath.MEMBERSHIPS, new CountDownLatch(1));
     }
 
     private void updateEndpointHit(String splitChanges) {

@@ -43,7 +43,7 @@ import tests.integration.shared.TestingHelper;
 public class LargeSegmentsStreamingTest {
 
     public static final String SPLIT_CHANGES = "splitChanges";
-    public static final String MY_SEGMENTS = "mySegments";
+    public static final String MY_SEGMENTS = IntegrationHelper.ServicePath.MEMBERSHIPS;
     public static final String AUTH = "v2/auth";
     public static final String SSE = "sse";
     private final FileHelper mFileHelper = new FileHelper();
@@ -159,14 +159,14 @@ public class LargeSegmentsStreamingTest {
         });
 
         String key = IntegrationHelper.dummyUserKey().matchingKey();
-        responses.put("mySegments/" + key, (path, query, body) -> {
+        responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + key, (path, query, body) -> {
             updateEndpointHit(MY_SEGMENTS);
             if (mMyLargeSegmentsStatusCode.get() != 200) {
                 return new HttpResponseMock(mMyLargeSegmentsStatusCode.get());
             } else {
-                String responseBody = IntegrationHelper.dummyMyUnifiedSegments();
+                String responseBody = IntegrationHelper.dummyAllSegments();
                 if (mRandomizeMyLargeSegments.get()) {
-                    responseBody = IntegrationHelper.randomizedMyUnifiedSegments();
+                    responseBody = IntegrationHelper.randomizedAllSegments();
                 }
                 return new HttpResponseMock(200, responseBody);
             }

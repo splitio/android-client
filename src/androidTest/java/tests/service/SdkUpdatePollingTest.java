@@ -227,9 +227,9 @@ public class SdkUpdatePollingTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Logger.i("NO CHANGWES MY S");
-                    return createResponse(200, IntegrationHelper.dummyMySegments());
+                    return createResponse(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     String json = IntegrationHelper.emptySplitChanges(99999, 99999);
                     Logger.i("NO CHANGES changes: " + json);
@@ -259,8 +259,8 @@ public class SdkUpdatePollingTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
-                    return createResponse(200, IntegrationHelper.dummyMySegments());
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return createResponse(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     mSplitChangesHitCount++;
                     String json = getChanges(mSplitChangesHitCount);
@@ -290,7 +290,7 @@ public class SdkUpdatePollingTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     mMySegmentsHitCount++;
                     int hit = mMySegmentsHitCount;
                     List<String> mySegments = new ArrayList<>();

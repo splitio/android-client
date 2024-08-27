@@ -88,7 +88,7 @@ public class MySegmentUpdatedTest {
 
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                if (request.getPath().contains("/mySegments")) {
+                if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
 
                     String data;
                     int index = mCurReqId;
@@ -100,7 +100,7 @@ public class MySegmentUpdatedTest {
                             data = IntegrationHelper.dummySingleSegment("segment2");
                             break;
                         default:
-                            data = IntegrationHelper.emptyMyUnifiedSegments();
+                            data = IntegrationHelper.emptyAllSegments();
                     }
 
                     if(index > 0 && index <= mLatchs.size()) {

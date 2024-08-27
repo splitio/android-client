@@ -13,7 +13,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -21,7 +20,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 import helper.DatabaseHelper;
 import helper.ImpressionListenerHelper;
@@ -77,8 +75,8 @@ public class TrackTest {
 
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                if (request.getPath().contains("/mySegments")) {
-                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[]}");
+                if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.emptyAllSegments());
 
                 } else if (request.getPath().contains("/splitChanges")) {
                     return new MockResponse().setResponseCode(200)

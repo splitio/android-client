@@ -5,7 +5,7 @@ on:
     branches:
       - 'development'
       - 'master'
-#      - '*_baseline' temporary disabled
+      - '*_baseline'
 
 jobs:
   test:

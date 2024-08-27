@@ -114,8 +114,8 @@ public class TelemetryIntegrationTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 String path = request.getPath();
-                if (path.contains("/mySegments")) {
-                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)
@@ -214,8 +214,8 @@ public class TelemetryIntegrationTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 String path = request.getPath();
-                if (path.contains("/mySegments")) {
-                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)
@@ -267,8 +267,8 @@ public class TelemetryIntegrationTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 String path = request.getPath();
-                if (path.contains("/mySegments")) {
-                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)
@@ -389,8 +389,8 @@ public class TelemetryIntegrationTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 String path = request.getPath();
-                if (path.contains("/mySegments")) {
-                    return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)

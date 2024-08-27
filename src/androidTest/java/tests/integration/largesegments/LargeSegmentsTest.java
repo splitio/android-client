@@ -32,7 +32,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         SplitClient readyClient = getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), factory);
 
         assertEquals(1, mEndpointHits.get("splitChanges").get());
-        assertEquals(1, mEndpointHits.get("mySegments").get());
+        assertEquals(1, mEndpointHits.get(IntegrationHelper.ServicePath.MEMBERSHIPS).get());
     }
 
     @Test
@@ -43,7 +43,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
 
 
         assertEquals(1, mEndpointHits.get("splitChanges").get());
-        assertEquals(1, mEndpointHits.get("mySegments").get());
+        assertEquals(1, mEndpointHits.get(IntegrationHelper.ServicePath.MEMBERSHIPS).get());
     }
 
     @Test
@@ -149,7 +149,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         boolean readyAwait = readyLatch.await(5, TimeUnit.SECONDS);
 
         assertEquals(1, mEndpointHits.get("splitChanges").get());
-        assertEquals(1, mEndpointHits.get("mySegments").get());
+        assertEquals(1, mEndpointHits.get(IntegrationHelper.ServicePath.MEMBERSHIPS).get());
         assertTrue(readyAwait);
     }
 

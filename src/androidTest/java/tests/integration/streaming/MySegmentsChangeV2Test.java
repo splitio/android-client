@@ -150,11 +150,11 @@ public class MySegmentsChangeV2Test {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments/key2")) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "/key2")) {
                     mMySegmentsSyncLatch2.countDown();
                     mMySegmentsUpdateLatch2.countDown();
-                    return createResponse(200, IntegrationHelper.emptyMySegments());
-                } else if (uri.getPath().contains("/mySegments")) {
+                    return createResponse(200, IntegrationHelper.emptyAllSegments());
+                } else if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     mMySegmentsHitCount++;
                     Logger.i("** My segments hit: " + mMySegmentsHitCount);
                     mMySegmentsSyncLatch.countDown();

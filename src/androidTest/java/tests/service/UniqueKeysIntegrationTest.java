@@ -254,8 +254,8 @@ public class UniqueKeysIntegrationTest {
         });
 
         IntegrationHelper.ResponseClosure mySegmentsResponse = (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments());
-        responses.put("mySegments/key1", mySegmentsResponse);
-        responses.put("mySegments/key2", mySegmentsResponse);
+        responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "/key1", mySegmentsResponse);
+        responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "/key2", mySegmentsResponse);
 
         responses.put("v2/auth", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.streamingEnabledToken()));
         return responses;
