@@ -33,6 +33,8 @@ public class MySegmentsSyncWorker extends BaseSegmentsSyncWorker {
                 false,
                 null,
                 StorageFactory.getTelemetryStorage(shouldRecordTelemetry),
-                MySegmentsSyncTaskConfig.get());
+                MySegmentsSyncTaskConfig.get(),
+                null,
+                null);
     }
 }
