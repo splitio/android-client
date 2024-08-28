@@ -155,6 +155,7 @@ public class MySegmentsSyncTask implements SplitTask {
             }
 
             if (isStaleResponse(response)) {
+                Logger.d("Retrying memberships fetch due to change number mismatch");
                 long waitMillis = TimeUnit.SECONDS.toMillis(mBackoffCounter.getNextRetryTime());
                 Thread.sleep(waitMillis);
                 remainingRetries--;
