@@ -197,24 +197,21 @@ public class MySegmentsSyncTask implements SplitTask {
     }
 
     private void updateStorage(AllSegmentsChange response) {
+        UpdateSegmentsResult segmentsResult = updateSegments(response.getSegmentsChange(), mMySegmentsStorage);
+        UpdateSegmentsResult largeSegmentsResult = updateSegments(response.getLargeSegmentsChange(), mMyLargeSegmentsStorage);
+        fireMySegmentsUpdatedIfNeeded(segmentsResult, largeSegmentsResult);
+    }
+
+    @NonNull
+    private static UpdateSegmentsResult updateSegments(SegmentsChange segmentsChange, MySegmentsStorage storage) {
         List<String> oldSegments = new ArrayList<>();
         List<String> mySegments = new ArrayList<>();
-        SegmentsChange segmentsChange = response.getSegmentsChange();
         if (segmentsChange != null) {
-            oldSegments = new ArrayList<>(mMySegmentsStorage.getAll());
+            oldSegments = new ArrayList<>(storage.getAll());
             mySegments = segmentsChange.getNames();
-            mMySegmentsStorage.set(segmentsChange);
+            storage.set(segmentsChange);
         }
-
-        List<String> oldLargeSegments = new ArrayList<>();
-        List<String> myLargeSegments = new ArrayList<>();
-        SegmentsChange largeSegmentsChange = response.getLargeSegmentsChange();
-        if (largeSegmentsChange != null) {
-            myLargeSegments = largeSegmentsChange.getNames();
-            oldLargeSegments = new ArrayList<>(mMyLargeSegmentsStorage.getAll());
-            mMyLargeSegmentsStorage.set(largeSegmentsChange);
-        }
-        fireMySegmentsUpdatedIfNeeded(oldSegments, mySegments, oldLargeSegments, myLargeSegments);
+        return new UpdateSegmentsResult(oldSegments, mySegments);
     }
 
     private void logError(String message) {
@@ -228,26 +225,18 @@ public class MySegmentsSyncTask implements SplitTask {
         return null;
     }
 
-    private void fireMySegmentsUpdatedIfNeeded(List<String> oldSegments, List<String> newSegments, List<String> oldLargeSegments, List<String> newLargeSegments) {
+    private void fireMySegmentsUpdatedIfNeeded(UpdateSegmentsResult segmentsResult, UpdateSegmentsResult largeSegmentsResult) {
         if (mEventsManager == null) {
             return;
         }
 
         // MY_SEGMENTS_UPDATED event when segments have changed
-        boolean segmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(oldSegments, newSegments);
-        boolean largeSegmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(oldLargeSegments, newLargeSegments);
-
-        if (segmentsHaveChanged) {
-            Logger.v("New segments fetched: " + String.join(", ", newSegments));
-        }
-        if (largeSegmentsHaveChanged) {
-            Logger.v("New large segments fetched: " + String.join(", ", newLargeSegments));
-        }
+        boolean segmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(segmentsResult.oldSegments, segmentsResult.newSegments);
+        boolean largeSegmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(largeSegmentsResult.oldSegments, largeSegmentsResult.newSegments);
 
         if (segmentsHaveChanged) {
             mEventsManager.notifyInternalEvent(mUpdateEvent);
         } else {
-
             // MY_LARGE_SEGMENTS_UPDATED event when large segments have changed
             if (largeSegmentsHaveChanged) {
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
@@ -255,6 +244,16 @@ public class MySegmentsSyncTask implements SplitTask {
                 // otherwise, MY_SEGMENTS_FETCHED event
                 mEventsManager.notifyInternalEvent(mFetchedEvent);
             }
+        }
+    }
+
+    private static class UpdateSegmentsResult {
+        public final List<String> oldSegments;
+        public final List<String> newSegments;
+
+        private UpdateSegmentsResult(List<String> oldSegments, List<String> newSegments) {
+            this.oldSegments = oldSegments;
+            this.newSegments = newSegments;
         }
     }
 }
