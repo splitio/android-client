@@ -28,7 +28,6 @@ import io.split.android.client.dtos.Matcher;
 import io.split.android.client.dtos.MatcherCombiner;
 import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.MatcherType;
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;

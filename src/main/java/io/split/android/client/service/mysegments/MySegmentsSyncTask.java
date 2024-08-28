@@ -175,32 +175,24 @@ public class MySegmentsSyncTask implements SplitTask {
     private Map<String, Object> getParams(boolean addTill) {
         Map<String, Object> params = new HashMap<>();
         if (addTill) {
-            long segmentsTarget = Utils.getOrDefault(mTargetSegmentsChangeNumber, -1L);
-            long largeSegmentsTarget = Utils.getOrDefault(mTargetLargeSegmentsChangeNumber, -1L);
-            params.put(TILL_PARAM, Math.max(segmentsTarget, largeSegmentsTarget));
+            params.put(TILL_PARAM, Math.max(
+                    Utils.getOrDefault(mTargetSegmentsChangeNumber, -1L),
+                    Utils.getOrDefault(mTargetLargeSegmentsChangeNumber, -1L)));
         }
 
         return params;
     }
 
     private boolean isStaleResponse(AllSegmentsChange response) {
-        boolean checkSegments = Utils.getOrDefault(mTargetSegmentsChangeNumber, -1L) != -1;
-        boolean checkLargeSegments = Utils.getOrDefault(mTargetLargeSegmentsChangeNumber, -1L) != -1;
-
-        boolean segmentsTargetMatched = !checkSegments ||
-                response.getSegmentsChange() != null && mTargetSegmentsChangeNumber.equals(response.getSegmentsChange().getChangeNumber());
-        boolean largeSegmentsTargetMatched = !checkLargeSegments ||
-                response.getLargeSegmentsChange() != null && mTargetLargeSegmentsChangeNumber.equals(response.getLargeSegmentsChange().getChangeNumber());
-
-        if (!segmentsTargetMatched) {
-            Logger.v("Segments target change number not matched. Expected: " + mTargetSegmentsChangeNumber + " - Actual: " + response.getSegmentsChange().getChangeNumber());
-        }
-
-        if (!largeSegmentsTargetMatched) {
-            Logger.v("Large segments target change number not matched. Expected: " + mTargetLargeSegmentsChangeNumber + " - Actual: " + response.getLargeSegmentsChange().getChangeNumber());
-        }
+        boolean segmentsTargetMatched = targetMatched(mTargetSegmentsChangeNumber, response.getSegmentsChange());
+        boolean largeSegmentsTargetMatched = targetMatched(mTargetLargeSegmentsChangeNumber, response.getLargeSegmentsChange());
 
         return !segmentsTargetMatched || !largeSegmentsTargetMatched;
+    }
+
+    private boolean targetMatched(@Nullable Long mTargetSegmentsChangeNumber, SegmentsChange response) {
+        return Utils.getOrDefault(mTargetSegmentsChangeNumber, -1L) == -1 ||
+                response != null && mTargetSegmentsChangeNumber.equals(response.getChangeNumber());
     }
 
     private void updateStorage(AllSegmentsChange response) {
