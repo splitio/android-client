@@ -5,10 +5,13 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import androidx.annotation.NonNull;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -22,12 +25,14 @@ import org.mockito.stubbing.Answer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.MySegment;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -36,6 +41,7 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTaskConfig;
+import io.split.android.client.service.sseclient.BackoffCounter;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -63,7 +69,7 @@ public class MySegmentsSyncTaskTest {
     @Before
     public void setup() {
         mAutoCloseable = MockitoAnnotations.openMocks(this);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get());
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null); // TODO
         loadMySegments();
     }
 
@@ -94,7 +100,7 @@ public class MySegmentsSyncTaskTest {
     public void correctExecutionNoCache() throws HttpFetcherException {
         Map<String, String> headers = new HashMap<>();
         headers.put(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER, SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, true, null, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get());
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, true, null, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null); // TODO
         when(mMySegmentsFetcher.execute(noParams, headers)).thenAnswer((Answer<AllSegmentsChange>) invocation -> mMySegments);
 
         mTask.execute();
@@ -117,7 +123,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void fetcherOtherExceptionRetryOn() throws HttpFetcherException {
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get());
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null); // TODO
         when(mMySegmentsFetcher.execute(noParams, null)).thenThrow(IllegalStateException.class);
 
         mTask.execute();
@@ -194,12 +200,36 @@ public class MySegmentsSyncTaskTest {
         Assert.assertEquals(result.getStatus(), SplitTaskExecutionStatus.SUCCESS);
     }
 
+    @Test
+    public void addTillParameterToRequestWhenResponseCnDoesNotMatchTargetAndRetryLimitIsReached() throws HttpFetcherException {
+        long targetLargeSegmentsChangeNumber = 4L;
+        BackoffCounter backoffCounter = mock(BackoffCounter.class);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, targetLargeSegmentsChangeNumber,
+                backoffCounter, 2);
+        when(mMySegmentsFetcher.execute(noParams, null))
+                .thenReturn(createChange(1L));
+        when(mMySegmentsFetcher.execute(Collections.singletonMap("till", 4L), null))
+                .thenReturn(createChange(4L));
+
+        SplitTaskExecutionInfo result = mTask.execute();
+
+        verify(backoffCounter).resetCounter();
+        verify(mMySegmentsFetcher, times(2)).execute(noParams, null);
+        verify(mMySegmentsFetcher, times(1)).execute(Collections.singletonMap("till", 4L), null);
+        verify(backoffCounter, times(2)).getNextRetryTime();
+    }
+
+    private static @NonNull AllSegmentsChange createChange(long lsChangeNumber) {
+        return AllSegmentsChange.create(
+                SegmentsChange.create(new HashSet<>(Collections.singletonList("segment0")), null),
+                SegmentsChange.create(new HashSet<>(Collections.singletonList("largesegment0")), lsChangeNumber));
+    }
+
     private void loadMySegments() {
         if (mMySegments == null) {
             List<MySegment> segments = new ArrayList<>();
             for (int i = 0; i < 5; i++) {
                 MySegment s = new MySegment();
-                s.id = "id_" + i;
                 s.name = "segment_" + i;
                 segments.add(s);
             }

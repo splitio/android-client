@@ -28,7 +28,9 @@ public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
                 avoidCache,
                 mConfiguration.getEventsManager(),
                 mTelemetryRuntimeProducer,
-                mConfiguration.getMySegmentsSyncTaskConfig());
+                mConfiguration.getMySegmentsSyncTaskConfig(),
+             null, // TODO
+                null); // TODO
     }
 
     @Override

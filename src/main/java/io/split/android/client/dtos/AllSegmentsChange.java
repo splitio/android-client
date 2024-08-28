@@ -1,6 +1,7 @@
 package io.split.android.client.dtos;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -15,6 +16,10 @@ public class AllSegmentsChange {
 
     @SerializedName("ls")
     private SegmentsChange mMyLargeSegmentsChange;
+
+    public AllSegmentsChange() {
+
+    }
 
     // TODO legacy endpoint support during development
     @Deprecated
@@ -36,5 +41,13 @@ public class AllSegmentsChange {
     @Nullable
     public SegmentsChange getLargeSegmentsChange() {
         return mMyLargeSegmentsChange;
+    }
+
+    @VisibleForTesting
+    public static AllSegmentsChange create(SegmentsChange mySegmentsChange, SegmentsChange myLargeSegmentsChange) {
+        AllSegmentsChange allSegmentsChange = new AllSegmentsChange();
+        allSegmentsChange.mMySegmentsChange = mySegmentsChange;
+        allSegmentsChange.mMyLargeSegmentsChange = myLargeSegmentsChange;
+        return allSegmentsChange;
     }
 }
