@@ -12,16 +12,7 @@ public class AllSegmentsResponseParser implements HttpResponseParser<AllSegments
     @Override
     public AllSegmentsChange parse(String responseData) throws HttpResponseParserException {
         try {
-            // TODO legacy endpoint support
-//            try {
-//                MySegmentsResponse mySegmentsResponse = Json.fromJson(responseData, MySegmentsResponse.class);
-//                Logger.d("Parsed legacy segments response");
-//                return new AllSegmentsChange(mySegmentsResponse.getSegments());
-//            } catch (Exception e) {
-
             return Json.fromJson(responseData, AllSegmentsChange.class);
-//            }
-
         } catch (JsonSyntaxException e) {
             throw new HttpResponseParserException("Syntax error parsing my large segments http response: " + e.getLocalizedMessage());
         } catch (Exception e) {

@@ -35,6 +35,7 @@ import io.split.android.client.common.CompressionType;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
 import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
@@ -64,7 +65,7 @@ public class MySegmentsNotificationProcessorImplTest {
     private CompressionUtil mCompressionUtil;
     private final BigInteger mHashedUserKey = new BigInteger("11288179738259047283");
     @Mock
-    private BlockingQueue<Long> mMySegmentChangeQueue;
+    private BlockingQueue<MySegmentUpdateParams> mMySegmentChangeQueue;
     @Mock
     private MySegmentChangeNotification mIncomingNotification;
     @Mock
@@ -86,7 +87,7 @@ public class MySegmentsNotificationProcessorImplTest {
                 .thenReturn(mock(MySegmentsUpdateTask.class));
         when(mSplitTaskFactory.createMySegmentsOverwriteTask(any()))
                 .thenReturn(mock(MySegmentsOverwriteTask.class));
-        when(mSplitTaskFactory.createMySegmentsSyncTask(anyBoolean()))
+        when(mSplitTaskFactory.createMySegmentsSyncTask(anyBoolean(), anyLong(), anyLong()))
                 .thenReturn(mock(MySegmentsSyncTask.class));
         when(mConfiguration.getHashedUserKey()).thenReturn(mHashedUserKey);
         when(mConfiguration.getMySegmentsTaskFactory()).thenReturn(mSplitTaskFactory);
@@ -142,8 +143,8 @@ public class MySegmentsNotificationProcessorImplTest {
         mNotificationProcessor.processMySegmentsUpdate(mySegmentChangeNotification);
 
         verify(mSplitTaskFactory, never()).createMySegmentsOverwriteTask(any());
-        ArgumentCaptor<Long> messageCaptor =
-                ArgumentCaptor.forClass(Long.class);
+        ArgumentCaptor<MySegmentUpdateParams> messageCaptor =
+                ArgumentCaptor.forClass(MySegmentUpdateParams.class);
         verify(mMySegmentChangeQueue, times(1)).offer(messageCaptor.capture());
     }
 
@@ -189,7 +190,7 @@ public class MySegmentsNotificationProcessorImplTest {
     @Test
     public void mySegmentsUpdateV2BoundedNotificationNoFetch() {
         mySegmentsUpdateV2BoundedNotification(false);
-        verify(mSplitTaskFactory, never()).createMySegmentsSyncTask(anyBoolean());
+        verify(mSplitTaskFactory, never()).createMySegmentsSyncTask(anyBoolean(), anyLong(), anyLong());
     }
 
     public void mySegmentsUpdateV2BoundedNotification(boolean hasToFetch) {

@@ -32,6 +32,7 @@ import io.split.android.client.service.synchronizer.MySegmentsChangeChecker;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
 
 public class MySegmentsSyncTask implements SplitTask {
@@ -73,6 +74,7 @@ public class MySegmentsSyncTask implements SplitTask {
                 myLargeSegmentsStorage,
                 avoidCache,
                 eventsManager,
+                new MySegmentsChangeChecker(),
                 telemetryRuntimeProducer,
                 config,
                 targetSegmentsChangeNumber,
@@ -87,6 +89,7 @@ public class MySegmentsSyncTask implements SplitTask {
                               @NonNull MySegmentsStorage myLargeSegmentsStorage,
                               boolean avoidCache,
                               SplitEventsManager eventsManager,
+                              MySegmentsChangeChecker mySegmentsChangeChecker,
                               @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                               @NonNull MySegmentsSyncTaskConfig config,
                               @Nullable Long targetSegmentsChangeNumber,
@@ -98,7 +101,7 @@ public class MySegmentsSyncTask implements SplitTask {
         mMyLargeSegmentsStorage = checkNotNull(myLargeSegmentsStorage);
         mAvoidCache = avoidCache;
         mEventsManager = eventsManager;
-        mMySegmentsChangeChecker = new MySegmentsChangeChecker();
+        mMySegmentsChangeChecker = mySegmentsChangeChecker;
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mTaskType = config.getTaskType();
         mUpdateEvent = config.getUpdateEvent();
@@ -172,20 +175,30 @@ public class MySegmentsSyncTask implements SplitTask {
     private Map<String, Object> getParams(boolean addTill) {
         Map<String, Object> params = new HashMap<>();
         if (addTill) {
-            params.put(TILL_PARAM, mTargetLargeSegmentsChangeNumber);
+            long segmentsTarget = Utils.getOrDefault(mTargetSegmentsChangeNumber, -1L);
+            long largeSegmentsTarget = Utils.getOrDefault(mTargetLargeSegmentsChangeNumber, -1L);
+            params.put(TILL_PARAM, Math.max(segmentsTarget, largeSegmentsTarget));
         }
 
         return params;
     }
 
     private boolean isStaleResponse(AllSegmentsChange response) {
-        boolean checkSegments = mTargetSegmentsChangeNumber != null && mTargetSegmentsChangeNumber != -1;
-        boolean checkLargeSegments = mTargetLargeSegmentsChangeNumber != null && mTargetLargeSegmentsChangeNumber != -1;
+        boolean checkSegments = Utils.getOrDefault(mTargetSegmentsChangeNumber, -1L) != -1;
+        boolean checkLargeSegments = Utils.getOrDefault(mTargetLargeSegmentsChangeNumber, -1L) != -1;
 
         boolean segmentsTargetMatched = !checkSegments ||
                 response.getSegmentsChange() != null && mTargetSegmentsChangeNumber.equals(response.getSegmentsChange().getChangeNumber());
         boolean largeSegmentsTargetMatched = !checkLargeSegments ||
                 response.getLargeSegmentsChange() != null && mTargetLargeSegmentsChangeNumber.equals(response.getLargeSegmentsChange().getChangeNumber());
+
+        if (!segmentsTargetMatched) {
+            Logger.v("Segments target change number not matched. Expected: " + mTargetSegmentsChangeNumber + " - Actual: " + response.getSegmentsChange().getChangeNumber());
+        }
+
+        if (!largeSegmentsTargetMatched) {
+            Logger.v("Large segments target change number not matched. Expected: " + mTargetLargeSegmentsChangeNumber + " - Actual: " + response.getLargeSegmentsChange().getChangeNumber());
+        }
 
         return !segmentsTargetMatched || !largeSegmentsTargetMatched;
     }

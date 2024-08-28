@@ -167,13 +167,13 @@ public class IntegrationHelper {
     }
 
     public static String dummyAllSegments() {
-        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment1\"},{\"n\":\"large-segment2\"},{\"n\":\"large-segment3\"}],\"cn\":9999999999999}}";
+        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment1\"},{\"n\":\"large-segment2\"},{\"n\":\"large-segment3\"}],\"cn\":1702507130121}}";
     }
 
     public static String randomizedAllSegments() {
         int randIntOne = (int) (Math.random() * 100);
         int randIntTwo = (int) (Math.random() * 100);
-        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment" + randIntOne + "\"},{\"n\":\"large-segment" + randIntTwo + "\"}],\"cn\":9999999999999}}";
+        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment" + randIntOne + "\"},{\"n\":\"large-segment" + randIntTwo + "\"}],\"cn\":1702507130121}}";
     }
 
     public static String dummySingleSegment(String segment) {

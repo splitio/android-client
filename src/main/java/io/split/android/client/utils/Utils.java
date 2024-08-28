@@ -1,5 +1,6 @@
 package io.split.android.client.utils;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -104,5 +105,10 @@ public class Utils {
             builder.append(str);
         }
         return builder.toString();
+    }
+
+    @NonNull
+    public static <T> T getOrDefault(@Nullable T value, @NonNull T defaultValue) {
+        return value != null ? value : defaultValue;
     }
 }

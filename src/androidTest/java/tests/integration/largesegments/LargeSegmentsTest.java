@@ -109,7 +109,7 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         List<String> mySegments = largeSegments.getNames();
         assertEquals(3, mySegments.size());
         assertTrue(mySegments.contains("large-segment1") && mySegments.contains("large-segment2") && mySegments.contains("large-segment3"));
-        assertEquals(9999999999999L, largeSegments.getChangeNumber().longValue());
+        assertEquals(1702507130121L, largeSegments.getChangeNumber().longValue());
     }
 
     @Test
@@ -134,8 +134,8 @@ public class LargeSegmentsTest extends LargeSegmentTestHelper {
         assertEquals(2, segmentList2.getNames().size());
         assertNotEquals(segmentList1,
                 segmentList2);
-        assertEquals(9999999999999L, segmentList1.getChangeNumber().longValue());
-        assertEquals(9999999999999L, segmentList2.getChangeNumber().longValue());
+        assertEquals(1702507130121L, segmentList1.getChangeNumber().longValue());
+        assertEquals(1702507130121L, segmentList2.getChangeNumber().longValue());
     }
 
     @Test
