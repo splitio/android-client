@@ -191,9 +191,9 @@ public class MySegmentsSyncTask implements SplitTask {
         return !segmentsTargetMatched || !largeSegmentsTargetMatched;
     }
 
-    private boolean targetMatched(@Nullable Long mTargetSegmentsChangeNumber, SegmentsChange response) {
-        return Utils.getOrDefault(mTargetSegmentsChangeNumber, -1L) == -1 ||
-                response != null && mTargetSegmentsChangeNumber.equals(response.getChangeNumber());
+    private boolean targetMatched(@Nullable Long targetChangeNumber, SegmentsChange response) {
+        return Utils.getOrDefault(targetChangeNumber, -1L) == -1 ||
+                response != null && targetChangeNumber.equals(response.getChangeNumber());
     }
 
     private void updateStorage(AllSegmentsChange response) {
