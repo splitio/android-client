@@ -140,7 +140,7 @@ public class SseHandlerTest {
         MyLargeSegmentChangeNotification notification = new MyLargeSegmentChangeNotification();
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
-        when(mNotificationParser.parseMyLargeSegmentUpdate(anyString())).thenReturn(notification);
+        when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(notification);
         when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));

@@ -1,5 +1,7 @@
 package io.split.android.client.service.sseclient.notifications.memberships;
 
+import androidx.annotation.Nullable;
+
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
@@ -29,62 +31,67 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
     private final SyncDelayCalculator mSyncDelayCalculator;
 
     public MembershipsNotificationProcessorImpl(NotificationParser notificationParser,
-                                                 SplitTaskExecutor splitTaskExecutor,
-                                                 MySegmentsV2PayloadDecoder mySegmentsPayloadDecoder,
-                                                 CompressionUtilProvider compressionProvider,
-                                                 MySegmentsNotificationProcessorConfiguration configuration) {
+                                                SplitTaskExecutor splitTaskExecutor,
+                                                MySegmentsV2PayloadDecoder mySegmentsPayloadDecoder,
+                                                CompressionUtilProvider compressionProvider,
+                                                MySegmentsNotificationProcessorConfiguration configuration,
+                                                SyncDelayCalculatorImpl syncDelayCalculator) {
         mNotificationParser = notificationParser;
         mSplitTaskExecutor = splitTaskExecutor;
         mMySegmentsPayloadDecoder = mySegmentsPayloadDecoder;
         mCompressionProvider = compressionProvider;
         mConfiguration = configuration;
-        mSyncDelayCalculator = new SyncDelayCalculatorImpl();
+        mSyncDelayCalculator = syncDelayCalculator;
     }
 
     @Override
-    public void process(MembershipNotification notification) {
-        long syncDelay = mSyncDelayCalculator.calculateSyncDelay(mConfiguration.getUserKey(),
-                notification.getUpdateIntervalMs(),
-                notification.getAlgorithmSeed(),
-                notification.getUpdateStrategy(),
-                notification.getHashingAlgorithm());
+    public void process(@Nullable MembershipNotification notification) {
+        if (notification == null) {
+            notifyMySegmentRefreshNeeded(mConfiguration.getNotificationsQueue(), 0L, null, null);
+        } else {
+            long syncDelay = mSyncDelayCalculator.calculateSyncDelay(mConfiguration.getUserKey(),
+                    notification.getUpdateIntervalMs(),
+                    notification.getAlgorithmSeed(),
+                    notification.getUpdateStrategy(),
+                    notification.getHashingAlgorithm());
 
-        processUpdate(notification.getType(),
-                notification.getUpdateStrategy(),
-                notification.getData(),
-                notification.getCompression(),
-                notification.getNames(),
-                notification.getChangeNumber(),
-                mConfiguration.getNotificationsQueue(),
-                syncDelay);
+            processUpdate(notification.getType(),
+                    notification.getUpdateStrategy(),
+                    notification.getData(),
+                    notification.getCompression(),
+                    notification.getNames(),
+                    notification.getChangeNumber(),
+                    mConfiguration.getNotificationsQueue(),
+                    syncDelay);
+        }
     }
 
     private void processUpdate(NotificationType notificationType, MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> names, Long changeNumber, BlockingQueue<MySegmentUpdateParams> notificationsQueue, long syncDelay) {
         try {
             switch (updateStrategy) {
                 case UNBOUNDED_FETCH_REQUEST:
-                    Logger.d("Received Unbounded my segment fetch request");
+                    Logger.d("Received Unbounded membership fetch request");
                     notifyMySegmentRefreshNeeded(notificationsQueue, syncDelay, notificationType, changeNumber);
                     break;
                 case BOUNDED_FETCH_REQUEST:
-                    Logger.d("Received Bounded my segment fetch request");
+                    Logger.d("Received Bounded membership fetch request");
                     byte[] keyMap = mMySegmentsPayloadDecoder.decodeAsBytes(data,
                             mCompressionProvider.get(compression));
                     executeBoundedFetch(keyMap, syncDelay);
                     break;
                 case KEY_LIST:
-                    Logger.d("Received KeyList my segment fetch request");
+                    Logger.d("Received KeyList membership fetch request");
                     updateSegments(notificationType, mMySegmentsPayloadDecoder.decodeAsString(data,
                                     mCompressionProvider.get(compression)),
                             names, changeNumber);
                     break;
                 case SEGMENT_REMOVAL:
-                    Logger.d("Received Segment removal request");
+                    Logger.d("Received membership removal request");
                     removeSegment(notificationType, names, changeNumber);
                     break;
                 default:
                     notifyMySegmentRefreshNeeded(notificationsQueue, syncDelay, notificationType, changeNumber);
-                    Logger.i("Unknown my segment change v2 notification type: " + updateStrategy);
+                    Logger.w("Unknown membership change notification type: " + updateStrategy);
                     break;
             }
         } catch (Exception e) {
@@ -115,7 +122,7 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
     private void executeBoundedFetch(byte[] keyMap, long syncDelay) {
         int index = mMySegmentsPayloadDecoder.computeKeyIndex(mConfiguration.getHashedUserKey(), keyMap.length);
         if (mMySegmentsPayloadDecoder.isKeyInBitmap(keyMap, index)) {
-            Logger.d("Executing Bounded my segment fetch request");
+            Logger.d("Executing Bounded membership fetch request");
             notifyMySegmentRefreshNeeded(mConfiguration.getNotificationsQueue(), syncDelay, NotificationType.MY_SEGMENTS_UPDATE_V2, null); // TODO
         }
     }

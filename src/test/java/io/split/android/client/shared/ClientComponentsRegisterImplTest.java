@@ -21,7 +21,7 @@ import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
-import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactory;
+import io.split.android.client.service.sseclient.notifications.mysegments.MembershipsNotificationProcessorFactory;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorRegistry;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
@@ -53,7 +53,7 @@ public class ClientComponentsRegisterImplTest {
     @Mock
     private MySegmentsNotificationProcessorRegistry mMySegmentsNotificationProcessorRegistry;
     @Mock
-    private MySegmentsNotificationProcessorFactory mMySegmentsNotificationProcessorFactory;
+    private MembershipsNotificationProcessorFactory mMembershipsNotificationProcessorFactory;
     @Mock
     private MySegmentsV2PayloadDecoder mMySegmentsV2PayloadDecoder;
 
@@ -139,7 +139,7 @@ public class ClientComponentsRegisterImplTest {
                 mEventsManagerRegistry,
                 mSseAuthenticator,
                 mMySegmentsNotificationProcessorRegistry,
-                mMySegmentsNotificationProcessorFactory,
+                mMembershipsNotificationProcessorFactory,
                 mMySegmentsV2PayloadDecoder
         );
     }

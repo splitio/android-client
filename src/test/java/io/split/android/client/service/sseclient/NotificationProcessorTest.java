@@ -139,7 +139,7 @@ public class NotificationProcessorTest {
 
         when(mySegmentChangeNotification.getData()).thenReturn("{}");
         when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_LARGE_SEGMENT_UPDATE);
-        when(mNotificationParser.parseMyLargeSegmentUpdate(anyString())).thenReturn(mySegmentChangeNotification);
+        when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(mySegmentChangeNotification);
 
         mNotificationProcessor.registerMyLargeSegmentsProcessor("1", mySegmentsNotificationProcessor);
         mNotificationProcessor.registerMyLargeSegmentsProcessor("2", mySegmentsNotificationProcessor2);

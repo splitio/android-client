@@ -84,9 +84,8 @@ public class SseHandler {
                     break;
                 case SPLIT_KILL:
                 case SPLIT_UPDATE:
-                case MY_SEGMENTS_UPDATE:
-                case MY_SEGMENTS_UPDATE_V2:
-                case MY_LARGE_SEGMENT_UPDATE:
+                case MEMBERSHIP_MS_UPDATE:
+                case MEMBERSHIP_LS_UPDATE:
                     if (mNotificationManagerKeeper.isStreamingActive()) {
                         mNotificationProcessor.process(incomingNotification);
                     }

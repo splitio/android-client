@@ -178,7 +178,7 @@ public class NotificationParserTest {
     @Test
     public void parseMyLargeSegmentsNotificationData() {
         IncomingNotification incomingNotification = mParser.parseIncoming(MY_LARGE_SEGMENTS_UPDATE);
-        MyLargeSegmentChangeNotification notification = mParser.parseMyLargeSegmentUpdate(incomingNotification.getJsonData());
+        MyLargeSegmentChangeNotification notification = mParser.parseMembershipNotification(incomingNotification.getJsonData());
 
         assertEquals("eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==", notification.getData());
         assertEquals((Long) 1702507130121L, notification.getChangeNumber());
