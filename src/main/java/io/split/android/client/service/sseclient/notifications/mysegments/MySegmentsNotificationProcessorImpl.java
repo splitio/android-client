@@ -13,6 +13,7 @@ import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
 import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeV2Notification;
@@ -45,7 +46,8 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
     @Override
     public void processMySegmentsUpdate(MySegmentChangeNotification notification) {
         if (!notification.isIncludesPayload()) {
-            mConfiguration.getMySegmentUpdateNotificationsQueue().offer(ServiceConstants.NO_INITIAL_DELAY);
+            //noinspection ResultOfMethodCallIgnored
+            mConfiguration.getMySegmentUpdateNotificationsQueue().offer(new MySegmentUpdateParams(ServiceConstants.NO_INITIAL_DELAY, null, null));
         } else {
             Set<String> segmentList = notification.getSegmentList() != null ? new HashSet<>(notification.getSegmentList()) : new HashSet<>();
             MySegmentsOverwriteTask task = mConfiguration.getMySegmentsTaskFactory()
@@ -60,7 +62,8 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
                 notification.getData(),
                 notification.getCompression(),
                 Collections.singleton(notification.getSegmentName()),
-                notification.getChangeNumber(), mConfiguration.getMySegmentUpdateNotificationsQueue(),
+                notification.getChangeNumber(),
+                mConfiguration.getMySegmentUpdateNotificationsQueue(),
                 ServiceConstants.NO_INITIAL_DELAY);
     }
 }

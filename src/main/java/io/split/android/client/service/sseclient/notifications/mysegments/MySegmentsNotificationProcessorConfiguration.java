@@ -6,18 +6,20 @@ import androidx.annotation.NonNull;
 
 import java.math.BigInteger;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingDeque;
 
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 
 public class MySegmentsNotificationProcessorConfiguration {
 
     private final MySegmentsTaskFactory mMySegmentsTaskFactory;
-    private final BlockingQueue<Long> mMySegmentUpdateNotificationsQueue;
+    private final BlockingQueue<MySegmentUpdateParams> mMySegmentUpdateNotificationsQueue;
     private final String mUserKey;
     private final BigInteger mHashedUserKey;
 
     public MySegmentsNotificationProcessorConfiguration(@NonNull MySegmentsTaskFactory mySegmentsTaskFactory,
-                                                        @NonNull BlockingQueue<Long> mySegmentUpdateNotificationsQueue,
+                                                        @NonNull LinkedBlockingDeque<MySegmentUpdateParams> mySegmentUpdateNotificationsQueue,
                                                         @NonNull String userKey,
                                                         @NonNull BigInteger hashedUserKey) {
         mMySegmentsTaskFactory = checkNotNull(mySegmentsTaskFactory);
@@ -30,7 +32,7 @@ public class MySegmentsNotificationProcessorConfiguration {
         return mMySegmentsTaskFactory;
     }
 
-    public BlockingQueue<Long> getMySegmentUpdateNotificationsQueue() {
+    public BlockingQueue<MySegmentUpdateParams> getMySegmentUpdateNotificationsQueue() {
         return mMySegmentUpdateNotificationsQueue;
     }
 

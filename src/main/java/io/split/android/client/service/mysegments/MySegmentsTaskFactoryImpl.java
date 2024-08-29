@@ -21,7 +21,7 @@ public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
     }
 
     @Override
-    public MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache) {
+    public MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache, Long targetSegmentsCn, Long targetLargeSegmentsCn) {
         return new MySegmentsSyncTask(mConfiguration.getHttpFetcher(),
                 mConfiguration.getMySegmentsStorage(),
                 mConfiguration.getMyLargeSegmentsStorage(),
@@ -29,8 +29,8 @@ public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
                 mConfiguration.getEventsManager(),
                 mTelemetryRuntimeProducer,
                 mConfiguration.getMySegmentsSyncTaskConfig(),
-             null, // TODO
-                null); // TODO
+                targetSegmentsCn,
+                targetLargeSegmentsCn);
     }
 
     @Override

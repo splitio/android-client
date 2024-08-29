@@ -6,8 +6,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
+
 public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronizerRegistry,
-    MySegmentsSynchronizerRegistry.Tasks {
+    MySegmentsSynchronizer {
 
     private final AtomicBoolean mLoadedFromCache = new AtomicBoolean(false);
     private final AtomicBoolean mSynchronizedSegments = new AtomicBoolean(false);
@@ -47,8 +49,8 @@ public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronize
     }
 
     @Override
-    public void forceMySegmentsSync(Long syncDelay) {
-        executeForAll(mySegmentsSynchronizer -> mySegmentsSynchronizer.forceMySegmentsSync(syncDelay));
+    public void forceMySegmentsSync(MySegmentUpdateParams params) {
+        executeForAll(mySegmentsSynchronizer -> mySegmentsSynchronizer.forceMySegmentsSync(params));
     }
 
     @Override

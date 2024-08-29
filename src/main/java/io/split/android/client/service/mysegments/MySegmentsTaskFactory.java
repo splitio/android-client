@@ -6,7 +6,7 @@ import io.split.android.client.dtos.SegmentsChange;
 
 public interface MySegmentsTaskFactory {
 
-    MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache);
+    MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache, Long targetSegmentsCn, Long targetLargeSegmentsCn);
 
     LoadMySegmentsTask createLoadMySegmentsTask();
 

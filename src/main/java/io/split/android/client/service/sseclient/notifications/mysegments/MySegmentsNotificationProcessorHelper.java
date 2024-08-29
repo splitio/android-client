@@ -6,6 +6,7 @@ import java.util.concurrent.BlockingQueue;
 import io.split.android.client.common.CompressionType;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
 import io.split.android.client.service.sseclient.notifications.KeyList;
 import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
@@ -34,20 +35,20 @@ class MySegmentsNotificationProcessorHelper {
         mConfiguration = configuration;
     }
 
-    void processMySegmentsUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, Long changeNumber, BlockingQueue<Long> notificationsQueue, long syncDelay) {
+    void processMySegmentsUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, Long changeNumber, BlockingQueue<MySegmentUpdateParams> notificationsQueue, long syncDelay) {
         processUpdate(NotificationType.MY_SEGMENTS_UPDATE_V2, updateStrategy, data, compression, segmentNames, changeNumber, notificationsQueue, syncDelay);
     }
 
-    void processMyLargeSegmentsUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, Long changeNumber, BlockingQueue<Long> notificationsQueue, long syncDelay) {
+    void processMyLargeSegmentsUpdate(MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, Long changeNumber, BlockingQueue<MySegmentUpdateParams> notificationsQueue, long syncDelay) {
         processUpdate(NotificationType.MY_LARGE_SEGMENT_UPDATE, updateStrategy, data, compression, segmentNames, changeNumber, notificationsQueue, syncDelay);
     }
 
-    private void processUpdate(NotificationType notificationType, MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, Long changeNumber, BlockingQueue<Long> notificationsQueue, long syncDelay) {
+    private void processUpdate(NotificationType notificationType, MySegmentUpdateStrategy updateStrategy, String data, CompressionType compression, Set<String> segmentNames, Long changeNumber, BlockingQueue<MySegmentUpdateParams> notificationsQueue, long syncDelay) {
         try {
             switch (updateStrategy) {
                 case UNBOUNDED_FETCH_REQUEST:
                     Logger.d("Received Unbounded my segment fetch request");
-                    notifyMySegmentRefreshNeeded(notificationsQueue, syncDelay);
+                    notifyMySegmentRefreshNeeded(notificationsQueue, syncDelay, notificationType, changeNumber);
                     break;
                 case BOUNDED_FETCH_REQUEST:
                     Logger.d("Received Bounded my segment fetch request");
@@ -70,12 +71,16 @@ class MySegmentsNotificationProcessorHelper {
             }
         } catch (Exception e) {
             Logger.e("Executing unbounded fetch because an error has occurred processing my "+(notificationType == NotificationType.MY_LARGE_SEGMENT_UPDATE ? "large" : "")+" segment notification: " + e.getLocalizedMessage());
-            notifyMySegmentRefreshNeeded(notificationsQueue, syncDelay);
+            notifyMySegmentRefreshNeeded(notificationsQueue, syncDelay, notificationType, changeNumber);
         }
     }
 
-    private void notifyMySegmentRefreshNeeded(BlockingQueue<Long> notificationsQueue, long syncDelay) {
-        notificationsQueue.offer(syncDelay);
+    private void notifyMySegmentRefreshNeeded(BlockingQueue<MySegmentUpdateParams> notificationsQueue, long syncDelay, NotificationType notificationType, Long changeNumber) {
+        Long targetSegmentsCn = (notificationType == NotificationType.MY_LARGE_SEGMENT_UPDATE) ? null : changeNumber;
+        Long targetLargeSegmentsCn = (notificationType == NotificationType.MY_LARGE_SEGMENT_UPDATE) ? changeNumber : null;
+
+        //noinspection ResultOfMethodCallIgnored
+        notificationsQueue.offer(new MySegmentUpdateParams(syncDelay, targetSegmentsCn, targetLargeSegmentsCn));
     }
 
     private void removeSegment(NotificationType notificationType, Set<String> segmentNames, Long changeNumber) {
@@ -92,8 +97,8 @@ class MySegmentsNotificationProcessorHelper {
     private void executeBoundedFetch(byte[] keyMap, long syncDelay) {
         int index = mMySegmentsPayloadDecoder.computeKeyIndex(mConfiguration.getHashedUserKey(), keyMap.length);
         if (mMySegmentsPayloadDecoder.isKeyInBitmap(keyMap, index)) {
-            Logger.d("Executing Unbounded my segment fetch request");
-            notifyMySegmentRefreshNeeded(mConfiguration.getMySegmentUpdateNotificationsQueue(), syncDelay);
+            Logger.d("Executing Bounded my segment fetch request");
+            notifyMySegmentRefreshNeeded(mConfiguration.getMySegmentUpdateNotificationsQueue(), syncDelay, NotificationType.MY_SEGMENTS_UPDATE_V2, null); // TODO
         }
     }
 

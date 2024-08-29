@@ -6,6 +6,8 @@ import static org.mockito.Mockito.verify;
 import org.junit.Before;
 import org.junit.Test;
 
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
+
 public class MySegmentsSynchronizerRegistryImplTest {
 
     private MySegmentsSynchronizerRegistryImpl mRegistry;
@@ -38,11 +40,12 @@ public class MySegmentsSynchronizerRegistryImplTest {
     @Test
     public void forceMySegmentsSyncGetCalledInEveryRegisteredSync() {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
+        MySegmentUpdateParams params = new MySegmentUpdateParams(4L, 1L, 2L);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
-        mRegistry.forceMySegmentsSync(4L);
+        mRegistry.forceMySegmentsSync(params);
 
-        verify(syncMock).forceMySegmentsSync(4L);
+        verify(syncMock).forceMySegmentsSync(params);
     }
 
     @Test

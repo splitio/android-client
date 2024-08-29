@@ -30,6 +30,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
@@ -70,7 +71,7 @@ public class MySegmentsSynchronizerImplTest {
     @Test
     public void synchronizeMySegmentsStartsSegmentsSyncTask() {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
-        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false)).thenReturn(mockTask);
+        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false, null, null)).thenReturn(mockTask);
 
         mMySegmentsSynchronizer.synchronizeMySegments();
 
@@ -81,11 +82,11 @@ public class MySegmentsSynchronizerImplTest {
     @Test
     public void forceMySegmentsSyncLaunchesSegmentsSyncTaskAvoidingCache() {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
-        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(true)).thenReturn(mockTask);
+        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(true, null, 10L)).thenReturn(mockTask);
 
-        mMySegmentsSynchronizer.forceMySegmentsSync(0L);
+        mMySegmentsSynchronizer.forceMySegmentsSync(new MySegmentUpdateParams(1L, null, 10L));
 
-        verify(mRetryBackoffCounterTimer).setTask(eq(mockTask), eq(0L), any());
+        verify(mRetryBackoffCounterTimer).setTask(eq(mockTask), eq(1L), any());
         verify(mRetryBackoffCounterTimer).start();
     }
 
@@ -93,12 +94,12 @@ public class MySegmentsSynchronizerImplTest {
     public void forceMySegmentsSyncDoesNotStopPreviouslyRunningTask() {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
         MySegmentsSyncTask mockTask2 = mock(MySegmentsSyncTask.class);
-        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(true))
+        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(true, null, null))
                 .thenReturn(mockTask)
                 .thenReturn(mockTask2);
 
-        mMySegmentsSynchronizer.forceMySegmentsSync(1000L);
-        mMySegmentsSynchronizer.forceMySegmentsSync(0L);
+        mMySegmentsSynchronizer.forceMySegmentsSync(new MySegmentUpdateParams(1000L, null, null));
+        mMySegmentsSynchronizer.forceMySegmentsSync(new MySegmentUpdateParams(0L, null, null));
 
         verify(mRetryBackoffCounterTimer).setTask(eq(mockTask), eq(1000L), any());
         verify(mRetryBackoffCounterTimer, times(0)).setTask(eq(mockTask2), eq(0L), any());
@@ -109,7 +110,7 @@ public class MySegmentsSynchronizerImplTest {
     @Test
     public void scheduleSegmentsSyncTaskSchedulesSyncTaskInTaskExecutor() {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
-        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false)).thenReturn(mockTask);
+        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false, null, null)).thenReturn(mockTask);
         when(mSplitTaskExecutor.schedule(eq(mockTask), eq(1L), eq(1L), notNull())).thenReturn("TaskID");
 
         mMySegmentsSynchronizer.scheduleSegmentsSyncTask();
@@ -120,7 +121,7 @@ public class MySegmentsSynchronizerImplTest {
     @Test
     public void stopPeriodicFetchingCallsStopTaskOnExecutor() {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
-        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false)).thenReturn(mockTask);
+        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false, null, null)).thenReturn(mockTask);
         when(mSplitTaskExecutor.schedule(eq(mockTask), eq(1L), eq(1L), notNull())).thenReturn("TaskID");
 
         mMySegmentsSynchronizer.scheduleSegmentsSyncTask();
@@ -135,7 +136,7 @@ public class MySegmentsSynchronizerImplTest {
     public void startPeriodicFetchingCancelsPreviousTaskIfExecutedSequentially() {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
         MySegmentsSyncTask mockTask2 = mock(MySegmentsSyncTask.class);
-        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false))
+        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false, null, null))
                 .thenReturn(mockTask)
                 .thenReturn(mockTask2);
         when(mSplitTaskExecutor.schedule(eq(mockTask), anyLong(), anyLong(), notNull())).thenReturn("TaskID");
@@ -152,7 +153,7 @@ public class MySegmentsSynchronizerImplTest {
     @Test
     public void syncTaskIsStoppedWhenTaskResultIsDoNotRetry() throws InterruptedException {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
-        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false)).thenReturn(mockTask);
+        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false, null, null)).thenReturn(mockTask);
         when(mockTask.execute()).thenReturn(SplitTaskExecutionInfo.error(
                 SplitTaskType.MY_SEGMENTS_SYNC,
                 Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true)));
@@ -186,7 +187,7 @@ public class MySegmentsSynchronizerImplTest {
     @Test
     public void syncTaskIsNotRestartedWhenTaskResultIsDoNotRetry() throws InterruptedException {
         MySegmentsSyncTask mockTask = mock(MySegmentsSyncTask.class);
-        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false)).thenReturn(mockTask);
+        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(false, null, null)).thenReturn(mockTask);
         when(mockTask.execute()).thenReturn(SplitTaskExecutionInfo.error(
                 SplitTaskType.MY_SEGMENTS_SYNC,
                 Collections.singletonMap(SplitTaskExecutionInfo.DO_NOT_RETRY, true)));

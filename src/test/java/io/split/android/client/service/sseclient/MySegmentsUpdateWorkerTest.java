@@ -1,5 +1,6 @@
 package io.split.android.client.service.sseclient;
 
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -12,6 +13,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 
@@ -22,7 +24,7 @@ public class MySegmentsUpdateWorkerTest {
     @Mock
     MySegmentsSynchronizer mSynchronizer;
 
-    BlockingQueue<Long> mNotificationQueue;
+    BlockingQueue<MySegmentUpdateParams> mNotificationQueue;
 
     @Before
     public void setup() {
@@ -35,23 +37,27 @@ public class MySegmentsUpdateWorkerTest {
     @Test
     public void mySegmentsUpdateReceived() throws InterruptedException {
 
-        mNotificationQueue.offer(0L);
-        mNotificationQueue.offer(1L);
-        mNotificationQueue.offer(2L);
-        mNotificationQueue.offer(3L);
+        MySegmentUpdateParams params = mock(MySegmentUpdateParams.class);
+        MySegmentUpdateParams params2 = mock(MySegmentUpdateParams.class);
+        MySegmentUpdateParams params3 = mock(MySegmentUpdateParams.class);
+        MySegmentUpdateParams params4 = mock(MySegmentUpdateParams.class);
+        mNotificationQueue.offer(params);
+        mNotificationQueue.offer(params2);
+        mNotificationQueue.offer(params3);
+        mNotificationQueue.offer(params4);
 
-        Thread.sleep(1000);
+        Thread.sleep(200);
 
-        verify(mSynchronizer, times(1)).forceMySegmentsSync(0L);
-        verify(mSynchronizer, times(1)).forceMySegmentsSync(1L);
-        verify(mSynchronizer, times(1)).forceMySegmentsSync(2L);
-        verify(mSynchronizer, times(1)).forceMySegmentsSync(3L);
+        verify(mSynchronizer, times(1)).forceMySegmentsSync(params);
+        verify(mSynchronizer, times(1)).forceMySegmentsSync(params2);
+        verify(mSynchronizer, times(1)).forceMySegmentsSync(params3);
+        verify(mSynchronizer, times(1)).forceMySegmentsSync(params4);
     }
 
     @Test
     public void stopped() throws InterruptedException {
         mWorker.stop();
-        mNotificationQueue.offer(0L);
+        mNotificationQueue.offer(mock(MySegmentUpdateParams.class));
 
         Thread.sleep(1000);
 

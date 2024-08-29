@@ -22,18 +22,16 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Set;
 
 import io.split.android.client.dtos.AllSegmentsChange;
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -42,6 +40,7 @@ import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTaskConfig;
 import io.split.android.client.service.sseclient.BackoffCounter;
+import io.split.android.client.service.synchronizer.MySegmentsChangeChecker;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -60,6 +59,8 @@ public class MySegmentsSyncTaskTest {
     SplitEventsManager mEventsManager;
     @Mock
     TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    @Mock
+    MySegmentsChangeChecker mMySegmentsChangeChecker;
 
     AllSegmentsChange mMySegments = null;
 
@@ -69,7 +70,8 @@ public class MySegmentsSyncTaskTest {
     @Before
     public void setup() {
         mAutoCloseable = MockitoAnnotations.openMocks(this);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null); // TODO
+        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(true);
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null);
         loadMySegments();
     }
 
@@ -100,7 +102,7 @@ public class MySegmentsSyncTaskTest {
     public void correctExecutionNoCache() throws HttpFetcherException {
         Map<String, String> headers = new HashMap<>();
         headers.put(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER, SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, true, null, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null); // TODO
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, true, null, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null);
         when(mMySegmentsFetcher.execute(noParams, headers)).thenAnswer((Answer<AllSegmentsChange>) invocation -> mMySegments);
 
         mTask.execute();
@@ -123,7 +125,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void fetcherOtherExceptionRetryOn() throws HttpFetcherException {
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null); // TODO
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null);
         when(mMySegmentsFetcher.execute(noParams, null)).thenThrow(IllegalStateException.class);
 
         mTask.execute();
@@ -204,7 +206,7 @@ public class MySegmentsSyncTaskTest {
     public void addTillParameterToRequestWhenResponseCnDoesNotMatchTargetAndRetryLimitIsReached() throws HttpFetcherException {
         long targetLargeSegmentsChangeNumber = 4L;
         BackoffCounter backoffCounter = mock(BackoffCounter.class);
-        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, targetLargeSegmentsChangeNumber,
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, targetLargeSegmentsChangeNumber,
                 backoffCounter, 2);
         when(mMySegmentsFetcher.execute(noParams, null))
                 .thenReturn(createChange(1L));
@@ -219,22 +221,123 @@ public class MySegmentsSyncTaskTest {
         verify(backoffCounter, times(2)).getNextRetryTime();
     }
 
-    private static @NonNull AllSegmentsChange createChange(long lsChangeNumber) {
+    @Test
+    public void fetchedEventIsEmittedWhenNoChangesInSegments() throws HttpFetcherException {
+        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(false);
+        when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
+    }
+
+    @Test
+    public void updatedEventIsEmittedWhenChangesInSegments() throws HttpFetcherException {
+        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(true);
+        when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+    }
+
+    @Test
+    public void largeSegmentsUpdatedEventIsEmittedWhenChangesInLargeSegmentsAndNotInSegments() throws HttpFetcherException {
+        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(false);
+        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(Collections.emptyList(), Collections.singletonList("largesegment0"))).thenReturn(true);
+        when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(createChange(1L));
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
+    }
+
+    @Test
+    public void largeSegmentsTargetIsUsedForCdnBypassWhenSegmentsChangeNumberIsNotSet() throws HttpFetcherException {
+        long targetLargeSegmentsChangeNumber = 4L;
+        when(mMySegmentsFetcher.execute(noParams, null))
+                .thenReturn(createChange(null, 1L));
+        when(mMySegmentsFetcher.execute(Collections.singletonMap("till", 4L), null))
+                .thenReturn(createChange(null, 4L));
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, targetLargeSegmentsChangeNumber, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mMySegmentsFetcher, times(2)).execute(any(), any());
+        verify(mMySegmentsFetcher).execute(noParams, null);
+        verify(mMySegmentsFetcher).execute(Collections.singletonMap("till", 4L), null);
+    }
+
+    @Test
+    public void segmentsTargetIsUsedForCdnBypassWhenLargeSegmentsChangeNumberIsNotSet() throws HttpFetcherException {
+        long targetSegmentsChangeNumber = 5L;
+        when(mMySegmentsFetcher.execute(noParams, null))
+                .thenReturn(createChange(2L, null));
+        when(mMySegmentsFetcher.execute(Collections.singletonMap("till", 5L), null))
+                .thenReturn(createChange(5L, null));
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), targetSegmentsChangeNumber, null, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mMySegmentsFetcher, times(2)).execute(any(), any());
+        verify(mMySegmentsFetcher).execute(noParams, null);
+        verify(mMySegmentsFetcher).execute(Collections.singletonMap("till", 5L), null);
+    }
+
+    @Test
+    public void largeSegmentsTargetIsUsedForCdnBypassWhenSegmentsChangeNumberIsSmaller() throws HttpFetcherException {
+        long targetLargeSegmentsChangeNumber = 4L;
+        when(mMySegmentsFetcher.execute(noParams, null))
+                .thenReturn(createChange(2L, 1L));
+        when(mMySegmentsFetcher.execute(Collections.singletonMap("till", 4L), null))
+                .thenReturn(createChange(2L, 4L));
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, targetLargeSegmentsChangeNumber, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mMySegmentsFetcher, times(2)).execute(any(), any());
+        verify(mMySegmentsFetcher).execute(noParams, null);
+        verify(mMySegmentsFetcher).execute(Collections.singletonMap("till", 4L), null);
+    }
+
+    @Test
+    public void segmentsTargetIsUsedForCdnBypassWhenLargeSegmentsChangeNumberIsSmaller() throws HttpFetcherException {
+        long targetSegmentsChangeNumber = 5L;
+        when(mMySegmentsFetcher.execute(noParams, null))
+                .thenReturn(createChange(2L, 1L));
+        when(mMySegmentsFetcher.execute(Collections.singletonMap("till", 5L), null))
+                .thenReturn(createChange(5L, 1L));
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), targetSegmentsChangeNumber, null, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mMySegmentsFetcher, times(2)).execute(any(), any());
+        verify(mMySegmentsFetcher).execute(noParams, null);
+        verify(mMySegmentsFetcher).execute(Collections.singletonMap("till", 5L), null);
+    }
+
+    @NonNull
+    private static AllSegmentsChange createChange(Long msChangeNumber, Long lsChangeNumber) {
         return AllSegmentsChange.create(
-                SegmentsChange.create(new HashSet<>(Collections.singletonList("segment0")), null),
+                SegmentsChange.create(new HashSet<>(Collections.singletonList("segment0")), msChangeNumber),
                 SegmentsChange.create(new HashSet<>(Collections.singletonList("largesegment0")), lsChangeNumber));
+    }
+
+    @NonNull
+    private static AllSegmentsChange createChange(long lsChangeNumber) {
+        return createChange(null, lsChangeNumber);
     }
 
     private void loadMySegments() {
         if (mMySegments == null) {
-            List<MySegment> segments = new ArrayList<>();
+            Set<String> segments = new HashSet<>();
             for (int i = 0; i < 5; i++) {
-                MySegment s = new MySegment();
-                s.name = "segment_" + i;
-                segments.add(s);
+                segments.add("segment_" + i);
             }
-            // TODO legacy endpoint support
-            mMySegments = new AllSegmentsChange(segments.stream().map(s -> s.name).collect(Collectors.toList()));
+            mMySegments = AllSegmentsChange.create(SegmentsChange.create(segments, null), SegmentsChange.createEmpty());
         }
     }
 }

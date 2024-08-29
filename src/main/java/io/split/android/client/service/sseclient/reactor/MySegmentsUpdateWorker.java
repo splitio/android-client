@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 
 import java.util.concurrent.BlockingQueue;
 
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.utils.logger.Logger;
 
@@ -15,11 +16,11 @@ import io.split.android.client.utils.logger.Logger;
 public class MySegmentsUpdateWorker extends UpdateWorker {
 
     private final MySegmentsSynchronizer mSynchronizer;
-    private final BlockingQueue<Long> mNotificationsQueue;
+    private final BlockingQueue<MySegmentUpdateParams> mNotificationsQueue;
 
     public MySegmentsUpdateWorker(
             @NonNull MySegmentsSynchronizer synchronizer,
-            @NonNull BlockingQueue<Long> notificationsQueue) {
+            @NonNull BlockingQueue<MySegmentUpdateParams> notificationsQueue) {
         super();
         mSynchronizer = checkNotNull(synchronizer);
         mNotificationsQueue = checkNotNull(notificationsQueue);
@@ -28,8 +29,8 @@ public class MySegmentsUpdateWorker extends UpdateWorker {
     @Override
     protected void onWaitForNotificationLoop() throws InterruptedException {
         try {
-            Long syncDelay = mNotificationsQueue.take();
-            mSynchronizer.forceMySegmentsSync(syncDelay);
+            MySegmentUpdateParams params = mNotificationsQueue.take();
+            mSynchronizer.forceMySegmentsSync(params);
             Logger.d("A new notification to update segments has been received. " +
                     "Enqueuing polling task.");
         } catch (InterruptedException e) {
