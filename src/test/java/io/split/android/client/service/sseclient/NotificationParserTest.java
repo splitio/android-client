@@ -1,7 +1,7 @@
 package io.split.android.client.service.sseclient;
 
 import static org.junit.Assert.assertEquals;
-import static io.split.android.client.service.sseclient.notifications.NotificationType.MY_LARGE_SEGMENT_UPDATE;
+import static io.split.android.client.service.sseclient.notifications.NotificationType.MEMBERSHIP_LS_UPDATE;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -45,7 +45,7 @@ public class NotificationParserTest {
 
     private final static String ERROR = "{\"id\":\"null\",\"name\":\"error\",\"comment\":\"[no comments]\",\"data\":\"{\\\"message\\\":\\\"Invalid token; capability must be a string\\\",\\\"code\\\":40144,\\\"statusCode\\\":400,\\\"href\\\":\\\"https://help.ably.io/error/40144\\\"}\"}";
 
-    private static final String MY_LARGE_SEGMENTS_UPDATE = "{\"id\": \"diSrQttrC9:0:0\",\"clientId\": \"pri:MjcyNDE2NDUxMA==\",\"timestamp\": 1702507131100,\"encoding\": \"json\",\"channel\": \"NzM2MDI5Mzc0_MTc1MTYwODQxMQ==_memberships\",\"data\": \"{\\\"type\\\":\\\"MEMBERSHIP_LS_UPDATE\\\",\\\"cn\\\":1702507130121,\\\"n\\\":[\\\"android_test\\\"],\\\"c\\\":2,\\\"u\\\":2,\\\"d\\\":\\\"eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==\\\",\\\"i\\\":100,\\\"h\\\":1,\\\"s\\\":325}\"}";
+    private static final String MY_LARGE_SEGMENTS_UPDATE = "{\"id\": \"diSrQttrC9:0:0\",\"clientId\": \"pri:MjcyNDE2NDUxMA==\",\"timestamp\": 1702507131100,\"encoding\": \"json\",\"channel\": \"NzM2MDI5Mzc0_MTc1MTYwODQxMQ==_memberships\",\"data\": \"{\\\"t\\\":\\\"MEMBERSHIP_LS_UPDATE\\\",\\\"cn\\\":1702507130121,\\\"n\\\":[\\\"android_test\\\"],\\\"c\\\":2,\\\"u\\\":2,\\\"d\\\":\\\"eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==\\\",\\\"i\\\":100,\\\"h\\\":1,\\\"s\\\":325}\"}";
 
     @Before
     public void setup() {
@@ -168,9 +168,9 @@ public class NotificationParserTest {
     public void parseMyLargeSegmentsIncomingNotification() {
         IncomingNotification incoming = mParser.parseIncoming(MY_LARGE_SEGMENTS_UPDATE);
 
-        assertEquals(MY_LARGE_SEGMENT_UPDATE, incoming.getType());
-        assertEquals("{\"type\":\"MY_LARGE_SEGMENT_UPDATE\",\"changeNumber\":1702507130121,\"largeSegments\":[\"android_test\"],\"c\":2,\"u\":2,\"d\":\"eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==\",\"i\":100,\"h\":1,\"s\":325}", incoming.getJsonData());
-        assertEquals("NzM2MDI5Mzc0_MTc1MTYwODQxMQ==_mylargesegments", incoming.getChannel());
+        assertEquals(MEMBERSHIP_LS_UPDATE, incoming.getType());
+        assertEquals("{\"t\":\"MEMBERSHIP_LS_UPDATE\",\"cn\":1702507130121,\"n\":[\"android_test\"],\"c\":2,\"u\":2,\"d\":\"eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==\",\"i\":100,\"h\":1,\"s\":325}", incoming.getJsonData());
+        assertEquals("NzM2MDI5Mzc0_MTc1MTYwODQxMQ==_memberships", incoming.getChannel());
         assertEquals(1702507131100L, incoming.getTimestamp());
     }
 

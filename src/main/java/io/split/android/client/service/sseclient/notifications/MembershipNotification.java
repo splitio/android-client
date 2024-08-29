@@ -1,6 +1,5 @@
 package io.split.android.client.service.sseclient.notifications;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
@@ -11,8 +10,6 @@ import io.split.android.client.common.CompressionType;
 
 public class MembershipNotification extends IncomingNotification {
 
-    @SerializedName("t")
-    private NotificationType type;
     @SerializedName("cn")
     private Long changeNumber;
     @SerializedName("n")
@@ -31,11 +28,6 @@ public class MembershipNotification extends IncomingNotification {
     private HashingAlgorithm hashingAlgorithm;
     @SerializedName("s")
     private Integer algorithmSeed;
-
-    @NonNull
-    public NotificationType getType() {
-        return type;
-    }
 
     @Nullable
     public Long getChangeNumber() {
