@@ -103,7 +103,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
         if (isSyncEnabled()) {
             mSseAuthenticator.unregisterKey(key.matchingKey());
             mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(key.matchingKey());
-            mMySegmentsNotificationProcessorRegistry.unregisterMySegmentsProcessor(key.matchingKey());
+            mMySegmentsNotificationProcessorRegistry.unregisterMembershipsProcessor(key.matchingKey());
         }
     }
 
@@ -142,7 +142,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
 
     private void registerMembershipsNotificationProcessor(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, LinkedBlockingDeque<MySegmentUpdateParams> notificationsQueue) {
         MembershipsNotificationProcessor processor = getMembershipsNotificationProcessor(key, mySegmentsTaskFactory, notificationsQueue);
-        mMySegmentsNotificationProcessorRegistry.registerMySegmentsProcessor(key.matchingKey(), processor);
+        mMySegmentsNotificationProcessorRegistry.registerMembershipsNotificationProcessor(key.matchingKey(), processor);
     }
 
     private MembershipsNotificationProcessor getMembershipsNotificationProcessor(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, LinkedBlockingDeque<MySegmentUpdateParams> mySegmentUpdateNotificationsQueue) {

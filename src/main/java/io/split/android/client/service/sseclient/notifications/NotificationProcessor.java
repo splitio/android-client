@@ -15,7 +15,6 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.sseclient.notifications.memberships.MembershipsNotificationProcessor;
-import io.split.android.client.service.sseclient.notifications.mysegments.MyLargeSegmentsNotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorRegistry;
 import io.split.android.client.utils.logger.Logger;
 
@@ -26,8 +25,6 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
     private final SplitTaskFactory mSplitTaskFactory;
     private final BlockingQueue<SplitsChangeNotification> mSplitsUpdateNotificationsQueue;
     private final ConcurrentMap<String, MembershipsNotificationProcessor> mMembershipsNotificationProcessors;
-    private final ConcurrentMap<String, MyLargeSegmentsNotificationProcessor> mMyLargeSegmentsNotificationProcessors;
-    private final MySegmentsPayloadDecoder mMySegmentsPayloadDecoder;
 
     public NotificationProcessor(
             @NonNull SplitTaskExecutor splitTaskExecutor,
@@ -39,9 +36,7 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mNotificationParser = checkNotNull(notificationParser);
         mSplitsUpdateNotificationsQueue = checkNotNull(splitsUpdateNotificationsQueue);
-        mMySegmentsPayloadDecoder = checkNotNull(mySegmentsPayloadDecoder);
         mMembershipsNotificationProcessors = new ConcurrentHashMap<>();
-        mMyLargeSegmentsNotificationProcessors = new ConcurrentHashMap<>();
     }
 
     public void process(IncomingNotification incomingNotification) {
@@ -71,12 +66,12 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
     }
 
     @Override
-    public void registerMySegmentsProcessor(String matchingKey, MembershipsNotificationProcessor processor) {
+    public void registerMembershipsNotificationProcessor(String matchingKey, MembershipsNotificationProcessor processor) {
         mMembershipsNotificationProcessors.put(matchingKey, processor);
     }
 
     @Override
-    public void unregisterMySegmentsProcessor(String matchingKey) {
+    public void unregisterMembershipsProcessor(String matchingKey) {
         mMembershipsNotificationProcessors.remove(matchingKey);
     }
 

@@ -9,7 +9,7 @@ import java.util.Set;
 
 import io.split.android.client.common.CompressionType;
 
-public class MembershipNotification {
+public class MembershipNotification extends IncomingNotification {
 
     @SerializedName("t")
     private NotificationType type;

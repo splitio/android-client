@@ -23,7 +23,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
-import io.split.android.client.service.sseclient.notifications.MyLargeSegmentChangeNotification;
+import io.split.android.client.service.sseclient.notifications.MembershipNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeV2Notification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
@@ -137,7 +137,7 @@ public class SseHandlerTest {
 
         IncomingNotification incomingNotification =
                 new IncomingNotification(NotificationType.MY_LARGE_SEGMENT_UPDATE, "", "", 100);
-        MyLargeSegmentChangeNotification notification = new MyLargeSegmentChangeNotification();
+        MembershipNotification notification = new MembershipNotification();
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
         when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(notification);

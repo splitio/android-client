@@ -1,7 +1,6 @@
 package io.split.android.client.service.sseclient;
 
 import static org.junit.Assert.assertEquals;
-
 import static io.split.android.client.service.sseclient.notifications.NotificationType.MY_LARGE_SEGMENT_UPDATE;
 
 import org.junit.Assert;
@@ -16,7 +15,7 @@ import io.split.android.client.common.CompressionType;
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.HashingAlgorithm;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
-import io.split.android.client.service.sseclient.notifications.MyLargeSegmentChangeNotification;
+import io.split.android.client.service.sseclient.notifications.MembershipNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
@@ -178,11 +177,11 @@ public class NotificationParserTest {
     @Test
     public void parseMyLargeSegmentsNotificationData() {
         IncomingNotification incomingNotification = mParser.parseIncoming(MY_LARGE_SEGMENTS_UPDATE);
-        MyLargeSegmentChangeNotification notification = mParser.parseMembershipNotification(incomingNotification.getJsonData());
+        MembershipNotification notification = mParser.parseMembershipNotification(incomingNotification.getJsonData());
 
         assertEquals("eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==", notification.getData());
         assertEquals((Long) 1702507130121L, notification.getChangeNumber());
-        assertEquals(Collections.singleton("android_test"), notification.getLargeSegments());
+        assertEquals(Collections.singleton("android_test"), notification.getNames());
         assertEquals(CompressionType.ZLIB, notification.getCompression());
         assertEquals(MySegmentUpdateStrategy.KEY_LIST, notification.getUpdateStrategy());
         assertEquals((Long) 100L, notification.getUpdateIntervalMs());

@@ -105,7 +105,7 @@ public class ClientComponentsRegisterImplTest {
     public void mySegmentsNotificationProcessorIsRegistered() {
         register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory);
 
-        verify(mMySegmentsNotificationProcessorRegistry).registerMySegmentsProcessor(eq("matching_key"), any());
+        verify(mMySegmentsNotificationProcessorRegistry).registerMembershipsNotificationProcessor(eq("matching_key"), any());
     }
 
     @Test
@@ -122,7 +122,7 @@ public class ClientComponentsRegisterImplTest {
         verify(mAttributesSynchronizerRegistry).unregisterAttributesSynchronizer("matching_key");
         verify(mMySegmentsSynchronizerRegistry).unregisterMySegmentsSynchronizer("matching_key");
         verify(mMySegmentsUpdateWorkerRegistry).unregisterMySegmentsUpdateWorker("matching_key");
-        verify(mMySegmentsNotificationProcessorRegistry).unregisterMySegmentsProcessor("matching_key");
+        verify(mMySegmentsNotificationProcessorRegistry).unregisterMembershipsProcessor("matching_key");
         verify(mEventsManagerRegistry).unregisterEventsManager(mMatchingKey);
     }
 
