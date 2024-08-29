@@ -13,21 +13,21 @@ public class SdkTargetPathTest {
     public void userKeyWithSpaces() throws URISyntaxException {
         URI uri = SdkTargetPath.mySegments("https://split.io", "CABM, CCIB Marketing");
 
-        assertEquals("/membership/CABM,%20CCIB%20Marketing", uri.getRawPath());
+        assertEquals(SdkTargetPath.MEMBERSHIPS+"/CABM,%20CCIB%20Marketing", uri.getRawPath());
     }
 
     @Test
     public void userKeyWithSlash() throws URISyntaxException {
         URI uri = SdkTargetPath.mySegments("https://split.io", "user/key");
 
-        assertEquals("/membership/user%2Fkey", uri.getRawPath());
+        assertEquals(SdkTargetPath.MEMBERSHIPS+"/user%2Fkey", uri.getRawPath());
     }
 
     @Test
     public void userKeyWithSpecialChars() throws URISyntaxException {
         URI uri = SdkTargetPath.mySegments("https://split.io", "grüneStraße");
 
-        assertEquals("/membership/gr%C3%BCneStra%C3%9Fe", uri.getRawPath());
+        assertEquals(SdkTargetPath.MEMBERSHIPS+"/gr%C3%BCneStra%C3%9Fe", uri.getRawPath());
     }
 
     @Test

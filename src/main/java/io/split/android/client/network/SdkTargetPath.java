@@ -9,7 +9,7 @@ import io.split.android.client.utils.Utils;
 
 public class SdkTargetPath {
     public static final String SPLIT_CHANGES = "/splitChanges";
-    public static final String MEMBERSHIPS = "/membership";
+    public static final String MEMBERSHIPS = "/memberships";
     public static final String EVENTS = "/events/bulk";
     public static final String IMPRESSIONS = "/testImpressions/bulk";
     public static final String IMPRESSIONS_COUNT = "/testImpressions/count";

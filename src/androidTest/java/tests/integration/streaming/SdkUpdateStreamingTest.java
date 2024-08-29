@@ -32,7 +32,6 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Segment;
 import io.split.android.client.dtos.Split;
