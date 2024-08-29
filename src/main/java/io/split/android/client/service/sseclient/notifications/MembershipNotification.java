@@ -12,7 +12,7 @@ import io.split.android.client.common.CompressionType;
 public class MembershipNotification {
 
     @SerializedName("t")
-    private String type;
+    private NotificationType type;
     @SerializedName("cn")
     private Long changeNumber;
     @SerializedName("n")
@@ -33,7 +33,7 @@ public class MembershipNotification {
     private Integer algorithmSeed;
 
     @NonNull
-    public String getType() {
+    public NotificationType getType() {
         return type;
     }
 

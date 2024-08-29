@@ -6,7 +6,7 @@ import io.split.android.client.service.sseclient.notifications.HashingAlgorithm;
 import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 import io.split.android.client.utils.MurmurHash3;
 
-class SyncDelayCalculatorImpl implements SyncDelayCalculator {
+public class SyncDelayCalculatorImpl implements SyncDelayCalculator {
 
     public static final long DEFAULT_SYNC_INTERVAL_MS = TimeUnit.SECONDS.toMillis(60);
 

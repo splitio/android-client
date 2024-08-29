@@ -14,6 +14,7 @@ import io.split.android.client.service.sseclient.notifications.MyLargeSegmentCha
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 
+@Deprecated
 public class MyLargeSegmentsNotificationProcessorImpl implements MyLargeSegmentsNotificationProcessor {
 
     private final MySegmentsNotificationProcessorHelper mProcessorHelper;
@@ -36,7 +37,7 @@ public class MyLargeSegmentsNotificationProcessorImpl implements MyLargeSegments
                                              @NonNull SyncDelayCalculator syncDelayCalculator) {
         mProcessorHelper = checkNotNull(processorHelper);
         mUserKey = configuration.getUserKey();
-        mNotificationQueue = configuration.getMySegmentUpdateNotificationsQueue();
+        mNotificationQueue = configuration.getNotificationsQueue();
         mSyncDelayCalculator = checkNotNull(syncDelayCalculator);
     }
 

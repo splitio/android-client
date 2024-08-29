@@ -20,6 +20,7 @@ import io.split.android.client.service.sseclient.notifications.MySegmentChangeV2
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 
+@Deprecated
 public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificationProcessor {
 
     private final MySegmentsNotificationProcessorHelper mProcessorHelper;
@@ -47,7 +48,7 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
     public void processMySegmentsUpdate(MySegmentChangeNotification notification) {
         if (!notification.isIncludesPayload()) {
             //noinspection ResultOfMethodCallIgnored
-            mConfiguration.getMySegmentUpdateNotificationsQueue().offer(new MySegmentUpdateParams(ServiceConstants.NO_INITIAL_DELAY, null, null));
+            mConfiguration.getNotificationsQueue().offer(new MySegmentUpdateParams(ServiceConstants.NO_INITIAL_DELAY, null, null));
         } else {
             Set<String> segmentList = notification.getSegmentList() != null ? new HashSet<>(notification.getSegmentList()) : new HashSet<>();
             MySegmentsOverwriteTask task = mConfiguration.getMySegmentsTaskFactory()
@@ -63,7 +64,7 @@ public class MySegmentsNotificationProcessorImpl implements MySegmentsNotificati
                 notification.getCompression(),
                 Collections.singleton(notification.getSegmentName()),
                 notification.getChangeNumber(),
-                mConfiguration.getMySegmentUpdateNotificationsQueue(),
+                mConfiguration.getNotificationsQueue(),
                 ServiceConstants.NO_INITIAL_DELAY);
     }
 }
