@@ -119,6 +119,12 @@ public class MySegmentsSyncTask implements SplitTask {
         long startTime = System.currentTimeMillis();
         long latency = 0;
         try {
+            // if target change number is outdated, we don't need to fetch
+            if (changeNumberIsOutdated()) {
+                Logger.v("Target CN is outdated. Skipping membership fetch");
+                return SplitTaskExecutionInfo.success(mTaskType);
+            }
+
             fetch(mOnDemandFetchBackoffMaxRetries);
 
             long now = System.currentTimeMillis();
@@ -126,7 +132,7 @@ public class MySegmentsSyncTask implements SplitTask {
 
             mTelemetryRuntimeProducer.recordSuccessfulSync(mTelemetryOperationType, now);
         } catch (HttpFetcherException e) {
-            logError("Network error while retrieving my segments: " + e.getLocalizedMessage());
+            logError("Network error while retrieving memberships: " + e.getLocalizedMessage());
             mTelemetryRuntimeProducer.recordSyncError(mTelemetryOperationType, e.getHttpStatus());
 
             if (HttpStatus.isNotRetryable(HttpStatus.fromCode(e.getHttpStatus()))) {
@@ -136,13 +142,27 @@ public class MySegmentsSyncTask implements SplitTask {
 
             return SplitTaskExecutionInfo.error(mTaskType);
         } catch (Exception e) {
-            logError("Unknown error while retrieving my segments: " + e.getLocalizedMessage());
+            logError("Unknown error while retrieving memberships: " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(mTaskType);
         } finally {
             mTelemetryRuntimeProducer.recordSyncLatency(mTelemetryOperationType, latency);
         }
         Logger.d("My Segments have been updated");
         return SplitTaskExecutionInfo.success(mTaskType);
+    }
+
+    private boolean changeNumberIsOutdated() {
+        if (mTargetSegmentsChangeNumber == null && mTargetLargeSegmentsChangeNumber == null) {
+            return false;
+        }
+
+        long segmentsTarget = Utils.getOrDefault(mTargetSegmentsChangeNumber, -1L);
+        long largeSegmentsTarget = Utils.getOrDefault(mTargetLargeSegmentsChangeNumber, -1L);
+
+        long msStorageChangeNumber = mMySegmentsStorage.getTill();
+        long lsStorageChangeNumber = mMyLargeSegmentsStorage.getTill();
+
+        return segmentsTarget <= msStorageChangeNumber && largeSegmentsTarget <= lsStorageChangeNumber;
     }
 
     private void fetch(int initialRetries) throws HttpFetcherException, InterruptedException {
@@ -218,7 +238,7 @@ public class MySegmentsSyncTask implements SplitTask {
     }
 
     private void logError(String message) {
-        Logger.e("Error while executing my segments sync task: " + message);
+        Logger.e("Error while executing memberships sync task: " + message);
     }
 
     private @Nullable Map<String, String> getHeaders() {

@@ -54,14 +54,17 @@ public class MembershipNotification extends IncomingNotification {
         return data;
     }
 
+    @Nullable
     public Long getUpdateIntervalMs() {
         return updateIntervalMs;
     }
 
+    @Nullable
     public HashingAlgorithm getHashingAlgorithm() {
         return hashingAlgorithm;
     }
 
+    @Nullable
     public Integer getAlgorithmSeed() {
         return algorithmSeed;
     }
