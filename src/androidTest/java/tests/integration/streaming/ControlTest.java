@@ -19,6 +19,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -43,6 +44,7 @@ import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamin
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
+import tests.integration.shared.TestingData;
 import tests.integration.shared.TestingHelper;
 
 public class ControlTest {
@@ -52,6 +54,7 @@ public class ControlTest {
     private String mApiKey;
     private Key mUserKey;
     private long mTimestamp = 100;
+    private final AtomicInteger mMembershipHitCount = new AtomicInteger(0);
 
     private final static String CONTROL_TYPE_PLACEHOLDER = "$CONTROL_TYPE$";
     private final static String CONTROL_TIMESTAMP_PLACEHOLDER = "$TIMESTAMP$";
@@ -79,6 +82,7 @@ public class ControlTest {
         mApiKey = apiKeyAndDb.first;
 
         mUserKey = IntegrationHelper.dummyUserKey();
+        mMembershipHitCount.set(0);
     }
 
     @Test
@@ -122,7 +126,7 @@ public class ControlTest {
         pushControl("STREAMING_PAUSED");
         synchronizerSpy.startPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
 
-        pushMySegmentsUpdatePayload("new_segment");
+        pushMySegmentsUpdatePayload();
 
         sleep(1000);
 
@@ -132,7 +136,7 @@ public class ControlTest {
         pushControl("STREAMING_RESUMED");
         synchronizerSpy.stopPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
 
-        pushMySegmentsUpdatePayload("new_segment");
+        pushMySegmentsUpdatePayload();
         updateLatch.await(10, TimeUnit.SECONDS);
 
         String treatmentEnabled = mClient.getTreatment(splitName);
@@ -141,7 +145,7 @@ public class ControlTest {
         updateLatch = new CountDownLatch(1);
         pushControl("STREAMING_DISABLED");
         updateLatch.await(5, TimeUnit.SECONDS);
-        pushMySegmentsUpdatePayload("new_segment");
+        pushMySegmentsUpdatePayload();
         updateLatch.await(5, TimeUnit.SECONDS);
         String treatmentDisabled = mClient.getTreatment(splitName);
 
@@ -201,9 +205,9 @@ public class ControlTest {
         mClient.destroy();
     }
 
-    private void pushMySegmentsUpdatePayload(String segmentName) throws IOException, InterruptedException {
+    private void pushMySegmentsUpdatePayload() throws IOException, InterruptedException {
         mPushLatch = new CountDownLatch(1);
-        pushMySegmentMessage(segmentName);
+        pushMySegmentMessage();
         mPushLatch.await(10, TimeUnit.SECONDS);
     }
 
@@ -215,6 +219,7 @@ public class ControlTest {
     }
 
     private HttpResponseMock createResponse(int status, String data) {
+        Logger.i("Response data will be -> " + data);
         return new HttpResponseMock(status, data);
     }
 
@@ -233,7 +238,12 @@ public class ControlTest {
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Logger.i("** My segments hit");
-                    return createResponse(200, IntegrationHelper.emptyAllSegments());
+                    int andIncrement = mMembershipHitCount.getAndIncrement();
+                    if (andIncrement == 0) {
+                        return createResponse(200, IntegrationHelper.emptyAllSegments());
+                    }
+
+                    return createResponse(200, IntegrationHelper.dummySingleSegment("new_segment"));
                 } else if (uri.getPath().contains("/splitChanges")) {
 
                     Logger.i("** Split Changes hit");
@@ -273,27 +283,13 @@ public class ControlTest {
         return Json.toJson(change);
     }
 
-    private void pushMySegmentMessage(String segmentName) {
-        String message = loadMockedData(MSG_SEGMENT_UPDATE_PAYLOAD);
-        message = message.replace("[SEGMENT_NAME]", segmentName);
-        mTimestamp += 100;
-        message = message.replace(CONTROL_TIMESTAMP_PLACEHOLDER, String.valueOf(mTimestamp));
+    private void pushMySegmentMessage() {
+        String message = TestingData.segmentsUnboundedNoCompression("1");
+//        mTimestamp += 100;
+//        message = message.replace(CONTROL_TIMESTAMP_PLACEHOLDER, String.valueOf(mTimestamp));
         try {
             mStreamingData.put(message + "" + "\n");
             sleep(500);
-            mPushLatch.countDown();
-            Logger.d("Pushed message: " + message);
-        } catch (InterruptedException e) {
-        }
-    }
-
-    private void pushMessage(String fileName) {
-        String message = loadMockedData(fileName);
-        mTimestamp += 100;
-        message = message.replace(CONTROL_TIMESTAMP_PLACEHOLDER, String.valueOf(mTimestamp));
-        try {
-            mStreamingData.put(message + "" + "\n");
-            sleep(200);
             mPushLatch.countDown();
             Logger.d("Pushed message: " + message);
         } catch (InterruptedException e) {

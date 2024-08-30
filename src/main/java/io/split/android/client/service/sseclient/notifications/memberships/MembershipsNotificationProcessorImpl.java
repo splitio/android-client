@@ -18,7 +18,6 @@ import io.split.android.client.service.sseclient.notifications.NotificationParse
 import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorConfiguration;
 import io.split.android.client.service.sseclient.notifications.mysegments.SyncDelayCalculator;
-import io.split.android.client.service.sseclient.notifications.mysegments.SyncDelayCalculatorImpl;
 import io.split.android.client.utils.logger.Logger;
 
 public class MembershipsNotificationProcessorImpl implements MembershipsNotificationProcessor {
@@ -35,7 +34,7 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
                                                 MySegmentsV2PayloadDecoder mySegmentsPayloadDecoder,
                                                 CompressionUtilProvider compressionProvider,
                                                 MySegmentsNotificationProcessorConfiguration configuration,
-                                                SyncDelayCalculatorImpl syncDelayCalculator) {
+                                                SyncDelayCalculator syncDelayCalculator) {
         mNotificationParser = notificationParser;
         mSplitTaskExecutor = splitTaskExecutor;
         mMySegmentsPayloadDecoder = mySegmentsPayloadDecoder;
@@ -77,7 +76,7 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
                     Logger.d("Received Bounded membership fetch request");
                     byte[] keyMap = mMySegmentsPayloadDecoder.decodeAsBytes(data,
                             mCompressionProvider.get(compression));
-                    executeBoundedFetch(keyMap, syncDelay);
+                    executeBoundedFetch(keyMap, syncDelay, notificationType, changeNumber);
                     break;
                 case KEY_LIST:
                     Logger.d("Received KeyList membership fetch request");
@@ -119,11 +118,11 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
         mSplitTaskExecutor.submit(task, null);
     }
 
-    private void executeBoundedFetch(byte[] keyMap, long syncDelay) {
+    private void executeBoundedFetch(byte[] keyMap, long syncDelay, NotificationType notificationType, Long changeNumber) {
         int index = mMySegmentsPayloadDecoder.computeKeyIndex(mConfiguration.getHashedUserKey(), keyMap.length);
         if (mMySegmentsPayloadDecoder.isKeyInBitmap(keyMap, index)) {
             Logger.d("Executing Bounded membership fetch request");
-            notifyMySegmentRefreshNeeded(mConfiguration.getNotificationsQueue(), syncDelay, NotificationType.MY_SEGMENTS_UPDATE_V2, null); // TODO
+            notifyMySegmentRefreshNeeded(mConfiguration.getNotificationsQueue(), syncDelay, notificationType, changeNumber);
         }
     }
 

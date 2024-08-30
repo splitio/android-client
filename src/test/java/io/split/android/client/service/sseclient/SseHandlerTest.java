@@ -103,10 +103,10 @@ public class SseHandlerTest {
 
         IncomingNotification incomingNotification =
                 new IncomingNotification(NotificationType.MEMBERSHIP_MS_UPDATE, "", "", 100);
-        MySegmentChangeV2Notification notification = new MySegmentChangeV2Notification();
+        MembershipNotification notification = new MembershipNotification();
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
-        when(mNotificationParser.parseMySegmentUpdateV2(anyString())).thenReturn(notification);
+        when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(notification);
         when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
@@ -134,11 +134,11 @@ public class SseHandlerTest {
     public void streamingPaused() {
 
         IncomingNotification incomingNotification =
-                new IncomingNotification(NotificationType.MY_SEGMENTS_UPDATE, "", "", 100);
-        MySegmentChangeNotification notification = new MySegmentChangeNotification();
+                new IncomingNotification(NotificationType.MEMBERSHIP_LS_UPDATE, "", "", 100);
+        MembershipNotification notification = new MembershipNotification();
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
-        when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(notification);
+        when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(notification);
         when(mManagerKeeper.isStreamingActive()).thenReturn(false);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));

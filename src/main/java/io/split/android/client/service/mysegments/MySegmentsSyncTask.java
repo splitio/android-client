@@ -270,6 +270,14 @@ public class MySegmentsSyncTask implements SplitTask {
         boolean largeSegmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(largeSegmentsResult.oldSegments, largeSegmentsResult.newSegments);
 
         if (segmentsHaveChanged) {
+            Logger.v("New segments: " + segmentsResult.newSegments);
+        }
+
+        if (largeSegmentsHaveChanged) {
+            Logger.v("New large segments: " + largeSegmentsResult.newSegments);
+        }
+
+        if (segmentsHaveChanged) {
             mEventsManager.notifyInternalEvent(mUpdateEvent);
         } else {
             // MY_LARGE_SEGMENTS_UPDATED event when large segments have changed

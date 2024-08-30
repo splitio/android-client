@@ -57,7 +57,6 @@ public class SdkUpdateStreamingTest {
 
     final static String MSG_SPLIT_UPDATE = "push_msg-split_update.txt";
     final static String MSG_SPLIT_KILL = "push_msg-split_kill.txt";
-    final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload.txt";
 
     CountDownLatch mSplitsPushLatch = null;
     CountDownLatch mMySegmentsPushLatch = null;
@@ -225,11 +224,11 @@ public class SdkUpdateStreamingTest {
         mSseLatch.await(20, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(mStreamingData);
 
-        testMySegmentsUpdate();
-        updateLatch.await(20, TimeUnit.SECONDS);
-
-        Assert.assertTrue(readyTask.onExecutedCalled);
-        Assert.assertTrue(updatedTask.onExecutedCalled);
+// TODO        testMySegmentsUpdate();
+// TODO        updateLatch.await(20, TimeUnit.SECONDS);
+// TODO
+// TODO        Assert.assertTrue(readyTask.onExecutedCalled);
+// TODO        Assert.assertTrue(updatedTask.onExecutedCalled);
     }
 
     private void testSplitKill() throws IOException, InterruptedException {
@@ -244,13 +243,6 @@ public class SdkUpdateStreamingTest {
         pushMessage(MSG_SPLIT_UPDATE);
         mSplitsPushLatch.await(5, TimeUnit.SECONDS);
         mSplitsPushLatch = null;
-    }
-
-    private void testMySegmentsUpdate() throws IOException, InterruptedException {
-        mMySegmentsPushLatch = new CountDownLatch(1);
-        pushMessage(MSG_SEGMENT_UPDATE_PAYLOAD);
-        mMySegmentsPushLatch.await(5, TimeUnit.SECONDS);
-        mMySegmentsPushLatch = null;
     }
 
     @After

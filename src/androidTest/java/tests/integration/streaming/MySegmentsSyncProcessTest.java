@@ -38,6 +38,7 @@ import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
+import tests.integration.shared.TestingData;
 import tests.integration.shared.TestingHelper;
 
 public class MySegmentsSyncProcessTest {
@@ -51,9 +52,9 @@ public class MySegmentsSyncProcessTest {
     private CountDownLatch mMySegmentsUpdateLatch;
     private CountDownLatch mMySegmentsPushLatch;
 
-    private final static String MSG_SEGMENT_UPDATE = "push_msg-segment_update.txt";
-    private final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload.txt";
-    private final static String MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD = "push_msg-segment_update_empty_payload.txt";
+//    private final static String MSG_SEGMENT_UPDATE = "push_msg-segment_update.txt";
+//    private final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload.txt";
+//    private final static String MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD = "push_msg-segment_update_empty_payload.txt";
 
     private int mMySegmentsHitCount = 0;
 
@@ -112,12 +113,12 @@ public class MySegmentsSyncProcessTest {
         MySegmentEntity mySegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
 
         mClient.on(SplitEvent.SDK_UPDATE, secondUpdateTask);
-        testMySegmentsPush(MSG_SEGMENT_UPDATE_PAYLOAD);
+        testMySegmentsPush(TestingData.largeSegmentsUnboundedNoCompression("1"));
         secondUpdateLatch.await(5, TimeUnit.SECONDS);
         MySegmentEntity mySegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
 
         mClient.on(SplitEvent.SDK_UPDATE, thirdUpdateTask);
-        testMySegmentsPush(MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD);
+        testMySegmentsPush(TestingData.largeSegmentsUnboundedNoCompression("1"));
         thirdUpdateLatch.await(5, TimeUnit.SECONDS);
         MySegmentEntity mySegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
 
@@ -184,12 +185,12 @@ public class MySegmentsSyncProcessTest {
         MySegmentEntity client1SegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity client2SegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 
-        testMySegmentsPush(MSG_SEGMENT_UPDATE_PAYLOAD);
+        testMySegmentsPush(TestingData.largeSegmentsUnboundedNoCompression("1"));
         client1UpdateLatch.await(5, TimeUnit.SECONDS);
         MySegmentEntity client1SegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity client2SegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 
-        testMySegmentsPush(MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD);
+        testMySegmentsPush(TestingData.largeSegmentsUnboundedNoCompression("1"));
         client1UpdateLatch.await(5, TimeUnit.SECONDS);
         MySegmentEntity client1SegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity client2SegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
@@ -205,7 +206,7 @@ public class MySegmentsSyncProcessTest {
 
     private void testMySegmentsUpdate() throws InterruptedException {
         mMySegmentsUpdateLatch = new CountDownLatch(1);
-        pushMessage(MSG_SEGMENT_UPDATE);
+        pushMessage(TestingData.largeSegmentsUnboundedNoCompression("100"));
         boolean await = mMySegmentsUpdateLatch.await(30, TimeUnit.SECONDS);
         if (!await) {
             Assert.fail("MySegments update not received");
@@ -289,20 +290,20 @@ public class MySegmentsSyncProcessTest {
         return fileHelper.loadFileContent(mContext, fileName);
     }
 
-    private void pushMessage(String fileName) {
+    private void pushMessage(String msg) {
         new Thread(() -> {
+            String MSG_SEGMENT_UPDATE_TEMPLATE = "push_msg-largesegment_update.txt";
+            BlockingQueue<String> queue = mStreamingData;
+            String message = loadMockedData(MSG_SEGMENT_UPDATE_TEMPLATE);
+            message = message.replace("$TIMESTAMP$", String.valueOf(System.currentTimeMillis()));
+            message = message.replace(TestingHelper.MSG_DATA_FIELD, msg);
             try {
-                Thread.sleep(500);
-                String message = loadMockedData(fileName);
-                message = message.replace("$TIMESTAMP$", String.valueOf(System.currentTimeMillis()));
                 mStreamingData.put(message + "" + "\n");
                 if (mMySegmentsPushLatch != null) {
                     mMySegmentsPushLatch.countDown();
                 }
                 Logger.d("Pushed message: " + message);
-
             } catch (InterruptedException e) {
-                throw new RuntimeException(e);
             }
         }).start();
     }

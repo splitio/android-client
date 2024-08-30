@@ -88,6 +88,8 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
         // These events were added to handle updated event logic in this component
         // and also to fix some issues when processing queue that made sdk update
         // fire on init
+        Logger.v("Internal event: " + internalEvent.name());
+
         if ((internalEvent == SplitInternalEvent.SPLITS_FETCHED
                 || internalEvent == SplitInternalEvent.MY_SEGMENTS_FETCHED) &&
                 isTriggered(SplitEvent.SDK_READY)) {
