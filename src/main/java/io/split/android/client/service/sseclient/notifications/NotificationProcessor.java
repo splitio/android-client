@@ -30,8 +30,7 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
             @NonNull SplitTaskExecutor splitTaskExecutor,
             @NonNull SplitTaskFactory splitTaskFactory,
             @NonNull NotificationParser notificationParser,
-            @NonNull BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationsQueue,
-            @NonNull MySegmentsPayloadDecoder mySegmentsPayloadDecoder) {
+            @NonNull BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationsQueue) {
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mNotificationParser = checkNotNull(notificationParser);

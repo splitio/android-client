@@ -39,7 +39,6 @@ import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
-import io.split.android.client.service.sseclient.notifications.MySegmentsPayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
@@ -345,7 +344,7 @@ class SplitFactoryHelper {
         NotificationParser notificationParser = new NotificationParser();
 
         NotificationProcessor notificationProcessor = new NotificationProcessor(splitTaskExecutor, splitTaskFactory,
-                notificationParser, splitsUpdateNotificationQueue, new MySegmentsPayloadDecoder());
+                notificationParser, splitsUpdateNotificationQueue);
 
         PushManagerEventBroadcaster pushManagerEventBroadcaster = new PushManagerEventBroadcaster();
 

@@ -1,6 +1,5 @@
 package tests.integration.shared;
 
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeV2Notification;
 import io.split.android.client.utils.Json;
 
 public class TestingData {

@@ -22,7 +22,6 @@ import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.MembershipNotification;
-import io.split.android.client.service.sseclient.notifications.MySegmentsPayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
@@ -42,8 +41,6 @@ public class NotificationProcessorTest {
     private BlockingQueue<SplitsChangeNotification> mSplitsChangeQueue;
     @Mock
     private IncomingNotification mIncomingNotification;
-    @Mock
-    private MySegmentsPayloadDecoder mMySegmentsPayloadDecoder;
     private NotificationProcessor mNotificationProcessor;
 
     @Before
@@ -56,7 +53,7 @@ public class NotificationProcessorTest {
 
         mNotificationProcessor = new NotificationProcessor(mSplitTaskExecutor,
                 mSplitTaskFactory, mNotificationParser,
-                mSplitsChangeQueue, mMySegmentsPayloadDecoder);
+                mSplitsChangeQueue);
     }
 
     @Test
