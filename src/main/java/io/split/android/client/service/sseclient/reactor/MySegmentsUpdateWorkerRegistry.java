@@ -4,8 +4,6 @@ public interface MySegmentsUpdateWorkerRegistry {
 
     void registerMySegmentsUpdateWorker(String matchingKey, MySegmentsUpdateWorker mySegmentsUpdateWorker);
 
-    void registerMyLargeSegmentsUpdateWorker(String matchingKey, MySegmentsUpdateWorker mySegmentsUpdateWorker);
-
     void unregisterMySegmentsUpdateWorker(String matchingKey);
 
     void start();

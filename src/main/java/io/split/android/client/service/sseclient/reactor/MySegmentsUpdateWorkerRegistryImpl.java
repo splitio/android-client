@@ -10,17 +10,10 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
 
     private final AtomicBoolean mStarted = new AtomicBoolean(false);
     private final ConcurrentMap<String, MySegmentsUpdateWorker> mMySegmentUpdateWorkers = new ConcurrentHashMap<>();
-    private final ConcurrentMap<String, MySegmentsUpdateWorker> mMyLargeSegmentUpdateWorkers = new ConcurrentHashMap<>();
 
     @Override
     public synchronized void registerMySegmentsUpdateWorker(String matchingKey, MySegmentsUpdateWorker mySegmentsUpdateWorker) {
         mMySegmentUpdateWorkers.put(matchingKey, mySegmentsUpdateWorker);
-        startIfNeeded(mySegmentsUpdateWorker);
-    }
-
-    @Override
-    public synchronized void registerMyLargeSegmentsUpdateWorker(String matchingKey, MySegmentsUpdateWorker mySegmentsUpdateWorker) {
-        mMyLargeSegmentUpdateWorkers.put(matchingKey, mySegmentsUpdateWorker);
         startIfNeeded(mySegmentsUpdateWorker);
     }
 
@@ -31,12 +24,6 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
             mySegmentsUpdateWorker.stop();
         }
         mMySegmentUpdateWorkers.remove(matchingKey);
-
-        MySegmentsUpdateWorker myLargeSegmentsUpdateWorker = mMyLargeSegmentUpdateWorkers.get(matchingKey);
-        if (myLargeSegmentsUpdateWorker != null) {
-            myLargeSegmentsUpdateWorker.stop();
-        }
-        mMyLargeSegmentUpdateWorkers.remove(matchingKey);
     }
 
     @Override
@@ -49,10 +36,6 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
             for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMySegmentUpdateWorkers.values()) {
                 mySegmentsUpdateWorker.start();
             }
-
-            for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMyLargeSegmentUpdateWorkers.values()) {
-                mySegmentsUpdateWorker.start();
-            }
         }
     }
 
@@ -61,10 +44,6 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
         if (mStarted.getAndSet(false)) {
             for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMySegmentUpdateWorkers.values()) {
                 mySegmentsUpdateWorker.stop();
-            }
-
-            for (MySegmentsUpdateWorker myLargeSegmentsUpdateWorker: mMyLargeSegmentUpdateWorkers.values()) {
-                myLargeSegmentsUpdateWorker.stop();
             }
         }
     }

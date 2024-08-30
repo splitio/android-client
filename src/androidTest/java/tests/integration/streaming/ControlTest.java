@@ -19,7 +19,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -54,7 +54,7 @@ public class ControlTest {
     private String mApiKey;
     private Key mUserKey;
     private long mTimestamp = 100;
-    private final AtomicInteger mMembershipHitCount = new AtomicInteger(0);
+    private final AtomicBoolean mReturnEmpty = new AtomicBoolean(true);
 
     private final static String CONTROL_TYPE_PLACEHOLDER = "$CONTROL_TYPE$";
     private final static String CONTROL_TIMESTAMP_PLACEHOLDER = "$TIMESTAMP$";
@@ -82,7 +82,7 @@ public class ControlTest {
         mApiKey = apiKeyAndDb.first;
 
         mUserKey = IntegrationHelper.dummyUserKey();
-        mMembershipHitCount.set(0);
+        mReturnEmpty.set(true);
     }
 
     @Test
@@ -136,17 +136,23 @@ public class ControlTest {
         pushControl("STREAMING_RESUMED");
         synchronizerSpy.stopPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
 
+        mReturnEmpty.set(false);
         pushMySegmentsUpdatePayload();
         updateLatch.await(10, TimeUnit.SECONDS);
 
+        mReturnEmpty.set(true);
         String treatmentEnabled = mClient.getTreatment(splitName);
 
         //Enable streaming, push a new my segments payload update and check data again
         updateLatch = new CountDownLatch(1);
         pushControl("STREAMING_DISABLED");
         updateLatch.await(5, TimeUnit.SECONDS);
+
+        mReturnEmpty.set(false);
         pushMySegmentsUpdatePayload();
+
         updateLatch.await(5, TimeUnit.SECONDS);
+        mReturnEmpty.set(true);
         String treatmentDisabled = mClient.getTreatment(splitName);
 
         assertTrue(telemetryStorage.popStreamingEvents().stream().anyMatch(event -> {
@@ -238,8 +244,8 @@ public class ControlTest {
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Logger.i("** My segments hit");
-                    int andIncrement = mMembershipHitCount.getAndIncrement();
-                    if (andIncrement == 0) {
+
+                    if (mReturnEmpty.get()) {
                         return createResponse(200, IntegrationHelper.emptyAllSegments());
                     }
 

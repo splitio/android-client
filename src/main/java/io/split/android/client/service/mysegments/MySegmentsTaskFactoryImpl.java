@@ -6,7 +6,6 @@ import androidx.annotation.NonNull;
 
 import java.util.Set;
 
-import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
@@ -36,11 +35,6 @@ public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
     @Override
     public LoadMySegmentsTask createLoadMySegmentsTask() {
         return new LoadMySegmentsTask(mConfiguration.getMySegmentsStorage(), mConfiguration.getMyLargeSegmentsStorage(), mConfiguration.getLoadMySegmentsTaskConfig());
-    }
-
-    @Override
-    public MySegmentsOverwriteTask createMySegmentsOverwriteTask(SegmentsChange segmentsChange) {
-        return new MySegmentsOverwriteTask(mConfiguration.getMySegmentsStorage(), segmentsChange, mConfiguration.getEventsManager(), mConfiguration.getMySegmentsOverwriteTaskConfig());
     }
 
     @Override

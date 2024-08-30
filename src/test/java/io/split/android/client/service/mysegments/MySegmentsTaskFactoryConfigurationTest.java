@@ -40,7 +40,6 @@ public class MySegmentsTaskFactoryConfigurationTest {
         assertSame(mEventsManager, config.getEventsManager());
         assertEquals(MySegmentsSyncTaskConfig.get(), config.getMySegmentsSyncTaskConfig());
         assertEquals(MySegmentsUpdateTaskConfig.getForMySegments(), config.getMySegmentsUpdateTaskConfig());
-        assertEquals(MySegmentsOverwriteTaskConfig.getForMySegments(), config.getMySegmentsOverwriteTaskConfig());
         assertEquals(LoadMySegmentsTaskConfig.get(), config.getLoadMySegmentsTaskConfig());
     }
 }

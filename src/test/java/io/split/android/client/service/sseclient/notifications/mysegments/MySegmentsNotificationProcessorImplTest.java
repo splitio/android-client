@@ -32,7 +32,6 @@ import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentUpdateParams;
-import io.split.android.client.service.mysegments.MySegmentsOverwriteTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;
@@ -84,8 +83,6 @@ public class MySegmentsNotificationProcessorImplTest {
         when(mLsMembershipNotification.getJsonData()).thenReturn("{}");
         when(mSplitTaskFactory.createMySegmentsUpdateTask(anyBoolean(), anySet(), anyLong()))
                 .thenReturn(mock(MySegmentsUpdateTask.class));
-        when(mSplitTaskFactory.createMySegmentsOverwriteTask(any()))
-                .thenReturn(mock(MySegmentsOverwriteTask.class));
         when(mSplitTaskFactory.createMySegmentsSyncTask(anyBoolean(), anyLong(), anyLong()))
                 .thenReturn(mock(MySegmentsSyncTask.class));
         when(mConfiguration.getUserKey()).thenReturn("key");
