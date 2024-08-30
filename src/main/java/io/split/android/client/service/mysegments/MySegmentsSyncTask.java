@@ -120,7 +120,7 @@ public class MySegmentsSyncTask implements SplitTask {
         long latency = 0;
         try {
             // if target change number is outdated, we don't need to fetch
-            if (changeNumberIsOutdated()) {
+            if (targetChangeNumberIsOutdated()) {
                 Logger.v("Target CN is outdated. Skipping membership fetch");
                 return SplitTaskExecutionInfo.success(mTaskType);
             }
@@ -151,7 +151,7 @@ public class MySegmentsSyncTask implements SplitTask {
         return SplitTaskExecutionInfo.success(mTaskType);
     }
 
-    private boolean changeNumberIsOutdated() {
+    private boolean targetChangeNumberIsOutdated() {
         if (mTargetSegmentsChangeNumber == null && mTargetLargeSegmentsChangeNumber == null) {
             return false;
         }
