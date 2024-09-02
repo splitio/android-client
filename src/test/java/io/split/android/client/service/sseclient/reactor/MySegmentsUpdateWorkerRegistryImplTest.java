@@ -20,33 +20,27 @@ public class MySegmentsUpdateWorkerRegistryImplTest {
     public void startCallsStartOnAllSegmentsWorkers() {
         MySegmentsUpdateWorker mySegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
         MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
-        MySegmentsUpdateWorker myLargeSegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
         registry.registerMySegmentsUpdateWorker("some_key", mySegmentsUpdateWorker);
         registry.registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
-        registry.registerMyLargeSegmentsUpdateWorker("some_key", myLargeSegmentsUpdateWorker);
 
         registry.start();
 
         verify(mySegmentsUpdateWorker).start();
         verify(anyKeyUpdateWorker).start();
-        verify(myLargeSegmentsUpdateWorker).start();
     }
 
     @Test
     public void stopCallsStopOnMyAllSegmentsWorkers() {
         MySegmentsUpdateWorker mySegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
         MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
-        MySegmentsUpdateWorker myLargeSegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
         registry.registerMySegmentsUpdateWorker("some_key", mySegmentsUpdateWorker);
         registry.registerMySegmentsUpdateWorker("any_key", anyKeyUpdateWorker);
-        registry.registerMyLargeSegmentsUpdateWorker("some_key", myLargeSegmentsUpdateWorker);
 
         registry.start();
         registry.stop();
 
         verify(mySegmentsUpdateWorker).stop();
         verify(anyKeyUpdateWorker).stop();
-        verify(myLargeSegmentsUpdateWorker).stop();
     }
 
     @Test
@@ -65,21 +59,6 @@ public class MySegmentsUpdateWorkerRegistryImplTest {
     }
 
     @Test
-    public void largeSegmentsWorkerIsStartedWhenRegisteredIfRegistryHasAlreadyStarted() {
-        MySegmentsUpdateWorker mySegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
-        registry.registerMySegmentsUpdateWorker("some_key", mySegmentsUpdateWorker);
-
-        registry.start();
-
-        verify(mySegmentsUpdateWorker).start();
-
-        MySegmentsUpdateWorker myLargeSegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
-        registry.registerMyLargeSegmentsUpdateWorker("some_key", myLargeSegmentsUpdateWorker);
-
-        verify(myLargeSegmentsUpdateWorker).start();
-    }
-
-    @Test
     public void workersAreNotStartedWhenRegisteredIfRegistryHasNotStarted() {
         MySegmentsUpdateWorker mySegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
         MySegmentsUpdateWorker anyKeyUpdateWorker = mock(MySegmentsUpdateWorker.class);
@@ -91,28 +70,14 @@ public class MySegmentsUpdateWorkerRegistryImplTest {
     }
 
     @Test
-    public void largeSegmentsWorkersAreNotStartedWhenRegisteredIfRegistryHasNotStarted() {
-        MySegmentsUpdateWorker mySegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
-        MySegmentsUpdateWorker myLargeSegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
-        registry.registerMySegmentsUpdateWorker("some_key", mySegmentsUpdateWorker);
-        registry.registerMyLargeSegmentsUpdateWorker("some_key", myLargeSegmentsUpdateWorker);
-
-        verify(mySegmentsUpdateWorker, times(0)).start();
-        verify(myLargeSegmentsUpdateWorker, times(0)).start();
-    }
-
-    @Test
     public void workerIsStoppedBeforeBeingUnregistered() {
         MySegmentsUpdateWorker mySegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
         registry.registerMySegmentsUpdateWorker("some_key", mySegmentsUpdateWorker);
-        MySegmentsUpdateWorker myLargeSegmentsUpdateWorker = mock(MySegmentsUpdateWorker.class);
-        registry.registerMyLargeSegmentsUpdateWorker("some_key", myLargeSegmentsUpdateWorker);
 
         registry.start();
 
         registry.unregisterMySegmentsUpdateWorker("some_key");
 
         verify(mySegmentsUpdateWorker).stop();
-        verify(myLargeSegmentsUpdateWorker).stop();
     }
 }

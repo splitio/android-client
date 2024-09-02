@@ -163,7 +163,7 @@ public class IntegrationHelper {
     }
 
     public static String emptyAllSegments() {
-        return "{\"ms\":{\"k\":[],\"cn\":null},\"ls\":{\"k\":[],\"cn\":9999999999999}}";
+        return "{\"ms\":{\"k\":[],\"cn\":null},\"ls\":{\"k\":[],\"cn\":1702507130121}}";
     }
 
     public static String dummyAllSegments() {
@@ -177,7 +177,7 @@ public class IntegrationHelper {
     }
 
     public static String dummySingleSegment(String segment) {
-        return "{\"ms\":{\"k\":[{\"n\":\"" + segment + "\"}],\"cn\":null},\"ls\":{\"k\":[],\"cn\":9999999999999}}";
+        return "{\"ms\":{\"k\":[{\"n\":\"" + segment + "\"}],\"cn\":null},\"ls\":{\"k\":[],\"cn\":1702507130121}}";
     }
 
     public static String dummyApiKey() {

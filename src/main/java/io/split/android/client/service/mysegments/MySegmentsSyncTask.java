@@ -152,29 +152,29 @@ public class MySegmentsSyncTask implements SplitTask {
     }
 
     private boolean targetChangeNumberIsOutdated() {
-        long segmentsTarget = Utils.getOrDefault(mTargetSegmentsChangeNumber, -1L);
-        long largeSegmentsTarget = Utils.getOrDefault(mTargetLargeSegmentsChangeNumber, -1L);
-
-        long msStorageChangeNumber = mMySegmentsStorage.getTill();
-        long lsStorageChangeNumber = mMyLargeSegmentsStorage.getTill();
-
         // In case both targets are present, both CN in storage should be newer for the targets to be considered outdated
         if (mTargetSegmentsChangeNumber != null && mTargetLargeSegmentsChangeNumber != null) {
-            return segmentsTarget <= msStorageChangeNumber && largeSegmentsTarget <= lsStorageChangeNumber;
+            return isTargetOutdated(mTargetSegmentsChangeNumber, mMySegmentsStorage.getTill()) &&
+                    isTargetOutdated(mTargetLargeSegmentsChangeNumber, mMyLargeSegmentsStorage.getTill());
         }
 
         // If only LS target is set, there's no need to check MS storage CN
         if (mTargetLargeSegmentsChangeNumber != null) {
-            return largeSegmentsTarget <= lsStorageChangeNumber;
+            return isTargetOutdated(mTargetLargeSegmentsChangeNumber, mMyLargeSegmentsStorage.getTill());
         }
 
         // If only MS target is set, there's no need to check LS storage CN
         if (mTargetSegmentsChangeNumber != null) {
-            return segmentsTarget <= msStorageChangeNumber;
+            return isTargetOutdated(mTargetSegmentsChangeNumber, mMySegmentsStorage.getTill());
         }
 
         // If no targets are set, consider it not outdated
         return false;
+    }
+
+    private boolean isTargetOutdated(@Nullable Long targetChangeNumber, long storageChangeNumber) {
+        long target = Utils.getOrDefault(targetChangeNumber, -1L);
+        return target < storageChangeNumber;
     }
 
     private void fetch(int initialRetries) throws HttpFetcherException, InterruptedException {

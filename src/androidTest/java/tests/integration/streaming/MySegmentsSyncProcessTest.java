@@ -53,17 +53,13 @@ public class MySegmentsSyncProcessTest {
     private CountDownLatch mMySegmentsUpdateLatch;
     private CountDownLatch mMySegmentsPushLatch;
 
-//    private final static String MSG_SEGMENT_UPDATE = "push_msg-segment_update.txt";
-//    private final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload.txt";
-//    private final static String MSG_SEGMENT_UPDATE_EMPTY_PAYLOAD = "push_msg-segment_update_empty_payload.txt";
-
     private int mMySegmentsHitCount = 0;
 
     SplitFactory mFactory;
     SplitClient mClient;
 
     SplitRoomDatabase mSplitRoomDatabase;
-    private AtomicReference<String> mCurrentUpdate = new AtomicReference<>(IntegrationHelper.dummyAllSegments());
+    private final AtomicReference<String> mCurrentUpdate = new AtomicReference<>(IntegrationHelper.dummyAllSegments());
 
     @Before
     public void setup() {
