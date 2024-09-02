@@ -201,7 +201,7 @@ public class IntegrationHelper {
         return SplitClientConfig.builder()
                 .ready(30000)
                 .streamingEnabled(true)
-                .logLevel(SplitLogLevel.DEBUG)
+                .logLevel(SplitLogLevel.VERBOSE)
                 .trafficType("account")
                 .build();
     }
