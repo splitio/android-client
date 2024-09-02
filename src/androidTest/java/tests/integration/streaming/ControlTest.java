@@ -1,6 +1,7 @@
 package tests.integration.streaming;
 
 import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 import static java.lang.Thread.sleep;
 
 import android.content.Context;
@@ -8,7 +9,6 @@ import android.content.Context;
 import androidx.core.util.Pair;
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -19,7 +19,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -54,7 +54,6 @@ public class ControlTest {
     private String mApiKey;
     private Key mUserKey;
     private long mTimestamp = 100;
-    private final AtomicBoolean mReturnEmpty = new AtomicBoolean(true);
 
     private final static String CONTROL_TYPE_PLACEHOLDER = "$CONTROL_TYPE$";
     private final static String CONTROL_TIMESTAMP_PLACEHOLDER = "$TIMESTAMP$";
@@ -68,6 +67,8 @@ public class ControlTest {
     private int mSseConnectionCount;
 
     String mSplitChange;
+    private final AtomicReference<String> mCurrentResponse = new AtomicReference<>();
+    private CountDownLatch mSplitChangesLatch = null;
 
     @Before
     public void setup() {
@@ -82,7 +83,7 @@ public class ControlTest {
         mApiKey = apiKeyAndDb.first;
 
         mUserKey = IntegrationHelper.dummyUserKey();
-        mReturnEmpty.set(true);
+        mCurrentResponse.set(IntegrationHelper.emptyAllSegments());
     }
 
     @Test
@@ -94,7 +95,7 @@ public class ControlTest {
         db.clearAllTables();
 
         CountDownLatch readyLatch = new CountDownLatch(1);
-        CountDownLatch updateLatch = new CountDownLatch(3);
+        CountDownLatch updateLatch = new CountDownLatch(1);
         SplitEventTaskHelper updateTask = new SplitEventTaskHelper(updateLatch);
 
         HttpClientMock httpClientMock = new HttpClientMock(createBasicResponseDispatcher());
@@ -106,7 +107,6 @@ public class ControlTest {
                 mApiKey, mUserKey,
                 config, mContext, httpClientMock, db, synchronizerSpy, null, null, telemetryStorage);
 
-//        mClient = mFactory.client();
         SplitClient mClient = mFactory.client();
         String splitName = "workm";
 
@@ -122,37 +122,36 @@ public class ControlTest {
         String treatmentReady = mClient.getTreatment(splitName);
 
         // Pause streaming
-        synchronizerSpy.startPeriodicFetchLatch = new CountDownLatch(1);
         pushControl("STREAMING_PAUSED");
-        synchronizerSpy.startPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
 
         pushMySegmentsUpdatePayload();
-
-        sleep(1000);
 
         String treatmentPaused = mClient.getTreatment(splitName);
         // Enable streaming, push a new my segments payload update and check data again
-        synchronizerSpy.stopPeriodicFetchLatch = new CountDownLatch(1);
+        mSplitChangesLatch = new CountDownLatch(1);
         pushControl("STREAMING_RESUMED");
-        synchronizerSpy.stopPeriodicFetchLatch.await(10, TimeUnit.SECONDS);
 
-        mReturnEmpty.set(false);
+        boolean await1 = mSplitChangesLatch.await(10, TimeUnit.SECONDS);
+        if (!await1) {
+            fail("Split changes latch count is " + mSplitChangesLatch.getCount());
+        }
+
+        mClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(updateLatch));
+        mCurrentResponse.set(IntegrationHelper.dummySingleSegment("new_segment"));
         pushMySegmentsUpdatePayload();
-        updateLatch.await(10, TimeUnit.SECONDS);
+        boolean await = updateLatch.await(10, TimeUnit.SECONDS);
+        if (!await) {
+            fail("Update latch count is " + updateLatch.getCount());
+        }
 
-        mReturnEmpty.set(true);
         String treatmentEnabled = mClient.getTreatment(splitName);
 
         //Enable streaming, push a new my segments payload update and check data again
-        updateLatch = new CountDownLatch(1);
+        mCurrentResponse.set(IntegrationHelper.emptyAllSegments());
         pushControl("STREAMING_DISABLED");
-        updateLatch.await(5, TimeUnit.SECONDS);
 
-        mReturnEmpty.set(false);
         pushMySegmentsUpdatePayload();
 
-        updateLatch.await(5, TimeUnit.SECONDS);
-        mReturnEmpty.set(true);
         String treatmentDisabled = mClient.getTreatment(splitName);
 
         assertTrue(telemetryStorage.popStreamingEvents().stream().anyMatch(event -> {
@@ -211,21 +210,13 @@ public class ControlTest {
         mClient.destroy();
     }
 
-    private void pushMySegmentsUpdatePayload() throws IOException, InterruptedException {
+    private void pushMySegmentsUpdatePayload() throws InterruptedException {
         mPushLatch = new CountDownLatch(1);
         pushMySegmentMessage();
         mPushLatch.await(10, TimeUnit.SECONDS);
     }
 
-    @After
-    public void tearDown() {
-//        if (mFactory != null) {
-//            mFactory.destroy();
-//        }
-    }
-
     private HttpResponseMock createResponse(int status, String data) {
-        Logger.i("Response data will be -> " + data);
         return new HttpResponseMock(status, data);
     }
 
@@ -245,13 +236,12 @@ public class ControlTest {
                 if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Logger.i("** My segments hit");
 
-                    if (mReturnEmpty.get()) {
-                        return createResponse(200, IntegrationHelper.emptyAllSegments());
-                    }
+                    return createResponse(200, mCurrentResponse.get());
 
-                    return createResponse(200, IntegrationHelper.dummySingleSegment("new_segment"));
                 } else if (uri.getPath().contains("/splitChanges")) {
-
+                    if (mSplitChangesLatch != null) {
+                        mSplitChangesLatch.countDown();
+                    }
                     Logger.i("** Split Changes hit");
                     return createResponse(200, mSplitChange);
                 } else if (uri.getPath().contains("/auth")) {
@@ -290,13 +280,14 @@ public class ControlTest {
     }
 
     private void pushMySegmentMessage() {
-        String message = TestingData.segmentsUnboundedNoCompression("1");
-//        mTimestamp += 100;
-//        message = message.replace(CONTROL_TIMESTAMP_PLACEHOLDER, String.valueOf(mTimestamp));
+        String msg = TestingData.segmentsUnboundedNoCompression("1");
+        String MSG_SEGMENT_UPDATE_TEMPLATE = "push_msg-largesegment_update.txt";
+        BlockingQueue<String> queue = mStreamingData;
+        String message = loadMockedData(MSG_SEGMENT_UPDATE_TEMPLATE);
+        message = message.replace("$TIMESTAMP$", String.valueOf(System.currentTimeMillis()));
+        message = message.replace(TestingHelper.MSG_DATA_FIELD, msg);
         try {
-            mStreamingData.put(message + "" + "\n");
-            sleep(500);
-            mPushLatch.countDown();
+            queue.put(message + "" + "\n");
             Logger.d("Pushed message: " + message);
         } catch (InterruptedException e) {
         }
@@ -310,6 +301,7 @@ public class ControlTest {
 
         try {
             mStreamingData.put(message + "" + "\n");
+            Logger.e("Pushed control: " + controlType);
             Thread.sleep(500);
             Logger.d("Pushed message: " + message);
         } catch (InterruptedException ignored) {
