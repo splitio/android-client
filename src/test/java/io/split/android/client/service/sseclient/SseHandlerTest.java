@@ -102,7 +102,7 @@ public class SseHandlerTest {
     public void incomingMembershipUpdate() {
 
         IncomingNotification incomingNotification =
-                new IncomingNotification(NotificationType.MEMBERSHIP_MS_UPDATE, "", "", 100);
+                new IncomingNotification(NotificationType.MEMBERSHIPS_MS_UPDATE, "", "", 100);
         MembershipNotification notification = new MembershipNotification();
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
@@ -118,7 +118,7 @@ public class SseHandlerTest {
     public void incomingLargeMembershipUpdate() {
 
         IncomingNotification incomingNotification =
-                new IncomingNotification(NotificationType.MEMBERSHIP_LS_UPDATE, "", "", 100);
+                new IncomingNotification(NotificationType.MEMBERSHIPS_LS_UPDATE, "", "", 100);
         MembershipNotification notification = new MembershipNotification();
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
@@ -134,7 +134,7 @@ public class SseHandlerTest {
     public void streamingPaused() {
 
         IncomingNotification incomingNotification =
-                new IncomingNotification(NotificationType.MEMBERSHIP_LS_UPDATE, "", "", 100);
+                new IncomingNotification(NotificationType.MEMBERSHIPS_LS_UPDATE, "", "", 100);
         MembershipNotification notification = new MembershipNotification();
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);

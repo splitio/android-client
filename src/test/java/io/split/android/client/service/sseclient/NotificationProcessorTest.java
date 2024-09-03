@@ -95,7 +95,7 @@ public class NotificationProcessorTest {
         MembershipNotification mySegmentChangeNotification = mock(MembershipNotification.class);
 
         when(mySegmentChangeNotification.getJsonData()).thenReturn("{}");
-        when(mIncomingNotification.getType()).thenReturn(NotificationType.MEMBERSHIP_MS_UPDATE);
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
         when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(mySegmentChangeNotification);
 
         mNotificationProcessor.registerMembershipsNotificationProcessor("1", mySegmentsNotificationProcessor);

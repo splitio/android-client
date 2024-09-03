@@ -123,7 +123,7 @@ public final static String BOUNDED_NOTIFICATION_ZLIB_2 = "{" +
 
     public static String largeSegmentsUnboundedNoCompression(String intervalMs) {
         return "{" +
-                "\\\"type\\\":\\\"MEMBERSHIP_LS_UPDATE\\\"" +
+                "\\\"type\\\":\\\"MEMBERSHIPS_LS_UPDATE\\\"" +
                 ",\\\"cn\\\":1702507130121," +
                 "\\\"n\\\":[\\\"android_test\\\",\\\"ios_test\\\"]," +
                 "\\\"c\\\":0," +
@@ -137,7 +137,7 @@ public final static String BOUNDED_NOTIFICATION_ZLIB_2 = "{" +
 
     public static String largeSegmentsRemoval() {
         return "{" +
-                "\\\"type\\\":\\\"MEMBERSHIP_LS_UPDATE\\\"" +
+                "\\\"type\\\":\\\"MEMBERSHIPS_LS_UPDATE\\\"" +
                 ",\\\"cn\\\":1702507130121," +
                 "\\\"n\\\":[\\\"large-segment1\\\",\\\"large-segment2\\\"]," +
                 "\\\"c\\\":0," +

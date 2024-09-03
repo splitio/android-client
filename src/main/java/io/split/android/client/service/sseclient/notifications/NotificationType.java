@@ -14,8 +14,8 @@ public enum NotificationType {
     @SerializedName("ERROR")
     ERROR,
 
-    @SerializedName("MEMBERSHIP_LS_UPDATE")
-    MEMBERSHIP_LS_UPDATE,
-    @SerializedName("MEMBERSHIP_MS_UPDATE")
-    MEMBERSHIP_MS_UPDATE,
+    @SerializedName("MEMBERSHIPS_LS_UPDATE")
+    MEMBERSHIPS_LS_UPDATE,
+    @SerializedName("MEMBERSHIPS_MS_UPDATE")
+    MEMBERSHIPS_MS_UPDATE,
 }

@@ -105,7 +105,7 @@ public class MySegmentsNotificationProcessorImplTest {
         MembershipNotification mySegmentChangeNotification
                 = mock(MembershipNotification.class);
         when(mySegmentChangeNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.UNBOUNDED_FETCH_REQUEST);
-        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MEMBERSHIP_MS_UPDATE);
+        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
         when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(mySegmentChangeNotification);
 
         mNotificationProcessor.process(mySegmentChangeNotification);
@@ -119,7 +119,7 @@ public class MySegmentsNotificationProcessorImplTest {
         String segmentName = "ToRemove";
         when(mMsMembershipNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.SEGMENT_REMOVAL);
         when(mMsMembershipNotification.getNames()).thenReturn(Collections.singleton(segmentName));
-        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIP_MS_UPDATE);
+        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
         when(mMsMembershipNotification.getChangeNumber()).thenReturn(25L);
         when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(mMsMembershipNotification);
 
@@ -150,8 +150,8 @@ public class MySegmentsNotificationProcessorImplTest {
                 = mock(MembershipNotification.class);
         when(mySegmentChangeNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.BOUNDED_FETCH_REQUEST);
         when(mySegmentChangeNotification.getData()).thenReturn("dummy");
-        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIP_MS_UPDATE);
-        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MEMBERSHIP_MS_UPDATE);
+        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
+        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
         try {
             when(mMySegmentsPayloadDecoder.decodeAsBytes(anyString(), any())).thenReturn(new byte[]{});
         } catch (MySegmentsParsingException e) {
@@ -191,8 +191,8 @@ public class MySegmentsNotificationProcessorImplTest {
                 = mock(MembershipNotification.class);
         when(mySegmentChangeNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.KEY_LIST);
         when(mySegmentChangeNotification.getNames()).thenReturn(Collections.singleton("s1"));
-        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIP_MS_UPDATE);
-        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MEMBERSHIP_MS_UPDATE);
+        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
+        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
         when(mMySegmentsPayloadDecoder.decodeAsString(anyString(), any())).thenThrow(MySegmentsParsingException.class);
 
         mNotificationProcessor.process(mMsMembershipNotification);
@@ -208,8 +208,8 @@ public class MySegmentsNotificationProcessorImplTest {
                 = mock(MembershipNotification.class);
         when(mySegmentChangeNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.BOUNDED_FETCH_REQUEST);
         when(mySegmentChangeNotification.getNames()).thenReturn(Collections.singleton("s1"));
-        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIP_MS_UPDATE);
-        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MEMBERSHIP_MS_UPDATE);
+        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
+        when(mySegmentChangeNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
         when(mMySegmentsPayloadDecoder.decodeAsBytes(anyString(), any())).thenThrow(MySegmentsParsingException.class);
 
         mNotificationProcessor.process(mMsMembershipNotification);
@@ -237,8 +237,8 @@ public class MySegmentsNotificationProcessorImplTest {
         when(mMsMembershipNotification.getUpdateStrategy()).thenReturn(MySegmentUpdateStrategy.KEY_LIST);
         when(mMsMembershipNotification.getNames()).thenReturn(Collections.singleton(segmentName));
         when(mMsMembershipNotification.getChangeNumber()).thenReturn(123456L);
-        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIP_MS_UPDATE);
-        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIP_MS_UPDATE);
+        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
+        when(mMsMembershipNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
         try {
             when(mMySegmentsPayloadDecoder.decodeAsString(anyString(), any())).thenReturn("");
         } catch (MySegmentsParsingException e) {

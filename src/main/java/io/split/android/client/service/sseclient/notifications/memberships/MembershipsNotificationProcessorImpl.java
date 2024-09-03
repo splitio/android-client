@@ -94,14 +94,14 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
                     break;
             }
         } catch (Exception e) {
-            Logger.e("Executing unbounded fetch because an error has occurred processing my "+(notificationType == NotificationType.MEMBERSHIP_LS_UPDATE ? "large" : "")+" segment notification: " + e.getLocalizedMessage());
+            Logger.e("Executing unbounded fetch because an error has occurred processing my "+(notificationType == NotificationType.MEMBERSHIPS_LS_UPDATE ? "large" : "")+" segment notification: " + e.getLocalizedMessage());
             notifyMySegmentRefreshNeeded(notificationsQueue, syncDelay, notificationType, changeNumber);
         }
     }
 
     private void notifyMySegmentRefreshNeeded(BlockingQueue<MySegmentUpdateParams> notificationsQueue, long syncDelay, NotificationType notificationType, Long changeNumber) {
-        Long targetSegmentsCn = (notificationType == NotificationType.MEMBERSHIP_MS_UPDATE) ? changeNumber : null;
-        Long targetLargeSegmentsCn = (notificationType == NotificationType.MEMBERSHIP_LS_UPDATE) ? changeNumber : null;
+        Long targetSegmentsCn = (notificationType == NotificationType.MEMBERSHIPS_MS_UPDATE) ? changeNumber : null;
+        Long targetLargeSegmentsCn = (notificationType == NotificationType.MEMBERSHIPS_LS_UPDATE) ? changeNumber : null;
 
         //noinspection ResultOfMethodCallIgnored
         notificationsQueue.offer(new MySegmentUpdateParams(syncDelay, targetSegmentsCn, targetLargeSegmentsCn));
@@ -112,7 +112,7 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
         if (segmentNames == null) {
             return;
         }
-        MySegmentsUpdateTask task = (notificationType == NotificationType.MEMBERSHIP_LS_UPDATE) ?
+        MySegmentsUpdateTask task = (notificationType == NotificationType.MEMBERSHIPS_LS_UPDATE) ?
                 mConfiguration.getMySegmentsTaskFactory().createMyLargeSegmentsUpdateTask(false, segmentNames, changeNumber) :
                 mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(false, segmentNames, changeNumber);
         mSplitTaskExecutor.submit(task, null);
@@ -139,7 +139,7 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
             return;
         }
 
-        boolean largeSegmentsUpdate = notificationType == NotificationType.MEMBERSHIP_LS_UPDATE;
+        boolean largeSegmentsUpdate = notificationType == NotificationType.MEMBERSHIPS_LS_UPDATE;
         Logger.d("Executing KeyList my "+ (largeSegmentsUpdate ? "large " : "") +"segment fetch request: Adding = " + actionIsAdd);
         MySegmentsUpdateTask task = largeSegmentsUpdate ? mConfiguration.getMySegmentsTaskFactory().createMyLargeSegmentsUpdateTask(actionIsAdd, segmentNames, changeNumber) :
                 mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(actionIsAdd, segmentNames, changeNumber);
