@@ -44,8 +44,8 @@ import io.split.android.client.service.sseclient.notifications.MySegmentsV2Paylo
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
-import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactory;
-import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactoryImpl;
+import io.split.android.client.service.sseclient.notifications.mysegments.MembershipsNotificationProcessorFactory;
+import io.split.android.client.service.sseclient.notifications.mysegments.MembershipsNotificationProcessorFactoryImpl;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
@@ -305,9 +305,9 @@ class SplitFactoryHelper {
         }
         MySegmentsSynchronizerFactory mySegmentsSynchronizerFactory = new MySegmentsSynchronizerFactoryImpl(new RetryBackoffCounterTimerFactory(), taskExecutor);
 
-        MySegmentsNotificationProcessorFactory mySegmentsNotificationProcessorFactory = null;
+        MembershipsNotificationProcessorFactory membershipsNotificationProcessorFactory = null;
         if (config.syncEnabled()) {
-            mySegmentsNotificationProcessorFactory = new MySegmentsNotificationProcessorFactoryImpl(notificationParser,
+            membershipsNotificationProcessorFactory = new MembershipsNotificationProcessorFactoryImpl(notificationParser,
                     taskExecutor,
                     mySegmentsV2PayloadDecoder,
                     compressionProvider);
@@ -324,7 +324,7 @@ class SplitFactoryHelper {
                 eventsManagerCoordinator,
                 sseAuthenticator,
                 notificationProcessor,
-                mySegmentsNotificationProcessorFactory,
+                membershipsNotificationProcessorFactory,
                 mySegmentsV2PayloadDecoder);
     }
 

@@ -31,7 +31,7 @@ public class MyLargeSegmentsNotificationProcessorImplTest {
     public void setup() {
         mConfiguration = mock(MySegmentsNotificationProcessorConfiguration.class);
         mBlockingQueue = mock(BlockingQueue.class);
-        when(mConfiguration.getMySegmentUpdateNotificationsQueue()).thenReturn(mBlockingQueue);
+        when(mConfiguration.getNotificationsQueue()).thenReturn(mBlockingQueue);
         when(mConfiguration.getUserKey()).thenReturn("key");
         mHelper = mock(MySegmentsNotificationProcessorHelper.class);
         mSyncDelayCalculator = mock(SyncDelayCalculator.class);

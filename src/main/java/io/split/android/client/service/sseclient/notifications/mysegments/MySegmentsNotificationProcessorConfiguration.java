@@ -14,7 +14,7 @@ import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 public class MySegmentsNotificationProcessorConfiguration {
 
     private final MySegmentsTaskFactory mMySegmentsTaskFactory;
-    private final BlockingQueue<MySegmentUpdateParams> mMySegmentUpdateNotificationsQueue;
+    private final BlockingQueue<MySegmentUpdateParams> mNotificationsQueue;
     private final String mUserKey;
     private final BigInteger mHashedUserKey;
 
@@ -23,7 +23,7 @@ public class MySegmentsNotificationProcessorConfiguration {
                                                         @NonNull String userKey,
                                                         @NonNull BigInteger hashedUserKey) {
         mMySegmentsTaskFactory = checkNotNull(mySegmentsTaskFactory);
-        mMySegmentUpdateNotificationsQueue = checkNotNull(mySegmentUpdateNotificationsQueue);
+        mNotificationsQueue = checkNotNull(mySegmentUpdateNotificationsQueue);
         mUserKey = checkNotNull(userKey);
         mHashedUserKey = checkNotNull(hashedUserKey);
     }
@@ -32,8 +32,8 @@ public class MySegmentsNotificationProcessorConfiguration {
         return mMySegmentsTaskFactory;
     }
 
-    public BlockingQueue<MySegmentUpdateParams> getMySegmentUpdateNotificationsQueue() {
-        return mMySegmentUpdateNotificationsQueue;
+    public BlockingQueue<MySegmentUpdateParams> getNotificationsQueue() {
+        return mNotificationsQueue;
     }
 
     public String getUserKey() {

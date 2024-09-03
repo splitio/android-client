@@ -95,7 +95,13 @@ public class NotificationParser {
         return null;
     }
 
-    public MyLargeSegmentChangeNotification parseMyLargeSegmentUpdate(String jsonData) {
-        return Json.fromJson(jsonData, MyLargeSegmentChangeNotification.class);
+    @Nullable
+    public MembershipNotification parseMembershipNotification(String jsonData) {
+        try {
+            return Json.fromJson(jsonData, MembershipNotification.class);
+        } catch (Exception e) {
+            Logger.w("Failed to parse membership notification");
+            return null;
+        }
     }
 }

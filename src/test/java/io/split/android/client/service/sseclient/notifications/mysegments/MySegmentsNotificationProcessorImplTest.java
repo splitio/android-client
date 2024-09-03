@@ -91,7 +91,7 @@ public class MySegmentsNotificationProcessorImplTest {
                 .thenReturn(mock(MySegmentsSyncTask.class));
         when(mConfiguration.getHashedUserKey()).thenReturn(mHashedUserKey);
         when(mConfiguration.getMySegmentsTaskFactory()).thenReturn(mSplitTaskFactory);
-        when(mConfiguration.getMySegmentUpdateNotificationsQueue()).thenReturn(mMySegmentChangeQueue);
+        when(mConfiguration.getNotificationsQueue()).thenReturn(mMySegmentChangeQueue);
         mNotificationProcessor = new MySegmentsNotificationProcessorImpl(
                 mNotificationParser,
                 mSplitTaskExecutor,

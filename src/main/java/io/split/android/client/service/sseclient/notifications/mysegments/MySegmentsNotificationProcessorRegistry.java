@@ -1,10 +1,10 @@
 package io.split.android.client.service.sseclient.notifications.mysegments;
 
+import io.split.android.client.service.sseclient.notifications.memberships.MembershipsNotificationProcessor;
+
 public interface MySegmentsNotificationProcessorRegistry {
 
-    void registerMySegmentsProcessor(String matchingKey, MySegmentsNotificationProcessor processor);
+    void registerMembershipsNotificationProcessor(String matchingKey, MembershipsNotificationProcessor processor);
 
-    void registerMyLargeSegmentsProcessor(String matchingKey, MyLargeSegmentsNotificationProcessor processor);
-
-    void unregisterMySegmentsProcessor(String matchingKey);
+    void unregisterMembershipsProcessor(String matchingKey);
 }
