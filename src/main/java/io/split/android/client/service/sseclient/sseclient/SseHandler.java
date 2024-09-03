@@ -91,7 +91,7 @@ public class SseHandler {
                     }
                     break;
                 default:
-                    Logger.w("SSE Handler: Unknown notification");
+                    Logger.w("SSE Handler: Unknown notification: " + incomingNotification.getType());
             }
         }
     }

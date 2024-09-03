@@ -319,6 +319,62 @@ public class MySegmentsSyncTaskTest {
         verify(mMySegmentsFetcher).execute(Collections.singletonMap("till", 5L), null);
     }
 
+    @Test
+    public void noFetchWhenSegmentsChangeNumberInStorageIsNewerThanTarget() throws HttpFetcherException {
+        long targetSegmentsChangeNumber = 5L;
+        when(mySegmentsStorage.getTill()).thenReturn(6L);
+        when(myLargeSegmentsStorage.getTill()).thenReturn(5L);
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), targetSegmentsChangeNumber, null, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mMySegmentsFetcher, never()).execute(any(), any());
+    }
+
+    @Test
+    public void noFetchWhenLargeSegmentsChangeNumberIsNewerThanTarget() throws HttpFetcherException {
+        long targetLargeSegmentsChangeNumber = 4L;
+        when(mySegmentsStorage.getTill()).thenReturn(3L);
+        when(myLargeSegmentsStorage.getTill()).thenReturn(5L);
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, targetLargeSegmentsChangeNumber, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mMySegmentsFetcher, never()).execute(any(), any());
+    }
+
+    @Test
+    public void fetchWhenSegmentsChangeNumberInStorageIsNewerThanTargetAndLargeSegmentsChangeNumberIsOlder() throws HttpFetcherException {
+        long targetSegmentsChangeNumber = 5L;
+        long targetLargeSegmentsChangeNumber = 4L;
+        when(mySegmentsStorage.getTill()).thenReturn(6L);
+        when(myLargeSegmentsStorage.getTill()).thenReturn(3L);
+        when(mMySegmentsFetcher.execute(noParams, null))
+                .thenReturn(createChange(6L, 4L));
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), targetSegmentsChangeNumber, targetLargeSegmentsChangeNumber, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mMySegmentsFetcher).execute(any(), any());
+        verify(mMySegmentsFetcher).execute(noParams, null);
+    }
+
+    @Test
+    public void fetchIsPerformedWhenLargeSegmentsChangeNumberInStorageIsNewerThanTargetAndSegmentsChangeNumberIsOlder() throws HttpFetcherException {
+        long targetSegmentsChangeNumber = 5L;
+        long targetLargeSegmentsChangeNumber = 4L;
+        when(mySegmentsStorage.getTill()).thenReturn(3L);
+        when(myLargeSegmentsStorage.getTill()).thenReturn(6L);
+        when(mMySegmentsFetcher.execute(noParams, null))
+                .thenReturn(createChange(5L, 6L));
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), targetSegmentsChangeNumber, targetLargeSegmentsChangeNumber, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mMySegmentsFetcher).execute(any(), any());
+        verify(mMySegmentsFetcher).execute(noParams, null);
+    }
+
     @NonNull
     private static AllSegmentsChange createChange(Long msChangeNumber, Long lsChangeNumber) {
         return AllSegmentsChange.create(
