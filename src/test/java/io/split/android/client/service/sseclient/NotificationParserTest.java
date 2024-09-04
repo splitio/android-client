@@ -1,7 +1,7 @@
 package io.split.android.client.service.sseclient;
 
 import static org.junit.Assert.assertEquals;
-import static io.split.android.client.service.sseclient.notifications.NotificationType.MEMBERSHIP_LS_UPDATE;
+import static io.split.android.client.service.sseclient.notifications.NotificationType.MEMBERSHIPS_LS_UPDATE;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -16,7 +16,6 @@ import io.split.android.client.service.sseclient.notifications.ControlNotificati
 import io.split.android.client.service.sseclient.notifications.HashingAlgorithm;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.MembershipNotification;
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentUpdateStrategy;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
@@ -33,19 +32,13 @@ public class NotificationParserTest {
             "{\"id\":\"VSEQrcq9D8:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:MjU4MzkwNDA2NA==\",\"timestamp\":1584554772719,\"encoding\":\"json\",\"channel\":\"MzM5Njc0ODcyNg==_MTExMzgwNjgx_splits\",\n" +
                     "\"data\":\"{\\\"type\\\":\\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\":1584554772108}\"}";
 
-    private final static String MY_SEGMENT_UDATE_NOTIFICATION = "{\"id\":\"x2dE2TEiJL:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:OTc5Nzc4NDYz\",\"timestamp\":1584647533288,\"encoding\":\"json\",\"channel\":\"MzM5Njc0ODcyNg==_MTExMzgwNjgx_MTcwNTI2MTM0Mg==_mySegments\",\"data\":\"{\\\"type\\\":\\\"MY_SEGMENTS_UPDATE\\\",\\\"changeNumber\\\":1584647532812,\\\"includesPayload\\\":false}\"}";
-
     private final static String SPLIT_KILL_NOTIFICATION = "{\"id\":\"-OT-rGuSwz:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:NDIxNjU0NTUyNw==\",\"timestamp\":1584647606489,\"encoding\":\"json\",\"channel\":\"MzM5Njc0ODcyNg==_MTExMzgwNjgx_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_KILL\\\",\\\"changeNumber\\\":1584647606125,\\\"defaultTreatment\\\":\\\"off\\\",\\\"splitName\\\":\\\"dep_split\\\"}\"}";
-
-    private final static String MY_SEGMENT_UDATE_INLINE_NOTIFICATION = "{\"id\":\"x2dE2TEiJL:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:OTc5Nzc4NDYz\",\"timestamp\":1584647533288,\"encoding\":\"json\",\"channel\":\"MzM5Njc0ODcyNg==_MTExMzgwNjgx_MTcwNTI2MTM0Mg==_mySegments\",\"data\":\"{\\\"type\\\":\\\"MY_SEGMENTS_UPDATE\\\",\\\"changeNumber\\\":1584647532812,\\\"includesPayload\\\":true,\\\"segmentList\\\":[\\\"segment1\\\", \\\"segment2\\\"]}\"}";
 
     private final static String OCCUPANCY = "{\"id\":\"x2dE2TEiJL:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:OTc5Nzc4NDYz\",\"timestamp\":1584647533288,\"encoding\":\"json\",\"channel\":\"control_pri\",\"data\":\"{\\\"metrics\\\": {\\\"publishers\\\":1}}\"}";
 
     private final static String CONTROL = "{\"id\":\"x2dE2TEiJL:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:OTc5Nzc4NDYz\",\"timestamp\":1584647533288,\"encoding\":\"json\",\"channel\":\"control_pri\",\"data\":\"{\\\"type\\\":\\\"CONTROL\\\",\\\"controlType\\\":\\\"STREAMING_RESUMED\\\"}\"}";
 
-    private final static String ERROR = "{\"id\":\"null\",\"name\":\"error\",\"comment\":\"[no comments]\",\"data\":\"{\\\"message\\\":\\\"Invalid token; capability must be a string\\\",\\\"code\\\":40144,\\\"statusCode\\\":400,\\\"href\\\":\\\"https://help.ably.io/error/40144\\\"}\"}";
-
-    private static final String MY_LARGE_SEGMENTS_UPDATE = "{\"id\": \"diSrQttrC9:0:0\",\"clientId\": \"pri:MjcyNDE2NDUxMA==\",\"timestamp\": 1702507131100,\"encoding\": \"json\",\"channel\": \"NzM2MDI5Mzc0_MTc1MTYwODQxMQ==_memberships\",\"data\": \"{\\\"type\\\":\\\"MEMBERSHIP_LS_UPDATE\\\",\\\"cn\\\":1702507130121,\\\"n\\\":[\\\"android_test\\\"],\\\"c\\\":2,\\\"u\\\":2,\\\"d\\\":\\\"eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==\\\",\\\"i\\\":100,\\\"h\\\":1,\\\"s\\\":325}\"}";
+    private static final String MY_LARGE_SEGMENTS_UPDATE = "{\"id\": \"diSrQttrC9:0:0\",\"clientId\": \"pri:MjcyNDE2NDUxMA==\",\"timestamp\": 1702507131100,\"encoding\": \"json\",\"channel\": \"NzM2MDI5Mzc0_MTc1MTYwODQxMQ==_memberships\",\"data\": \"{\\\"type\\\":\\\"MEMBERSHIPS_LS_UPDATE\\\",\\\"cn\\\":1702507130121,\\\"n\\\":[\\\"android_test\\\"],\\\"c\\\":2,\\\"u\\\":2,\\\"d\\\":\\\"eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==\\\",\\\"i\\\":100,\\\"h\\\":1,\\\"s\\\":325}\"}";
 
     @Before
     public void setup() {
@@ -69,29 +62,6 @@ public class NotificationParserTest {
         assertEquals(NotificationType.SPLIT_KILL, incoming.getType());
         assertEquals("dep_split", splitKill.getSplitName());
         assertEquals("off", splitKill.getDefaultTreatment());
-    }
-
-    @Test
-    public void processMySegmentUpdate() {
-        IncomingNotification incoming = mParser.parseIncoming(MY_SEGMENT_UDATE_NOTIFICATION);
-        MySegmentChangeNotification mySegmentUpdate = mParser.parseMySegmentUpdate(incoming.getJsonData());
-
-        assertEquals(NotificationType.MY_SEGMENTS_UPDATE, incoming.getType());
-        assertEquals(1584647532812L, mySegmentUpdate.getChangeNumber());
-        Assert.assertFalse(mySegmentUpdate.isIncludesPayload());
-    }
-
-    @Test
-    public void processMySegmentUpdateInline() {
-        IncomingNotification incoming = mParser.parseIncoming(MY_SEGMENT_UDATE_INLINE_NOTIFICATION);
-        MySegmentChangeNotification mySegmentUpdate = mParser.parseMySegmentUpdate(incoming.getJsonData());
-
-        assertEquals(NotificationType.MY_SEGMENTS_UPDATE, incoming.getType());
-        assertEquals(1584647532812L, mySegmentUpdate.getChangeNumber());
-        Assert.assertTrue(mySegmentUpdate.isIncludesPayload());
-        assertEquals(2, mySegmentUpdate.getSegmentList().size());
-        assertEquals("segment1", mySegmentUpdate.getSegmentList().get(0));
-        assertEquals("segment2", mySegmentUpdate.getSegmentList().get(1));
     }
 
     @Test
@@ -168,8 +138,8 @@ public class NotificationParserTest {
     public void parseMyLargeSegmentsIncomingNotification() {
         IncomingNotification incoming = mParser.parseIncoming(MY_LARGE_SEGMENTS_UPDATE);
 
-        assertEquals(MEMBERSHIP_LS_UPDATE, incoming.getType());
-        assertEquals("{\"type\":\"MEMBERSHIP_LS_UPDATE\",\"cn\":1702507130121,\"n\":[\"android_test\"],\"c\":2,\"u\":2,\"d\":\"eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==\",\"i\":100,\"h\":1,\"s\":325}", incoming.getJsonData());
+        assertEquals(MEMBERSHIPS_LS_UPDATE, incoming.getType());
+        assertEquals("{\"type\":\"MEMBERSHIPS_LS_UPDATE\",\"cn\":1702507130121,\"n\":[\"android_test\"],\"c\":2,\"u\":2,\"d\":\"eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==\",\"i\":100,\"h\":1,\"s\":325}", incoming.getJsonData());
         assertEquals("NzM2MDI5Mzc0_MTc1MTYwODQxMQ==_memberships", incoming.getChannel());
         assertEquals(1702507131100L, incoming.getTimestamp());
     }

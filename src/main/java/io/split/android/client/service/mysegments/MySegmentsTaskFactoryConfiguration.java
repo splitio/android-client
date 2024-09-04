@@ -16,7 +16,6 @@ public class MySegmentsTaskFactoryConfiguration {
     private final SplitEventsManager mEventsManager;
     private final MySegmentsSyncTaskConfig mMySegmentsSyncTaskConfig;
     private final MySegmentsUpdateTaskConfig mMySegmentsUpdateTaskConfig;
-    private final MySegmentsOverwriteTaskConfig mMySegmentsOverwriteTaskConfig;
     private final MySegmentsUpdateTaskConfig mMyLargeSegmentsUpdateTaskConfig;
     private final LoadMySegmentsTaskConfig mLoadMySegmentsTaskConfig;
     private final MySegmentsStorage mMyLargeSegmentsStorage;
@@ -27,7 +26,6 @@ public class MySegmentsTaskFactoryConfiguration {
                                                @NonNull SplitEventsManager eventsManager,
                                                @NonNull MySegmentsSyncTaskConfig mySegmentsSyncTaskConfig,
                                                @NonNull MySegmentsUpdateTaskConfig mySegmentsUpdateTaskConfig,
-                                               @NonNull MySegmentsOverwriteTaskConfig mySegmentsOverwriteTaskConfig,
                                                @NonNull MySegmentsUpdateTaskConfig myLargeSegmentsUpdateTaskConfig,
                                                @NonNull LoadMySegmentsTaskConfig loadMySegmentsTaskConfig) {
         mHttpFetcher = checkNotNull(httpFetcher);
@@ -36,7 +34,6 @@ public class MySegmentsTaskFactoryConfiguration {
         mEventsManager = checkNotNull(eventsManager);
         mMySegmentsSyncTaskConfig = checkNotNull(mySegmentsSyncTaskConfig);
         mMySegmentsUpdateTaskConfig = checkNotNull(mySegmentsUpdateTaskConfig);
-        mMySegmentsOverwriteTaskConfig = checkNotNull(mySegmentsOverwriteTaskConfig);
         mMyLargeSegmentsUpdateTaskConfig = checkNotNull(myLargeSegmentsUpdateTaskConfig);
         mLoadMySegmentsTaskConfig = checkNotNull(loadMySegmentsTaskConfig);
     }
@@ -72,11 +69,6 @@ public class MySegmentsTaskFactoryConfiguration {
     }
 
     @NonNull
-    public MySegmentsOverwriteTaskConfig getMySegmentsOverwriteTaskConfig() {
-        return mMySegmentsOverwriteTaskConfig;
-    }
-
-    @NonNull
     public MySegmentsUpdateTaskConfig getMyLargeSegmentsUpdateTaskConfig() {
         return mMyLargeSegmentsUpdateTaskConfig;
     }
@@ -96,7 +88,6 @@ public class MySegmentsTaskFactoryConfiguration {
                 eventsManager,
                 MySegmentsSyncTaskConfig.get(),
                 MySegmentsUpdateTaskConfig.getForMySegments(),
-                MySegmentsOverwriteTaskConfig.getForMySegments(),
                 MySegmentsUpdateTaskConfig.getForMyLargeSegments(),
                 LoadMySegmentsTaskConfig.get());
     }

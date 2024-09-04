@@ -64,6 +64,7 @@ public class SseHandler {
     public void handleIncomingMessage(Map<String, String> values) {
 
         String messageData = values.get(EventStreamParser.DATA_FIELD);
+
         if (messageData != null) {
             if (mNotificationParser.isError(values)) {
                 handleError(messageData);
@@ -84,8 +85,8 @@ public class SseHandler {
                     break;
                 case SPLIT_KILL:
                 case SPLIT_UPDATE:
-                case MEMBERSHIP_MS_UPDATE:
-                case MEMBERSHIP_LS_UPDATE:
+                case MEMBERSHIPS_MS_UPDATE:
+                case MEMBERSHIPS_LS_UPDATE:
                     if (mNotificationManagerKeeper.isStreamingActive()) {
                         mNotificationProcessor.process(incomingNotification);
                     }

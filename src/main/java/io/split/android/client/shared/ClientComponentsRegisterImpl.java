@@ -89,8 +89,6 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
             LinkedBlockingDeque<MySegmentUpdateParams> mySegmentsNotificationQueue = new LinkedBlockingDeque<>();
             registerMembershipsNotificationProcessor(key, mySegmentsTaskFactory, mySegmentsNotificationQueue);
             registerMySegmentsUpdateWorker(key, mySegmentsSynchronizer, mySegmentsNotificationQueue);
-
-            registerMyLargeSegmentsUpdateWorker(key, mySegmentsSynchronizer, mySegmentsNotificationQueue);
         }
     }
 
@@ -124,11 +122,6 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
 
     private void registerMySegmentsUpdateWorker(Key key, MySegmentsSynchronizer mySegmentsSynchronizer, LinkedBlockingDeque<MySegmentUpdateParams> notificationsQueue) {
         mMySegmentsUpdateWorkerRegistry.registerMySegmentsUpdateWorker(key.matchingKey(),
-                new MySegmentsUpdateWorker(mySegmentsSynchronizer, notificationsQueue));
-    }
-
-    private void registerMyLargeSegmentsUpdateWorker(Key key, MySegmentsSynchronizer mySegmentsSynchronizer, LinkedBlockingDeque<MySegmentUpdateParams> notificationsQueue) {
-        mMySegmentsUpdateWorkerRegistry.registerMyLargeSegmentsUpdateWorker(key.matchingKey(),
                 new MySegmentsUpdateWorker(mySegmentsSynchronizer, notificationsQueue));
     }
 

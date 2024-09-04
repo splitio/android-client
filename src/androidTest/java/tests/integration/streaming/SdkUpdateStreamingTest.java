@@ -23,17 +23,16 @@ import java.util.concurrent.TimeUnit;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import fake.HttpStreamResponseMock;
 import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
-import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Partition;
-import io.split.android.client.dtos.Segment;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
@@ -43,9 +42,8 @@ import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
-import fake.HttpStreamResponseMock;
-
-import static java.lang.Thread.sleep;
+import tests.integration.shared.TestingData;
+import tests.integration.shared.TestingHelper;
 
 public class SdkUpdateStreamingTest {
     Context mContext;
@@ -57,7 +55,6 @@ public class SdkUpdateStreamingTest {
 
     final static String MSG_SPLIT_UPDATE = "push_msg-split_update.txt";
     final static String MSG_SPLIT_KILL = "push_msg-split_kill.txt";
-    final static String MSG_SEGMENT_UPDATE_PAYLOAD = "push_msg-segment_update_payload.txt";
 
     CountDownLatch mSplitsPushLatch = null;
     CountDownLatch mMySegmentsPushLatch = null;
@@ -246,11 +243,19 @@ public class SdkUpdateStreamingTest {
         mSplitsPushLatch = null;
     }
 
-    private void testMySegmentsUpdate() throws IOException, InterruptedException {
+    private void testMySegmentsUpdate() throws InterruptedException {
         mMySegmentsPushLatch = new CountDownLatch(1);
-        pushMessage(MSG_SEGMENT_UPDATE_PAYLOAD);
-        mMySegmentsPushLatch.await(5, TimeUnit.SECONDS);
-        mMySegmentsPushLatch = null;
+        String msg = TestingData.segmentsUnboundedNoCompression("1");
+        String MSG_SEGMENT_UPDATE_TEMPLATE = "push_msg-largesegment_update.txt";
+        BlockingQueue<String> queue = mStreamingData;
+        String message = loadMockedData(MSG_SEGMENT_UPDATE_TEMPLATE);
+        message = message.replace("$TIMESTAMP$", String.valueOf(System.currentTimeMillis()));
+        message = message.replace(TestingHelper.MSG_DATA_FIELD, msg);
+        try {
+            queue.put(message + "" + "\n");
+            Logger.d("Pushed message: " + message);
+        } catch (InterruptedException e) {
+        }
     }
 
     @After
@@ -334,21 +339,21 @@ public class SdkUpdateStreamingTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                Logger.e("PATH IS " + uri.getPath());
                 if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    Logger.d("*** Memberships hit; " + mMySegmentsHitCount);
                     mMySegmentsHitCount++;
                     int hit = mMySegmentsHitCount;
                     String json = IntegrationHelper.emptyAllSegments();
-                    if (mMySegmentsHitCount > 2) {
+                    if (mMySegmentsHitCount > 1) {
                         StringBuilder mySegments = new StringBuilder();
-                        mySegments.append("{\"ms\":\"k\":[");
+                        mySegments.append("{\"ms\":{\"k\":[");
                         List<String> segmentList = new ArrayList<>();
                         for (int i = 0; i <= hit; i++) {
                             segmentList.add("{\"n\":\"" + "s" + i + "\"}");
                         }
                         mySegments.append(String.join(",", segmentList));
-                        mySegments.append("],\"cn\":99999}");
-                        json = "{\"ms\": " + mySegments + "}";
+                        mySegments.append("],\"cn\":99999}}");
+                        json = mySegments.toString();
                     }
                     if(mMySegmentsPushLatch != null) {
                         mMySegmentsPushLatch.countDown();

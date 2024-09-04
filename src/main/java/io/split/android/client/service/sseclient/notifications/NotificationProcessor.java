@@ -30,8 +30,7 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
             @NonNull SplitTaskExecutor splitTaskExecutor,
             @NonNull SplitTaskFactory splitTaskFactory,
             @NonNull NotificationParser notificationParser,
-            @NonNull BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationsQueue,
-            @NonNull MySegmentsPayloadDecoder mySegmentsPayloadDecoder) {
+            @NonNull BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationsQueue) {
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mNotificationParser = checkNotNull(notificationParser);
@@ -49,8 +48,8 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
                 case SPLIT_KILL:
                     processSplitKill(mNotificationParser.parseSplitKill(notificationJson));
                     break;
-                case MEMBERSHIP_MS_UPDATE:
-                case MEMBERSHIP_LS_UPDATE:
+                case MEMBERSHIPS_MS_UPDATE:
+                case MEMBERSHIPS_LS_UPDATE:
                     processMembershipsUpdate(mNotificationParser.parseMembershipNotification(notificationJson));
                     break;
                 default:

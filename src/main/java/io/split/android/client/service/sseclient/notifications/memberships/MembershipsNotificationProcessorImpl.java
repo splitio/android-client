@@ -18,7 +18,6 @@ import io.split.android.client.service.sseclient.notifications.NotificationParse
 import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorConfiguration;
 import io.split.android.client.service.sseclient.notifications.mysegments.SyncDelayCalculator;
-import io.split.android.client.service.sseclient.notifications.mysegments.SyncDelayCalculatorImpl;
 import io.split.android.client.utils.logger.Logger;
 
 public class MembershipsNotificationProcessorImpl implements MembershipsNotificationProcessor {
@@ -35,7 +34,7 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
                                                 MySegmentsV2PayloadDecoder mySegmentsPayloadDecoder,
                                                 CompressionUtilProvider compressionProvider,
                                                 MySegmentsNotificationProcessorConfiguration configuration,
-                                                SyncDelayCalculatorImpl syncDelayCalculator) {
+                                                SyncDelayCalculator syncDelayCalculator) {
         mNotificationParser = notificationParser;
         mSplitTaskExecutor = splitTaskExecutor;
         mMySegmentsPayloadDecoder = mySegmentsPayloadDecoder;
@@ -77,7 +76,7 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
                     Logger.d("Received Bounded membership fetch request");
                     byte[] keyMap = mMySegmentsPayloadDecoder.decodeAsBytes(data,
                             mCompressionProvider.get(compression));
-                    executeBoundedFetch(keyMap, syncDelay);
+                    executeBoundedFetch(keyMap, syncDelay, notificationType, changeNumber);
                     break;
                 case KEY_LIST:
                     Logger.d("Received KeyList membership fetch request");
@@ -95,14 +94,14 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
                     break;
             }
         } catch (Exception e) {
-            Logger.e("Executing unbounded fetch because an error has occurred processing my "+(notificationType == NotificationType.MEMBERSHIP_LS_UPDATE ? "large" : "")+" segment notification: " + e.getLocalizedMessage());
+            Logger.e("Executing unbounded fetch because an error has occurred processing my "+(notificationType == NotificationType.MEMBERSHIPS_LS_UPDATE ? "large" : "")+" segment notification: " + e.getLocalizedMessage());
             notifyMySegmentRefreshNeeded(notificationsQueue, syncDelay, notificationType, changeNumber);
         }
     }
 
     private void notifyMySegmentRefreshNeeded(BlockingQueue<MySegmentUpdateParams> notificationsQueue, long syncDelay, NotificationType notificationType, Long changeNumber) {
-        Long targetSegmentsCn = (notificationType == NotificationType.MEMBERSHIP_MS_UPDATE) ? changeNumber : null;
-        Long targetLargeSegmentsCn = (notificationType == NotificationType.MEMBERSHIP_LS_UPDATE) ? changeNumber : null;
+        Long targetSegmentsCn = (notificationType == NotificationType.MEMBERSHIPS_MS_UPDATE) ? changeNumber : null;
+        Long targetLargeSegmentsCn = (notificationType == NotificationType.MEMBERSHIPS_LS_UPDATE) ? changeNumber : null;
 
         //noinspection ResultOfMethodCallIgnored
         notificationsQueue.offer(new MySegmentUpdateParams(syncDelay, targetSegmentsCn, targetLargeSegmentsCn));
@@ -113,17 +112,17 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
         if (segmentNames == null) {
             return;
         }
-        MySegmentsUpdateTask task = (notificationType == NotificationType.MEMBERSHIP_LS_UPDATE) ?
+        MySegmentsUpdateTask task = (notificationType == NotificationType.MEMBERSHIPS_LS_UPDATE) ?
                 mConfiguration.getMySegmentsTaskFactory().createMyLargeSegmentsUpdateTask(false, segmentNames, changeNumber) :
                 mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(false, segmentNames, changeNumber);
         mSplitTaskExecutor.submit(task, null);
     }
 
-    private void executeBoundedFetch(byte[] keyMap, long syncDelay) {
+    private void executeBoundedFetch(byte[] keyMap, long syncDelay, NotificationType notificationType, Long changeNumber) {
         int index = mMySegmentsPayloadDecoder.computeKeyIndex(mConfiguration.getHashedUserKey(), keyMap.length);
         if (mMySegmentsPayloadDecoder.isKeyInBitmap(keyMap, index)) {
             Logger.d("Executing Bounded membership fetch request");
-            notifyMySegmentRefreshNeeded(mConfiguration.getNotificationsQueue(), syncDelay, NotificationType.MY_SEGMENTS_UPDATE_V2, null); // TODO
+            notifyMySegmentRefreshNeeded(mConfiguration.getNotificationsQueue(), syncDelay, notificationType, changeNumber);
         }
     }
 
@@ -140,7 +139,7 @@ public class MembershipsNotificationProcessorImpl implements MembershipsNotifica
             return;
         }
 
-        boolean largeSegmentsUpdate = notificationType == NotificationType.MEMBERSHIP_LS_UPDATE;
+        boolean largeSegmentsUpdate = notificationType == NotificationType.MEMBERSHIPS_LS_UPDATE;
         Logger.d("Executing KeyList my "+ (largeSegmentsUpdate ? "large " : "") +"segment fetch request: Adding = " + actionIsAdd);
         MySegmentsUpdateTask task = largeSegmentsUpdate ? mConfiguration.getMySegmentsTaskFactory().createMyLargeSegmentsUpdateTask(actionIsAdd, segmentNames, changeNumber) :
                 mConfiguration.getMySegmentsTaskFactory().createMySegmentsUpdateTask(actionIsAdd, segmentNames, changeNumber);
