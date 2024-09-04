@@ -14,7 +14,6 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.dtos.Segment;
 import io.split.android.client.dtos.SegmentsChange;
-import io.split.android.client.utils.logger.Logger;
 
 class MySegmentsStorageImpl implements MySegmentsStorage {
 
