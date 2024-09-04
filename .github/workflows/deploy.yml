@@ -5,7 +5,6 @@ on:
     branches:
       - 'development'
       - '*_baseline'
-      - '*_nits'
 
 jobs:
   build-app:

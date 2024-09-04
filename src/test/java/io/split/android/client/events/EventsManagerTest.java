@@ -169,6 +169,25 @@ public class EventsManagerTest {
         sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, false);
     }
 
+    @Test
+    public void sdkReadyWithSplitsAndUpdatedLargeSegments() {
+
+        SplitClientConfig cfg = SplitClientConfig.builder().build();
+        SplitEventsManager eventManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
+
+        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
+
+        boolean shouldStop = false;
+        long maxExecutionTime = System.currentTimeMillis() + 10000;
+        long intervalExecutionTime = 200;
+
+        execute(shouldStop, intervalExecutionTime, maxExecutionTime, eventManager, SplitEvent.SDK_READY);
+
+        assertTrue(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
+        assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
+    }
+
     private static void sdkUpdateTest(SplitInternalEvent eventToCheck, boolean negate) throws InterruptedException {
         SplitEventsManager eventManager = new SplitEventsManager(SplitClientConfig.builder()
                 .build(), new SplitTaskExecutorStub());
