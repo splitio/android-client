@@ -46,7 +46,7 @@ public class Stats {
     @SerializedName("seC")
     private long segmentCount;
 
-    @SerializedName("lseC")
+    @SerializedName("lsC")
     private long largeSegmentCount;
 
     @SerializedName("skC")

@@ -13,7 +13,7 @@ public interface MySegmentsStorage {
 
     void set(SegmentsChange segmentsChange);
 
-    long getTill();
+    long getChangeNumber();
 
     @VisibleForTesting
     void clear();

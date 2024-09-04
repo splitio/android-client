@@ -87,9 +87,9 @@ public class MySegmentsStorageTest {
         mySegmentsStorage.loadLocal();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
-        long till = mMySegmentsStorage.getTill();
+        long till = mMySegmentsStorage.getChangeNumber();
         Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
-        long newTill = mySegmentsStorage.getTill();
+        long newTill = mySegmentsStorage.getChangeNumber();
 
         assertEquals(4, snapshot.size());
         assertTrue(snapshot.contains("a1"));
@@ -119,7 +119,7 @@ public class MySegmentsStorageTest {
 
         assertEquals(0, snapshot.size());
         assertEquals(0, newSnapshot.size());
-        assertEquals(11124442, mySegmentsStorage.getTill());
+        assertEquals(11124442, mySegmentsStorage.getChangeNumber());
     }
 
     @Test
@@ -135,7 +135,7 @@ public class MySegmentsStorageTest {
 
         assertEquals(3, snapshot.size());
         assertEquals(3, newSnapshot.size());
-        assertEquals(-1, mySegmentsStorage.getTill());
+        assertEquals(-1, mySegmentsStorage.getChangeNumber());
     }
 
     @Test
@@ -150,7 +150,7 @@ public class MySegmentsStorageTest {
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
 
         assertEquals(0, snapshot.size());
-        assertEquals(-1, mySegmentsStorage.getTill());
+        assertEquals(-1, mySegmentsStorage.getChangeNumber());
     }
 
     @Test
@@ -170,7 +170,7 @@ public class MySegmentsStorageTest {
         assertTrue(all.contains("a3"));
         assertTrue(all.contains("a4"));
         assertEquals(4, all.size());
-        assertEquals(999820, mySegmentsStorage.getTill());
+        assertEquals(999820, mySegmentsStorage.getChangeNumber());
     }
 
     @Test
@@ -225,6 +225,6 @@ public class MySegmentsStorageTest {
 
         latch.await(40, TimeUnit.SECONDS);
         assertEquals(10, mMySegmentsStorage.getAll().size());
-        assertEquals(112421 + 190, mMySegmentsStorage.getTill());
+        assertEquals(112421 + 190, mMySegmentsStorage.getChangeNumber());
     }
 }
