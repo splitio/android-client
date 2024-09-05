@@ -95,7 +95,6 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
             return;
         }
         try {
-            Logger.v("Internal event: " + internalEvent.name());
             mQueue.add(internalEvent);
         } catch (IllegalStateException e) {
             Logger.d("Internal events queue is full");
