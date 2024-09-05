@@ -67,12 +67,8 @@ public class SqLitePersistentMySegmentsStorage<T extends SegmentEntity> implemen
             return createEmpty();
         }
 
-        SegmentsChange dto;
         try {
-            dto = Json.fromJson(storedJson, SegmentsChange.class);
-
-            Logger.v("Returning segments from DTO");
-            return dto;
+            return Json.fromJson(storedJson, SegmentsChange.class);
         } catch (JsonParseException | NullPointerException ex) {
             Logger.v("Parsing of segments DTO failed, returning as legacy");
             String[] segments = storedJson.split(",");

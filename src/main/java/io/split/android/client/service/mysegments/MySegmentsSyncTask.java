@@ -154,18 +154,18 @@ public class MySegmentsSyncTask implements SplitTask {
     private boolean targetChangeNumberIsOutdated() {
         // In case both targets are present, both CN in storage should be newer for the targets to be considered outdated
         if (mTargetSegmentsChangeNumber != null && mTargetLargeSegmentsChangeNumber != null) {
-            return isTargetOutdated(mTargetSegmentsChangeNumber, mMySegmentsStorage.getTill()) &&
-                    isTargetOutdated(mTargetLargeSegmentsChangeNumber, mMyLargeSegmentsStorage.getTill());
+            return isTargetOutdated(mTargetSegmentsChangeNumber, mMySegmentsStorage.getChangeNumber()) &&
+                    isTargetOutdated(mTargetLargeSegmentsChangeNumber, mMyLargeSegmentsStorage.getChangeNumber());
         }
 
         // If only LS target is set, there's no need to check MS storage CN
         if (mTargetLargeSegmentsChangeNumber != null) {
-            return isTargetOutdated(mTargetLargeSegmentsChangeNumber, mMyLargeSegmentsStorage.getTill());
+            return isTargetOutdated(mTargetLargeSegmentsChangeNumber, mMyLargeSegmentsStorage.getChangeNumber());
         }
 
         // If only MS target is set, there's no need to check LS storage CN
         if (mTargetSegmentsChangeNumber != null) {
-            return isTargetOutdated(mTargetSegmentsChangeNumber, mMySegmentsStorage.getTill());
+            return isTargetOutdated(mTargetSegmentsChangeNumber, mMySegmentsStorage.getChangeNumber());
         }
 
         // If no targets are set, consider it not outdated

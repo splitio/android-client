@@ -322,8 +322,8 @@ public class MySegmentsSyncTaskTest {
     @Test
     public void noFetchWhenSegmentsChangeNumberInStorageIsNewerThanTarget() throws HttpFetcherException {
         long targetSegmentsChangeNumber = 5L;
-        when(mySegmentsStorage.getTill()).thenReturn(6L);
-        when(myLargeSegmentsStorage.getTill()).thenReturn(5L);
+        when(mySegmentsStorage.getChangeNumber()).thenReturn(6L);
+        when(myLargeSegmentsStorage.getChangeNumber()).thenReturn(5L);
 
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), targetSegmentsChangeNumber, null, mock(BackoffCounter.class), 1);
         mTask.execute();
@@ -334,8 +334,8 @@ public class MySegmentsSyncTaskTest {
     @Test
     public void noFetchWhenLargeSegmentsChangeNumberIsNewerThanTarget() throws HttpFetcherException {
         long targetLargeSegmentsChangeNumber = 4L;
-        when(mySegmentsStorage.getTill()).thenReturn(3L);
-        when(myLargeSegmentsStorage.getTill()).thenReturn(5L);
+        when(mySegmentsStorage.getChangeNumber()).thenReturn(3L);
+        when(myLargeSegmentsStorage.getChangeNumber()).thenReturn(5L);
 
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, targetLargeSegmentsChangeNumber, mock(BackoffCounter.class), 1);
         mTask.execute();
@@ -347,8 +347,8 @@ public class MySegmentsSyncTaskTest {
     public void fetchWhenSegmentsChangeNumberInStorageIsNewerThanTargetAndLargeSegmentsChangeNumberIsOlder() throws HttpFetcherException {
         long targetSegmentsChangeNumber = 5L;
         long targetLargeSegmentsChangeNumber = 4L;
-        when(mySegmentsStorage.getTill()).thenReturn(6L);
-        when(myLargeSegmentsStorage.getTill()).thenReturn(3L);
+        when(mySegmentsStorage.getChangeNumber()).thenReturn(6L);
+        when(myLargeSegmentsStorage.getChangeNumber()).thenReturn(3L);
         when(mMySegmentsFetcher.execute(noParams, null))
                 .thenReturn(createChange(6L, 4L));
 
@@ -363,8 +363,8 @@ public class MySegmentsSyncTaskTest {
     public void fetchIsPerformedWhenLargeSegmentsChangeNumberInStorageIsNewerThanTargetAndSegmentsChangeNumberIsOlder() throws HttpFetcherException {
         long targetSegmentsChangeNumber = 5L;
         long targetLargeSegmentsChangeNumber = 4L;
-        when(mySegmentsStorage.getTill()).thenReturn(3L);
-        when(myLargeSegmentsStorage.getTill()).thenReturn(6L);
+        when(mySegmentsStorage.getChangeNumber()).thenReturn(3L);
+        when(myLargeSegmentsStorage.getChangeNumber()).thenReturn(6L);
         when(mMySegmentsFetcher.execute(noParams, null))
                 .thenReturn(createChange(5L, 6L));
 

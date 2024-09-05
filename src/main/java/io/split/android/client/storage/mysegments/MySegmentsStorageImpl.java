@@ -54,7 +54,7 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
     }
 
     @Override
-    public long getTill() {
+    public long getChangeNumber() {
         return mTill.get();
     }
 

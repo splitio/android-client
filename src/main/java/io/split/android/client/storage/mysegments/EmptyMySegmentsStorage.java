@@ -20,7 +20,7 @@ public class EmptyMySegmentsStorage implements MySegmentsStorage{
     }
 
     @Override
-    public long getTill() {
+    public long getChangeNumber() {
         return -1;
     }
 
