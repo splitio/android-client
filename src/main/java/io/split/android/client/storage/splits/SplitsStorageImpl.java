@@ -2,11 +2,15 @@ package io.split.android.client.storage.splits;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
+import android.os.SystemClock;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -15,6 +19,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.utils.Json;
 
 public class SplitsStorageImpl implements SplitsStorage {
 
@@ -26,6 +31,8 @@ public class SplitsStorageImpl implements SplitsStorage {
     private String mSplitsFilterQueryString;
     private String mFlagsSpec;
     private final Map<String, Integer> mTrafficTypes;
+    private final Object mGetAllLock = new Object();
+    private final MegaParser mParser = new MegaParser();
 
     public SplitsStorageImpl(@NonNull PersistentSplitsStorage persistentStorage) {
         mPersistentStorage = checkNotNull(persistentStorage);
@@ -52,19 +59,31 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     @Override
     public Split get(@NonNull String name) {
-        return mInMemorySplits.get(name);
+        return getParsedSplit(name);
     }
 
     @Override
     public Map<String, Split> getMany(@Nullable List<String> splitNames) {
         Map<String, Split> splits = new HashMap<>();
         if (splitNames == null || splitNames.isEmpty()) {
-            splits.putAll(mInMemorySplits);
-            return splits;
+//            // check if all splits are already parsed. the ones that are not parsed
+//            // should be parsed and replaced in inmemorysplits
+//            for (Map.Entry<String, Split> entry : mInMemorySplits.entrySet()) {
+//                Split split = getParsedSplit(entry.getKey());
+//                if (split != null) {
+//                    splits.put(entry.getKey(), split);
+//                }
+//            }
+//
+//            return splits;
+
+            Map<String, Split> parsed = mParser.parse(mInMemorySplits);
+            mInMemorySplits.putAll(parsed);
+            return parsed;
         }
 
         for (String name : splitNames) {
-            Split split = mInMemorySplits.get(name);
+            Split split = getParsedSplit(name);
             if (split != null) {
                 splits.put(name, split);
             }
@@ -74,7 +93,20 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     @Override
     public Map<String, Split> getAll() {
-        return getMany(null);
+        Log.d("TestingSDK", "getAll requested by Thread id: " + Thread.currentThread().getId());
+        long start = SystemClock.uptimeMillis();
+        synchronized (mGetAllLock) {
+            try {
+                return getMany(null);
+            } finally {
+                Log.d("TestingSDK", "getAll: " + (SystemClock.uptimeMillis() - start) + "ms by thread id: " + Thread.currentThread().getId());
+            }
+        }
+    }
+
+    @Override
+    public Set<String> getNames() {
+        return Collections.unmodifiableSet(mInMemorySplits.keySet());
     }
 
     @Override
@@ -94,7 +126,7 @@ public class SplitsStorageImpl implements SplitsStorage {
                 appliedUpdates = true;
             }
             for (Split split : activeSplits) {
-                Split loadedSplit = mInMemorySplits.get(split.name);
+                Split loadedSplit = getParsedSplit(split.name);
                 if (loadedSplit != null && loadedSplit.trafficTypeName != null) {
                     decreaseTrafficTypeCount(loadedSplit.trafficTypeName);
                 }
@@ -271,6 +303,23 @@ public class SplitsStorageImpl implements SplitsStorage {
             if (flagsForSet != null) {
                 flagsForSet.remove(featureFlag.name);
             }
+        }
+    }
+
+    @Nullable
+    private Split getParsedSplit(@NonNull String name) {
+        Split split = mInMemorySplits.get(name);
+        if (split == null || split.parsed) {
+            Log.d("TestingSDK", "getParsedSplit: " + name + ". Already parsed");
+            return split;
+        } else {
+            Split parsedSplit = Json.fromJson(split.originalJson, Split.class);
+            parsedSplit.name = split.name;
+            parsedSplit.originalJson = null;
+            parsedSplit.parsed = true;
+            mInMemorySplits.put(name, split);
+//            Log.d("TestingSDK", "getParsedSplit: " + name + ". Parsed to default treatment: " + parsedSplit.defaultTreatment);
+            return parsedSplit;
         }
     }
 }

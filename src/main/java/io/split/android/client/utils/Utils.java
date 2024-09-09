@@ -4,8 +4,10 @@ import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
@@ -74,6 +76,32 @@ public class Utils {
         List<List<T>> partitions = new ArrayList<>();
         for (int i = 0; i < list.size(); i += size) {
             partitions.add(new ArrayList<>(list.subList(i, Math.min(i + size, list.size()))));
+        }
+
+        return partitions;
+    }
+
+    public static <T> List<Map<String, T>> partition(Map<String, T> map, int size) {
+        if (map == null) {
+            return new ArrayList<>();
+        }
+
+        if (size <= 0) {
+            return Collections.singletonList(map);
+        }
+
+        List<Map<String, T>> partitions = new ArrayList<>();
+        for (int i = 0; i < map.size(); i += size) {
+            // partition the map
+            Map<String, T> partition = new HashMap<>();
+            int j = 0;
+            for (Map.Entry<String, T> entry : map.entrySet()) {
+                if (j >= i && j < Math.min(i + size, map.size())) {
+                    partition.put(entry.getKey(), entry.getValue());
+                }
+                j++;
+            }
+            partitions.add(partition);
         }
 
         return partitions;

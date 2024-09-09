@@ -87,8 +87,9 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
                 name = cipher.decrypt(entity.getName());
                 json = cipher.decrypt(entity.getBody());
                 if (name != null && json != null) {
-                    Split split = Json.fromJson(json, Split.class);
+                    Split split = getSplit(json);
                     split.name = name;
+                    split.originalJson = json;
                     splits.add(split);
                 }
             } catch (JsonSyntaxException e) {
@@ -96,5 +97,10 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
             }
         }
         return splits;
+    }
+
+    private static Split getSplit(String json) {
+        //return Json.fromJson(json, Split.class);
+        return new Split();
     }
 }

@@ -10,6 +10,7 @@ import androidx.annotation.Nullable;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -87,6 +88,11 @@ public class LocalhostSplitsStorage implements SplitsStorage {
             splits.putAll(mInMemorySplits);
         }
         return splits;
+    }
+
+    @Override
+    public Set<String> getNames() {
+        return Collections.unmodifiableSet(mInMemorySplits.keySet());
     }
 
     @Override

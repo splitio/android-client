@@ -88,6 +88,8 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
         List<SplitTaskBatchItem> enqueued = new ArrayList<>();
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createFilterSplitsInCacheTask(), null));
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createLoadSplitsTask(), mLoadLocalSplitsListener));
+        enqueued.add(new SplitTaskBatchItem(
+                mSplitTaskFactory.createParseSplitsTask(), null));
         enqueued.add(new SplitTaskBatchItem(() -> {
             synchronize();
             return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);

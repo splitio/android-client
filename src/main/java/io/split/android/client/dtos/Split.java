@@ -49,4 +49,8 @@ public class Split {
     @Nullable
     @SerializedName("sets")
     public Set<String> sets;
+
+    public String originalJson;
+
+    public boolean parsed = false;
 }

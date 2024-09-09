@@ -3,6 +3,7 @@ package io.split.android.client.service.executor;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import android.annotation.SuppressLint;
+import android.util.Log;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -201,6 +202,19 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public SplitInPlaceUpdateTask createSplitsUpdateTask(Split featureFlag, long since) {
         return new SplitInPlaceUpdateTask(mSplitsStorageContainer.getSplitsStorage(), mSplitChangeProcessor, mEventsManager, mTelemetryRuntimeProducer, featureFlag, since);
+    }
+
+    @Override
+    public SplitTask createParseSplitsTask() {
+        return new SplitTask() {
+            @NonNull
+            @Override
+            public SplitTaskExecutionInfo execute() {
+                Log.d("TestingSDK", "Calling getAll to parse");
+                mSplitsStorageContainer.getSplitsStorage().getAll();
+                return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
+            }
+        };
     }
 
     @NonNull

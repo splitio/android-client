@@ -115,11 +115,9 @@ public class SplitManagerImpl implements SplitManager {
                 return result;
             }
 
-            Map<String, Split> splitMap = _splitsStorage.getAll();
+            Set<String> splitMap = _splitsStorage.getNames();
             if (splitMap != null && splitMap.size() > 0) {
-                for (Split split : splitMap.values()) {
-                    result.add(split.name);
-                }
+                result.addAll(splitMap);
             }
 
             return result;

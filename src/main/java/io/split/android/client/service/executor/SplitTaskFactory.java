@@ -29,4 +29,6 @@ public interface SplitTaskFactory extends TelemetryTaskFactory, ImpressionsTaskF
     FilterSplitsInCacheTask createFilterSplitsInCacheTask();
 
     CleanUpDatabaseTask createCleanUpDatabaseTask(long maxTimestamp);
+
+    SplitTask createParseSplitsTask();
 }

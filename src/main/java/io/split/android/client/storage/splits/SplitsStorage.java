@@ -42,4 +42,6 @@ public interface SplitsStorage {
 
     @NonNull
     Set<String> getNamesByFlagSets(Collection<String> flagSets);
+
+    Set<String> getNames();
 }
