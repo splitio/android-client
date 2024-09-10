@@ -198,22 +198,22 @@ public class IntegrationHelper {
     }
 
     public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled) {
-        return lowRefreshRateConfig(streamingEnabled, false, true, 60L, 2L);
+        return lowRefreshRateConfig(streamingEnabled, false, true, 60L, 2);
     }
 
     public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled, boolean telemetryEnabled) {
-        return lowRefreshRateConfig(streamingEnabled, telemetryEnabled, true, 60L, 2L);
+        return lowRefreshRateConfig(streamingEnabled, telemetryEnabled, true, 60L, 2);
     }
 
     public static SplitClientConfig syncDisabledConfig() {
-        return lowRefreshRateConfig(true, false, false, 60L, 2L);
+        return lowRefreshRateConfig(true, false, false, 60L, 2);
     }
 
-    public static SplitClientConfig customSseConnectionDelayConfig(boolean streamingEnabled, long delay, long disconnectionDelay) {
+    public static SplitClientConfig customSseConnectionDelayConfig(boolean streamingEnabled, long delay, int disconnectionDelay) {
         return lowRefreshRateConfig(streamingEnabled, false, true, delay, disconnectionDelay);
     }
 
-    public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled, boolean telemetryEnabled, boolean syncEnabled, long delay, long sseDisconnectionDelay) {
+    public static SplitClientConfig lowRefreshRateConfig(boolean streamingEnabled, boolean telemetryEnabled, boolean syncEnabled, long delay, int sseDisconnectionDelay) {
         TestableSplitConfigBuilder builder = new TestableSplitConfigBuilder()
                 .ready(30000)
                 .featuresRefreshRate(3)
