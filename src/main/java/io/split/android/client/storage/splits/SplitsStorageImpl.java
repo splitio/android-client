@@ -81,7 +81,7 @@ public class SplitsStorageImpl implements SplitsStorage {
 //
 //            return splits;
 
-            Map<String, Split> parsed = mParser.parse(mInMemorySplits);
+            Map<String, Split> parsed = mParser.parse(mInMemorySplits.values());
             mInMemorySplits.putAll(parsed);
             return parsed;
         }
