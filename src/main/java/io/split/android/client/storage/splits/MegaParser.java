@@ -2,9 +2,8 @@ package io.split.android.client.storage.splits;
 
 import static io.split.android.client.utils.Utils.partition;
 
-import android.util.Log;
-
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -62,15 +61,30 @@ public class MegaParser {
                 continue;
             }
 
-            if (split.getValue() instanceof Split) {
-                splits.put(split.getValue().name, (Split) split.getValue());
-            } else {
-                Split parsedSplit = Json.fromJson(split.getValue().originalJson, Split.class);
-                parsedSplit.name = split.getValue().name;
-                parsedSplit.originalJson = null;
-                splits.put(split.getValue().name, parsedSplit);
+            SimpleSplit unparsedSplit = split.getValue();
+            Split parsedSplit = parseSplit(unparsedSplit);
+
+            if (parsedSplit != null) {
+                splits.put(unparsedSplit.name, parsedSplit);
             }
         }
         return splits;
+    }
+
+    static @Nullable Split parseSplit(SimpleSplit unparsedSplit) {
+        Split parsedSplit;
+        if (unparsedSplit instanceof Split) {
+            parsedSplit = (Split) unparsedSplit;
+        } else {
+            String originalJson = unparsedSplit.originalJson;
+            try {
+                parsedSplit = Json.fromJson(originalJson, Split.class);
+                parsedSplit.name = unparsedSplit.name;
+                parsedSplit.originalJson = null;
+            } catch (Exception e) {
+                parsedSplit = null;
+            }
+        }
+        return parsedSplit;
     }
 }

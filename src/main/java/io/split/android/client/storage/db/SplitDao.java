@@ -32,4 +32,7 @@ public interface SplitDao {
     @MapInfo(keyColumn = "name", valueColumn = "body")
     @Query("SELECT name, body FROM splits")
     Map<String, String> getAllAsMap();
+
+    @Query("SELECT body FROM splits")
+    List<String> getAllBodies();
 }

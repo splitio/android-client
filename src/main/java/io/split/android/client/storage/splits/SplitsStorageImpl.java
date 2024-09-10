@@ -81,7 +81,7 @@ public class SplitsStorageImpl implements SplitsStorage {
 //
 //            return splits;
 
-            Map<String, Split> parsed = MegaParser.getStringSplitMap(mInMemorySplits);//mParser.parse(mInMemorySplits);
+            Map<String, Split> parsed = mParser.parse(mInMemorySplits);
             mInMemorySplits.putAll(parsed);
             return parsed;
         }
@@ -312,19 +312,6 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     @Nullable
     private Split getParsedSplit(@NonNull String name) {
-        SimpleSplit split = mInMemorySplits.get(name);
-        if (split == null) {
-            Log.d("TestingSDK", "getParsedSplit: " + name + ". Already parsed");
-            return (Split) split;
-        } else if (split instanceof Split) {
-            Log.d("TestingSDK", "getParsedSplit: " + name + ". Already parsed");
-            return (Split) split;
-        } else {
-            Split parsedSplit = Json.fromJson(split.originalJson, Split.class);
-            parsedSplit.originalJson = null;
-            mInMemorySplits.put(name, split);
-//            Log.d("TestingSDK", "getParsedSplit: " + name + ". Parsed to default treatment: " + parsedSplit.defaultTreatment);
-            return parsedSplit;
-        }
+        return MegaParser.parseSplit(mInMemorySplits.get(name));
     }
 }

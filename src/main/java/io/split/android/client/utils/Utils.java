@@ -1,5 +1,7 @@
 package io.split.android.client.utils;
 
+import android.util.Log;
+
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
@@ -76,6 +78,11 @@ public class Utils {
         List<List<T>> partitions = new ArrayList<>();
         for (int i = 0; i < list.size(); i += size) {
             partitions.add(new ArrayList<>(list.subList(i, Math.min(i + size, list.size()))));
+        }
+
+        if (!partitions.isEmpty() && partitions.size() % size != 0) {
+            partitions.get(0).addAll(partitions.get(partitions.size() - 1));
+            partitions.remove(partitions.size() - 1);
         }
 
         return partitions;

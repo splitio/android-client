@@ -3,13 +3,15 @@ package io.split.android.client.storage.splits;
 import static io.split.android.client.utils.Utils.checkNotNull;
 import static io.split.android.client.utils.Utils.partition;
 
+import android.os.SystemClock;
+import android.util.Log;
+
 import androidx.annotation.NonNull;
 
 import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Callable;
 
 import io.split.android.client.dtos.SimpleSplit;
@@ -19,7 +21,7 @@ import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 
-public class SplitEntityToSplitTransformer implements SplitTransformer<Map<String, String>, List<SimpleSplit>> {
+public class SplitEntityToSplitTransformer implements SplitListTransformer<String, SimpleSplit> {
 
     private final SplitParallelTaskExecutor<List<SimpleSplit>> mTaskExecutor;
     private final SplitCipher mSplitCipher;
@@ -31,7 +33,7 @@ public class SplitEntityToSplitTransformer implements SplitTransformer<Map<Strin
     }
 
     @Override
-    public List<SimpleSplit> transform(Map<String, String> entities) {
+    public List<SimpleSplit> transform(List<String> entities) {
         if (entities == null) {
             return new ArrayList<>();
         }
@@ -52,13 +54,13 @@ public class SplitEntityToSplitTransformer implements SplitTransformer<Map<Strin
     }
 
     @NonNull
-    private List<SplitDeferredTaskItem<List<SimpleSplit>>> getSplitDeserializationTasks(Map<String, String> allEntities, int entitiesCount) {
+    private List<SplitDeferredTaskItem<List<SimpleSplit>>> getSplitDeserializationTasks(List<String> allEntities, int entitiesCount) {
         int availableThreads = mTaskExecutor.getAvailableThreads();
         int partitionSize = availableThreads > 0 ? entitiesCount / availableThreads : 1;
-        List<Map<String, String>> partitions = partition(allEntities, partitionSize);
+        List<List<String>> partitions = partition(allEntities, partitionSize);
         List<SplitDeferredTaskItem<List<SimpleSplit>>> taskList = new ArrayList<>(partitions.size());
 
-        for (Map<String, String> partition : partitions) {
+        for (List<String> partition : partitions) {
             taskList.add(new SplitDeferredTaskItem<>(
                     new Callable<List<SimpleSplit>>() {
                         @Override
@@ -72,38 +74,34 @@ public class SplitEntityToSplitTransformer implements SplitTransformer<Map<Strin
     }
 
     @NonNull
-    private static List<SimpleSplit> convertEntitiesToSplitList(Map<String, String> entities,
+    private static List<SimpleSplit> convertEntitiesToSplitList(List<String> entities,
                                                                 SplitCipher cipher) {
         List<SimpleSplit> splits = new ArrayList<>();
 
         if (entities == null) {
             return splits;
         }
-
-        for (Map.Entry<String, String> entry : entities.entrySet()) {
-            String name;
-            String json;
-            try {
-                name = cipher.decrypt(entry.getKey());
-                json = cipher.decrypt(entry.getValue());
-                if (name != null && json != null) {
-                    SimpleSplit split = getSplit(json);
-                    if (split != null) {
-                        split.name = name;
-                        split.originalJson = json;
-                        splits.add(split);
+long start = SystemClock.uptimeMillis();
+        try {
+            for (String entry : entities) {
+                String json;
+                try {
+                    json = cipher.decrypt(entry);
+                    if (json != null) {
+                        SimpleSplit split = Json.fromJson(json, SimpleSplit.class);//getSplit(json);
+                        if (split != null) {
+                            split.originalJson = json;
+                            splits.add(split);
+                        }
                     }
+                } catch (JsonSyntaxException e) {
+                    Logger.e("Could not parse entity to split");
                 }
-            } catch (JsonSyntaxException e) {
-                Logger.e("Could not parse entity to split: " + entry.getKey());
             }
+            return splits;
+        } finally {
+            long end = SystemClock.uptimeMillis();
+            Log.d("TestingSDK", "Time to convertEntitiesToSplitList: " + (end - start) + " with partition size " + entities.size());
         }
-        return splits;
-    }
-
-    private static SimpleSplit getSplit(String json) {
-        //return Json.fromJson(json, Split.class);
-//        return new Split();
-        return Json.fromJson(json, SimpleSplit.class);
     }
 }

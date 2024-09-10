@@ -23,7 +23,7 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     private static final int SQL_PARAM_BIND_SIZE = 20;
-    private final SplitTransformer<Map<String, String>, List<SimpleSplit>>mEntityToSplitTransformer;
+    private final SplitListTransformer<String, SimpleSplit> mEntityToSplitTransformer;
     private final SplitListTransformer<Split, SplitEntity> mSplitToEntityTransformer;
     private final SplitRoomDatabase mDatabase;
 
@@ -33,7 +33,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @VisibleForTesting
     public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database,
-                                         @NonNull SplitTransformer<Map<String, String>, List<SimpleSplit>> entityToSplitTransformer,
+                                         @NonNull SplitListTransformer<String, SimpleSplit> entityToSplitTransformer,
                                          @NonNull SplitListTransformer<Split, SplitEntity> splitToEntityTransformer) {
         mDatabase = checkNotNull(database);
         mEntityToSplitTransformer = checkNotNull(entityToSplitTransformer);
@@ -144,7 +144,9 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 //        return mEntityToSplitTransformer.transform(mDatabase.splitDao().getAll());
 //    }
     private List<SimpleSplit> loadSplits() {
-        return mEntityToSplitTransformer.transform(mDatabase.splitDao().getAllAsMap());
+//        return mEntityToSplitTransformer.transform(mDatabase.splitDao().getAllAsMap());
+        List<String> allBodies = mDatabase.splitDao().getAllBodies();
+        return mEntityToSplitTransformer.transform(allBodies);
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {

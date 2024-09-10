@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.split.android.client.dtos.SimpleSplit;
 import io.split.android.client.utils.serializer.DoubleSerializer;
 
 public class Json {
@@ -20,6 +21,7 @@ public class Json {
     private static final Gson mJson = new GsonBuilder()
             .serializeNulls()
             .registerTypeAdapter(Double.class, new DoubleSerializer())
+//            .registerTypeAdapter(SimpleSplit.class, new SimpleSplitAdapter())
             .create();
     private static volatile Gson mNonNullJson;
 
