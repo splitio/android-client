@@ -138,7 +138,7 @@ public class SyncGuardianIntegrationTest {
                 false,
                 IntegrationHelper.streamingEnabledToken(6),
                 1L,
-                1L,
+                1,
                 null);
         SplitClient client = pair.first;
         SplitEventTaskHelper readyTask = pair.second;
@@ -233,10 +233,10 @@ public class SyncGuardianIntegrationTest {
     }
 
     private Pair<SplitClient, SplitEventTaskHelper> getClient(CountDownLatch latch, boolean streamingEnabled, boolean singleSync, String sseResponse) throws IOException {
-        return getClient(latch, streamingEnabled, singleSync, sseResponse, 2L, 2L, null);
+        return getClient(latch, streamingEnabled, singleSync, sseResponse, 2L, 2, null);
     }
 
-    private Pair<SplitClient, SplitEventTaskHelper> getClient(CountDownLatch latch, boolean streamingEnabled, boolean singleSync, String sseResponse, long defaultConnectionDelay, long disconnectionDelay, TestingConfig testingConfig) throws IOException {
+    private Pair<SplitClient, SplitEventTaskHelper> getClient(CountDownLatch latch, boolean streamingEnabled, boolean singleSync, String sseResponse, long defaultConnectionDelay, int disconnectionDelay, TestingConfig testingConfig) throws IOException {
         HttpClientMock httpClientMock = new HttpClientMock(createStreamingResponseDispatcher(sseResponse));
 
         SplitClientConfig config = (singleSync) ? IntegrationHelper.syncDisabledConfig() : IntegrationHelper.customSseConnectionDelayConfig(streamingEnabled, defaultConnectionDelay, disconnectionDelay);

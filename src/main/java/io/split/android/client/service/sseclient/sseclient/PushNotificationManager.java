@@ -1,13 +1,11 @@
 package io.split.android.client.service.sseclient.sseclient;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
 import static java.lang.Thread.sleep;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
-
-import io.split.android.client.service.executor.ThreadFactoryBuilder;
 
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
@@ -19,6 +17,7 @@ import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.executor.ThreadFactoryBuilder;
 import io.split.android.client.service.sseclient.SseJwtToken;
 import io.split.android.client.service.sseclient.feedbackchannel.DelayStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
@@ -54,13 +53,13 @@ public class PushNotificationManager {
                                    @NonNull SseRefreshTokenTimer refreshTokenTimer,
                                    @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                                    long defaultSSEConnectionDelayInSecs,
-                                   long sseDisconnectionDelayInSecs,
+                                   int sseDisconnectionDelayInSecs,
                                    @Nullable ScheduledExecutorService executorService) {
         this(pushManagerEventBroadcaster,
                 sseAuthenticator,
                 sseClient,
                 refreshTokenTimer,
-                new SseDisconnectionTimer(new SplitSingleThreadTaskExecutor(), Math.toIntExact(sseDisconnectionDelayInSecs)),
+                new SseDisconnectionTimer(new SplitSingleThreadTaskExecutor(), sseDisconnectionDelayInSecs),
                 telemetryRuntimeProducer,
                 defaultSSEConnectionDelayInSecs,
                 executorService);
