@@ -9,7 +9,9 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import io.split.android.client.dtos.SimpleSplit;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactory;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactoryImpl;
@@ -21,7 +23,7 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     private static final int SQL_PARAM_BIND_SIZE = 20;
-    private final SplitListTransformer<SplitEntity, Split> mEntityToSplitTransformer;
+    private final SplitTransformer<Map<String, String>, List<SimpleSplit>>mEntityToSplitTransformer;
     private final SplitListTransformer<Split, SplitEntity> mSplitToEntityTransformer;
     private final SplitRoomDatabase mDatabase;
 
@@ -31,7 +33,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @VisibleForTesting
     public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database,
-                                         @NonNull SplitListTransformer<SplitEntity, Split> entityToSplitTransformer,
+                                         @NonNull SplitTransformer<Map<String, String>, List<SimpleSplit>> entityToSplitTransformer,
                                          @NonNull SplitListTransformer<Split, SplitEntity> splitToEntityTransformer) {
         mDatabase = checkNotNull(database);
         mEntityToSplitTransformer = checkNotNull(entityToSplitTransformer);
@@ -42,7 +44,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                                           @NonNull SplitParallelTaskExecutorFactory executorFactory,
                                           @NonNull SplitCipher splitCipher) {
         this(database,
-                new SplitEntityToSplitTransformer(executorFactory.createForList(Split.class), splitCipher),
+                new SplitEntityToSplitTransformer(executorFactory.createForList(SimpleSplit.class), splitCipher),
                 new SplitToSplitEntityTransformer(executorFactory.createForList(SplitEntity.class), splitCipher));
     }
 
@@ -127,7 +129,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     }
 
     @Override
-    public List<Split> getAll() {
+    public List<SimpleSplit> getAll() {
         return loadSplits();
     }
 
@@ -138,8 +140,11 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         return generalInfoEntity != null ? generalInfoEntity.getStringValue() : null;
     }
 
-    private List<Split> loadSplits() {
-        return mEntityToSplitTransformer.transform(mDatabase.splitDao().getAll());
+//    private List<Split> loadSplits() {
+//        return mEntityToSplitTransformer.transform(mDatabase.splitDao().getAll());
+//    }
+    private List<SimpleSplit> loadSplits() {
+        return mEntityToSplitTransformer.transform(mDatabase.splitDao().getAllAsMap());
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {

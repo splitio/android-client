@@ -4,12 +4,13 @@ import androidx.annotation.Nullable;
 
 import java.util.List;
 
+import io.split.android.client.dtos.SimpleSplit;
 import io.split.android.client.dtos.Split;
 
 public interface PersistentSplitsStorage {
     boolean update(ProcessedSplitChange splitChange);
     SplitsSnapshot getSnapshot();
-    List<Split> getAll();
+    List<SimpleSplit> getAll();
 
     void update(Split splitName);
     @Nullable String getFilterQueryString();

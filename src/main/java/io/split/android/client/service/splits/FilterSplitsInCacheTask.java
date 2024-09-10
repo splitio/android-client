@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Set;
 
 import io.split.android.client.SplitFilter;
+import io.split.android.client.dtos.SimpleSplit;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -61,8 +62,8 @@ public class FilterSplitsInCacheTask implements SplitTask {
         }
 
         List<String> splitsToDelete = new ArrayList<>();
-        List<Split> splitsInCache = mSplitsStorage.getAll();
-        for (Split split : splitsInCache) {
+        List<SimpleSplit> splitsInCache = mSplitsStorage.getAll();
+        for (SimpleSplit split : splitsInCache) {
             String splitName = split.name;
 
             // Since sets filter takes precedence,

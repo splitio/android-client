@@ -18,13 +18,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.split.android.client.dtos.SimpleSplit;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.utils.Json;
 
 public class SplitsStorageImpl implements SplitsStorage {
 
     private final PersistentSplitsStorage mPersistentStorage;
-    private final Map<String, Split> mInMemorySplits;
+    private final Map<String, SimpleSplit> mInMemorySplits;
     private final Map<String, Set<String>> mFlagSets;
     private long mChangeNumber;
     private long mUpdateTimestamp;
@@ -45,14 +46,17 @@ public class SplitsStorageImpl implements SplitsStorage {
     @WorkerThread
     public void loadLocal() {
         SplitsSnapshot snapshot = mPersistentStorage.getSnapshot();
-        List<Split> splits = snapshot.getSplits();
+        List<SimpleSplit> simpleSplits = snapshot.getSplits();
         mChangeNumber = snapshot.getChangeNumber();
         mUpdateTimestamp = snapshot.getUpdateTimestamp();
         mSplitsFilterQueryString = snapshot.getSplitsFilterQueryString();
         mFlagsSpec = snapshot.getFlagsSpec();
-        for (Split split : splits) {
+
+        for (SimpleSplit split : simpleSplits) {
             mInMemorySplits.put(split.name, split);
-            addOrUpdateFlagSets(split);
+
+            // update basics
+            addOrUpdateFlagSets(split.name, split.sets);
             increaseTrafficTypeCount(split.trafficTypeName);
         }
     }
@@ -63,7 +67,7 @@ public class SplitsStorageImpl implements SplitsStorage {
     }
 
     @Override
-    public Map<String, Split> getMany(@Nullable List<String> splitNames) {
+    public synchronized Map<String, Split> getMany(@Nullable List<String> splitNames) {
         Map<String, Split> splits = new HashMap<>();
         if (splitNames == null || splitNames.isEmpty()) {
 //            // check if all splits are already parsed. the ones that are not parsed
@@ -77,7 +81,7 @@ public class SplitsStorageImpl implements SplitsStorage {
 //
 //            return splits;
 
-            Map<String, Split> parsed = mParser.parse(mInMemorySplits);
+            Map<String, Split> parsed = MegaParser.getStringSplitMap(mInMemorySplits);//mParser.parse(mInMemorySplits);
             mInMemorySplits.putAll(parsed);
             return parsed;
         }
@@ -132,7 +136,7 @@ public class SplitsStorageImpl implements SplitsStorage {
                 }
                 increaseTrafficTypeCount(split.trafficTypeName);
                 mInMemorySplits.put(split.name, split);
-                addOrUpdateFlagSets(split);
+                addOrUpdateFlagSets(split.name, split.sets);
             }
         }
 
@@ -142,7 +146,7 @@ public class SplitsStorageImpl implements SplitsStorage {
                     // The flag was in memory, so it will be updated
                     appliedUpdates = true;
                     decreaseTrafficTypeCount(split.trafficTypeName);
-                    deleteFromFlagSetsIfNecessary(split);
+                    deleteFromFlagSetsIfNecessary(split.name, split.sets);
                 }
             }
         }
@@ -263,36 +267,36 @@ public class SplitsStorageImpl implements SplitsStorage {
         return count;
     }
 
-    private void addOrUpdateFlagSets(Split split) {
-        if (split.sets == null) {
+    private void addOrUpdateFlagSets(String name, Set<String> sets) {
+        if (sets == null) {
             return;
         }
 
-        for (String set : split.sets) {
+        for (String set : sets) {
             Set<String> splitsForSet = mFlagSets.get(set);
             if (splitsForSet == null) {
                 splitsForSet = new HashSet<>();
                 mFlagSets.put(set, splitsForSet);
             }
-            splitsForSet.add(split.name);
+            splitsForSet.add(name);
         }
 
-        deleteFromFlagSetsIfNecessary(split);
+        deleteFromFlagSetsIfNecessary(name, sets);
     }
 
-    private void deleteFromFlagSetsIfNecessary(Split featureFlag) {
-        if (featureFlag.sets == null) {
+    private void deleteFromFlagSetsIfNecessary(String name, Set<String> sets) {
+        if (sets == null) {
             return;
         }
 
         for (String set : mFlagSets.keySet()) {
-            if (featureFlag.sets.contains(set)) {
+            if (sets.contains(set)) {
                 continue;
             }
 
             Set<String> flagsForSet = mFlagSets.get(set);
             if (flagsForSet != null) {
-                flagsForSet.remove(featureFlag.name);
+                flagsForSet.remove(name);
             }
         }
     }
@@ -308,15 +312,16 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     @Nullable
     private Split getParsedSplit(@NonNull String name) {
-        Split split = mInMemorySplits.get(name);
-        if (split == null || split.parsed) {
+        SimpleSplit split = mInMemorySplits.get(name);
+        if (split == null) {
             Log.d("TestingSDK", "getParsedSplit: " + name + ". Already parsed");
-            return split;
+            return (Split) split;
+        } else if (split instanceof Split) {
+            Log.d("TestingSDK", "getParsedSplit: " + name + ". Already parsed");
+            return (Split) split;
         } else {
             Split parsedSplit = Json.fromJson(split.originalJson, Split.class);
-            parsedSplit.name = split.name;
             parsedSplit.originalJson = null;
-            parsedSplit.parsed = true;
             mInMemorySplits.put(name, split);
 //            Log.d("TestingSDK", "getParsedSplit: " + name + ". Parsed to default treatment: " + parsedSplit.defaultTreatment);
             return parsedSplit;

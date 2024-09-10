@@ -1,17 +1,11 @@
 package io.split.android.client.dtos;
 
-import androidx.annotation.Nullable;
-
 import com.google.gson.annotations.SerializedName;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-public class Split {
-
-    @SerializedName("name")
-    public String name;
+public class Split extends SimpleSplit {
 
     @SerializedName("seed")
     public int seed;
@@ -28,9 +22,6 @@ public class Split {
     @SerializedName("conditions")
     public List<Condition> conditions;
 
-    @SerializedName("trafficTypeName")
-    public String trafficTypeName;
-
     @SerializedName("changeNumber")
     public long changeNumber;
 
@@ -45,12 +36,4 @@ public class Split {
 
     @SerializedName("configurations")
     public Map<String, String> configurations;
-
-    @Nullable
-    @SerializedName("sets")
-    public Set<String> sets;
-
-    public String originalJson;
-
-    public boolean parsed = false;
 }
