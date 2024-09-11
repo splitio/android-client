@@ -2,12 +2,10 @@ package io.split.android.client.storage.db;
 
 import androidx.room.Dao;
 import androidx.room.Insert;
-import androidx.room.MapInfo;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
 import java.util.List;
-import java.util.Map;
 
 @Dao
 public interface SplitDao {
@@ -28,10 +26,6 @@ public interface SplitDao {
 
     @Query("DELETE FROM splits")
     void deleteAll();
-
-    @MapInfo(keyColumn = "name", valueColumn = "body")
-    @Query("SELECT name, body FROM splits")
-    Map<String, String> getAllAsMap();
 
     @Query("SELECT body FROM splits")
     List<String> getAllBodies();

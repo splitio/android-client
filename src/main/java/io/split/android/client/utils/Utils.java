@@ -81,35 +81,9 @@ public class Utils {
             partitions.add(new ArrayList<>(list.subList(i, Math.min(i + size, list.size()))));
         }
 
-        if (!partitions.isEmpty() && partitions.size() % size != 0) {
+        if (partitions.size() > 1 && partitions.size() % size != 0) {
             partitions.get(0).addAll(partitions.get(partitions.size() - 1));
             partitions.remove(partitions.size() - 1);
-        }
-
-        return partitions;
-    }
-
-    public static <T> List<Map<String, T>> partition(Map<String, T> map, int size) {
-        if (map == null) {
-            return new ArrayList<>();
-        }
-
-        if (size <= 0) {
-            return Collections.singletonList(map);
-        }
-
-        List<Map<String, T>> partitions = new ArrayList<>();
-        for (int i = 0; i < map.size(); i += size) {
-            // partition the map
-            Map<String, T> partition = new HashMap<>();
-            int j = 0;
-            for (Map.Entry<String, T> entry : map.entrySet()) {
-                if (j >= i && j < Math.min(i + size, map.size())) {
-                    partition.put(entry.getKey(), entry.getValue());
-                }
-                j++;
-            }
-            partitions.add(partition);
         }
 
         return partitions;
