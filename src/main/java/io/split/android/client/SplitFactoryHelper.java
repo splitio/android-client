@@ -241,7 +241,7 @@ class SplitFactoryHelper {
                                                        SseClient sseClient,
                                                        TelemetryRuntimeProducer telemetryRuntimeProducer,
                                                        long defaultSseConnectionDelayInSecs,
-                                                       long sseDisconnectionDelayInSecs) {
+                                                       int sseDisconnectionDelayInSecs) {
         return new PushNotificationManager(pushManagerEventBroadcaster,
                 sseAuthenticator,
                 sseClient,

@@ -1,3 +1,6 @@
+4.2.1 (Sep 10, 2024)
+- Removed usage of Math.toIntExact to avoid issues with certain build configurations.
+
 4.2.0 (Jun 28, 2024)
 - Added certificate pinning functionality. This feature allows you to pin a certificate to the SDK, ensuring that the SDK only communicates with servers that present this certificate. Read more in our documentation.
 
