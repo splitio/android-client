@@ -218,8 +218,8 @@ public class EncryptionTest {
                 fail("Split name not encrypted, it was " + splitEntity.getName());
             }
 
-            boolean bodyCondition = splitEntity.getBody().trim().endsWith("=");
-            if (!bodyCondition) {
+            boolean bodyCondition = splitEntity.getBody().trim().endsWith("}");
+            if (bodyCondition) {
                 fail("Body not encrypted, it was " + splitEntity.getBody());
             }
         }

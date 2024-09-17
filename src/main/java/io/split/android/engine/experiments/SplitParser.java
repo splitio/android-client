@@ -159,8 +159,8 @@ public class SplitParser {
                 delegate = new MySegmentsMatcher((matchingKey != null) ? mMySegmentsStorageContainer.getStorageForKey(matchingKey) : new EmptyMySegmentsStorage(), matcher.userDefinedSegmentMatcherData.segmentName);
                 break;
             case IN_LARGE_SEGMENT:
-                checkNotNull(matcher.userDefinedSegmentMatcherData);
-                delegate = new MySegmentsMatcher((matchingKey != null) ? mMyLargeSegmentsStorageContainer.getStorageForKey(matchingKey) : new EmptyMySegmentsStorage(), matcher.userDefinedSegmentMatcherData.segmentName);
+                checkNotNull(matcher.userDefinedLargeSegmentMatcherData);
+                delegate = new MySegmentsMatcher((matchingKey != null) ? mMyLargeSegmentsStorageContainer.getStorageForKey(matchingKey) : new EmptyMySegmentsStorage(), matcher.userDefinedLargeSegmentMatcherData.largeSegmentName);
                 break;
             case WHITELIST:
                 checkNotNull(matcher.whitelistMatcherData);

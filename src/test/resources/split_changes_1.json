@@ -2538,6 +2538,9 @@
                 "userDefinedSegmentMatcherData":{
                   "segmentName":"segment1"
                 },
+                "userDefinedLargeSegmentMatcherData":{
+                  "largeSegmentName":"segment1"
+                },
                 "whitelistMatcherData":null,
                 "unaryNumericMatcherData":null,
                 "betweenMatcherData":null,

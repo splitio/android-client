@@ -21,8 +21,8 @@
                 "keySelector": null,
                 "matcherType": "IN_LARGE_SEGMENT",
                 "negate": false,
-                "userDefinedSegmentMatcherData": {
-                  "segmentName": "large-segment1"
+                "userDefinedLargeSegmentMatcherData": {
+                  "largeSegmentName": "large-segment1"
                 },
                 "whitelistMatcherData": null,
                 "unaryNumericMatcherData": null,
