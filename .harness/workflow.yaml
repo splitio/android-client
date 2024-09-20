@@ -1,5 +1,5 @@
 pipeline:
-  name: Android client tests
+  name: Android SDK unit tests
   identifier: Android_client_tests
   projectIdentifier: default_project
   orgIdentifier: default
