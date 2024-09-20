@@ -1,0 +1,34 @@
+pipeline:
+  name: Android SDK instrumented tests
+  identifier: Android_SDK_instrumented_tests
+  projectIdentifier: default_project
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: GH_androidclient
+        build: <+input>
+  stages:
+    - stage:
+        name: Instrumented tests
+        identifier: Instrumented_tests
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: connected check
+                  identifier: connected_check
+                  spec:
+                    shell: Sh
+                    command: ./gradlew connectedCheck
