@@ -26,12 +26,18 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: Run
-                  name: run test
-                  identifier: run_test
+                  type: RunTests
+                  name: gradle test
+                  identifier: gradle_test
                   spec:
-                    shell: Sh
-                    command: ./gradlew test
-                  description: Run unit tests
-                  when:
-                    stageStatus: Success
+                    language: Java
+                    buildTool: Gradle
+                    args: test
+                    runOnlySelectedTests: true
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - "**/*.xml"
+                    enableTestSplitting: true
+                    testSplitStrategy: TestCount
