@@ -26,6 +26,12 @@ pipeline:
           execution:
             steps:
               - step:
+                  type: Action
+                  name: emulator
+                  identifier: emulator
+                  spec:
+                    uses: reactivecircus/android-emulator-runner@v2
+              - step:
                   type: Run
                   name: connected check
                   identifier: connected_check
