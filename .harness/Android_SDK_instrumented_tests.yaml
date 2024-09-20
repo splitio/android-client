@@ -30,7 +30,7 @@ pipeline:
                   name: emulator
                   identifier: emulator
                   spec:
-                    uses: reactivecircus/android-emulator-runner@v2.31.0
+                    uses: reactivecircus/android-emulator-runner@v2.29.0
               - step:
                   type: Run
                   name: connected check
