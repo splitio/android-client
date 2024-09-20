@@ -41,3 +41,12 @@ pipeline:
                           - "**/*.xml"
                     enableTestSplitting: true
                     testSplitStrategy: TestCount
+        strategy:
+          parallelism: 2
+        failureStrategies:
+          - onFailure:
+              errors: []
+              action:
+                type: Retry
+                spec:
+                  retryCount: 1
