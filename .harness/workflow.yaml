@@ -1,0 +1,37 @@
+pipeline:
+  name: Android client tests
+  identifier: Android_client_tests
+  projectIdentifier: default_project
+  orgIdentifier: default
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: GH_androidclient
+        build: <+input>
+  stages:
+    - stage:
+        name: Test
+        identifier: Test
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: run test
+                  identifier: run_test
+                  spec:
+                    shell: Sh
+                    command: ./gradlew test
+                  description: Run unit tests
+                  when:
+                    stageStatus: Success
