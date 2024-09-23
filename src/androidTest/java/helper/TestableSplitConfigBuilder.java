@@ -59,7 +59,7 @@ public class TestableSplitConfigBuilder {
     private UserConsent mUserConsent = UserConsent.GRANTED;
     private boolean mEncryptionEnabled;
     private long mDefaultSSEConnectionDelayInSecs = ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
-    private long mSSEDisconnectionDelayInSecs = 60L;
+    private int mSSEDisconnectionDelayInSecs = 60;
     private long mObserverCacheExpirationPeriod = ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS;
     private String mPrefix = "";
     private CertificatePinningConfiguration mCertificatePinningConfiguration;
@@ -249,7 +249,7 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
-    public TestableSplitConfigBuilder sseDisconnectionDelayInSecs(long seconds) {
+    public TestableSplitConfigBuilder sseDisconnectionDelayInSecs(int seconds) {
         this.mSSEDisconnectionDelayInSecs = seconds;
         return this;
     }

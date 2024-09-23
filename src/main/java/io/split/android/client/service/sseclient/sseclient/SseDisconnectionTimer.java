@@ -1,6 +1,6 @@
 package io.split.android.client.service.sseclient.sseclient;
 
-import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
+import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 

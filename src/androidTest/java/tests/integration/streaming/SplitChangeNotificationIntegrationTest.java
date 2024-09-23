@@ -146,7 +146,7 @@ public class SplitChangeNotificationIntegrationTest {
     private Pair<SplitClient, SplitEventTaskHelper> getClient(CountDownLatch latch, String sseResponse) throws IOException, InterruptedException {
         HttpClientMock httpClientMock = new HttpClientMock(createStreamingResponseDispatcher(sseResponse));
 
-        SplitClientConfig config = IntegrationHelper.customSseConnectionDelayConfig(true, 0, 5L);
+        SplitClientConfig config = IntegrationHelper.customSseConnectionDelayConfig(true, 0, 5);
 
         SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(),

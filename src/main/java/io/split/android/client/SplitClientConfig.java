@@ -124,7 +124,7 @@ public class SplitClientConfig {
     private boolean mEncryptionEnabled = false;
     private final String mPrefix;
     private final long mDefaultSSEConnectionDelayInSecs;
-    private final long mSSEDisconnectionDelayInSecs;
+    private final int mSSEDisconnectionDelayInSecs;
 
     // To be set during startup
     public static String splitSdkVersion;
@@ -181,7 +181,7 @@ public class SplitClientConfig {
                               UserConsent userConsent,
                               boolean encryptionEnabled,
                               long defaultSSEConnectionDelayInSecs,
-                              long sseDisconnectionDelayInSecs,
+                              int sseDisconnectionDelayInSecs,
                               String prefix,
                               long observerCacheExpirationPeriod,
                               CertificatePinningConfiguration certificatePinningConfiguration,
@@ -468,7 +468,7 @@ public class SplitClientConfig {
         return mDefaultSSEConnectionDelayInSecs;
     }
 
-    public long sseDisconnectionDelay() {
+    public int sseDisconnectionDelay() {
         return mSSEDisconnectionDelayInSecs;
     }
 
@@ -552,7 +552,7 @@ public class SplitClientConfig {
 
         private final long mDefaultSSEConnectionDelayInSecs = ServiceConstants.DEFAULT_SSE_CONNECTION_DELAY_SECS;
 
-        private final long mSSEDisconnectionDelayInSecs = 60L;
+        private final int mSSEDisconnectionDelayInSecs = 60;
 
         private final long mObserverCacheExpirationPeriod = OBSERVER_CACHE_EXPIRATION_PERIOD;
 
