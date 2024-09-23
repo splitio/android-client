@@ -24,6 +24,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     private final SplitListTransformer<SplitEntity, Split> mEntityToSplitTransformer;
     private final SplitListTransformer<Split, SplitEntity> mSplitToEntityTransformer;
     private final SplitRoomDatabase mDatabase;
+    private final SplitCipher mCipher;
 
     public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database, @NonNull SplitCipher splitCipher) {
         this(database, new SplitParallelTaskExecutorFactoryImpl(), splitCipher);
@@ -32,10 +33,12 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     @VisibleForTesting
     public SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database,
                                          @NonNull SplitListTransformer<SplitEntity, Split> entityToSplitTransformer,
-                                         @NonNull SplitListTransformer<Split, SplitEntity> splitToEntityTransformer) {
+                                         @NonNull SplitListTransformer<Split, SplitEntity> splitToEntityTransformer,
+                                         @NonNull SplitCipher cipher) {
         mDatabase = checkNotNull(database);
         mEntityToSplitTransformer = checkNotNull(entityToSplitTransformer);
         mSplitToEntityTransformer = checkNotNull(splitToEntityTransformer);
+        mCipher = checkNotNull(cipher);
     }
 
     private SqLitePersistentSplitsStorage(@NonNull SplitRoomDatabase database,
@@ -43,7 +46,8 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                                           @NonNull SplitCipher splitCipher) {
         this(database,
                 new SplitEntityToSplitTransformer(executorFactory.createForList(Split.class), splitCipher),
-                new SplitToSplitEntityTransformer(executorFactory.createForList(SplitEntity.class), splitCipher));
+                new SplitToSplitEntityTransformer(executorFactory.createForList(SplitEntity.class), splitCipher),
+                splitCipher);
     }
 
     @Override
@@ -104,8 +108,13 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public void delete(List<String> splitNames) {
+        List<String> encryptedNames = new ArrayList<>();
+        for (String splitName : splitNames) {
+            encryptedNames.add(mCipher.encrypt(splitName));
+        }
+
         // This is to avoid an sqlite error if there are many split to delete
-        List<List<String>> deleteChunk = partition(splitNames, SQL_PARAM_BIND_SIZE);
+        List<List<String>> deleteChunk = partition(encryptedNames, SQL_PARAM_BIND_SIZE);
         for (List<String> splits : deleteChunk) {
             mDatabase.splitDao().delete(splits);
         }
@@ -152,7 +161,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             return names;
         }
         for (Split split : splits) {
-            names.add(split.name);
+            names.add(mCipher.encrypt(split.name));
         }
         return names;
     }
