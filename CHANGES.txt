@@ -1,3 +1,6 @@
+4.2.2 (Sep 25, 2024)
+- Fixed issue in updating archived feature flags when using encryption.
+
 4.2.1 (Sep 10, 2024)
 - Removed usage of Math.toIntExact to avoid issues with certain build configurations.
 
