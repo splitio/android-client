@@ -330,6 +330,7 @@ public class EncryptionTest {
                 .impressionsRefreshRate(1000)
                 .impressionsCountersRefreshRate(1000)
                 .streamingEnabled(false)
+                .enableDebug()
                 .eventFlushInterval(1000)
                 .encryptionEnabled(encryptionEnabled)
                 .build();

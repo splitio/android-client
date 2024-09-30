@@ -173,7 +173,7 @@ public class SplitsSyncProcessTest {
                         mSplitsUpdateLatch.countDown();
                         return createResponse(200, getSplitChanges(mSplitChangesHitCount - 1));
                     }
-                    String data = IntegrationHelper.emptySplitChanges(-1, CHANGE_NUMBER - 1000);
+                    String data = IntegrationHelper.emptySplitChanges(CHANGE_NUMBER - 1000, CHANGE_NUMBER - 1000);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
@@ -220,6 +220,7 @@ public class SplitsSyncProcessTest {
 
     private String getSplitChanges(int hit) {
         mSplitChange.splits.get(0).changeNumber = CHANGE_NUMBER;
+        mSplitChange.since = CHANGE_NUMBER;
         mSplitChange.till = CHANGE_NUMBER;
         return Json.toJson(mSplitChange);
     }

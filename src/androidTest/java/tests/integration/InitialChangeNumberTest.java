@@ -74,7 +74,7 @@ public class InitialChangeNumberTest {
                         mIsFirstChangeNumber = false;
                     }
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber + 1000) + "}");
+                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber) + "}");
                 } else if (request.getPath().contains("/events/bulk")) {
                     String trackRequestBody = request.getBody().readUtf8();
 
@@ -139,9 +139,4 @@ public class InitialChangeNumberTest {
         Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertEquals(INITIAL_CHANGE_NUMBER, mFirstChangeNumberReceived); // Checks that change number is the bigger number from cached splitss
     }
-
-    private void log(String m) {
-        System.out.println("FACTORY_TEST: " + m);
-    }
-
 }

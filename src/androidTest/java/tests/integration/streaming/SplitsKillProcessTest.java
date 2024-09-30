@@ -242,6 +242,7 @@ public class SplitsKillProcessTest {
         split.changeNumber = CHANGE_NUMBER;
         split.killed = true;
         split.defaultTreatment = "off";
+        mSplitChange.since = CHANGE_NUMBER;
         mSplitChange.till = CHANGE_NUMBER;
         return Json.toJson(mSplitChange);
     }
