@@ -145,10 +145,11 @@ public class SplitsSyncHelper {
     private long fetchUntil(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnByPass, boolean resetChangeNumber) throws Exception {
         boolean shouldClearBeforeUpdate = clearBeforeUpdate;
 
+        long newTill = till;
         while (true) {
             long changeNumber = (resetChangeNumber) ? -1 : mSplitsStorage.getTill();
             resetChangeNumber = false;
-            if (till < changeNumber) {
+            if (newTill < changeNumber) {
                 return changeNumber;
             }
 
@@ -156,6 +157,7 @@ public class SplitsSyncHelper {
             updateStorage(shouldClearBeforeUpdate, splitChange);
             shouldClearBeforeUpdate = false;
 
+            newTill = splitChange.till;
             if (splitChange.till == splitChange.since) {
                 return splitChange.till;
             }
