@@ -97,7 +97,7 @@ public class InitialChangeNumberTest {
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
-        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000));
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis()));
 
         SplitClient client;
 
@@ -114,7 +114,7 @@ public class InitialChangeNumberTest {
                 .segmentsRefreshRate(30)
                 .impressionsRefreshRate(99999)
                 .streamingEnabled(false)
-                .logLevel(SplitLogLevel.DEBUG)
+                .logLevel(SplitLogLevel.VERBOSE)
                 .build();
 
 

@@ -1,5 +1,8 @@
 package tests.integration.streaming;
 
+import static java.lang.Thread.sleep;
+import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
+
 import android.content.Context;
 
 import androidx.core.util.Pair;
@@ -40,9 +43,6 @@ import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import tests.integration.shared.TestingHelper;
 
-import static java.lang.Thread.sleep;
-import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
-
 public class SplitsSyncProcessTest {
     Context mContext;
     BlockingQueue<String> mStreamingData;
@@ -82,7 +82,7 @@ public class SplitsSyncProcessTest {
         mSplitRoomDatabase = Room.inMemoryDatabaseBuilder(mContext, SplitRoomDatabase.class).build();
         mSplitRoomDatabase.clearAllTables();
         mSplitRoomDatabase.generalInfoDao().update(
-                new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000 - 30));
+                new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() - 30));
         mUserKey = IntegrationHelper.dummyUserKey();
         loadSplitChanges();
     }
