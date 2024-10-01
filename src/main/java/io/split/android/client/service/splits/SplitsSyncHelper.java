@@ -145,10 +145,11 @@ public class SplitsSyncHelper {
     private long fetchUntil(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnByPass, boolean resetChangeNumber) throws Exception {
         boolean shouldClearBeforeUpdate = clearBeforeUpdate;
 
+        long newTill = till;
         while (true) {
             long changeNumber = (resetChangeNumber) ? -1 : mSplitsStorage.getTill();
             resetChangeNumber = false;
-            if (till < changeNumber) {
+            if (newTill < changeNumber) {
                 return changeNumber;
             }
 
@@ -156,6 +157,7 @@ public class SplitsSyncHelper {
             updateStorage(shouldClearBeforeUpdate, splitChange);
             shouldClearBeforeUpdate = false;
 
+            newTill = splitChange.till;
             if (splitChange.till == splitChange.since) {
                 return splitChange.till;
             }
@@ -184,14 +186,14 @@ public class SplitsSyncHelper {
     }
 
     public boolean cacheHasExpired(long storedChangeNumber, long updateTimestamp, long cacheExpirationInSeconds) {
-        long elapsed = now() - updateTimestamp;
+        long elapsed = now() - TimeUnit.MILLISECONDS.toSeconds(updateTimestamp);
         return storedChangeNumber > -1
                 && updateTimestamp > 0
                 && (elapsed > cacheExpirationInSeconds);
     }
 
     private long now() {
-        return System.currentTimeMillis() / 1000;
+        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     }
 
     private void logError(String message) {

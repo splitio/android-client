@@ -191,9 +191,13 @@ public class SplitsTwoDifferentApiKeyTest {
                         return createResponse(200, getSplitChanges(factoryNumber, hit));
                     }
                     String data = IntegrationHelper.emptySplitChanges(respChangeNumber, respChangeNumber);
-                    CountDownLatch latch = mSplitsUpdateLatch.get(factoryNumber - 1);
-                    if (latch != null) {
-                        latch.countDown();
+                    try {
+                        CountDownLatch latch = mSplitsUpdateLatch.get(factoryNumber - 1);
+                        if (latch != null) {
+                            latch.countDown();
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
                     }
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {

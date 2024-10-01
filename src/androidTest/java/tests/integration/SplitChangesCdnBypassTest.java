@@ -57,7 +57,7 @@ public class SplitChangesCdnBypassTest {
         SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(
-                new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000 - 30));
+                new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() - 30));
         SplitClientConfig config = new TestableSplitConfigBuilder().ready(30000)
                 .streamingEnabled(true)
                 .enableDebug()

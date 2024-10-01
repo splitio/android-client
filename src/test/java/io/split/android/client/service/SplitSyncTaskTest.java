@@ -106,7 +106,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, times(1)).sync(100L, true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        verify(mSplitsSyncHelper, times(1)).sync(100L, true, true, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
     }
 
     @Test

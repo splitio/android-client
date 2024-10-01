@@ -74,7 +74,7 @@ public class InitialChangeNumberTest {
                         mIsFirstChangeNumber = false;
                     }
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber + 1000) + "}");
+                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber) + "}");
                 } else if (request.getPath().contains("/events/bulk")) {
                     String trackRequestBody = request.getBody().readUtf8();
 
@@ -97,7 +97,7 @@ public class InitialChangeNumberTest {
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
-        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000));
+        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis()));
 
         SplitClient client;
 
@@ -114,7 +114,7 @@ public class InitialChangeNumberTest {
                 .segmentsRefreshRate(30)
                 .impressionsRefreshRate(99999)
                 .streamingEnabled(false)
-                .logLevel(SplitLogLevel.DEBUG)
+                .logLevel(SplitLogLevel.VERBOSE)
                 .build();
 
 
@@ -139,9 +139,4 @@ public class InitialChangeNumberTest {
         Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertEquals(INITIAL_CHANGE_NUMBER, mFirstChangeNumberReceived); // Checks that change number is the bigger number from cached splitss
     }
-
-    private void log(String m) {
-        System.out.println("FACTORY_TEST: " + m);
-    }
-
 }

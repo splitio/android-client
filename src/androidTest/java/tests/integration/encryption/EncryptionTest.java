@@ -119,7 +119,7 @@ public class EncryptionTest {
                     }
                 }
                 try {
-                    Thread.sleep(200);
+                    Thread.sleep(500);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -330,6 +330,7 @@ public class EncryptionTest {
                 .impressionsRefreshRate(1000)
                 .impressionsCountersRefreshRate(1000)
                 .streamingEnabled(false)
+                .enableDebug()
                 .eventFlushInterval(1000)
                 .encryptionEnabled(encryptionEnabled)
                 .build();

@@ -119,7 +119,7 @@ public class TelemetryIntegrationTest {
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber + 1000) + "}");
+                            .setBody("{\"splits\":[], \"since\":" + (changeNumber + 1000) + ", \"till\":" + (changeNumber + 1000) + "}");
                 } else if (path.contains("/events/bulk")) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("metrics/usage")) {
@@ -219,7 +219,7 @@ public class TelemetryIntegrationTest {
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber + 1000) + "}");
+                            .setBody("{\"splits\":[], \"since\":" + (changeNumber + 1000) + ", \"till\":" + (changeNumber + 1000) + "}");
                 } else if (path.contains("/events/bulk")) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("metrics/usage")) {
@@ -272,7 +272,7 @@ public class TelemetryIntegrationTest {
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber + 1000) + "}");
+                            .setBody("{\"splits\":[], \"since\":" + (changeNumber + 1000) + ", \"till\":" + (changeNumber + 1000) + "}");
                 } else if (path.contains("/events/bulk")) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("metrics/usage")) {
@@ -367,7 +367,7 @@ public class TelemetryIntegrationTest {
 
         testDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         testDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 1));
-        testDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000));
+        testDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis()));
 
         testDatabase.splitDao().insert(entities);
     }
@@ -394,7 +394,7 @@ public class TelemetryIntegrationTest {
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber + 1000) + "}");
+                            .setBody("{\"splits\":[], \"since\":" + (changeNumber + 1000) + ", \"till\":" + (changeNumber + 1000) + "}");
                 } else if (path.contains("/events/bulk")) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("/metrics")) {

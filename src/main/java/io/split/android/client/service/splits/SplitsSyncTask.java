@@ -88,7 +88,7 @@ public class SplitsSyncTask implements SplitTask {
         long startTime = System.currentTimeMillis();
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(storedChangeNumber,
                 splitsFilterHasChanged || shouldClearExpiredCache,
-                splitsFilterHasChanged, mOnDemandFetchBackoffMaxRetries);
+                splitsFilterHasChanged || shouldClearExpiredCache, mOnDemandFetchBackoffMaxRetries);
         mTelemetryRuntimeProducer.recordSyncLatency(OperationType.SPLITS, System.currentTimeMillis() - startTime);
 
         if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
