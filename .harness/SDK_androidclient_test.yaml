@@ -36,8 +36,8 @@ pipeline:
                   spec:
                     language: Java
                     buildTool: Gradle
-                    args: test
-                    runOnlySelectedTests: true
+                    args: clean test
+                    runOnlySelectedTests: false
                     reports:
                       type: JUnit
                       spec:
@@ -45,3 +45,5 @@ pipeline:
                           - build/reports/junit.xml
                     enableTestSplitting: true
                     testSplitStrategy: TestCount
+                  strategy:
+                    parallelism: 2
