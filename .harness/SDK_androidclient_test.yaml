@@ -30,13 +30,6 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: Run
-                  name: Dependencies
-                  identifier: Dependencies
-                  spec:
-                    shell: Sh
-                    command: bundle update
-              - step:
                   type: RunTests
                   name: UT
                   identifier: UT
