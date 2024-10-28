@@ -35,9 +35,7 @@ pipeline:
                   identifier: build_and_test
                   spec:
                     shell: Sh
-                    command: |-
-                      ./gradlew test assemble -YOUR_PROJECT
-                      ./gradlew testDebug
+                    command: ./gradlew test
                     reports:
                       type: JUnit
                       spec:
