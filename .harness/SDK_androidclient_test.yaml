@@ -30,18 +30,16 @@ pipeline:
           execution:
             steps:
               - step:
-                  type: RunTests
-                  name: UT
-                  identifier: UT
+                  type: Run
+                  name: build and test
+                  identifier: build_and_test
                   spec:
-                    language: Java
-                    buildTool: Gradle
-                    args: clean test
-                    runOnlySelectedTests: false
+                    shell: Sh
+                    command: |-
+                      ./gradlew test assemble -YOUR_PROJECT
+                      ./gradlew testDebug
                     reports:
                       type: JUnit
                       spec:
                         paths:
-                          - build/reports/junit.xml
-                    enableTestSplitting: false
-                    testSplitStrategy: TestCount
+                          - "*/build/test-results/.*xml"
