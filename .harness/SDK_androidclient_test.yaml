@@ -21,21 +21,32 @@ pipeline:
           cloneCodebase: true
           platform:
             os: Linux
-            arch: Arm64
+            arch: Amd64
           runtime:
             type: Cloud
             spec: {}
           execution:
             steps:
               - step:
-                  type: Run
-                  name: build and test
-                  identifier: build_and_test
+                  type: RunTests
+                  name: gradle test
+                  identifier: gradle_test
                   spec:
-                    shell: Sh
-                    command: ./gradlew test
+                    language: Java
+                    buildTool: Gradle
+                    args: test
+                    runOnlySelectedTests: true
                     reports:
                       type: JUnit
                       spec:
                         paths:
-                          - "*/build/test-results/.*xml"
+                          - "**/*.xml"
+                    enableTestSplitting: true
+                    testSplitStrategy: TestCount
+        failureStrategies:
+          - onFailure:
+              errors: []
+              action:
+                type: Retry
+                spec:
+                  retryCount: 1
