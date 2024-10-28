@@ -56,3 +56,55 @@ pipeline:
                             onRetryFailure:
                               action:
                                 type: MarkAsFailure
+              - step:
+                  type: Run
+                  name: connectedCheck
+                  identifier: connectedCheck
+                  spec:
+                    shell: Sh
+                    command: |-
+                      EMULATOR_NAME=$(emulator -list-avds | head -n 1)
+
+                      if [ -z "$EMULATOR_NAME" ]; then
+                        echo "No AVDs found. Creating a new AVD..."
+                        avdmanager create avd -n CI_AVD -k "system-images;android-30;google_apis;x86_64" --device "pixel"
+                        EMULATOR_NAME="CI_AVD"
+                      fi
+
+                      nohup emulator -avd $EMULATOR_NAME -no-window -no-audio -no-camera -no-snapshot-load > /dev/null 2>&1 &
+
+                      echo "Waiting for the Android emulator to start..."
+                      adb wait-for-device
+
+                      BOOT_STATUS=""
+                      TIMEOUT=300
+                      START_TIME=$(date +%s)
+                      while [[ "$BOOT_STATUS" != *"1"* ]]; do
+                        CURRENT_TIME=$(date +%s)
+                        ELAPSED_TIME=$((CURRENT_TIME - START_TIME))
+                        if [ $ELAPSED_TIME -ge $TIMEOUT ]; then
+                          echo "Emulator boot timed out after $TIMEOUT seconds."
+                          exit 1
+                        fi
+                        BOOT_STATUS=$(adb shell getprop sys.boot_completed 2>&1)
+                        sleep 5
+                      done
+
+                      if [[ "$BOOT_STATUS" == *"1"* ]]; then
+                        echo "Emulator is fully booted. Running connectedCheck..."
+                        gradle connectedCheck
+                      else
+                        echo "Emulator failed to boot properly. Skipping connectedCheck."
+                      fi
+
+                      echo "Stopping the emulator..."
+                      adb emu kill
+
+                      echo "Done."
+                  timeout: 20m
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - AllErrors
+                        action:
+                          type: Ignore
