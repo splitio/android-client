@@ -1,0 +1,54 @@
+pipeline:
+  name: SDK_android-client_test
+  identifier: SDK_androidclient_test
+  projectIdentifier: Harness_Split
+  orgIdentifier: PROD
+  description: Tests for Android SDK
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        connectorRef: githubdevops
+        repoName: android-client
+        build: <+input>
+  stages:
+    - stage:
+        name: Test
+        identifier: Test
+        description: ""
+        type: CI
+        spec:
+          caching:
+            enabled: true
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Arm64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Dependencies
+                  identifier: Dependencies
+                  spec:
+                    shell: Sh
+                    command: bundle update
+              - step:
+                  type: RunTests
+                  name: UT
+                  identifier: UT
+                  spec:
+                    language: Java
+                    buildTool: Gradle
+                    args: test
+                    runOnlySelectedTests: true
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - build/reports/junit.xml
+                    enableTestSplitting: true
+                    testSplitStrategy: TestCount
