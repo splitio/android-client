@@ -18,6 +18,8 @@ pipeline:
         description: ""
         type: CI
         spec:
+          caching:
+            enabled: true
           cloneCodebase: true
           platform:
             os: Linux
@@ -35,7 +37,7 @@ pipeline:
                     language: Java
                     buildTool: Gradle
                     args: test
-                    runOnlySelectedTests: true
+                    runOnlySelectedTests: false
                     reports:
                       type: JUnit
                       spec:
@@ -43,10 +45,19 @@ pipeline:
                           - "**/*.xml"
                     enableTestSplitting: true
                     testSplitStrategy: TestCount
-        failureStrategies:
-          - onFailure:
-              errors: []
-              action:
-                type: Retry
-                spec:
-                  retryCount: 1
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - Timeout
+                          - Unknown
+                        action:
+                          type: Retry
+                          spec:
+                            onRetryFailure:
+                              action:
+                                type: MarkAsFailure
+                            retryCount: 1
+                            retryIntervals:
+                              - 30s
+                  strategy:
+                    parallelism: 2
