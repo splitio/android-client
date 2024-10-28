@@ -43,7 +43,5 @@ pipeline:
                       spec:
                         paths:
                           - build/reports/junit.xml
-                    enableTestSplitting: true
+                    enableTestSplitting: false
                     testSplitStrategy: TestCount
-                  strategy:
-                    parallelism: 2
