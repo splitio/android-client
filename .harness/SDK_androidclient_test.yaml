@@ -41,12 +41,18 @@ pipeline:
                       spec:
                         paths:
                           - "**/*.xml"
-                    enableTestSplitting: true
-                    testSplitStrategy: TestCount
-        failureStrategies:
-          - onFailure:
-              errors: []
-              action:
-                type: Retry
-                spec:
-                  retryCount: 1
+                    enableTestSplitting: false
+                  failureStrategies:
+                    - onFailure:
+                        errors:
+                          - InputTimeoutError
+                          - Timeout
+                        action:
+                          type: Retry
+                          spec:
+                            retryCount: 1
+                            retryIntervals:
+                              - 30s
+                            onRetryFailure:
+                              action:
+                                type: MarkAsFailure
