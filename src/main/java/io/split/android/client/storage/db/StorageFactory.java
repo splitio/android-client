@@ -55,6 +55,14 @@ public class StorageFactory {
         return getMySegmentsStorageContainer(splitRoomDatabase, SplitCipherFactory.create(apiKey, encryptionEnabled));
     }
 
+    public static MySegmentsStorageContainer getMyLargeSegmentsStorage(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
+        return getMyLargeSegmentsStorageContainer(splitRoomDatabase, splitCipher);
+    }
+
+    public static MySegmentsStorageContainer getMyLargeSegmentsStorageForWorker(SplitRoomDatabase splitRoomDatabase, String apiKey, boolean encryptionEnabled) {
+        return getMyLargeSegmentsStorageContainer(splitRoomDatabase, SplitCipherFactory.create(apiKey, encryptionEnabled));
+    }
+
     public static EventsStorage getEventsStorage(PersistentEventsStorage persistentEventsStorage,
                                                  boolean isPersistenceEnabled) {
         return new EventsStorage(persistentEventsStorage, isPersistenceEnabled);
@@ -124,7 +132,11 @@ public class StorageFactory {
     }
 
     private static MySegmentsStorageContainer getMySegmentsStorageContainer(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
-        return new MySegmentsStorageContainerImpl(new SqLitePersistentMySegmentsStorage(splitRoomDatabase, splitCipher));
+        return new MySegmentsStorageContainerImpl(new SqLitePersistentMySegmentsStorage<>(splitCipher, splitRoomDatabase.mySegmentDao(), MySegmentEntity.creator()));
+    }
+
+    private static MySegmentsStorageContainer getMyLargeSegmentsStorageContainer(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
+        return new MySegmentsStorageContainerImpl(new SqLitePersistentMySegmentsStorage<>(splitCipher, splitRoomDatabase.myLargeSegmentDao(), MyLargeSegmentEntity.creator()));
     }
 
     private static AttributesStorageContainer getAttributesStorageContainerInstance() {

@@ -1,12 +1,14 @@
 package io.split.android.client.service.synchronizer.mysegments;
 
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
+
 public interface MySegmentsSynchronizer {
 
     void loadMySegmentsFromCache();
 
     void synchronizeMySegments();
 
-    void forceMySegmentsSync();
+    void forceMySegmentsSync(MySegmentUpdateParams params);
 
     void destroy();
 

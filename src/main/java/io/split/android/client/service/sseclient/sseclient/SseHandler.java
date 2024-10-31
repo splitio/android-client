@@ -1,5 +1,7 @@
 package io.split.android.client.service.sseclient.sseclient;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
@@ -21,8 +23,6 @@ import io.split.android.client.telemetry.model.streaming.AblyErrorStreamingEvent
 import io.split.android.client.telemetry.model.streaming.SseConnectionErrorStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
-
-import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class SseHandler {
 
@@ -85,14 +85,14 @@ public class SseHandler {
                     break;
                 case SPLIT_KILL:
                 case SPLIT_UPDATE:
-                case MY_SEGMENTS_UPDATE:
-                case MY_SEGMENTS_UPDATE_V2:
+                case MEMBERSHIPS_MS_UPDATE:
+                case MEMBERSHIPS_LS_UPDATE:
                     if (mNotificationManagerKeeper.isStreamingActive()) {
                         mNotificationProcessor.process(incomingNotification);
                     }
                     break;
                 default:
-                    Logger.w("SSE Handler: Unknown notification");
+                    Logger.w("SSE Handler: Unknown notification: " + incomingNotification.getType());
             }
         }
     }

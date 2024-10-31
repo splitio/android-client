@@ -1,0 +1,3 @@
+id:cf74eb42-f687-48e4-ad18-af2125110aac
+event:message
+data:{"id":"x2dE2TEiJL:0:0","clientId":"NDEzMTY5Mzg0MA==:OTc5Nzc4NDYz","timestamp":1584647533288,"encoding":"json","channel":"MzM5´Njc0ODcyNg==_MTExMzgwNjgx_MTcwNTI2MTM0Mg==_mySegments","data":"[NOTIFICATION_DATA]"}

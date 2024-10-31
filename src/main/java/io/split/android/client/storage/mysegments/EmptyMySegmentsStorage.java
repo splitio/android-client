@@ -1,10 +1,9 @@
 package io.split.android.client.storage.mysegments;
 
-import androidx.annotation.NonNull;
-
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
+
+import io.split.android.client.dtos.SegmentsChange;
 
 public class EmptyMySegmentsStorage implements MySegmentsStorage{
     @Override
@@ -17,7 +16,12 @@ public class EmptyMySegmentsStorage implements MySegmentsStorage{
     }
 
     @Override
-    public void set(@NonNull List<String> mySegments) {
+    public void set(SegmentsChange segmentsChange) {
+    }
+
+    @Override
+    public long getChangeNumber() {
+        return -1;
     }
 
     @Override

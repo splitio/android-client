@@ -79,9 +79,10 @@ public class NotificationManagerKeeper {
 
                 case STREAMING_RESET:
                     mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_RESET));
-
+                    break;
                 default:
-                    Logger.e("Unknown message received" + notification.getControlType());
+                    Logger.e("Unknown message received " + notification.getControlType());
+                    break;
             }
         } catch (JsonSyntaxException e) {
             Logger.e("Could not parse control notification: "

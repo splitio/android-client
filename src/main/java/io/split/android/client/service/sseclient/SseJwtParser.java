@@ -16,13 +16,13 @@ import io.split.android.client.utils.logger.Logger;
 
 public class SseJwtParser {
 
-    private final static String PUBLISHERS_CHANNEL_METADATA = "channel-metadata:publishers";
-    private final static String PUBLISHERS_CHANNEL_PREFIX = "[?occupancy=metrics.publishers]";
+    private static final String PUBLISHERS_CHANNEL_METADATA = "channel-metadata:publishers";
+    private static final String PUBLISHERS_CHANNEL_PREFIX = "[?occupancy=metrics.publishers]";
 
-    final static Type ALL_TOKEN_TYPE = new TypeToken<Map<String, Object>>() {
+    static final Type ALL_TOKEN_TYPE = new TypeToken<Map<String, Object>>() {
     }.getType();
 
-    final static Type CHANNEL_TYPE = new TypeToken<Map<String, List<String>>>() {
+    private static final Type CHANNEL_TYPE = new TypeToken<Map<String, List<String>>>() {
     }.getType();
 
     public SseJwtToken parse(String rawToken) throws InvalidJwtTokenException {
@@ -64,7 +64,7 @@ public class SseJwtParser {
             Logger.e("Error parsing SSE authentication JWT json " + e.getLocalizedMessage());
             throw new InvalidJwtTokenException();
         } catch (Exception e) {
-            Logger.e("Unknonwn error while parsing SSE authentication JWT: " + e.getLocalizedMessage());
+            Logger.e("Unknown error while parsing SSE authentication JWT: " + e.getLocalizedMessage());
             throw new InvalidJwtTokenException();
         }
 

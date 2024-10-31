@@ -57,7 +57,7 @@ public class SplitChangesCdnBypassTest {
         SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
         splitRoomDatabase.generalInfoDao().update(
-                new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000 - 30));
+                new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() - 30));
         SplitClientConfig config = new TestableSplitConfigBuilder().ready(30000)
                 .streamingEnabled(true)
                 .enableDebug()
@@ -116,9 +116,8 @@ public class SplitChangesCdnBypassTest {
             @Override
 
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
-                    return new HttpResponseMock(200, "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, " +
-                            "{ \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new HttpResponseMock(200, IntegrationHelper.dummyAllSegments());
 
                 } else if (uri.getPath().contains("/splitChanges")) {
                     System.out.println("URL HIT: " + uri.getPath());

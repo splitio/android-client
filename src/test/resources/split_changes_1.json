@@ -2515,6 +2515,52 @@
       ]
     },
     {
+      "trafficTypeName":"account",
+      "name":"ls_split",
+      "trafficAllocation":100,
+      "trafficAllocationSeed":-285565213,
+      "seed":-1992295819,
+      "status":"ACTIVE",
+      "killed":false,
+      "defaultTreatment":"off",
+      "changeNumber":1506703262916,
+      "algo":2,
+      "conditions":[
+        {
+          "conditionType":"WHITELIST",
+          "matcherGroup":{
+            "combiner":"AND",
+            "matchers":[
+              {
+                "keySelector":null,
+                "matcherType":"IN_LARGE_SEGMENT",
+                "negate":false,
+                "userDefinedSegmentMatcherData":{
+                  "segmentName":"segment1"
+                },
+                "userDefinedLargeSegmentMatcherData":{
+                  "largeSegmentName":"segment1"
+                },
+                "whitelistMatcherData":null,
+                "unaryNumericMatcherData":null,
+                "betweenMatcherData":null,
+                "booleanMatcherData":null,
+                "dependencyMatcherData":null,
+                "stringMatcherData":null
+              }
+            ]
+          },
+          "partitions":[
+            {
+              "treatment":"on",
+              "size":100
+            }
+          ],
+          "label":"whitelisted segment"
+        }
+      ]
+    },
+    {
       "trafficTypeName":"user",
       "name":"broken_split",
       "trafficAllocation":100,

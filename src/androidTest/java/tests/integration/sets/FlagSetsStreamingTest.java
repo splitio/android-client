@@ -227,7 +227,7 @@ public class FlagSetsStreamingTest {
             mSplitChangesHits.incrementAndGet();
             return new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(-1, 1));
         });
-        responses.put("mySegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
+        responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
         responses.put("v2/auth", (uri, httpMethod, body) -> {
             authLatch.countDown();
             return new HttpResponseMock(200, IntegrationHelper.streamingEnabledToken());

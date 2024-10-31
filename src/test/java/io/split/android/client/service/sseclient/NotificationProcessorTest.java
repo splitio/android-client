@@ -21,15 +21,13 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeV2Notification;
-import io.split.android.client.service.sseclient.notifications.MySegmentsPayloadDecoder;
+import io.split.android.client.service.sseclient.notifications.MembershipNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.SplitKillNotification;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
-import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessor;
+import io.split.android.client.service.sseclient.notifications.memberships.MembershipsNotificationProcessor;
 
 public class NotificationProcessorTest {
 
@@ -43,8 +41,6 @@ public class NotificationProcessorTest {
     private BlockingQueue<SplitsChangeNotification> mSplitsChangeQueue;
     @Mock
     private IncomingNotification mIncomingNotification;
-    @Mock
-    private MySegmentsPayloadDecoder mMySegmentsPayloadDecoder;
     private NotificationProcessor mNotificationProcessor;
 
     @Before
@@ -57,7 +53,7 @@ public class NotificationProcessorTest {
 
         mNotificationProcessor = new NotificationProcessor(mSplitTaskExecutor,
                 mSplitTaskFactory, mNotificationParser,
-                mSplitsChangeQueue, mMySegmentsPayloadDecoder);
+                mSplitsChangeQueue);
     }
 
     @Test
@@ -93,39 +89,19 @@ public class NotificationProcessorTest {
     }
 
     @Test
-    public void notificationProcessorDelegatesRegisteredProcessorDependingOnKey() {
-        MySegmentsNotificationProcessor mySegmentsNotificationProcessor = mock(MySegmentsNotificationProcessor.class);
-        MySegmentsNotificationProcessor mySegmentsNotificationProcessor2 = mock(MySegmentsNotificationProcessor.class);
-        MySegmentChangeNotification mySegmentChangeNotification = mock(MySegmentChangeNotification.class);
-        when(mNotificationParser.extractUserKeyHashFromChannel("a_b_MjAwNjI0Nzg3NQ==_mySegments")).thenReturn("MjAwNjI0Nzg3NQ==");
-        when(mIncomingNotification.getChannel()).thenReturn("a_b_MjAwNjI0Nzg3NQ==_mySegments");
-        when(mMySegmentsPayloadDecoder.hashUserKeyForMySegmentsV1("user_key")).thenReturn("MjAwNjI0Nzg3NQ==");
-
-        when(mySegmentChangeNotification.getJsonData()).thenReturn("{}");
-        when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE);
-        when(mNotificationParser.parseMySegmentUpdate(anyString())).thenReturn(mySegmentChangeNotification);
-
-        mNotificationProcessor.registerMySegmentsProcessor("user_key", mySegmentsNotificationProcessor);
-        mNotificationProcessor.registerMySegmentsProcessor("button_key", mySegmentsNotificationProcessor2);
-        mNotificationProcessor.process(mIncomingNotification);
-
-        verify(mySegmentsNotificationProcessor).processMySegmentsUpdate(mySegmentChangeNotification);
-    }
-
-    @Test
     public void notificationProcessorDelegatesMySegmentsNotificationsV2ToRegisteredProcessors() {
-        MySegmentsNotificationProcessor mySegmentsNotificationProcessor = mock(MySegmentsNotificationProcessor.class);
-        MySegmentsNotificationProcessor mySegmentsNotificationProcessor2 = mock(MySegmentsNotificationProcessor.class);
-        MySegmentChangeV2Notification mySegmentChangeNotification = mock(MySegmentChangeV2Notification.class);
+        MembershipsNotificationProcessor mySegmentsNotificationProcessor = mock(MembershipsNotificationProcessor.class);
+        MembershipsNotificationProcessor mySegmentsNotificationProcessor2 = mock(MembershipsNotificationProcessor.class);
+        MembershipNotification mySegmentChangeNotification = mock(MembershipNotification.class);
 
         when(mySegmentChangeNotification.getJsonData()).thenReturn("{}");
-        when(mIncomingNotification.getType()).thenReturn(NotificationType.MY_SEGMENTS_UPDATE_V2);
-        when(mNotificationParser.parseMySegmentUpdateV2(anyString())).thenReturn(mySegmentChangeNotification);
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.MEMBERSHIPS_MS_UPDATE);
+        when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(mySegmentChangeNotification);
 
-        mNotificationProcessor.registerMySegmentsProcessor("1", mySegmentsNotificationProcessor);
-        mNotificationProcessor.registerMySegmentsProcessor("2", mySegmentsNotificationProcessor2);
+        mNotificationProcessor.registerMembershipsNotificationProcessor("1", mySegmentsNotificationProcessor);
+        mNotificationProcessor.registerMembershipsNotificationProcessor("2", mySegmentsNotificationProcessor2);
         mNotificationProcessor.process(mIncomingNotification);
 
-        verify(mySegmentsNotificationProcessor).processMySegmentsUpdateV2(mySegmentChangeNotification);
+        verify(mySegmentsNotificationProcessor).process(mySegmentChangeNotification);
     }
 }

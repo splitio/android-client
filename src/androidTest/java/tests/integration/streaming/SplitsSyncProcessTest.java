@@ -1,5 +1,8 @@
 package tests.integration.streaming;
 
+import static java.lang.Thread.sleep;
+import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
+
 import android.content.Context;
 
 import androidx.core.util.Pair;
@@ -40,9 +43,6 @@ import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import tests.integration.shared.TestingHelper;
 
-import static java.lang.Thread.sleep;
-import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
-
 public class SplitsSyncProcessTest {
     Context mContext;
     BlockingQueue<String> mStreamingData;
@@ -82,7 +82,7 @@ public class SplitsSyncProcessTest {
         mSplitRoomDatabase = Room.inMemoryDatabaseBuilder(mContext, SplitRoomDatabase.class).build();
         mSplitRoomDatabase.clearAllTables();
         mSplitRoomDatabase.generalInfoDao().update(
-                new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() / 1000 - 30));
+                new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis() - 30));
         mUserKey = IntegrationHelper.dummyUserKey();
         loadSplitChanges();
     }
@@ -158,11 +158,11 @@ public class SplitsSyncProcessTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Logger.i("** My segments hit");
                     mMySegmentsSyncLatch.countDown();
 
-                    return createResponse(200, IntegrationHelper.dummyMySegments());
+                    return createResponse(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
 
                     mSplitChangesHitCount++;
@@ -173,7 +173,7 @@ public class SplitsSyncProcessTest {
                         mSplitsUpdateLatch.countDown();
                         return createResponse(200, getSplitChanges(mSplitChangesHitCount - 1));
                     }
-                    String data = IntegrationHelper.emptySplitChanges(-1, CHANGE_NUMBER - 1000);
+                    String data = IntegrationHelper.emptySplitChanges(CHANGE_NUMBER - 1000, CHANGE_NUMBER - 1000);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
@@ -220,6 +220,7 @@ public class SplitsSyncProcessTest {
 
     private String getSplitChanges(int hit) {
         mSplitChange.splits.get(0).changeNumber = CHANGE_NUMBER;
+        mSplitChange.since = CHANGE_NUMBER;
         mSplitChange.till = CHANGE_NUMBER;
         return Json.toJson(mSplitChange);
     }

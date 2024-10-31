@@ -59,4 +59,5 @@ public class ServiceConstants {
     public static final long DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS = TimeUnit.HOURS.toMillis(4);
     public static final String FLAGS_SPEC_PARAM = "s";
     public static final long DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL = 3600L * 1000L; // 1 hour
+    public static final int ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES = 10;
 }

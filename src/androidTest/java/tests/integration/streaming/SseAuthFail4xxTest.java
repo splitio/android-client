@@ -102,11 +102,11 @@ public class SseAuthFail4xxTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Logger.i("** My segments hit");
                     mMySegmentsHitsCountLatch.countDown();
                     mySegmentsHitsCountHit++;
-                    return createResponse(200, IntegrationHelper.dummyMySegments());
+                    return createResponse(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     Logger.i("** Split Changes hit");
                     mSplitsHitsCountLatch.countDown();

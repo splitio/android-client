@@ -55,14 +55,6 @@ public class NotificationParser {
         return Json.fromJson(jsonData, SplitKillNotification.class);
     }
 
-    public MySegmentChangeNotification parseMySegmentUpdate(String jsonData) throws JsonSyntaxException {
-        return Json.fromJson(jsonData, MySegmentChangeNotification.class);
-    }
-
-    public MySegmentChangeV2Notification parseMySegmentUpdateV2(String jsonData) throws JsonSyntaxException {
-        return Json.fromJson(jsonData, MySegmentChangeV2Notification.class);
-    }
-
     public OccupancyNotification parseOccupancy(String jsonData) throws JsonSyntaxException {
         return Json.fromJson(jsonData, OccupancyNotification.class);
     }
@@ -93,5 +85,15 @@ public class NotificationParser {
         }
 
         return null;
+    }
+
+    @Nullable
+    public MembershipNotification parseMembershipNotification(String jsonData) {
+        try {
+            return Json.fromJson(jsonData, MembershipNotification.class);
+        } catch (Exception e) {
+            Logger.w("Failed to parse membership notification");
+            return null;
+        }
     }
 }

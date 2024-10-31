@@ -73,7 +73,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 validationLogger,
                 splitTaskExecutor,
                 mStorageContainer.getPersistentAttributesStorage());
-        mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer());
+        mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer(), mStorageContainer.getMyLargeSegmentsStorageContainer());
         mSplitValidator = new SplitValidatorImpl();
         SplitsStorage splitsStorage = mStorageContainer.getSplitsStorage();
         mTreatmentManagerFactory = new TreatmentManagerFactoryImpl(

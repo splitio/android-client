@@ -6,6 +6,8 @@ import static org.mockito.Mockito.verify;
 import org.junit.Before;
 import org.junit.Test;
 
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
+
 public class MySegmentsSynchronizerRegistryImplTest {
 
     private MySegmentsSynchronizerRegistryImpl mRegistry;
@@ -38,11 +40,12 @@ public class MySegmentsSynchronizerRegistryImplTest {
     @Test
     public void forceMySegmentsSyncGetCalledInEveryRegisteredSync() {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
+        MySegmentUpdateParams params = new MySegmentUpdateParams(4L, 1L, 2L);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
-        mRegistry.forceMySegmentsSync();
+        mRegistry.forceMySegmentsSync(params);
 
-        verify(syncMock).forceMySegmentsSync();
+        verify(syncMock).forceMySegmentsSync(params);
     }
 
     @Test
@@ -100,35 +103,44 @@ public class MySegmentsSynchronizerRegistryImplTest {
     public void callLoadSegmentsFromCacheForNewlyRegisteredSyncIfNecessary() {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
         MySegmentsSynchronizer syncMock2 = mock(MySegmentsSynchronizer.class);
+        MySegmentsSynchronizer syncMock3 = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
         mRegistry.loadMySegmentsFromCache();
         mRegistry.registerMySegmentsSynchronizer("new_key", syncMock2);
+        mRegistry.registerMySegmentsSynchronizer("new_key", syncMock3);
 
         verify(syncMock2).loadMySegmentsFromCache();
+        verify(syncMock3).loadMySegmentsFromCache();
     }
 
     @Test
     public void callSynchronizeMySegmentsForNewlyRegisteredSyncIfNecessary() {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
         MySegmentsSynchronizer syncMock2 = mock(MySegmentsSynchronizer.class);
+        MySegmentsSynchronizer syncMock3 = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
         mRegistry.synchronizeMySegments();
         mRegistry.registerMySegmentsSynchronizer("new_key", syncMock2);
+        mRegistry.registerMySegmentsSynchronizer("new_key", syncMock3);
 
         verify(syncMock2).synchronizeMySegments();
+        verify(syncMock3).synchronizeMySegments();
     }
 
     @Test
     public void callScheduleSegmentsSyncTaskForNewlyRegisteredSyncIfNecessary() {
         MySegmentsSynchronizer syncMock = mock(MySegmentsSynchronizer.class);
         MySegmentsSynchronizer syncMock2 = mock(MySegmentsSynchronizer.class);
+        MySegmentsSynchronizer syncMock3 = mock(MySegmentsSynchronizer.class);
 
         mRegistry.registerMySegmentsSynchronizer("key", syncMock);
         mRegistry.scheduleSegmentsSyncTask();
         mRegistry.registerMySegmentsSynchronizer("new_key", syncMock2);
+        mRegistry.registerMySegmentsSynchronizer("new_key", syncMock3);
 
         verify(syncMock2).scheduleSegmentsSyncTask();
+        verify(syncMock3).scheduleSegmentsSyncTask();
     }
 }

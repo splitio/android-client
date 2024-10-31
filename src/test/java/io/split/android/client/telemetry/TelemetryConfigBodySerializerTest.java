@@ -24,7 +24,7 @@ public class TelemetryConfigBodySerializerTest {
     @Test
     public void jsonIsBuiltAsExpected() {
 
-        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"rR\":{\"sp\":4000,\"ms\":5000,\"im\":3000,\"ev\":2000,\"te\":1000},\"uO\":{\"s\":true,\"e\":true,\"a\":true,\"st\":true,\"t\":true},\"iQ\":4000,\"eQ\":3000,\"iM\":1,\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"uC\":1,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"],\"fsT\":4,\"fsI\":2}";
+        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"rR\":{\"sp\":4000,\"ms\":5000,\"mls\":6000,\"im\":3000,\"ev\":2000,\"te\":1000},\"uO\":{\"s\":true,\"e\":true,\"a\":true,\"st\":true,\"t\":true},\"iQ\":4000,\"eQ\":3000,\"iM\":1,\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"uC\":1,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"],\"fsT\":4,\"fsI\":2,\"lsE\":true,\"wls\":true}";
         final String serializedConfig = telemetryConfigBodySerializer.serialize(buildMockConfig());
 
         assertEquals(expectedJson, serializedConfig);
@@ -33,7 +33,7 @@ public class TelemetryConfigBodySerializerTest {
     @Test
     public void nullValuesAreIgnoredForJson() {
 
-        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"iQ\":4000,\"eQ\":3000,\"iM\":1,\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"uC\":0,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"],\"fsT\":0,\"fsI\":0}";
+        final String expectedJson = "{\"oM\":0,\"st\":\"memory\",\"sE\":true,\"iQ\":4000,\"eQ\":3000,\"iM\":1,\"iL\":true,\"hP\":true,\"aF\":1,\"rF\":0,\"tR\":300,\"tC\":0,\"nR\":3,\"uC\":0,\"t\":[\"tag1\",\"tag2\"],\"i\":[\"integration1\",\"integration2\"],\"fsT\":0,\"fsI\":0,\"lsE\":false,\"wls\":false}";
         final String serializedConfig = telemetryConfigBodySerializer.serialize(buildMockConfigWithNulls());
 
         assertEquals(expectedJson, serializedConfig);
@@ -48,6 +48,7 @@ public class TelemetryConfigBodySerializerTest {
         refreshRates.setImpressions(3000);
         refreshRates.setSplits(4000);
         refreshRates.setMySegments(5000);
+        refreshRates.setMyLargeSegments(6000);
 
         UrlOverrides urlOverrides = new UrlOverrides();
         urlOverrides.setTelemetry(true);
@@ -73,6 +74,8 @@ public class TelemetryConfigBodySerializerTest {
         config.setIntegrations(Arrays.asList("integration1", "integration2"));
         config.setFlagSetsTotal(4);
         config.setFlagSetsInvalid(2);
+        config.setLargeSegmentsEnabled(true);
+        config.setWaitForLargeSegments(true);
 
         return config;
     }

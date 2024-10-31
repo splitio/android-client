@@ -34,12 +34,14 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.MySegmentDao;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.storage.InMemoryTelemetryStorage;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import tests.integration.shared.TestingData;
 import tests.integration.shared.TestingHelper;
@@ -157,21 +159,19 @@ public class MySegmentsChangeV2MultiClientTest {
         pushMessage(TestingData.ESCAPED_KEY_LIST_NOTIFICATION_GZIP);
         l1.await(5, TimeUnit.SECONDS);
 
-        MySegmentEntity e = mySegmentsDao.getByUserKey(userKey);
-        MySegmentEntity e1 = mySegmentsDao.getByUserKey(userKey2);
-
         l1 = new CountDownLatch(1);
         updateTask.setLatch(l1);
         pushMessage(TestingData.SEGMENT_REMOVAL_NOTIFICATION);
         l1.await(5, TimeUnit.SECONDS);
 
-        MySegmentEntity mySegmentEntity = getByKey(userKey, mDb);
-        MySegmentEntity mySegmentEntity2 = getByKey(userKey2, mDb);
-        Assert.assertTrue(mySegmentEntity.getSegmentList().contains("new_segment_added"));
-        Assert.assertFalse(mySegmentEntity.getSegmentList().contains("segment1"));
+        SegmentsChange mySegmentEntity = Json.fromJson(getByKey(userKey, mDb).getSegmentList(), SegmentsChange.class);
+        SegmentsChange mySegmentEntity2 = Json.fromJson(getByKey(userKey2, mDb).getSegmentList(), SegmentsChange.class);
+        Assert.assertTrue(mySegmentEntity.getNames().contains("new_segment_added"));
+        Assert.assertFalse(mySegmentEntity.getNames().contains("segment1"));
 
+        Assert.assertEquals(1, mySegmentEntity2.getSegments().size());
+        Assert.assertEquals("new_segment_added", mySegmentEntity2.getNames().get(0));
         Assert.assertEquals(4, mTelemetryStorage.popUpdatesFromSSE().getMySegments());
-        Assert.assertEquals("new_segment_added", mySegmentEntity2.getSegmentList());
     }
 
     @After
@@ -191,11 +191,11 @@ public class MySegmentsChangeV2MultiClientTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments/key2")) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "key2")) {
                     mMySegmentsSyncLatch2.countDown();
                     mMySegmentsUpdateLatch2.countDown();
-                    return createResponse(200, IntegrationHelper.emptyMySegments());
-                } else if (uri.getPath().contains("/mySegments")) {
+                    return createResponse(200, IntegrationHelper.emptyAllSegments());
+                } else if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     mMySegmentsHitCount++;
                     Logger.i("** My segments hit: " + mMySegmentsHitCount);
                     mMySegmentsSyncLatch.countDown();

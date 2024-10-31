@@ -226,8 +226,8 @@ class UserConsentModeDebugTest {
 
             override fun getResponse(uri: URI, method: HttpMethod, body: String): HttpResponseMock {
                 println(uri.path)
-                return if (uri.path.contains("/mySegments")) {
-                    HttpResponseMock(200, IntegrationHelper.emptyMySegments())
+                return if (uri.path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    HttpResponseMock(200, IntegrationHelper.emptyAllSegments())
                 } else if (uri.path.contains("/splitChanges")) {
                     if (mChangeHit == 0) {
                         mChangeHit+=1

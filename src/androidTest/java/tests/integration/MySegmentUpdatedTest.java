@@ -26,8 +26,8 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
+import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.Matcher;
@@ -39,7 +39,6 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.dtos.UserDefinedSegmentMatcherData;
-import io.split.android.client.dtos.Condition;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -89,19 +88,19 @@ public class MySegmentUpdatedTest {
 
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                if (request.getPath().contains("/mySegments")) {
+                if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
 
                     String data;
                     int index = mCurReqId;
                     switch (index) {
                         case 1:
-                            data = "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}]}";
+                            data = IntegrationHelper.dummySingleSegment("segment1");
                             break;
                         case 2:
-                            data = "{\"mySegments\":[{ \"id\":\"id2\", \"name\":\"segment2\"}]}";
+                            data = IntegrationHelper.dummySingleSegment("segment2");
                             break;
                         default:
-                            data = "{\"mySegments\":[]}";
+                            data = IntegrationHelper.emptyAllSegments();
                     }
 
                     if(index > 0 && index <= mLatchs.size()) {

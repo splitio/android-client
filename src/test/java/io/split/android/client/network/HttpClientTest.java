@@ -30,12 +30,11 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.utils.Json;
@@ -143,13 +142,11 @@ public class HttpClientTest {
         Assert.assertEquals("this is split test", dummyResp.getData());
 
         // Assert my segments
-        List<MySegment> mySegments = parseMySegments(mySegmentsResp.getData());
+        List<String> mySegments = parseMySegments(mySegmentsResp.getData()).getSegmentsChange().getNames();
         Assert.assertEquals(200, mySegmentsResp.getHttpStatus());
         Assert.assertEquals(2, mySegments.size());
-        Assert.assertEquals("id1", mySegments.get(0).id);
-        Assert.assertEquals("groupa", mySegments.get(0).name);
-        Assert.assertEquals("id2", mySegments.get(1).id);
-        Assert.assertEquals("groupb", mySegments.get(1).name);
+        Assert.assertTrue(mySegments.contains("groupa"));
+        Assert.assertTrue(mySegments.contains("groupb"));
 
         // Assert split changes
         SplitChange splitChange = Json.fromJson(splitChangeResp.getData(), SplitChange.class);
@@ -157,7 +154,7 @@ public class HttpClientTest {
         assertTrue(splitChangeResp.isSuccess());
         Assert.assertEquals(-1, splitChange.since);
         Assert.assertEquals(1506703262916L, splitChange.till);
-        Assert.assertEquals(30, splitChange.splits.size());
+        Assert.assertEquals(31, splitChange.splits.size());
 
         // Assert empty response
         Assert.assertEquals(200, emptyResp.getHttpStatus());
@@ -426,7 +423,7 @@ public class HttpClientTest {
 
                     case "/test2/":
 
-                        return new MockResponse().setResponseCode(200).setBody("{\"mySegments\":[{\"id\":\"id1\", \"name\":\"groupa\"}, {\"id\":\"id2\", \"name\":\"groupb\"}]}");
+                        return new MockResponse().setResponseCode(200).setBody("{\"ms\":{\"k\":[{\"n\":\"groupa\"},{\"n\":\"groupb\"}],\"cn\":999999},\"ls\":{\"k\":[],\"cn\":999999}}");
                     case "/test3/":
                         return new MockResponse().setResponseCode(200).setBody(splitChangesResponse);
 
@@ -462,12 +459,8 @@ public class HttpClientTest {
                 .build();
     }
 
-    private List<MySegment> parseMySegments(String json) {
-        Type mapType = new TypeToken<Map<String, List<MySegment>>>() {
-        }.getType();
-
-        Map<String, List<MySegment>> mySegmentsMap = Json.fromJson(json, mapType);
-        return mySegmentsMap.get("mySegments");
+    private AllSegmentsChange parseMySegments(String json) {
+        return Json.fromJson(json, AllSegmentsChange.class);
     }
 
     private List<Event> parseTrackEvents(String json) {

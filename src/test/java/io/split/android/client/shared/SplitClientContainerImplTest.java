@@ -77,6 +77,7 @@ public class SplitClientContainerImplTest {
         MockitoAnnotations.openMocks(this);
         when(mSplitApiFacade.getMySegmentsFetcher(any())).thenReturn(mock(HttpFetcher.class));
         when(mStorageContainer.getMySegmentsStorage(any())).thenReturn(mock(MySegmentsStorage.class));
+        when(mStorageContainer.getMyLargeSegmentsStorage(any())).thenReturn(mock(MySegmentsStorage.class));
         mClientContainer = getSplitClientContainer(mDefaultMatchingKey, true);
     }
 

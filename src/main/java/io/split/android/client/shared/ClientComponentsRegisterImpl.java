@@ -11,13 +11,14 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerRegistry;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.attributes.AttributeTaskFactoryImpl;
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
-import io.split.android.client.service.sseclient.notifications.MySegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
-import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessor;
+import io.split.android.client.service.sseclient.notifications.memberships.MembershipsNotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorConfiguration;
-import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactory;
+import io.split.android.client.service.sseclient.notifications.mysegments.MembershipsNotificationProcessorFactory;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorRegistry;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorker;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
@@ -28,13 +29,13 @@ import io.split.android.client.service.synchronizer.attributes.AttributesSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizer;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerFactory;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
-import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorage;
+import io.split.android.client.storage.common.SplitStorageContainer;
 
 public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
 
     private final MySegmentsSynchronizerFactory mMySegmentsSynchronizerFactory;
-    private final MySegmentsNotificationProcessorFactory mMySegmentsNotificationProcessorFactory;
+    private final MembershipsNotificationProcessorFactory mMembershipsNotificationProcessorFactory;
     private final SplitStorageContainer mStorageContainer;
     private final AttributesSynchronizerFactory mAttributesSynchronizerFactory;
     private final AttributesSynchronizerRegistry mAttributesSynchronizerRegistry;
@@ -56,7 +57,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
                                         @NonNull EventsManagerRegistry eventsManagerRegistry,
                                         @Nullable SseAuthenticator sseAuthenticator,
                                         @Nullable MySegmentsNotificationProcessorRegistry mySegmentsNotificationProcessorRegistry,
-                                        @Nullable MySegmentsNotificationProcessorFactory mySegmentsNotificationProcessorFactory,
+                                        @Nullable MembershipsNotificationProcessorFactory membershipsNotificationProcessorFactory,
                                         @Nullable MySegmentsV2PayloadDecoder mySegmentsV2PayloadDecoder) {
         mSplitConfig = splitConfig;
         mMySegmentsSynchronizerFactory = checkNotNull(mySegmentsSynchronizerFactory);
@@ -70,20 +71,23 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
         mMySegmentsNotificationProcessorRegistry = mySegmentsNotificationProcessorRegistry;
         mMySegmentsUpdateWorkerRegistry = mySegmentsUpdateWorkerRegistry;
         mSseAuthenticator = sseAuthenticator;
-        mMySegmentsNotificationProcessorFactory = mySegmentsNotificationProcessorFactory;
+        mMembershipsNotificationProcessorFactory = membershipsNotificationProcessorFactory;
         mMySegmentsV2PayloadDecoder = mySegmentsV2PayloadDecoder;
     }
 
     @Override
-    public void registerComponents(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, SplitEventsManager eventsManager) {
+    public void registerComponents(Key key, SplitEventsManager eventsManager, MySegmentsTaskFactory mySegmentsTaskFactory) {
         registerEventsManager(key, eventsManager);
-        MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(mySegmentsTaskFactory, eventsManager);
+
+        MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizerFactory.getSynchronizer(mySegmentsTaskFactory, eventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, mSplitConfig.segmentsRefreshRate());
         registerMySegmentsSynchronizer(key, mySegmentsSynchronizer);
+
         registerAttributesSynchronizer(key, eventsManager);
+
         if (isSyncEnabled()) {
             registerKeyInSeeAuthenticator(key);
-            LinkedBlockingDeque<MySegmentChangeNotification> mySegmentsNotificationQueue = new LinkedBlockingDeque<>();
-            registerMySegmentsNotificationProcessor(key, mySegmentsTaskFactory, mySegmentsNotificationQueue);
+            LinkedBlockingDeque<MySegmentUpdateParams> mySegmentsNotificationQueue = new LinkedBlockingDeque<>();
+            registerMembershipsNotificationProcessor(key, mySegmentsTaskFactory, mySegmentsNotificationQueue);
             registerMySegmentsUpdateWorker(key, mySegmentsSynchronizer, mySegmentsNotificationQueue);
         }
     }
@@ -97,7 +101,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
         if (isSyncEnabled()) {
             mSseAuthenticator.unregisterKey(key.matchingKey());
             mMySegmentsUpdateWorkerRegistry.unregisterMySegmentsUpdateWorker(key.matchingKey());
-            mMySegmentsNotificationProcessorRegistry.unregisterMySegmentsProcessor(key.matchingKey());
+            mMySegmentsNotificationProcessorRegistry.unregisterMembershipsProcessor(key.matchingKey());
         }
     }
 
@@ -116,7 +120,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
                 mySegmentsSynchronizer);
     }
 
-    private void registerMySegmentsUpdateWorker(Key key, MySegmentsSynchronizer mySegmentsSynchronizer, LinkedBlockingDeque<MySegmentChangeNotification> notificationsQueue) {
+    private void registerMySegmentsUpdateWorker(Key key, MySegmentsSynchronizer mySegmentsSynchronizer, LinkedBlockingDeque<MySegmentUpdateParams> notificationsQueue) {
         mMySegmentsUpdateWorkerRegistry.registerMySegmentsUpdateWorker(key.matchingKey(),
                 new MySegmentsUpdateWorker(mySegmentsSynchronizer, notificationsQueue));
     }
@@ -129,19 +133,18 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
         mSseAuthenticator.registerKey(key.matchingKey());
     }
 
-    private void registerMySegmentsNotificationProcessor(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, LinkedBlockingDeque<MySegmentChangeNotification> notificationsQueue) {
-        MySegmentsNotificationProcessor processor = getMySegmentsNotificationProcessor(key, mySegmentsTaskFactory, notificationsQueue);
-        mMySegmentsNotificationProcessorRegistry.registerMySegmentsProcessor(key.matchingKey(), processor);
+    private void registerMembershipsNotificationProcessor(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, LinkedBlockingDeque<MySegmentUpdateParams> notificationsQueue) {
+        MembershipsNotificationProcessor processor = getMembershipsNotificationProcessor(key, mySegmentsTaskFactory, notificationsQueue);
+        mMySegmentsNotificationProcessorRegistry.registerMembershipsNotificationProcessor(key.matchingKey(), processor);
     }
 
-    private MySegmentsNotificationProcessor getMySegmentsNotificationProcessor(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, LinkedBlockingDeque<MySegmentChangeNotification> mySegmentUpdateNotificationsQueue) {
-        return mMySegmentsNotificationProcessorFactory.getProcessor(
+    private MembershipsNotificationProcessor getMembershipsNotificationProcessor(Key key, MySegmentsTaskFactory mySegmentsTaskFactory, LinkedBlockingDeque<MySegmentUpdateParams> mySegmentUpdateNotificationsQueue) {
+        return mMembershipsNotificationProcessorFactory.getProcessor(
                 new MySegmentsNotificationProcessorConfiguration(
                         mySegmentsTaskFactory,
                         mySegmentUpdateNotificationsQueue,
-                        mMySegmentsV2PayloadDecoder.hashKey(key.matchingKey())
-                )
-        );
+                        key.matchingKey(),
+                        mMySegmentsV2PayloadDecoder.hashKey(key.matchingKey())));
     }
 
     private boolean isSyncEnabled() {

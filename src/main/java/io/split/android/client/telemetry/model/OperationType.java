@@ -7,5 +7,6 @@ public enum OperationType {
     EVENTS,
     TELEMETRY,
     TOKEN,
-    MY_SEGMENT
+    MY_SEGMENT,
+    MY_LARGE_SEGMENT,
 }

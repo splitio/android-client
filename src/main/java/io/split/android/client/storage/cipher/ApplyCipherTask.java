@@ -13,8 +13,12 @@ import io.split.android.client.storage.db.ImpressionDao;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.ImpressionsCountDao;
 import io.split.android.client.storage.db.ImpressionsCountEntity;
+import io.split.android.client.storage.db.MyLargeSegmentDao;
+import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.MySegmentDao;
 import io.split.android.client.storage.db.MySegmentEntity;
+import io.split.android.client.storage.db.SegmentDao;
+import io.split.android.client.storage.db.SegmentEntity;
 import io.split.android.client.storage.db.SplitDao;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -47,6 +51,7 @@ public class ApplyCipherTask implements SplitTask {
                 public void run() {
                     updateSplits(mSplitDatabase.splitDao());
                     updateSegments(mSplitDatabase.mySegmentDao());
+                    updateLargeSegments(mSplitDatabase.myLargeSegmentDao());
                     updateImpressions(mSplitDatabase.impressionDao());
                     updateEvents(mSplitDatabase.eventDao());
                     updateImpressionsCount(mSplitDatabase.impressionsCountDao());
@@ -140,7 +145,17 @@ public class ApplyCipherTask implements SplitTask {
     private void updateSegments(MySegmentDao mySegmentDao) {
         List<MySegmentEntity> items = mySegmentDao.getAll();
 
-        for (MySegmentEntity item : items) {
+        updateSegments(mySegmentDao, items);
+    }
+
+    private void updateLargeSegments(MyLargeSegmentDao myLargeSegmentDao) {
+        List<MyLargeSegmentEntity> items = myLargeSegmentDao.getAll();
+
+        updateSegments(myLargeSegmentDao, items);
+    }
+
+    private void updateSegments(SegmentDao<? extends SegmentEntity> mySegmentDao, List<? extends SegmentEntity> items) {
+        for (SegmentEntity item : items) {
             String userKey = item.getUserKey();
             String fromUserKey = mFromCipher.decrypt(userKey);
             String fromBody = mFromCipher.decrypt(item.getSegmentList());
@@ -151,7 +166,7 @@ public class ApplyCipherTask implements SplitTask {
             if (toUserKey != null && toBody != null) {
                 mySegmentDao.update(userKey, toUserKey, toBody);
             } else {
-                Logger.e("Error applying cipher to my segment");
+                Logger.e("Error applying cipher to my " + (item instanceof MyLargeSegmentEntity ? "large" : "") + " segment");
             }
         }
     }

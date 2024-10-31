@@ -39,12 +39,14 @@ public class TelemetryStatsProviderImplTest {
     private SplitsStorage splitsStorage;
     @Mock
     private MySegmentsStorageContainer mySegmentsStorageContainer;
+    @Mock
+    private MySegmentsStorageContainer myLargeSegmentsStorageContainer;
     private TelemetryStatsProvider telemetryStatsProvider;
 
     @Before
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        telemetryStatsProvider = new TelemetryStatsProviderImpl(telemetryStorageConsumer, splitsStorage, mySegmentsStorageContainer);
+        telemetryStatsProvider = new TelemetryStatsProviderImpl(telemetryStorageConsumer, splitsStorage, mySegmentsStorageContainer, myLargeSegmentsStorageContainer);
     }
 
     @Test
@@ -64,6 +66,7 @@ public class TelemetryStatsProviderImplTest {
     public void statsAreCorrectlyBuilt() {
 
         long mySegmentsUniqueCount = 3;
+        long myLargeSegmentsUniqueCount = 152516;
         int splitsCount = 40;
 
         List<StreamingEvent> streamingEvents = Arrays.asList(
@@ -89,6 +92,7 @@ public class TelemetryStatsProviderImplTest {
         long eventsDropped = 21L;
         long sseSplits = 2L;
         long sseMySegments = 4L;
+        long sseMyLargeSegments = 5L;
 
         Map<String, Split> splits = new HashMap<>();
         for (int i = 0; i < splitsCount; i++) {
@@ -97,6 +101,7 @@ public class TelemetryStatsProviderImplTest {
 
         when(splitsStorage.getAll()).thenReturn(splits);
         when(mySegmentsStorageContainer.getUniqueAmount()).thenReturn(mySegmentsUniqueCount);
+        when(myLargeSegmentsStorageContainer.getUniqueAmount()).thenReturn(myLargeSegmentsUniqueCount);
         when(telemetryStorageConsumer.popStreamingEvents()).thenReturn(streamingEvents);
         when(telemetryStorageConsumer.popTags()).thenReturn(tags);
         when(telemetryStorageConsumer.popLatencies()).thenReturn(methodLatencies);
@@ -112,7 +117,7 @@ public class TelemetryStatsProviderImplTest {
         when(telemetryStorageConsumer.popAuthRejections()).thenReturn(authRejections);
         when(telemetryStorageConsumer.getEventsStats(EventsDataRecordsEnum.EVENTS_QUEUED)).thenReturn(eventsQueued);
         when(telemetryStorageConsumer.getEventsStats(EventsDataRecordsEnum.EVENTS_DROPPED)).thenReturn(eventsDropped);
-        when(telemetryStorageConsumer.popUpdatesFromSSE()).thenReturn(new UpdatesFromSSE(sseSplits, sseMySegments));
+        when(telemetryStorageConsumer.popUpdatesFromSSE()).thenReturn(new UpdatesFromSSE(sseSplits, sseMySegments, sseMyLargeSegments));
 
         Stats stats = telemetryStatsProvider.getTelemetryStats();
         assertEquals(streamingEvents, stats.getStreamingEvents());
@@ -120,6 +125,7 @@ public class TelemetryStatsProviderImplTest {
         assertEquals(tags, stats.getTags());
         assertEquals(methodLatencies, stats.getMethodLatencies());
         assertEquals(mySegmentsUniqueCount, stats.getSegmentCount());
+        assertEquals(myLargeSegmentsUniqueCount, stats.getLargeSegmentCount());
         assertEquals(sessionLength, stats.getSessionLengthMs());
         assertEquals(lastSync, stats.getLastSynchronizations());
         assertEquals(impDropped, stats.getImpressionsDropped());

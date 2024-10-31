@@ -10,6 +10,9 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.Arrays;
+import java.util.HashSet;
+
+import io.split.android.client.dtos.SegmentsChange;
 
 public class MySegmentsStorageContainerImplTest {
 
@@ -55,8 +58,8 @@ public class MySegmentsStorageContainerImplTest {
         MySegmentsStorage storageForKey = mContainer.getStorageForKey(userKey);
         MySegmentsStorage storageForKey2 = mContainer.getStorageForKey(userKey2);
 
-        storageForKey.set(Arrays.asList("s1", "s2"));
-        storageForKey2.set(Arrays.asList("s2", "s4", "s6"));
+        storageForKey.set(SegmentsChange.create(new HashSet<>(Arrays.asList("s1", "s2")), -1L));
+        storageForKey2.set(SegmentsChange.create(new HashSet<>(Arrays.asList("s2", "s4", "s6")), -1L));
 
         long distinctAmount = mContainer.getUniqueAmount();
 

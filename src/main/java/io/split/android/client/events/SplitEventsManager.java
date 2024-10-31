@@ -28,6 +28,10 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     private final SplitTaskExecutor mSplitTaskExecutor;
 
     public SplitEventsManager(SplitClientConfig config, SplitTaskExecutor splitTaskExecutor) {
+        this(splitTaskExecutor, config.blockUntilReady());
+    }
+
+    public SplitEventsManager(SplitTaskExecutor splitTaskExecutor, final int blockUntilReady) {
         super();
         mSplitTaskExecutor = splitTaskExecutor;
         mSubscriptions = new ConcurrentHashMap<>();
@@ -39,8 +43,8 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
             @Override
             public void run() {
                 try {
-                    if (config.blockUntilReady() > 0) {
-                        Thread.sleep(config.blockUntilReady());
+                    if (blockUntilReady > 0) {
+                        Thread.sleep(blockUntilReady);
                         notifyInternalEvent(SplitInternalEvent.SDK_READY_TIMEOUT_REACHED);
                     }
                 } catch (InterruptedException e) {
@@ -84,6 +88,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
         // These events were added to handle updated event logic in this component
         // and also to fix some issues when processing queue that made sdk update
         // fire on init
+
         if ((internalEvent == SplitInternalEvent.SPLITS_FETCHED
                 || internalEvent == SplitInternalEvent.MY_SEGMENTS_FETCHED) &&
                 isTriggered(SplitEvent.SDK_READY)) {
@@ -129,6 +134,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
             switch (event) {
                 case SPLITS_UPDATED:
                 case MY_SEGMENTS_UPDATED:
+                case MY_LARGE_SEGMENTS_UPDATED:
                     if (isTriggered(SplitEvent.SDK_READY)) {
                         trigger(SplitEvent.SDK_UPDATE);
                         return;
@@ -182,7 +188,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     }
 
     private void triggerSdkReadyIfNeeded() {
-        if ((wasTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_SEGMENTS_FETCHED)) &&
+        if ((wasTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_SEGMENTS_FETCHED) || wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED)) &&
                 (wasTriggered(SplitInternalEvent.SPLITS_UPDATED) || wasTriggered(SplitInternalEvent.SPLITS_FETCHED)) &&
                 !isTriggered(SplitEvent.SDK_READY)) {
             trigger(SplitEvent.SDK_READY);
@@ -195,15 +201,17 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
             return;
             // If executionTimes is grater than zero, maximum executions decrease 1
         } else if (mExecutionTimes.get(event) > 0) {
-            if (event != null) {
-                Logger.d(event.name() + " event triggered");
-            }
             mExecutionTimes.put(event, mExecutionTimes.get(event) - 1);
         } //If executionTimes is lower than zero, execute it without limitation
+        if (event != null) {
+            Logger.d(event.name() + " event triggered");
+        }
         if (mSubscriptions.containsKey(event)) {
             List<SplitEventTask> toExecute = mSubscriptions.get(event);
-            for (SplitEventTask task : toExecute) {
-                executeTask(event, task);
+            if (toExecute != null) {
+                for (SplitEventTask task : toExecute) {
+                    executeTask(event, task);
+                }
             }
         }
     }

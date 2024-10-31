@@ -23,13 +23,16 @@ import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
         entities = {
                 MySegmentEntity.class, SplitEntity.class, EventEntity.class,
                 ImpressionEntity.class, GeneralInfoEntity.class, ImpressionsCountEntity.class,
-                AttributesEntity.class, UniqueKeyEntity.class, ImpressionsObserverCacheEntity.class
+                AttributesEntity.class, UniqueKeyEntity.class, ImpressionsObserverCacheEntity.class,
+                MyLargeSegmentEntity.class
         },
-        version = 5
+        version = 6
 )
 public abstract class SplitRoomDatabase extends RoomDatabase {
 
     public abstract MySegmentDao mySegmentDao();
+
+    public abstract MyLargeSegmentDao myLargeSegmentDao();
 
     public abstract SplitDao splitDao();
 

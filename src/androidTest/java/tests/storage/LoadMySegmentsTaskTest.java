@@ -16,7 +16,9 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
+import io.split.android.client.service.mysegments.LoadMySegmentsTaskConfig;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
+import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
@@ -29,9 +31,12 @@ public class LoadMySegmentsTaskTest {
     SplitRoomDatabase mRoomDb;
     Context mContext;
     PersistentMySegmentsStorage mPersistentMySegmentsStorage;
+    PersistentMySegmentsStorage mPersistentMyLargeSegmentsStorage;
     MySegmentsStorage mMySegmentsStorage;
+    MySegmentsStorage mMyLargeSegmentsStorage;
     final String mUserKey = "userkey-1";
     private MySegmentsStorageContainer mMySegmentsStorageContainer;
+    private MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
 
     @Before
     public void setUp() {
@@ -51,22 +56,43 @@ public class LoadMySegmentsTaskTest {
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb, SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false));
+        MyLargeSegmentEntity largeEntity = new MyLargeSegmentEntity();
+        largeEntity.setUserKey(mUserKey);
+        largeEntity.setSegmentList("ls1,ls2,ls3");
+        largeEntity.setUpdatedAt(System.currentTimeMillis() / 1000);
+        mRoomDb.myLargeSegmentDao().update(largeEntity);
+
+        largeEntity = new MyLargeSegmentEntity();
+        largeEntity.setUserKey("userkey-2");
+        largeEntity.setSegmentList("ls10,ls20");
+        largeEntity.setUpdatedAt(System.currentTimeMillis() / 1000);
+        mRoomDb.myLargeSegmentDao().update(largeEntity);
+
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
+        mPersistentMyLargeSegmentsStorage = new SqLitePersistentMySegmentsStorage(SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false), mRoomDb.myLargeSegmentDao(), MyLargeSegmentEntity.creator());
         mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
+        mMyLargeSegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMyLargeSegmentsStorage);
         mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
+        mMyLargeSegmentsStorage = mMyLargeSegmentsStorageContainer.getStorageForKey(mUserKey);
     }
 
     @Test
     public void execute() {
 
-        SplitTask task = new LoadMySegmentsTask(mMySegmentsStorage);
+        SplitTask task = new LoadMySegmentsTask(mMySegmentsStorage, mMyLargeSegmentsStorage, LoadMySegmentsTaskConfig.get());
         SplitTaskExecutionInfo result = task.execute();
-        Set<String> snapshot = new HashSet(mMySegmentsStorage.getAll());
+        Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
+        Set<String> largeSnapshot = new HashSet<>(mMyLargeSegmentsStorage.getAll());
 
         Assert.assertEquals(3, snapshot.size());
         Assert.assertTrue(snapshot.contains("s1"));
         Assert.assertTrue(snapshot.contains("s2"));
         Assert.assertTrue(snapshot.contains("s3"));
+
+        Assert.assertEquals(3, largeSnapshot.size());
+        Assert.assertTrue(largeSnapshot.contains("ls1"));
+        Assert.assertTrue(largeSnapshot.contains("ls2"));
+        Assert.assertTrue(largeSnapshot.contains("ls3"));
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
 }

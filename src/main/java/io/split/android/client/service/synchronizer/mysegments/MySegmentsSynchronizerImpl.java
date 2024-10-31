@@ -12,6 +12,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.mysegments.MySegmentUpdateParams;
+import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.LoadLocalDataListener;
@@ -26,21 +28,24 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
     private final SplitTaskExecutionListener mMySegmentsSyncListener;
     private final AtomicBoolean mIsSynchronizing = new AtomicBoolean(true);
     private String mMySegmentsFetcherTaskId;
+    private final AtomicBoolean mIsDelayedFetchScheduled = new AtomicBoolean(false);
 
     public MySegmentsSynchronizerImpl(@NonNull RetryBackoffCounterTimer retryBackoffCounterTimer,
                                       @NonNull SplitTaskExecutor taskExecutor,
                                       @NonNull SplitEventsManager eventsManager,
                                       @NonNull MySegmentsTaskFactory mySegmentsTaskFactory,
-                                      int segmentsRefreshRate) {
+                                      int segmentsRefreshRate,
+                                      @NonNull SplitInternalEvent loadedFromStorageInternalEvent) {
         mTaskExecutor = checkNotNull(taskExecutor);
         mMySegmentsSyncRetryTimer = checkNotNull(retryBackoffCounterTimer);
         mSplitTaskFactory = checkNotNull(mySegmentsTaskFactory);
         mSegmentsRefreshRate = segmentsRefreshRate;
         mLoadLocalMySegmentsListener = new LoadLocalDataListener(
-                eventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
+                eventsManager, loadedFromStorageInternalEvent);
         mMySegmentsSyncListener = new SplitTaskExecutionListener() {
             @Override
             public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                mIsDelayedFetchScheduled.set(false);
                 if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
                     if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
                         mIsSynchronizing.compareAndSet(true, false);
@@ -59,15 +64,17 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
     @Override
     public void synchronizeMySegments() {
         if (mIsSynchronizing.get()) {
-            mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(false), mMySegmentsSyncListener);
+            mMySegmentsSyncRetryTimer.stop();
+            mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(false, null, null), mMySegmentsSyncListener);
             mMySegmentsSyncRetryTimer.start();
         }
     }
 
     @Override
-    public void forceMySegmentsSync() {
-        if (mIsSynchronizing.get()) {
-            mMySegmentsSyncRetryTimer.setTask(mSplitTaskFactory.createMySegmentsSyncTask(true), mMySegmentsSyncListener);
+    public void forceMySegmentsSync(MySegmentUpdateParams params) {
+        if (mIsSynchronizing.get() && mIsDelayedFetchScheduled.compareAndSet(false, true)) {
+            mMySegmentsSyncRetryTimer.stop();
+            mMySegmentsSyncRetryTimer.setTask(getForcedSegmentsSyncTask(params.getTargetSegmentsCn(), params.getTargetLargeSegmentsCn()), params.getSyncDelay(), mMySegmentsSyncListener);
             mMySegmentsSyncRetryTimer.start();
         }
     }
@@ -85,7 +92,7 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
             }
 
             mMySegmentsFetcherTaskId = mTaskExecutor.schedule(
-                    mSplitTaskFactory.createMySegmentsSyncTask(false),
+                    getMySegmentsSyncTask(),
                     mSegmentsRefreshRate,
                     mSegmentsRefreshRate,
                     mMySegmentsSyncListener);
@@ -104,5 +111,13 @@ public class MySegmentsSynchronizerImpl implements MySegmentsSynchronizer {
 
     private void submitMySegmentsLoadingTask(SplitTaskExecutionListener executionListener) {
         mTaskExecutor.submit(mSplitTaskFactory.createLoadMySegmentsTask(), executionListener);
+    }
+
+    private MySegmentsSyncTask getMySegmentsSyncTask() {
+        return mSplitTaskFactory.createMySegmentsSyncTask(false, null, null);
+    }
+
+    private MySegmentsSyncTask getForcedSegmentsSyncTask(Long targetSegmentsCn, Long targetLargeSegmentsCn) {
+        return mSplitTaskFactory.createMySegmentsSyncTask(true, targetSegmentsCn, targetLargeSegmentsCn);
     }
 }

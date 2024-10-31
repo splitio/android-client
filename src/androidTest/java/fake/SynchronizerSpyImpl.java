@@ -56,12 +56,6 @@ public class SynchronizerSpyImpl implements SynchronizerSpy, MySegmentsSynchroni
     }
 
     @Override
-    public void forceMySegmentsSync() {
-        mSynchronizer.forceMySegmentsSync();
-        mForceMySegmentSyncCalledCount.addAndGet(1);
-    }
-
-    @Override
     public void startPeriodicFetching() {
         mSynchronizer.startPeriodicFetching();
         if (startPeriodicFetchLatch != null) {

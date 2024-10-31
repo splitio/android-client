@@ -165,4 +165,34 @@ public class SseJwtTokenParserTest {
         Assert.assertNotNull(thrownEx);
     }
 
+    @Test
+    public void testLargeSegmentsToken() throws InvalidJwtTokenException {
+        String jwtToken = "eyJhbGciOiJIUzI1NiIsImtpZCI6IjVZOU05US45QnJtR0EiLCJ0eXAiOiJKV1QifQ." +
+                "ewogICJ4LWFibHktY2FwYWJpbGl0eSI6ICJ7XCJNek01TmpjME9EY3lOZz09X01URXhNemd3Tm" +
+                "pneF9NVGN3TlRJMk1UTTBNZz09X215U2VnbWVudHNcIjpbXCJzdWJzY3JpYmVcIl0sXCJNek01" +
+                "TmpjME9EY3lOZz09X01URXhNemd3TmpneF9NVGN3TlRJMk1UTTBNZz09X215bGFyZ2VzZWdtZW" +
+                "50c1wiOltcInN1YnNjcmliZVwiXSxcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X3Nw" +
+                "bGl0c1wiOltcInN1YnNjcmliZVwiXSxcImNvbnRyb2xfcHJpXCI6W1wic3Vic2NyaWJlXCIsXC" +
+                "JjaGFubmVsLW1ldGFkYXRhOnB1Ymxpc2hlcnNcIl0sXCJjb250cm9sX3NlY1wiOltcInN1YnNj" +
+                "cmliZVwiLFwiY2hhbm5lbC1tZXRhZGF0YTpwdWJsaXNoZXJzXCJdfSIsCiAgIngtYWJseS1jbG" +
+                "llbnRJZCI6ICJjbGllbnRJZCIsCiAgImV4cCI6IDIyMDg5ODg4MDAsCiAgImlhdCI6IDE1ODc0M" +
+                "DQzODgKfQ==.LcKAXnkr-CiYVxZ7l38w9i98Y-BMAv9JlGP2i92nVQY";
+
+        SseJwtParser parser = new SseJwtParser();
+        SseJwtToken parsedToken = parser.parse(jwtToken);
+        List<String> channels = parsedToken.getChannels();
+
+        Assert.assertEquals(2208988800L, parsedToken.getExpirationTime());
+        Assert.assertEquals(jwtToken, parsedToken.getRawJwt());
+        Assert.assertEquals("MzM5Njc0ODcyNg==_MTExMzgwNjgx_MTcwNTI2MTM0Mg==_mySegments",
+                channels.get(0));
+        Assert.assertEquals("MzM5Njc0ODcyNg==_MTExMzgwNjgx_MTcwNTI2MTM0Mg==_mylargesegments",
+                channels.get(1));
+        Assert.assertEquals("MzM5Njc0ODcyNg==_MTExMzgwNjgx_splits",
+                channels.get(2));
+        Assert.assertEquals("[?occupancy=metrics.publishers]control_pri",
+                channels.get(3));
+        Assert.assertEquals("[?occupancy=metrics.publishers]control_sec",
+                channels.get(4));
+    }
 }

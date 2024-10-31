@@ -147,7 +147,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
 
         SplitClient client = mSplitClientFactory.getClient(key, mySegmentsTaskFactory, eventsManager, mDefaultMatchingKey.equals(key.matchingKey()));
         trackNewClient(key, client);
-        mClientComponentsRegister.registerComponents(key, mySegmentsTaskFactory, eventsManager);
+        mClientComponentsRegister.registerComponents(key, eventsManager, mySegmentsTaskFactory);
 
         if (mConfig.syncEnabled() && mStreamingEnabled) {
             connectToStreaming();
@@ -159,14 +159,14 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
         }
     }
 
+    @NonNull
     private MySegmentsTaskFactory getMySegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
         return mMySegmentsTaskFactoryProvider.getFactory(
-                new MySegmentsTaskFactoryConfiguration(
+                MySegmentsTaskFactoryConfiguration.get(
                         mSplitApiFacade.getMySegmentsFetcher(key.matchingKey()),
                         mStorageContainer.getMySegmentsStorage(key.matchingKey()),
-                        eventsManager
-                )
-        );
+                        mStorageContainer.getMyLargeSegmentsStorage(key.matchingKey()),
+                        eventsManager));
     }
 
     private void connectToStreaming() {

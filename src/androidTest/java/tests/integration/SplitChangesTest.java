@@ -81,11 +81,10 @@ public class SplitChangesTest {
 
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                if (request.getPath().contains("/mySegments")) {
+                if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     return new MockResponse()
                             .setResponseCode(200)
-                            .setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, " +
-                                    "{ \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                            .setBody(IntegrationHelper.dummyAllSegments());
 
                 } else if (request.getPath().contains("/splitChanges")) {
                     int currReq = mCurSplitReqId;
@@ -100,7 +99,7 @@ public class SplitChangesTest {
                         mLatchs.get(currReq - 1).countDown();
                     }
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\": 9567456937869, \"till\": 9567456937869 }");
+                            .setBody("{\"splits\":[], \"since\": 1567456938865, \"till\": 1567456938865 }");
 
 
                 } else if (request.getPath().contains("/testImpressions/bulk")) {
@@ -170,12 +169,12 @@ public class SplitChangesTest {
             }
             treatments.add(client.getTreatment("test_feature"));
         }
+        Thread.sleep(1000);
+        client.destroy();
         boolean impAwait = mImpLatch.await(10, TimeUnit.SECONDS);
         if (!impAwait) {
             Assert.fail("Impressions not received");
         }
-        client.destroy();
-        Thread.sleep(1000);
 
         ArrayList<Impression> impLis = new ArrayList<>();
         impLis.add(impListener.getImpression(impListener.buildKey(
