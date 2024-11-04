@@ -1,14 +1,14 @@
 package io.split.android.client.service.mysegments;
 
-import java.util.List;
+import java.util.Set;
 
 public interface MySegmentsTaskFactory {
 
-    MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache);
+    MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache, Long targetSegmentsCn, Long targetLargeSegmentsCn);
 
     LoadMySegmentsTask createLoadMySegmentsTask();
 
-    MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments);
+    MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, Set<String> segmentNames, Long changeNumber);
 
-    MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, String segmentName);
+    MySegmentsUpdateTask createMyLargeSegmentsUpdateTask(boolean add, Set<String> segmentNames, Long changeNumber);
 }

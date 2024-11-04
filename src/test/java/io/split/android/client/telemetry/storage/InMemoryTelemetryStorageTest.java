@@ -288,6 +288,7 @@ public class InMemoryTelemetryStorageTest {
         telemetryStorage.recordSuccessfulSync(OperationType.MY_SEGMENT, 5000);
         telemetryStorage.recordSuccessfulSync(OperationType.SPLITS, 6000);
         telemetryStorage.recordSuccessfulSync(OperationType.TOKEN, 7000);
+        telemetryStorage.recordSuccessfulSync(OperationType.MY_LARGE_SEGMENT, 8000);
 
         LastSync lastSync = telemetryStorage.getLastSynchronization();
 
@@ -296,6 +297,7 @@ public class InMemoryTelemetryStorageTest {
         assertEquals(3000, lastSync.getLastImpressionSync());
         assertEquals(4000, lastSync.getLastImpressionCountSync());
         assertEquals(5000, lastSync.getLastMySegmentSync());
+        assertEquals(8000, lastSync.getLastMyLargeSegmentSync());
         assertEquals(6000, lastSync.getLastSplitSync());
         assertEquals(7000, lastSync.getLastTokenRefresh());
     }
@@ -324,6 +326,7 @@ public class InMemoryTelemetryStorageTest {
         telemetryStorage.recordSyncError(OperationType.SPLITS, 404);
         telemetryStorage.recordSyncError(OperationType.SPLITS, 500);
         telemetryStorage.recordSyncError(OperationType.TOKEN, 401);
+        telemetryStorage.recordSyncError(OperationType.MY_LARGE_SEGMENT, 401);
 
         HttpErrors httpErrors = telemetryStorage.popHttpErrors();
 
@@ -344,6 +347,7 @@ public class InMemoryTelemetryStorageTest {
         assertEquals(expectedEventMap, httpErrors.getImpressionSyncErrs());
         assertEquals(expectedEventMap, httpErrors.getTelemetrySyncErrs());
         assertEquals(expectedEventMap, httpErrors.getMySegmentSyncErrs());
+        assertEquals(expectedEventMap, httpErrors.getMyLargeSegmentsSyncErrs());
         assertEquals(expectedSplitSyncMap, httpErrors.getSplitSyncErrs());
         assertEquals(expectedEventMap, httpErrors.getTokenGetErrs());
     }
@@ -355,6 +359,7 @@ public class InMemoryTelemetryStorageTest {
         telemetryStorage.recordSyncError(OperationType.IMPRESSIONS, 401);
         telemetryStorage.recordSyncError(OperationType.TELEMETRY, 401);
         telemetryStorage.recordSyncError(OperationType.MY_SEGMENT, 401);
+        telemetryStorage.recordSyncError(OperationType.MY_LARGE_SEGMENT, 401);
         telemetryStorage.recordSyncError(OperationType.SPLITS, 401);
         telemetryStorage.recordSyncError(OperationType.TOKEN, 401);
 
@@ -366,6 +371,7 @@ public class InMemoryTelemetryStorageTest {
         assertTrue(httpErrors.getImpressionSyncErrs().isEmpty());
         assertTrue(httpErrors.getTelemetrySyncErrs().isEmpty());
         assertTrue(httpErrors.getMySegmentSyncErrs().isEmpty());
+        assertTrue(httpErrors.getMyLargeSegmentsSyncErrs().isEmpty());
         assertTrue(httpErrors.getSplitSyncErrs().isEmpty());
         assertTrue(httpErrors.getTokenGetErrs().isEmpty());
     }
@@ -380,6 +386,7 @@ public class InMemoryTelemetryStorageTest {
         telemetryStorage.recordSyncLatency(OperationType.IMPRESSIONS, 200);
         telemetryStorage.recordSyncLatency(OperationType.IMPRESSIONS_COUNT, 10);
         telemetryStorage.recordSyncLatency(OperationType.MY_SEGMENT, 2000);
+        telemetryStorage.recordSyncLatency(OperationType.MY_LARGE_SEGMENT, 200);
         telemetryStorage.recordSyncLatency(OperationType.TOKEN, 2000);
 
         HttpLatencies httpLatencies = telemetryStorage.popHttpLatencies();
@@ -396,6 +403,7 @@ public class InMemoryTelemetryStorageTest {
         assertEquals(1, (long) httpLatencies.getSplits().get(14));
         assertEquals(1, (long) httpLatencies.getSplits().get(22));
         assertEquals(1, (long) httpLatencies.getMySegments().get(19));
+        assertEquals(1, (long) httpLatencies.getMyLargeSegments().get(14));
         assertEquals(1, (long) httpLatencies.getImpressions().get(14));
         assertEquals(1, (long) httpLatencies.getImpressionsCount().get(6));
         assertEquals(1, (long) httpLatencies.getEvents().get(15));

@@ -5,18 +5,23 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import androidx.annotation.NonNull;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.math.BigInteger;
+
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.EventsManagerRegistry;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
-import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactory;
+import io.split.android.client.service.sseclient.notifications.mysegments.MembershipsNotificationProcessorFactory;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorRegistry;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
@@ -48,7 +53,7 @@ public class ClientComponentsRegisterImplTest {
     @Mock
     private MySegmentsNotificationProcessorRegistry mMySegmentsNotificationProcessorRegistry;
     @Mock
-    private MySegmentsNotificationProcessorFactory mMySegmentsNotificationProcessorFactory;
+    private MembershipsNotificationProcessorFactory mMembershipsNotificationProcessorFactory;
     @Mock
     private MySegmentsV2PayloadDecoder mMySegmentsV2PayloadDecoder;
 
@@ -67,56 +72,45 @@ public class ClientComponentsRegisterImplTest {
     public void setUp() {
         MockitoAnnotations.openMocks(this);
 
-        when(mMySegmentsSynchronizerFactory.getSynchronizer(mMySegmentsTaskFactory, mSplitEventsManager))
+        when(mMySegmentsV2PayloadDecoder.hashKey("matching_key")).thenReturn(BigInteger.valueOf(123));
+
+        when(mMySegmentsSynchronizerFactory.getSynchronizer(mMySegmentsTaskFactory, mSplitEventsManager, SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, 1800))
                 .thenReturn(mMySegmentsSynchronizer);
 
-        register = new ClientComponentsRegisterImpl(
-                new SplitClientConfig.Builder().build(),
-                mMySegmentsSynchronizerFactory,
-                mStorageContainer,
-                mAttributesSynchronizerFactory,
-                mAttributesSynchronizerRegistry,
-                mMySegmentsSynchronizerRegistry,
-                mMySegmentsUpdateWorkerRegistry,
-                mEventsManagerRegistry,
-                mSseAuthenticator,
-                mMySegmentsNotificationProcessorRegistry,
-                mMySegmentsNotificationProcessorFactory,
-                mMySegmentsV2PayloadDecoder
-        );
+        register = getRegister();
     }
 
     @Test
     public void attributesSynchronizerIsRegistered() {
-        register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
+        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory);
 
         verify(mAttributesSynchronizerRegistry).registerAttributesSynchronizer(eq("matching_key"), any());
     }
 
     @Test
     public void mySegmentsSynchronizerIsRegistered() {
-        register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
+        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory);
 
         verify(mMySegmentsSynchronizerRegistry).registerMySegmentsSynchronizer("matching_key", mMySegmentsSynchronizer);
     }
 
     @Test
     public void mySegmentsUpdateWorkerIsRegistered() {
-        register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
+        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory);
 
         verify(mMySegmentsUpdateWorkerRegistry).registerMySegmentsUpdateWorker(eq("matching_key"), any());
     }
 
     @Test
     public void mySegmentsNotificationProcessorIsRegistered() {
-        register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
+        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory);
 
-        verify(mMySegmentsNotificationProcessorRegistry).registerMySegmentsProcessor(eq("matching_key"), any());
+        verify(mMySegmentsNotificationProcessorRegistry).registerMembershipsNotificationProcessor(eq("matching_key"), any());
     }
 
     @Test
     public void eventsManagerIsRegistered() {
-        register.registerComponents(mMatchingKey, mMySegmentsTaskFactory, mSplitEventsManager);
+        register.registerComponents(mMatchingKey, mSplitEventsManager, mMySegmentsTaskFactory);
 
         verify(mEventsManagerRegistry).registerEventsManager(mMatchingKey, mSplitEventsManager);
     }
@@ -128,7 +122,25 @@ public class ClientComponentsRegisterImplTest {
         verify(mAttributesSynchronizerRegistry).unregisterAttributesSynchronizer("matching_key");
         verify(mMySegmentsSynchronizerRegistry).unregisterMySegmentsSynchronizer("matching_key");
         verify(mMySegmentsUpdateWorkerRegistry).unregisterMySegmentsUpdateWorker("matching_key");
-        verify(mMySegmentsNotificationProcessorRegistry).unregisterMySegmentsProcessor("matching_key");
+        verify(mMySegmentsNotificationProcessorRegistry).unregisterMembershipsProcessor("matching_key");
         verify(mEventsManagerRegistry).unregisterEventsManager(mMatchingKey);
+    }
+
+    @NonNull
+    private ClientComponentsRegisterImpl getRegister() {
+        return new ClientComponentsRegisterImpl(
+                new SplitClientConfig.Builder().build(),
+                mMySegmentsSynchronizerFactory,
+                mStorageContainer,
+                mAttributesSynchronizerFactory,
+                mAttributesSynchronizerRegistry,
+                mMySegmentsSynchronizerRegistry,
+                mMySegmentsUpdateWorkerRegistry,
+                mEventsManagerRegistry,
+                mSseAuthenticator,
+                mMySegmentsNotificationProcessorRegistry,
+                mMembershipsNotificationProcessorFactory,
+                mMySegmentsV2PayloadDecoder
+        );
     }
 }

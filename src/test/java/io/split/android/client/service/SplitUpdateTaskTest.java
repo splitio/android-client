@@ -3,33 +3,23 @@ package io.split.android.client.service;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.Mockito;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
-import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
-import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
-import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.helpers.FileHelper;
 
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -50,8 +40,8 @@ public class SplitUpdateTaskTest {
         mSplitsSyncHelper = Mockito.mock(SplitsSyncHelper.class);
         mEventsManager = Mockito.mock(SplitEventsManager.class);
         mTask = new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorage, mChangeNumber, mEventsManager);
-        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
-        when(mSplitsSyncHelper.sync(anyLong())).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
+        when(mSplitsSyncHelper.sync(anyLong(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
+        when(mSplitsSyncHelper.sync(anyLong(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
         loadSplitChanges();
     }
 
@@ -61,7 +51,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper).sync(mChangeNumber);
+        verify(mSplitsSyncHelper).sync(mChangeNumber, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
     }
 
     @Test
@@ -70,7 +60,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mSplitsSyncHelper, never()).sync(anyLong(), anyBoolean(), anyBoolean());
+        verify(mSplitsSyncHelper, never()).sync(anyLong(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES));
     }
 
     @After

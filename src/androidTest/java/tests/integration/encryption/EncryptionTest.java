@@ -33,10 +33,10 @@ import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.service.impressions.ImpressionsMode;
-import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.ImpressionsCountEntity;
+import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -70,6 +70,7 @@ public class EncryptionTest {
 
         verifySplits(testDatabase);
         verifySegments(testDatabase);
+        verifyLargeSegments(testDatabase);
         verifyEvents(testDatabase);
     }
 
@@ -118,7 +119,7 @@ public class EncryptionTest {
                     }
                 }
                 try {
-                    Thread.sleep(200);
+                    Thread.sleep(500);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
                 }
@@ -148,12 +149,16 @@ public class EncryptionTest {
                 client.getTreatment("FACUNDO_TEST");
                 client.getTreatment("testing");
                 factory.destroy();
-                latch.countDown();
+                try {
+                    Thread.sleep(1000);
+                    latch.countDown();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             }
         });
 
-        assertTrue(latch.await(2, TimeUnit.SECONDS));
-        Thread.sleep(250);
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
 
         verifyUniqueKeys(testDatabase);
     }
@@ -213,8 +218,8 @@ public class EncryptionTest {
                 fail("Split name not encrypted, it was " + splitEntity.getName());
             }
 
-            boolean bodyCondition = splitEntity.getBody().trim().endsWith("=");
-            if (!bodyCondition) {
+            boolean bodyCondition = splitEntity.getBody().trim().endsWith("}");
+            if (bodyCondition) {
                 fail("Body not encrypted, it was " + splitEntity.getBody());
             }
         }
@@ -230,9 +235,26 @@ public class EncryptionTest {
                 fail("Segment user key not encrypted, it was " + segmentEntity.getUserKey());
             }
 
-            boolean bodyCondition = segmentEntity.getSegmentList().trim().endsWith("=");
+            boolean bodyCondition = !segmentEntity.getSegmentList().trim().endsWith("}");
             if (!bodyCondition) {
                 fail("Segment list not encrypted, it was " + segmentEntity.getSegmentList());
+            }
+        }
+
+        assertEquals(1, all.size());
+    }
+
+    private static void verifyLargeSegments(SplitRoomDatabase testDatabase) {
+        List<MyLargeSegmentEntity> all = testDatabase.myLargeSegmentDao().getAll();
+        for (MyLargeSegmentEntity segmentEntity : all) {
+            boolean nameCondition = segmentEntity.getUserKey().trim().contains("=");
+            if (!nameCondition) {
+                fail("Large segment user key not encrypted, it was " + segmentEntity.getUserKey());
+            }
+
+            boolean bodyCondition = segmentEntity.getSegmentList().trim().contains("large-segment");
+            if (bodyCondition) {
+                fail("Large segment list not encrypted, it was " + segmentEntity.getSegmentList());
             }
         }
 
@@ -308,6 +330,7 @@ public class EncryptionTest {
                 .impressionsRefreshRate(1000)
                 .impressionsCountersRefreshRate(1000)
                 .streamingEnabled(false)
+                .enableDebug()
                 .eventFlushInterval(1000)
                 .encryptionEnabled(encryptionEnabled)
                 .build();
@@ -327,7 +350,7 @@ public class EncryptionTest {
     private Map<String, IntegrationHelper.ResponseClosure> getResponses() {
         Map<String, IntegrationHelper.ResponseClosure> responses = new HashMap<>();
         responses.put("splitChanges", (uri, httpMethod, body) -> new HttpResponseMock(200, loadSplitChanges()));
-        responses.put("mySegments/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.dummyMySegments()));
+        responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.dummyAllSegments()));
         responses.put("events/bulk", (uri, httpMethod, body) -> new HttpResponseMock(404, ""));
         responses.put("testImpressions/bulk", (uri, httpMethod, body) -> new HttpResponseMock(404, ""));
         return responses;

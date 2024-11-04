@@ -170,12 +170,12 @@ public class SplitsTwoDifferentApiKeyTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
 
-                    return createResponse(200, IntegrationHelper.dummyMySegments());
+                    return createResponse(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     int hit = 0;
-                    long changeNumber = Long.parseLong(getSinceFromUri(uri));//new Integer(uri.getQuery().split("&")[1].split("=")[1]);
+                    long changeNumber = Long.parseLong(getSinceFromUri(uri));
                     if (factoryNumber == 1) {
                         System.out.println("hit 1 cn: " + changeNumber);
                         f1ChangeNumbers.add(changeNumber);
@@ -191,9 +191,13 @@ public class SplitsTwoDifferentApiKeyTest {
                         return createResponse(200, getSplitChanges(factoryNumber, hit));
                     }
                     String data = IntegrationHelper.emptySplitChanges(respChangeNumber, respChangeNumber);
-                    CountDownLatch latch = mSplitsUpdateLatch.get(factoryNumber - 1);
-                    if (latch != null) {
-                        latch.countDown();
+                    try {
+                        CountDownLatch latch = mSplitsUpdateLatch.get(factoryNumber - 1);
+                        if (latch != null) {
+                            latch.countDown();
+                        }
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
                     }
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {

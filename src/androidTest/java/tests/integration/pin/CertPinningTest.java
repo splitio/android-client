@@ -79,11 +79,11 @@ public class CertPinningTest {
                         mEndpointHits.put("splitChanges", new AtomicInteger(1));
                     }
                     return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.emptySplitChanges(1602796638344L, 1602796638344L));
-                } else if (request.getRequestUrl().encodedPathSegments().contains("mySegments")) {
-                    if (mEndpointHits.containsKey("mySegments")) {
-                        mEndpointHits.get("mySegments").getAndIncrement();
+                } else if (request.getRequestUrl().encodedPathSegments().contains(IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    if (mEndpointHits.containsKey(IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                        mEndpointHits.get(IntegrationHelper.ServicePath.MEMBERSHIPS).getAndIncrement();
                     } else {
-                        mEndpointHits.put("mySegments", new AtomicInteger(1));
+                        mEndpointHits.put(IntegrationHelper.ServicePath.MEMBERSHIPS, new AtomicInteger(1));
                     }
                     return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.emptyMySegments());
                 } else {

@@ -66,6 +66,12 @@ public class Config {
     @SerializedName("fsI")
     private int flagSetsInvalid;
 
+    @SerializedName("lsE")
+    private boolean largeSegmentsEnabled;
+
+    @SerializedName("wls")
+    private boolean waitForLargeSegments;
+
     public int getOperationMode() {
         return operationMode;
     }
@@ -216,5 +222,21 @@ public class Config {
 
     public void setFlagSetsInvalid(int flagSetsInvalid) {
         this.flagSetsInvalid = flagSetsInvalid;
+    }
+
+    public boolean largeSegmentsEnabled() {
+        return largeSegmentsEnabled;
+    }
+
+    public void setLargeSegmentsEnabled(boolean largeSegmentsEnabled) {
+        this.largeSegmentsEnabled = largeSegmentsEnabled;
+    }
+
+    public boolean getWaitForLargeSegments() {
+        return waitForLargeSegments;
+    }
+
+    public void setWaitForLargeSegments(boolean waitForLargeSegments) {
+        this.waitForLargeSegments = waitForLargeSegments;
     }
 }

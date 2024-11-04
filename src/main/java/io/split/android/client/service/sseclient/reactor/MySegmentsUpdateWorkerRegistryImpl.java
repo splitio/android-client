@@ -14,9 +14,7 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
     @Override
     public synchronized void registerMySegmentsUpdateWorker(String matchingKey, MySegmentsUpdateWorker mySegmentsUpdateWorker) {
         mMySegmentUpdateWorkers.put(matchingKey, mySegmentsUpdateWorker);
-        if (mStarted.get()) {
-            mySegmentsUpdateWorker.start();
-        }
+        startIfNeeded(mySegmentsUpdateWorker);
     }
 
     @Override
@@ -47,6 +45,12 @@ public class MySegmentsUpdateWorkerRegistryImpl implements MySegmentsUpdateWorke
             for (MySegmentsUpdateWorker mySegmentsUpdateWorker : mMySegmentUpdateWorkers.values()) {
                 mySegmentsUpdateWorker.stop();
             }
+        }
+    }
+
+    private void startIfNeeded(MySegmentsUpdateWorker mySegmentsUpdateWorker) {
+        if (mStarted.get()) {
+            mySegmentsUpdateWorker.start();
         }
     }
 }

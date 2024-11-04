@@ -8,6 +8,8 @@ import static io.split.android.client.ServiceEndpoints.EndpointValidator.sdkEndp
 import static io.split.android.client.ServiceEndpoints.EndpointValidator.streamingEndpointIsOverridden;
 import static io.split.android.client.ServiceEndpoints.EndpointValidator.telemetryEndpointIsOverridden;
 
+import android.os.Build;
+
 import androidx.annotation.NonNull;
 
 import io.split.android.client.SplitClientConfig;
@@ -15,6 +17,7 @@ import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.telemetry.model.RefreshRates;
 import io.split.android.client.telemetry.model.UrlOverrides;
+import io.split.android.client.utils.logger.Logger;
 
 public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
 
@@ -36,6 +39,7 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
     @Override
     public Config getConfigTelemetry() {
         Config config = new Config();
+        addDefaultTags(mSplitClientConfig);
         config.setStreamingEnabled(mSplitClientConfig.streamingEnabled());
         config.setRefreshRates(buildRefreshRates(mSplitClientConfig));
         config.setTags(mTelemetryConsumer.popTags());
@@ -83,5 +87,21 @@ public class TelemetryConfigProviderImpl implements TelemetryConfigProvider {
         urlOverrides.setTelemetry(telemetryEndpointIsOverridden(splitClientConfig.telemetryEndpoint()));
 
         return urlOverrides;
+    }
+
+    private void addDefaultTags(SplitClientConfig mSplitClientConfig) {
+        try {
+            TelemetryRuntimeProducer producer = (TelemetryRuntimeProducer) mTelemetryConsumer;
+            int sdkInt = Build.VERSION.SDK_INT;
+            if (sdkInt > 0) {
+                producer.addTag("av:" + sdkInt);
+            }
+
+            if (mSplitClientConfig.synchronizeInBackground()) {
+                producer.addTag("bgr:" + mSplitClientConfig.backgroundSyncPeriod());
+            }
+        } catch (ClassCastException ex) {
+            Logger.d("Telemetry storage is not a producer");
+        }
     }
 }

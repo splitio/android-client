@@ -3,10 +3,10 @@ package io.split.android.client.service.sseclient.notifications;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.google.gson.JsonSyntaxException;
 
-import java.util.Map;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentMap;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessor;
+import io.split.android.client.service.sseclient.notifications.memberships.MembershipsNotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorRegistry;
 import io.split.android.client.utils.logger.Logger;
 
@@ -24,21 +24,18 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
     private final SplitTaskExecutor mSplitTaskExecutor;
     private final SplitTaskFactory mSplitTaskFactory;
     private final BlockingQueue<SplitsChangeNotification> mSplitsUpdateNotificationsQueue;
-    private final ConcurrentMap<String, MySegmentsNotificationProcessor> mMySegmentsNotificationProcessors;
-    private final MySegmentsPayloadDecoder mMySegmentsPayloadDecoder;
+    private final ConcurrentMap<String, MembershipsNotificationProcessor> mMembershipsNotificationProcessors;
 
     public NotificationProcessor(
             @NonNull SplitTaskExecutor splitTaskExecutor,
             @NonNull SplitTaskFactory splitTaskFactory,
             @NonNull NotificationParser notificationParser,
-            @NonNull BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationsQueue,
-            @NonNull MySegmentsPayloadDecoder mySegmentsPayloadDecoder) {
+            @NonNull BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationsQueue) {
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mNotificationParser = checkNotNull(notificationParser);
         mSplitsUpdateNotificationsQueue = checkNotNull(splitsUpdateNotificationsQueue);
-        mMySegmentsPayloadDecoder = checkNotNull(mySegmentsPayloadDecoder);
-        mMySegmentsNotificationProcessors = new ConcurrentHashMap<>();
+        mMembershipsNotificationProcessors = new ConcurrentHashMap<>();
     }
 
     public void process(IncomingNotification incomingNotification) {
@@ -51,12 +48,9 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
                 case SPLIT_KILL:
                     processSplitKill(mNotificationParser.parseSplitKill(notificationJson));
                     break;
-                case MY_SEGMENTS_UPDATE:
-                    processMySegmentUpdate(mNotificationParser.parseMySegmentUpdate(notificationJson),
-                            mNotificationParser.extractUserKeyHashFromChannel(incomingNotification.getChannel()));
-                    break;
-                case MY_SEGMENTS_UPDATE_V2:
-                    processMySegmentUpdateV2(mNotificationParser.parseMySegmentUpdateV2(notificationJson));
+                case MEMBERSHIPS_MS_UPDATE:
+                case MEMBERSHIPS_LS_UPDATE:
+                    processMembershipsUpdate(mNotificationParser.parseMembershipNotification(notificationJson));
                     break;
                 default:
                     Logger.e("Unknown notification arrived: " + notificationJson);
@@ -71,13 +65,13 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
     }
 
     @Override
-    public void registerMySegmentsProcessor(String matchingKey, MySegmentsNotificationProcessor processor) {
-        mMySegmentsNotificationProcessors.put(matchingKey, processor);
+    public void registerMembershipsNotificationProcessor(String matchingKey, MembershipsNotificationProcessor processor) {
+        mMembershipsNotificationProcessors.put(matchingKey, processor);
     }
 
     @Override
-    public void unregisterMySegmentsProcessor(String matchingKey) {
-        mMySegmentsNotificationProcessors.remove(matchingKey);
+    public void unregisterMembershipsProcessor(String matchingKey) {
+        mMembershipsNotificationProcessors.remove(matchingKey);
     }
 
     private void processSplitUpdate(SplitsChangeNotification notification) {
@@ -94,23 +88,9 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
         mSplitsUpdateNotificationsQueue.offer(new SplitsChangeNotification(split.changeNumber));
     }
 
-    private void processMySegmentUpdate(MySegmentChangeNotification notification, String hashedUserKey) {
-        for (Map.Entry<String, MySegmentsNotificationProcessor> processor : mMySegmentsNotificationProcessors.entrySet()) {
-            String encodedProcessorKey = mMySegmentsPayloadDecoder.hashUserKeyForMySegmentsV1(processor.getKey());
-
-            if (encodedProcessorKey == null) {
-                continue;
-            }
-
-            if (encodedProcessorKey.equals(hashedUserKey)) {
-                processor.getValue().processMySegmentsUpdate(notification);
-            }
-        }
-    }
-
-    private void processMySegmentUpdateV2(MySegmentChangeV2Notification notification) {
-        for (MySegmentsNotificationProcessor processor : mMySegmentsNotificationProcessors.values()) {
-            processor.processMySegmentsUpdateV2(notification);
+    private void processMembershipsUpdate(@Nullable MembershipNotification notification) {
+        for (MembershipsNotificationProcessor processor : mMembershipsNotificationProcessors.values()) {
+            processor.process(notification);
         }
     }
 }

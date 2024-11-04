@@ -5,9 +5,9 @@ import androidx.annotation.RestrictTo;
 import java.net.URISyntaxException;
 import java.util.List;
 
+import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SdkTargetPath;
@@ -22,7 +22,7 @@ import io.split.android.client.service.impressions.ImpressionsCountRequestBodySe
 import io.split.android.client.service.impressions.ImpressionsRequestBodySerializer;
 import io.split.android.client.service.impressions.unique.MTK;
 import io.split.android.client.service.impressions.unique.MTKRequestBodySerializer;
-import io.split.android.client.service.mysegments.MySegmentsResponseParser;
+import io.split.android.client.service.mysegments.AllSegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 import io.split.android.client.service.sseauthentication.SseAuthenticationResponseParser;
 import io.split.android.client.telemetry.TelemetryConfigBodySerializer;
@@ -43,14 +43,14 @@ public class ServiceFactory {
                 new SplitChangeResponseParser());
     }
 
-    public static HttpFetcher<List<MySegment>> getMySegmentsFetcher(
+    public static HttpFetcher<AllSegmentsChange> getMySegmentsFetcher(
             HttpClient httpClient,
             String endPoint,
             String key) throws URISyntaxException {
 
         return new HttpFetcherImpl<>(httpClient,
                 SdkTargetPath.mySegments(endPoint, key),
-                new MySegmentsResponseParser());
+                new AllSegmentsResponseParser());
     }
 
     public static HttpRecorder<List<Event>> getEventsRecorder(

@@ -49,20 +49,24 @@ public class SplitParser {
     public static final int CONDITIONS_UPPER_LIMIT = 50;
 
     private final MySegmentsStorageContainer mMySegmentsStorageContainer;
+    private final MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
     private final DefaultConditionsProvider mDefaultConditionsProvider;
 
-    public SplitParser(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer) {
-        this(mySegmentsStorageContainer, new DefaultConditionsProvider());
+    public SplitParser(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer, @Nullable MySegmentsStorageContainer myLargeSegmentsStorageContainer) {
+        this(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, new DefaultConditionsProvider());
     }
 
     @VisibleForTesting
-    static SplitParser get(MySegmentsStorageContainer mySegmentsStorageContainer) {
-        return new SplitParser(mySegmentsStorageContainer);
+    static SplitParser get(MySegmentsStorageContainer mySegmentsStorageContainer, MySegmentsStorageContainer myLargeSegmentsStorageContainer) {
+        return new SplitParser(mySegmentsStorageContainer, myLargeSegmentsStorageContainer);
     }
 
     @VisibleForTesting
-    SplitParser(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer, @NonNull DefaultConditionsProvider defaultConditionsProvider) {
+    SplitParser(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
+                @Nullable MySegmentsStorageContainer myLargeSegmentsStorageContainer,
+                @NonNull DefaultConditionsProvider defaultConditionsProvider) {
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
+        mMyLargeSegmentsStorageContainer = myLargeSegmentsStorageContainer;
         mDefaultConditionsProvider = checkNotNull(defaultConditionsProvider);
     }
 
@@ -153,6 +157,10 @@ public class SplitParser {
             case IN_SEGMENT:
                 checkNotNull(matcher.userDefinedSegmentMatcherData);
                 delegate = new MySegmentsMatcher((matchingKey != null) ? mMySegmentsStorageContainer.getStorageForKey(matchingKey) : new EmptyMySegmentsStorage(), matcher.userDefinedSegmentMatcherData.segmentName);
+                break;
+            case IN_LARGE_SEGMENT:
+                checkNotNull(matcher.userDefinedLargeSegmentMatcherData);
+                delegate = new MySegmentsMatcher((matchingKey != null) ? mMyLargeSegmentsStorageContainer.getStorageForKey(matchingKey) : new EmptyMySegmentsStorage(), matcher.userDefinedLargeSegmentMatcherData.largeSegmentName);
                 break;
             case WHITELIST:
                 checkNotNull(matcher.whitelistMatcherData);

@@ -8,14 +8,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import helper.DatabaseHelper;
+import helper.IntegrationHelper;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -37,77 +34,85 @@ public class PersistentMySegmentStorageTest {
 
         MySegmentEntity entity = new MySegmentEntity();
         entity.setUserKey(mUserKey);
-        entity.setSegmentList("s1,s2,s3");
+        entity.setSegmentList("{\"k\":[{\"n\":\"s1\"},{\"n\":\"s2\"},{\"n\":\"s3\"}],\"cn\":null}");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
         entity = new MySegmentEntity();
         String mUserKey2 = "userkey-2";
         entity.setUserKey(mUserKey2);
-        entity.setSegmentList("s10,s20");
+        entity.setSegmentList("{\"k\":[{\"n\":\"s10\"},{\"n\":\"s20\"}],\"cn\":-1}");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb,
-                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false));
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
+                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
     }
 
     @Test
-    public void getMySegments() {
-        Set<String> snapshot = new HashSet<>(mPersistentMySegmentsStorage.getSnapshot(mUserKey));
+    public void getNames() {
+        SegmentsChange snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
-        Assert.assertEquals(3, snapshot.size());
-        Assert.assertTrue(snapshot.contains("s1"));
-        Assert.assertTrue(snapshot.contains("s2"));
-        Assert.assertTrue(snapshot.contains("s3"));
+        List<String> mySegments = snapshot.getNames();
+        Assert.assertEquals(3, mySegments.size());
+        Assert.assertTrue(mySegments.contains("s1"));
+        Assert.assertTrue(mySegments.contains("s2"));
+        Assert.assertTrue(mySegments.contains("s3"));
     }
 
     @Test
     public void updateSegments() {
 
-        mPersistentMySegmentsStorage.set(mUserKey, Collections.singletonList("a1,a2,a3,a4"));
+        mPersistentMySegmentsStorage.set(mUserKey, SegmentsChange.create(IntegrationHelper.asSet("a1", "a2", "a3", "a4"), 2002012L));
 
-        Set<String> snapshot = new HashSet<>(mPersistentMySegmentsStorage.getSnapshot(mUserKey));
+        SegmentsChange snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
-        Assert.assertEquals(4, snapshot.size());
-        Assert.assertTrue(snapshot.contains("a1"));
-        Assert.assertTrue(snapshot.contains("a2"));
-        Assert.assertTrue(snapshot.contains("a3"));
-        Assert.assertTrue(snapshot.contains("a4"));
+        List<String> mySegments = snapshot.getNames();
+        Long till = snapshot.getChangeNumber();
+        Assert.assertEquals(4, mySegments.size());
+        Assert.assertTrue(mySegments.contains("a1"));
+        Assert.assertTrue(mySegments.contains("a2"));
+        Assert.assertTrue(mySegments.contains("a3"));
+        Assert.assertTrue(mySegments.contains("a4"));
+        Assert.assertEquals(2002012, till.longValue());
     }
 
     @Test
     public void updateSegmentsEncrypted() {
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb,
-                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true));
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
+                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
 
-        mPersistentMySegmentsStorage.set(mUserKey, Collections.singletonList("a1,a2,a3,a4"));
+        mPersistentMySegmentsStorage.set(mUserKey, SegmentsChange.create(IntegrationHelper.asSet("a1", "a2", "a3", "a4"), -1L));
 
-        Set<String> snapshot = new HashSet<>(mPersistentMySegmentsStorage.getSnapshot(mUserKey));
+        SegmentsChange snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
-        Assert.assertEquals(4, snapshot.size());
-        Assert.assertTrue(snapshot.contains("a1"));
-        Assert.assertTrue(snapshot.contains("a2"));
-        Assert.assertTrue(snapshot.contains("a3"));
-        Assert.assertTrue(snapshot.contains("a4"));
+        List<String> mySegments = snapshot.getNames();
+        Assert.assertEquals(4, mySegments.size());
+        Assert.assertTrue(mySegments.contains("a1"));
+        Assert.assertTrue(mySegments.contains("a2"));
+        Assert.assertTrue(mySegments.contains("a3"));
+        Assert.assertTrue(mySegments.contains("a4"));
+        Assert.assertEquals(-1, snapshot.getChangeNumber().longValue());
     }
 
     @Test
     public void updateEmptyMySegment() {
 
-        mPersistentMySegmentsStorage.set(mUserKey, new ArrayList<>());
+        mPersistentMySegmentsStorage.set(mUserKey, SegmentsChange.create(IntegrationHelper.asSet(), 22121L));
 
-        List<String> snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
+        SegmentsChange snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
-        Assert.assertEquals(0, snapshot.size());
+        Assert.assertEquals(0, snapshot.getNames().size());
+        Assert.assertEquals(22121, snapshot.getChangeNumber().longValue());
     }
 
     @Test
     public void addNullMySegmentsList() {
-        mPersistentMySegmentsStorage.set(mUserKey, null);
+        mPersistentMySegmentsStorage.set(mUserKey, SegmentsChange.create(null, -1L));
 
-        List<String> snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
+        SegmentsChange snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
-        Assert.assertEquals(3, snapshot.size());
+        Assert.assertEquals(3, snapshot.getNames().size());
+        Assert.assertNull(snapshot.getChangeNumber());
     }
 }

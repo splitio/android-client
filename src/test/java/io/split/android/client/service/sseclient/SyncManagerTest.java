@@ -269,6 +269,20 @@ public class SyncManagerTest {
         verify(mSyncGuardian).updateLastSyncTimestamp();
     }
 
+    @Test
+    public void startCallsLoadMySegmentsFromCache() {
+        mSyncManager.start();
+
+        verify(mSynchronizer).loadMySegmentsFromCache();
+    }
+
+    @Test
+    public void startCallsSynchronizeMySegments() {
+        mSyncManager.start();
+
+        verify(mSynchronizer).synchronizeMySegments();
+    }
+
     private void testStartUserConsentNotGranted(UserConsent userConsent) {
         when(mConfig.userConsent()).thenReturn(userConsent);
         mSyncManager.start();

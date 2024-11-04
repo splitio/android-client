@@ -195,9 +195,9 @@ public class SplitChangeNotificationIntegrationTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("mySegments")) {
+                if (uri.getPath().contains(IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     mMySegmentsHitsCountLatch.countDown();
-                    return createResponse(IntegrationHelper.dummyMySegments());
+                    return createResponse(IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     mSplitsHitsCountLatch.countDown();
                     mSplitsHitsCountHit.incrementAndGet();

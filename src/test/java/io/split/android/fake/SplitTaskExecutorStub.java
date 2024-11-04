@@ -58,6 +58,6 @@ public class SplitTaskExecutorStub implements SplitTaskExecutor {
 
     @Override
     public void submitOnMainThread(SplitTask splitTask) {
-
+        splitTask.execute();
     }
 }

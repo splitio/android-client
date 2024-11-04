@@ -39,7 +39,6 @@ import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -292,14 +291,14 @@ public class SharedClientsIntegrationTest {
 
                 @Override
                 public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                    if (request.getPath().contains("/mySegments/key1")) {
+                    if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS + "/key1")) {
                         return new MockResponse()
                                 .setResponseCode(200)
-                                .setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}");
-                    } else if (request.getPath().contains("/mySegments/key2")) {
+                                .setBody(IntegrationHelper.dummyAllSegments());
+                    } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS + "/key2")) {
                         return new MockResponse()
                                 .setResponseCode(200)
-                                .setBody("{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment2\"}]}");
+                                .setBody(IntegrationHelper.dummySingleSegment("segment2"));
                     } else if (request.getPath().contains("/splitChanges")) {
                         return new MockResponse().setResponseCode(200)
                                 .setBody(splitsPerRequest());

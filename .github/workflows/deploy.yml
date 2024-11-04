@@ -3,7 +3,8 @@ name: Internal deploy
 on:
   push:
     branches:
-      - development
+      - 'development'
+      - '*_baseline'
 
 jobs:
   build-app:

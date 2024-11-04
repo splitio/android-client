@@ -8,17 +8,23 @@ import androidx.room.Query;
 import java.util.List;
 
 @Dao
-public interface MySegmentDao {
+public interface MySegmentDao extends SegmentDao<MySegmentEntity> {
 
+    String TABLE_NAME = "my_segments";
+
+    @Override
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void update(MySegmentEntity mySegment);
 
-    @Query("UPDATE my_segments SET user_key = :userKey, segment_list = :segmentList WHERE user_key = :formerUserKey")
+    @Override
+    @Query("UPDATE " + TABLE_NAME + " SET user_key = :userKey, segment_list = :segmentList WHERE user_key = :formerUserKey")
     void update(String formerUserKey, String userKey, String segmentList);
 
-    @Query("SELECT user_key, segment_list, updated_at FROM my_segments WHERE user_key = :userKey")
+    @Override
+    @Query("SELECT user_key, segment_list, updated_at FROM " + TABLE_NAME + " WHERE user_key = :userKey")
     MySegmentEntity getByUserKey(String userKey);
 
-    @Query("SELECT user_key, segment_list, updated_at FROM my_segments")
+    @Override
+    @Query("SELECT user_key, segment_list, updated_at FROM " + TABLE_NAME)
     List<MySegmentEntity> getAll();
 }

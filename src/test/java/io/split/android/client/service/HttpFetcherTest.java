@@ -18,13 +18,14 @@ import org.mockito.ArgumentMatcher;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import io.split.android.client.dtos.MySegment;
+import io.split.android.client.dtos.AllSegmentsChange;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
@@ -38,21 +39,21 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpFetcherImpl;
 import io.split.android.client.service.http.HttpResponseParser;
-import io.split.android.client.service.mysegments.MySegmentsResponseParser;
+import io.split.android.client.service.mysegments.AllSegmentsResponseParser;
 import io.split.android.client.service.splits.SplitChangeResponseParser;
 
 public class HttpFetcherTest {
 
     private final static String TEST_URL = "http://testurl.com";
     private final static String SPLIT_CHANGES_TEST_URL = TEST_URL + SdkTargetPath.SPLIT_CHANGES;
-    private final static String MY_SEGMENTS_TEST_URL = TEST_URL + SdkTargetPath.MY_SEGMENTS;
+    private final static String MY_SEGMENTS_TEST_URL = TEST_URL + SdkTargetPath.MEMBERSHIPS;
 
-    HttpClient mClientMock;
-    URI mUrl;
-    URI mSplitChangesUrl;
-    URI mMySegmentsUrl;
-    HttpResponseParser<SplitChange> mSplitChangeResponseParser = new SplitChangeResponseParser();
-    HttpResponseParser<List<MySegment>> mMySegmentsResponseParser = new MySegmentsResponseParser();
+    private HttpClient mClientMock;
+    private URI mUrl;
+    private URI mSplitChangesUrl;
+    private URI mMySegmentsUrl;
+    private final HttpResponseParser<SplitChange> mSplitChangeResponseParser = new SplitChangeResponseParser();
+    private final HttpResponseParser<AllSegmentsChange> mMySegmentsResponseParser = new AllSegmentsResponseParser();
 
     @Before
     public void setup() throws URISyntaxException {
@@ -193,15 +194,16 @@ public class HttpFetcherTest {
         when(request.execute()).thenReturn(response);
         when(mClientMock.request(mMySegmentsUrl, HttpMethod.GET, null, null)).thenReturn(request);
 
-        HttpFetcher<List<MySegment>> fetcher = new HttpFetcherImpl<>(mClientMock, mMySegmentsUrl, mMySegmentsResponseParser);
-        List<MySegment> mySegments = null;
+        HttpFetcher<AllSegmentsChange> fetcher = new HttpFetcherImpl<>(mClientMock, mMySegmentsUrl, mMySegmentsResponseParser);
+        List<String> mySegments = null;
         try {
-            mySegments = fetcher.execute(new HashMap<>(), null);
+            SegmentsChange segmentsChange = fetcher.execute(new HashMap<>(), null).getSegmentsChange();
+            mySegments = segmentsChange.getNames();
         } catch (HttpFetcherException e) {
             exceptionWasThrown = true;
         }
 
-        Set<String> mySegmentsSet = mySegments.stream().map(mySegment -> mySegment.name).collect(Collectors.toSet());
+        Set<String> mySegmentsSet = new HashSet<>(mySegments);
 
         Assert.assertFalse(exceptionWasThrown);
         Assert.assertEquals(2, mySegments.size());
@@ -222,10 +224,10 @@ public class HttpFetcherTest {
         when(request.execute()).thenReturn(response);
         when(mClientMock.request(mMySegmentsUrl, HttpMethod.GET, null, headers)).thenReturn(request);
 
-        HttpFetcher<List<MySegment>> fetcher = new HttpFetcherImpl<>(mClientMock, mMySegmentsUrl, mMySegmentsResponseParser);
+        HttpFetcher<AllSegmentsChange> fetcher = new HttpFetcherImpl<>(mClientMock, mMySegmentsUrl, mMySegmentsResponseParser);
 
         try {
-            List<MySegment> mySegments = fetcher.execute(new HashMap<>(), headers);
+            List<String> mySegments = fetcher.execute(new HashMap<>(), headers).getSegmentsChange().getNames();
         } catch (HttpFetcherException e) {
             exceptionWasThrown = true;
         }
@@ -246,10 +248,10 @@ public class HttpFetcherTest {
         when(mClientMock.request(mMySegmentsUrl, HttpMethod.GET)).thenReturn(request);
 
 
-        HttpFetcher<List<MySegment>> fetcher = new HttpFetcherImpl<>(mClientMock, mMySegmentsUrl, mMySegmentsResponseParser);
-        List<MySegment> mySegments = null;
+        HttpFetcher<AllSegmentsChange> fetcher = new HttpFetcherImpl<>(mClientMock, mMySegmentsUrl, mMySegmentsResponseParser);
+        List<String> mySegments = null;
         try {
-            mySegments = fetcher.execute(new HashMap<>(), null);
+            mySegments = fetcher.execute(new HashMap<>(), null).getSegmentsChange().getNames();
         } catch (HttpFetcherException e) {
             exceptionWasThrown = true;
         }
@@ -281,7 +283,7 @@ public class HttpFetcherTest {
         params.put("since", "-1");
         params.put("sets", "flag_set1,flagset2");
 
-            fetcher.execute(params, null);
+        fetcher.execute(params, null);
 
         verifyQuery("s=1.1&since=-1&sets=flag_set1,flagset2");
     }
@@ -365,6 +367,6 @@ public class HttpFetcherTest {
     }
 
     private String dummyMySegmentsResponse() {
-        return "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id2\", \"name\":\"segment2\"}]}";
+        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":99999},\"ls\":{\"k\":[{\"n\":\"large-segment1\"},{\"n\":\"large-segment2\"},{\"n\":\"large-segment3\"}],\"cn\":9999999999999}}";
     }
 }

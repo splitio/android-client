@@ -244,8 +244,8 @@ public class CleanUpDatabaseTest {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/mySegments")) {
-                    return createResponse(200, IntegrationHelper.dummyMySegments());
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return createResponse(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
                     String data = IntegrationHelper.emptySplitChanges(-1, 1000);
                     return createResponse(200, data);
@@ -284,11 +284,4 @@ public class CleanUpDatabaseTest {
         } catch (InterruptedException e) {
         }
     }
-
-    private String updatedMySegments() {
-        return "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, " +
-                " { \"id\":\"id1\", \"name\":\"segment2\"}, " +
-                "{ \"id\":\"id3\", \"name\":\"segment3\"}]}";
-    }
-
 }

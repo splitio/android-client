@@ -74,7 +74,7 @@ public class SplitChangeProcessor {
             processStrategy.process(activeFeatureFlags, archivedFeatureFlags, featureFlag);
         }
 
-        return new ProcessedSplitChange(activeFeatureFlags, archivedFeatureFlags, changeNumber, System.currentTimeMillis() / 100);
+        return new ProcessedSplitChange(activeFeatureFlags, archivedFeatureFlags, changeNumber, System.currentTimeMillis());
     }
 
     private FeatureFlagProcessStrategy getProcessStrategy(SplitFilter splitFilter) {

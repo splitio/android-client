@@ -30,6 +30,8 @@ public abstract class SplitClientImplBaseTest {
     @Mock
     protected MySegmentsStorageContainer mySegmentsStorageContainer;
     @Mock
+    protected MySegmentsStorageContainer myLargeSegmentsStorageContainer;
+    @Mock
     protected MySegmentsStorage mySegmentsStorage;
     @Mock
     protected ImpressionListener impressionListener;
@@ -56,7 +58,7 @@ public abstract class SplitClientImplBaseTest {
                 container,
                 clientContainer,
                 new Key("test_key"),
-                new SplitParser(mySegmentsStorageContainer),
+                new SplitParser(mySegmentsStorageContainer, myLargeSegmentsStorageContainer),
                 impressionListener,
                 splitClientConfig,
                 new SplitEventsManager(splitClientConfig, new SplitTaskExecutorStub()),

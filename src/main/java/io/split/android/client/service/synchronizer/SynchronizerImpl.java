@@ -35,7 +35,8 @@ import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreaming
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
 
-public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener, MySegmentsSynchronizerRegistry, AttributesSynchronizerRegistry {
+public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListener,
+        MySegmentsSynchronizerRegistry, AttributesSynchronizerRegistry {
 
     private final SplitTaskExecutor mTaskExecutor;
     private final SplitTaskExecutor mSingleThreadTaskExecutor;
@@ -164,11 +165,6 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     @Override
     public void synchronizeMySegments() {
         mMySegmentsSynchronizerRegistry.synchronizeMySegments();
-    }
-
-    @Override
-    public void forceMySegmentsSync() {
-        mMySegmentsSynchronizerRegistry.forceMySegmentsSync();
     }
 
     @Override

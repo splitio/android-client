@@ -4,39 +4,91 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import java.util.List;
-
-import io.split.android.client.dtos.MySegment;
+import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 
 public class MySegmentsTaskFactoryConfiguration {
 
-    private final HttpFetcher<List<MySegment>> mHttpFetcher;
-    private final MySegmentsStorage mStorage;
+    private final HttpFetcher<AllSegmentsChange> mHttpFetcher;
+    private final MySegmentsStorage mMySegmentsStorage;
     private final SplitEventsManager mEventsManager;
+    private final MySegmentsSyncTaskConfig mMySegmentsSyncTaskConfig;
+    private final MySegmentsUpdateTaskConfig mMySegmentsUpdateTaskConfig;
+    private final MySegmentsUpdateTaskConfig mMyLargeSegmentsUpdateTaskConfig;
+    private final LoadMySegmentsTaskConfig mLoadMySegmentsTaskConfig;
+    private final MySegmentsStorage mMyLargeSegmentsStorage;
 
-    public MySegmentsTaskFactoryConfiguration(@NonNull HttpFetcher<List<MySegment>> httpFetcher,
-                                              @NonNull MySegmentsStorage storage,
-                                              @NonNull SplitEventsManager eventsManager) {
+    private MySegmentsTaskFactoryConfiguration(@NonNull HttpFetcher<AllSegmentsChange> httpFetcher,
+                                               @NonNull MySegmentsStorage storage,
+                                               @NonNull MySegmentsStorage myLargeSegmentsStorage,
+                                               @NonNull SplitEventsManager eventsManager,
+                                               @NonNull MySegmentsSyncTaskConfig mySegmentsSyncTaskConfig,
+                                               @NonNull MySegmentsUpdateTaskConfig mySegmentsUpdateTaskConfig,
+                                               @NonNull MySegmentsUpdateTaskConfig myLargeSegmentsUpdateTaskConfig,
+                                               @NonNull LoadMySegmentsTaskConfig loadMySegmentsTaskConfig) {
         mHttpFetcher = checkNotNull(httpFetcher);
-        mStorage = checkNotNull(storage);
+        mMySegmentsStorage = checkNotNull(storage);
+        mMyLargeSegmentsStorage = checkNotNull(myLargeSegmentsStorage);
         mEventsManager = checkNotNull(eventsManager);
+        mMySegmentsSyncTaskConfig = checkNotNull(mySegmentsSyncTaskConfig);
+        mMySegmentsUpdateTaskConfig = checkNotNull(mySegmentsUpdateTaskConfig);
+        mMyLargeSegmentsUpdateTaskConfig = checkNotNull(myLargeSegmentsUpdateTaskConfig);
+        mLoadMySegmentsTaskConfig = checkNotNull(loadMySegmentsTaskConfig);
     }
 
     @NonNull
-    public HttpFetcher<List<MySegment>> getHttpFetcher() {
+    public HttpFetcher<AllSegmentsChange> getHttpFetcher() {
         return mHttpFetcher;
     }
 
     @NonNull
-    public MySegmentsStorage getStorage() {
-        return mStorage;
+    public MySegmentsStorage getMySegmentsStorage() {
+        return mMySegmentsStorage;
+    }
+
+    @NonNull
+    public MySegmentsStorage getMyLargeSegmentsStorage() {
+        return mMyLargeSegmentsStorage;
     }
 
     @NonNull
     public SplitEventsManager getEventsManager() {
         return mEventsManager;
+    }
+
+    @NonNull
+    public MySegmentsSyncTaskConfig getMySegmentsSyncTaskConfig() {
+        return mMySegmentsSyncTaskConfig;
+    }
+
+    @NonNull
+    public MySegmentsUpdateTaskConfig getMySegmentsUpdateTaskConfig() {
+        return mMySegmentsUpdateTaskConfig;
+    }
+
+    @NonNull
+    public MySegmentsUpdateTaskConfig getMyLargeSegmentsUpdateTaskConfig() {
+        return mMyLargeSegmentsUpdateTaskConfig;
+    }
+
+    @NonNull
+    public LoadMySegmentsTaskConfig getLoadMySegmentsTaskConfig() {
+        return mLoadMySegmentsTaskConfig;
+    }
+
+    public static MySegmentsTaskFactoryConfiguration get(@NonNull HttpFetcher<AllSegmentsChange> httpFetcher,
+                                                         @NonNull MySegmentsStorage mySegmentsStorage,
+                                                         @NonNull MySegmentsStorage myLargeSegmentsStorage,
+                                                         @NonNull SplitEventsManager eventsManager) {
+        return new MySegmentsTaskFactoryConfiguration(httpFetcher,
+                mySegmentsStorage,
+                myLargeSegmentsStorage,
+                eventsManager,
+                MySegmentsSyncTaskConfig.get(),
+                MySegmentsUpdateTaskConfig.getForMySegments(),
+                MySegmentsUpdateTaskConfig.getForMyLargeSegments(),
+                LoadMySegmentsTaskConfig.get());
     }
 }

@@ -10,15 +10,15 @@ import androidx.test.platform.app.InstrumentationRegistry;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import helper.DatabaseHelper;
+import helper.IntegrationHelper;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -45,18 +45,18 @@ public class MySegmentsStorageTest {
 
         MySegmentEntity entity = new MySegmentEntity();
         entity.setUserKey(mUserKey);
-        entity.setSegmentList("s1,s2,s3");
+        entity.setSegmentList("{\"k\":[{\"n\":\"s1\"},{\"n\":\"s2\"},{\"n\":\"s3\"}],\"cn\":-1}");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
         entity = new MySegmentEntity();
         entity.setUserKey("userkey-2");
-        entity.setSegmentList("s10,s20");
+        entity.setSegmentList("{\"k\":[{\"n\":\"s10\"},{\"n\":\"s20\"}],\"cn\":-1}");
         entity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mRoomDb.mySegmentDao().update(entity);
 
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb,
-                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false));
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
+                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", false), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
         mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
         mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
     }
@@ -69,7 +69,7 @@ public class MySegmentsStorageTest {
     }
 
     @Test
-    public void getMySegments() {
+    public void getSegments() {
         mMySegmentsStorage.loadLocal();
         Set<String> snapshot = new HashSet(mMySegmentsStorage.getAll());
 
@@ -82,30 +82,34 @@ public class MySegmentsStorageTest {
     @Test
     public void updateSegments() {
         mMySegmentsStorage.loadLocal();
-        mMySegmentsStorage.set(Arrays.asList("a1", "a2", "a3", "a4"));
+        mMySegmentsStorage.set(SegmentsChange.create(IntegrationHelper.asSet("a1", "a2", "a3", "a4"), 2222222L));
         MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
 
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
+        long till = mMySegmentsStorage.getChangeNumber();
         Set<String> newSnapshot = new HashSet<>(mySegmentsStorage.getAll());
+        long newTill = mySegmentsStorage.getChangeNumber();
 
         assertEquals(4, snapshot.size());
         assertTrue(snapshot.contains("a1"));
         assertTrue(snapshot.contains("a2"));
         assertTrue(snapshot.contains("a3"));
         assertTrue(snapshot.contains("a4"));
+        assertEquals(2222222, till);
 
         assertEquals(4, newSnapshot.size());
         assertTrue(newSnapshot.contains("a1"));
         assertTrue(newSnapshot.contains("a2"));
         assertTrue(newSnapshot.contains("a3"));
         assertTrue(newSnapshot.contains("a4"));
+        assertEquals(2222222, newTill);
     }
 
     @Test
     public void updateEmptyMySegment() {
         mMySegmentsStorage.loadLocal();
-        mMySegmentsStorage.set(new ArrayList<>());
+        mMySegmentsStorage.set(SegmentsChange.create(Collections.emptySet(), 11124442L));
 
         MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
@@ -115,12 +119,13 @@ public class MySegmentsStorageTest {
 
         assertEquals(0, snapshot.size());
         assertEquals(0, newSnapshot.size());
+        assertEquals(11124442, mySegmentsStorage.getChangeNumber());
     }
 
     @Test
     public void addNullMySegmentsList() {
 
-        mPersistentMySegmentsStorage.set(mUserKey, null);
+        mPersistentMySegmentsStorage.set(mUserKey, SegmentsChange.create(null, -1)); // till will be ignored
         mMySegmentsStorage.loadLocal();
         MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
@@ -130,6 +135,7 @@ public class MySegmentsStorageTest {
 
         assertEquals(3, snapshot.size());
         assertEquals(3, newSnapshot.size());
+        assertEquals(-1, mySegmentsStorage.getChangeNumber());
     }
 
     @Test
@@ -144,16 +150,17 @@ public class MySegmentsStorageTest {
         Set<String> snapshot = new HashSet<>(mMySegmentsStorage.getAll());
 
         assertEquals(0, snapshot.size());
+        assertEquals(-1, mySegmentsStorage.getChangeNumber());
     }
 
     @Test
     public void originalValuesCanBeRetrievedWhenStorageIsEncrypted() {
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(mRoomDb,
-                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true));
+        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
+                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
         mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
         mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
 
-        mMySegmentsStorage.set(Arrays.asList("a1", "a2", "a3", "a4"));
+        mMySegmentsStorage.set(SegmentsChange.create(IntegrationHelper.asSet("a1", "a2", "a3", "a4"), 999820));
         MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
 
@@ -163,6 +170,7 @@ public class MySegmentsStorageTest {
         assertTrue(all.contains("a3"));
         assertTrue(all.contains("a4"));
         assertEquals(4, all.size());
+        assertEquals(999820, mySegmentsStorage.getChangeNumber());
     }
 
     @Test
@@ -170,11 +178,11 @@ public class MySegmentsStorageTest {
         mMySegmentsStorage.loadLocal();
         CountDownLatch latch = new CountDownLatch(2);
 
-        new Thread(new Runnable() {
+        Thread thread1 = new Thread(new Runnable() {
             @Override
             public void run() {
                 for (int j = 1000; j < 1200; j += 10) {
-                    List<String> segments = new ArrayList<>();
+                    Set<String> segments = new HashSet<>();
 
                     for (int i = 0; i < 10; i++) {
                         segments.add("segment_" + j + "_" + i);
@@ -183,34 +191,40 @@ public class MySegmentsStorageTest {
                         Thread.sleep(80);
                     } catch (InterruptedException e) {
                     }
-                    mMySegmentsStorage.set(segments);
+                    mMySegmentsStorage.set(SegmentsChange.create(segments, 112421 + j));
                 }
                 latch.countDown();
             }
-        }).start();
+        });
 
-        new Thread(new Runnable() {
+        Thread thread2 = new Thread(new Runnable() {
             @Override
             public void run() {
 
                 for (int j = 0; j < 200; j += 10) {
-                    List<String> segments = new ArrayList<>();
+                    Set<String> segments = new HashSet<>();
 
                     for (int i = 0; i < 10; i++) {
                         segments.add("segment_" + j + "_" + i);
                     }
                     try {
                         Thread.sleep(80);
-                        mMySegmentsStorage.set(segments);
+                        mMySegmentsStorage.set(SegmentsChange.create(segments, 112421 + j));
                         Thread.sleep(80);
                     } catch (InterruptedException e) {
                     }
                 }
                 latch.countDown();
             }
-        }).start();
+        });
+
+        thread1.start();
+        thread2.start();
+        thread1.join();
+        thread2.join();
+
         latch.await(40, TimeUnit.SECONDS);
-        Set<String> l = mMySegmentsStorage.getAll();
         assertEquals(10, mMySegmentsStorage.getAll().size());
+        assertEquals(112421 + 190, mMySegmentsStorage.getChangeNumber());
     }
 }

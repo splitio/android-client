@@ -17,7 +17,7 @@ apply plugin: 'kotlin-android'
 apply from: 'spec.gradle'
 
 ext {
-    splitVersion = '4.2.2'
+    splitVersion = '5.0.0'
 }
 
 android {
@@ -323,3 +323,10 @@ task printReleaseDependenciesToFile {
 }
 
 preBuild.dependsOn printReleaseDependenciesToFile
+
+tasks.withType(Test) {
+    systemProperties['junit.jupiter.execution.parallel.enabled'] = true
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    forkEvery = 100
+    maxHeapSize = "1024m"
+}

@@ -56,8 +56,7 @@ public class SplitClientConfig {
     private static final int DEFAULT_BACKGROUND_SYNC_PERIOD_MINUTES = 15;
     private static final long MIN_IMPRESSIONS_DEDUPE_TIME_INTERVAL = TimeUnit.HOURS.toMillis(1);
     private static final long MAX_IMPRESSIONS_DEDUPE_TIME_INTERVAL = TimeUnit.HOURS.toMillis(24);
-
-    private final static int DEFAULT_MTK_PER_PUSH = 30000;
+    private static final int DEFAULT_MTK_PER_PUSH = 30000;
 
     // Validation settings
     private static final int MAXIMUM_KEY_LENGTH = 250;

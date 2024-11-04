@@ -4,7 +4,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import java.util.List;
+import java.util.Set;
 
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
@@ -20,26 +20,30 @@ public class MySegmentsTaskFactoryImpl implements MySegmentsTaskFactory {
     }
 
     @Override
-    public MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache) {
+    public MySegmentsSyncTask createMySegmentsSyncTask(boolean avoidCache, Long targetSegmentsCn, Long targetLargeSegmentsCn) {
         return new MySegmentsSyncTask(mConfiguration.getHttpFetcher(),
-                mConfiguration.getStorage(),
+                mConfiguration.getMySegmentsStorage(),
+                mConfiguration.getMyLargeSegmentsStorage(),
                 avoidCache,
                 mConfiguration.getEventsManager(),
-                mTelemetryRuntimeProducer);
+                mTelemetryRuntimeProducer,
+                mConfiguration.getMySegmentsSyncTaskConfig(),
+                targetSegmentsCn,
+                targetLargeSegmentsCn);
     }
 
     @Override
     public LoadMySegmentsTask createLoadMySegmentsTask() {
-        return new LoadMySegmentsTask(mConfiguration.getStorage());
+        return new LoadMySegmentsTask(mConfiguration.getMySegmentsStorage(), mConfiguration.getMyLargeSegmentsStorage(), mConfiguration.getLoadMySegmentsTaskConfig());
     }
 
     @Override
-    public MySegmentsOverwriteTask createMySegmentsOverwriteTask(List<String> segments) {
-        return new MySegmentsOverwriteTask(mConfiguration.getStorage(), segments, mConfiguration.getEventsManager());
+    public MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, Set<String> segmentNames, Long changeNumber) {
+        return new MySegmentsUpdateTask(mConfiguration.getMySegmentsStorage(), add, segmentNames, changeNumber, mConfiguration.getEventsManager(), mTelemetryRuntimeProducer, mConfiguration.getMySegmentsUpdateTaskConfig());
     }
 
     @Override
-    public MySegmentsUpdateTask createMySegmentsUpdateTask(boolean add, String segmentName) {
-        return new MySegmentsUpdateTask(mConfiguration.getStorage(), add, segmentName, mConfiguration.getEventsManager(), mTelemetryRuntimeProducer);
+    public MySegmentsUpdateTask createMyLargeSegmentsUpdateTask(boolean add, Set<String> segmentNames, Long changeNumber) {
+        return new MySegmentsUpdateTask(mConfiguration.getMyLargeSegmentsStorage(), add, segmentNames, changeNumber, mConfiguration.getEventsManager(), mTelemetryRuntimeProducer, mConfiguration.getMyLargeSegmentsUpdateTaskConfig());
     }
 }

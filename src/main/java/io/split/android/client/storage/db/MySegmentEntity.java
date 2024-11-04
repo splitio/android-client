@@ -1,48 +1,23 @@
 package io.split.android.client.storage.db;
 
-import androidx.annotation.NonNull;
-import androidx.room.ColumnInfo;
 import androidx.room.Entity;
-import androidx.room.PrimaryKey;
 
 @Entity(tableName = "my_segments")
-public class MySegmentEntity {
+public class MySegmentEntity extends SegmentEntity {
 
-    @PrimaryKey()
-    @NonNull
-    @ColumnInfo(name = "user_key")
-    private String userKey;
+    private final static Creator<MySegmentEntity> CREATOR = new Creator<MySegmentEntity>() {
+        @Override
+        public MySegmentEntity createEntity(String userKey, String segmentList, long updatedAt) {
+            MySegmentEntity entity = new MySegmentEntity();
+            entity.setUserKey(userKey);
+            entity.setSegmentList(segmentList);
+            entity.setUpdatedAt(updatedAt);
 
-    @NonNull
-    @ColumnInfo(name = "segment_list")
-    private String segmentList;
+            return entity;
+        }
+    };
 
-    @ColumnInfo(name = "updated_at")
-    private long updatedAt;
-
-    @NonNull
-    public String getUserKey() {
-        return userKey;
-    }
-
-    public void setUserKey(String userKey) {
-        this.userKey = userKey;
-    }
-
-    @NonNull
-    public String getSegmentList() {
-        return segmentList;
-    }
-
-    public void setSegmentList(@NonNull String segmentList) {
-        this.segmentList = segmentList;
-    }
-
-    public long getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(long updatedAt) {
-        this.updatedAt = updatedAt;
+    public static Creator<MySegmentEntity> creator() {
+        return CREATOR;
     }
 }

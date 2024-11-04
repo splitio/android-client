@@ -7,6 +7,7 @@ import androidx.annotation.Nullable;
 
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -27,6 +28,7 @@ public class SplitsSyncTask implements SplitTask {
     private final ISplitEventsManager mEventsManager; // Should only be null on background sync
     private final SplitsChangeChecker mChangeChecker;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private final int mOnDemandFetchBackoffMaxRetries;
 
     public static SplitsSyncTask build(@NonNull SplitsSyncHelper splitsSyncHelper,
                                        @NonNull SplitsStorage splitsStorage,
@@ -35,7 +37,7 @@ public class SplitsSyncTask implements SplitTask {
                                        String splitsFilterQueryString,
                                        @NonNull ISplitEventsManager eventsManager,
                                        @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
-        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, checkCacheExpiration, cacheExpirationInSeconds, splitsFilterQueryString, telemetryRuntimeProducer, eventsManager);
+        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, checkCacheExpiration, cacheExpirationInSeconds, splitsFilterQueryString, telemetryRuntimeProducer, eventsManager, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
     }
 
     public static SplitTask buildForBackground(@NonNull SplitsSyncHelper splitsSyncHelper,
@@ -44,7 +46,7 @@ public class SplitsSyncTask implements SplitTask {
                                                     long cacheExpirationInSeconds,
                                                     String splitsFilterQueryString,
                                                     @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
-        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, checkCacheExpiration, cacheExpirationInSeconds, splitsFilterQueryString, telemetryRuntimeProducer, null);
+        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, checkCacheExpiration, cacheExpirationInSeconds, splitsFilterQueryString, telemetryRuntimeProducer, null, 1);
     }
 
     private SplitsSyncTask(@NonNull SplitsSyncHelper splitsSyncHelper,
@@ -53,7 +55,8 @@ public class SplitsSyncTask implements SplitTask {
                            long cacheExpirationInSeconds,
                            String splitsFilterQueryString,
                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
-                           @Nullable ISplitEventsManager eventsManager) {
+                           @Nullable ISplitEventsManager eventsManager,
+                           int onDemandFetchBackoffMaxRetries) {
 
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
@@ -63,6 +66,7 @@ public class SplitsSyncTask implements SplitTask {
         mEventsManager = eventsManager;
         mChangeChecker = new SplitsChangeChecker();
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
+        mOnDemandFetchBackoffMaxRetries = onDemandFetchBackoffMaxRetries;
     }
 
     @Override
@@ -84,7 +88,7 @@ public class SplitsSyncTask implements SplitTask {
         long startTime = System.currentTimeMillis();
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(storedChangeNumber,
                 splitsFilterHasChanged || shouldClearExpiredCache,
-                splitsFilterHasChanged);
+                splitsFilterHasChanged || shouldClearExpiredCache, mOnDemandFetchBackoffMaxRetries);
         mTelemetryRuntimeProducer.recordSyncLatency(OperationType.SPLITS, System.currentTimeMillis() - startTime);
 
         if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {

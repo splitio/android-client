@@ -30,7 +30,7 @@ public class TelemetryStatsBodySerializerTest {
     public void jsonIsBuiltAsExpected() {
         String serializedStats = telemetryStatsBodySerializer.serialize(getMockStats());
 
-        assertEquals("{\"lS\":{\"sp\":1000,\"ms\":2000,\"im\":3000,\"ic\":4000,\"ev\":5000,\"te\":6000,\"to\":7000},\"mL\":{\"t\":[0,0,2,0],\"ts\":[0,0,3,0],\"tc\":[0,0,5,0],\"tcs\":[0,0,4,0],\"tf\":[1,0,0,0],\"tfs\":[2,0,0,0],\"tcf\":[3,0,0,0],\"tcfs\":[4,0,0,0],\"tr\":[0,0,1,0]},\"mE\":{\"t\":2,\"ts\":3,\"tc\":5,\"tcs\":4,\"tf\":10,\"tfs\":20,\"tcf\":30,\"tcfs\":40,\"tr\":1},\"hE\":{},\"hL\":{\"sp\":[0,0,3,0],\"ms\":[0,0,5,0],\"im\":[0,0,1,0],\"ic\":[0,0,4,0],\"ev\":[0,0,2,0],\"te\":[1,0,0,0],\"to\":[0,0,6,0]},\"tR\":4,\"aR\":5,\"iQ\":2,\"iDe\":5,\"iDr\":4,\"spC\":456,\"seC\":4,\"skC\":1,\"sL\":2000,\"eQ\":4,\"eD\":2,\"sE\":[{\"e\":0,\"t\":5000},{\"e\":20,\"d\":4,\"t\":2000}],\"t\":[\"tag1\",\"tag2\"],\"ufs\":{\"sp\":4,\"ms\":8}}", serializedStats);
+        assertEquals("{\"lS\":{\"sp\":1000,\"ms\":2000,\"mls\":425,\"im\":3000,\"ic\":4000,\"ev\":5000,\"te\":6000,\"to\":7000},\"mL\":{\"t\":[0,0,2,0],\"ts\":[0,0,3,0],\"tc\":[0,0,5,0],\"tcs\":[0,0,4,0],\"tf\":[1,0,0,0],\"tfs\":[2,0,0,0],\"tcf\":[3,0,0,0],\"tcfs\":[4,0,0,0],\"tr\":[0,0,1,0]},\"mE\":{\"t\":2,\"ts\":3,\"tc\":5,\"tcs\":4,\"tf\":10,\"tfs\":20,\"tcf\":30,\"tcfs\":40,\"tr\":1},\"hE\":{},\"hL\":{\"sp\":[0,0,3,0],\"ms\":[0,0,5,0],\"mls\":[0,0,6,0],\"im\":[0,0,1,0],\"ic\":[0,0,4,0],\"ev\":[0,0,2,0],\"te\":[1,0,0,0],\"to\":[0,0,6,0]},\"tR\":4,\"aR\":5,\"iQ\":2,\"iDe\":5,\"iDr\":4,\"spC\":456,\"seC\":4,\"lsC\":25,\"skC\":1,\"sL\":2000,\"eQ\":4,\"eD\":2,\"sE\":[{\"e\":0,\"t\":5000},{\"e\":20,\"d\":4,\"t\":2000}],\"t\":[\"tag1\",\"tag2\"],\"ufs\":{\"sp\":4,\"ms\":8,\"mls\":3}}", serializedStats);
     }
 
     private Stats getMockStats() {
@@ -46,6 +46,7 @@ public class TelemetryStatsBodySerializerTest {
         httpLatencies.setSplits(Arrays.asList(0L, 0L, 3L, 0L));
         httpLatencies.setImpressionsCount(Arrays.asList(0L, 0L, 4L, 0L));
         httpLatencies.setMySegments(Arrays.asList(0L, 0L, 5L, 0L));
+        httpLatencies.setMyLargeSegments(Arrays.asList(0L, 0L, 6L, 0L));
         httpLatencies.setToken(Arrays.asList(0L, 0L, 6L, 0L));
 
         MethodLatencies methodLatencies = new MethodLatencies();
@@ -80,6 +81,7 @@ public class TelemetryStatsBodySerializerTest {
         LastSync lastSynchronizations = new LastSync();
         lastSynchronizations.setLastSplitSync(1000);
         lastSynchronizations.setLastMySegmentSync(2000);
+        lastSynchronizations.setLastMyLargeSegmentSync(425);
         lastSynchronizations.setLastImpressionSync(3000);
         lastSynchronizations.setLastImpressionCountSync(4000);
         lastSynchronizations.setLastEventSync(5000);
@@ -87,6 +89,7 @@ public class TelemetryStatsBodySerializerTest {
         lastSynchronizations.setLastTokenRefresh(7000);
         stats.setLastSynchronizations(lastSynchronizations);
         stats.setSegmentCount(4);
+        stats.setLargeSegmentCount(25);
         stats.setMethodExceptions(methodExceptions);
         stats.setMethodLatencies(methodLatencies);
         stats.setSessionLengthMs(2000);
@@ -94,7 +97,7 @@ public class TelemetryStatsBodySerializerTest {
         stats.setTags(Arrays.asList("tag1", "tag2"));
         stats.setTokenRefreshes(4);
         stats.setStreamingEvents(Arrays.asList(new ConnectionEstablishedStreamingEvent(5000), new OccupancySecStreamingEvent(4, 2000)));
-        stats.setUpdatesFromSSE(new UpdatesFromSSE(4L, 8L));
+        stats.setUpdatesFromSSE(new UpdatesFromSSE(4L, 8L, 3L));
 
         return stats;
     }

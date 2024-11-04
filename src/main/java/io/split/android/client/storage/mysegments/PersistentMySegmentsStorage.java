@@ -1,14 +1,12 @@
 package io.split.android.client.storage.mysegments;
 
-import androidx.annotation.NonNull;
-
-import java.util.List;
+import io.split.android.client.dtos.SegmentsChange;
 
 public interface PersistentMySegmentsStorage {
 
-    void set(String userKey, @NonNull List<String> mySegments);
+    void set(String userKey, SegmentsChange segmentsChange);
 
-    List<String> getSnapshot(String userKey);
+    SegmentsChange getSnapshot(String userKey);
 
     void close();
 }

@@ -41,7 +41,6 @@ import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.MySegment;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.Impression;
@@ -163,7 +162,7 @@ public class SynchronizerTest {
         mTaskExecutor = taskExecutor;
         mSingleThreadedTaskExecutor = spy(new SplitTaskExecutorStub());
         HttpFetcher<SplitChange> splitsFetcher = Mockito.mock(HttpFetcher.class);
-        HttpFetcher<List<MySegment>> mySegmentsFetcher = Mockito.mock(HttpFetcher.class);
+        HttpFetcher mySegmentsFetcher = Mockito.mock(HttpFetcher.class);
         HttpRecorder<List<Event>> eventsRecorder = Mockito.mock(HttpRecorder.class);
         HttpRecorder<List<KeyImpression>> impressionsRecorder = Mockito.mock(HttpRecorder.class);
 
@@ -182,7 +181,7 @@ public class SynchronizerTest {
         when(mSplitStorageContainer.getImpressionsStorage()).thenReturn(mImpressionsStorage);
 
         when(mTaskFactory.createSplitsSyncTask(anyBoolean())).thenReturn(Mockito.mock(SplitsSyncTask.class));
-        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(anyBoolean())).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
+        when(mMySegmentsTaskFactory.createMySegmentsSyncTask(anyBoolean(), anyLong(), anyLong())).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));
         when(mTaskFactory.createLoadSplitsTask()).thenReturn(Mockito.mock(LoadSplitsTask.class));
@@ -245,6 +244,20 @@ public class SynchronizerTest {
         verify(mWorkManagerWrapper, never()).scheduleWork();
 
         mSynchronizer.unregisterMySegmentsSynchronizer("userKey");
+    }
+
+    @Test
+    public void startPeriodicRecordingSchedulesLargeSegmentsSyncTask() {
+        SplitClientConfig config = SplitClientConfig.builder()
+                .eventsQueueSize(10)
+                .userConsent(UserConsent.GRANTED)
+                .impressionsQueueSize(3)
+                .build();
+        setup(config);
+
+        mSynchronizer.startPeriodicFetching();
+
+        verify(mMySegmentsSynchronizerRegistry).scheduleSegmentsSyncTask();
     }
 
     @Test
@@ -515,7 +528,7 @@ public class SynchronizerTest {
         setup(config);
 
         List<SplitTaskExecutionInfo> list = new ArrayList<>();
-        list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS));
+        list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SEGMENTS));
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
         list.add(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_ATTRIBUTES));
         SplitTaskExecutor executor = new SplitTaskExecutorSub(list);
@@ -528,7 +541,7 @@ public class SynchronizerTest {
                 mFeatureFlagsSynchronizer, mSplitStorageContainer.getEventsStorage());
 
         LoadMySegmentsTask loadMySegmentsTask = mock(LoadMySegmentsTask.class);
-        when(loadMySegmentsTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SYGMENTS));
+        when(loadMySegmentsTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SEGMENTS));
         when(mMySegmentsTaskFactory.createLoadMySegmentsTask()).thenReturn(loadMySegmentsTask);
 
         ((MySegmentsSynchronizerRegistry) mSynchronizer).registerMySegmentsSynchronizer("", mMySegmentsSynchronizer);
@@ -609,15 +622,6 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void forceMySegmentsSyncDelegatesToRegistry() {
-        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
-
-        mSynchronizer.forceMySegmentsSync();
-
-        verify(mMySegmentsSynchronizerRegistry).forceMySegmentsSync();
-    }
-
-    @Test
     public void destroyDelegatesToRegisteredSyncs() {
         setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
 
@@ -685,8 +689,8 @@ public class SynchronizerTest {
     }
 
     @Test
-    public void beginNotifiedOfMySegmentsSyncTriggersMySegmentsLoad() {
-        setup(SplitClientConfig.builder().persistentAttributesEnabled(false).build());
+    public void beingNotifiedOfMySegmentsSyncTriggersMySegmentsLoad() {
+        setup(SplitClientConfig.builder().build());
 
         mSynchronizer.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.MY_SEGMENTS_SYNC));
 
@@ -765,6 +769,24 @@ public class SynchronizerTest {
                 eq(eventsTask), anyLong(), anyLong(),
                 any(SplitTaskExecutionListener.class));
         verify(mTaskExecutor, times(1)).stopTask("task-id");
+    }
+
+    @Test
+    public void registerMySegmentsSynchronizerDelegatesToRegistry() {
+        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
+
+        mSynchronizer.registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
+
+        verify(mMySegmentsSynchronizerRegistry).registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
+    }
+
+    @Test
+    public void synchronizeSplitsDelegatesToFeatureFlagsSynchronizer() {
+        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
+
+        mSynchronizer.synchronizeSplits();
+
+        verify(mFeatureFlagsSynchronizer).synchronize();
     }
 
     @After

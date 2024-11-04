@@ -24,7 +24,6 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.ConditionType;
@@ -86,14 +85,14 @@ public class MySegmentsServerErrorTest {
 
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                if (request.getPath().contains("/mySegments")) {
+                if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
 
                     int code = 200;
                     String data = null;
                     int index = mCurReqId;
                     switch (index) {
                         case 0:
-                            data = "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}]}";
+                            data = IntegrationHelper.dummySingleSegment("segment1");
                             break;
                         case 1:
                         case 2:
@@ -101,7 +100,7 @@ public class MySegmentsServerErrorTest {
                             data = "";
                             break;
                         case 3:
-                            data = "{\"mySegments\":[{ \"id\":\"id2\", \"name\":\"segment2\"}]}";
+                            data = IntegrationHelper.dummySingleSegment("segment2");
                     }
 
                     if(index > 0 && index <= mLatchs.size()) {

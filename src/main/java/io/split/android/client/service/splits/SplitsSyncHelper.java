@@ -31,7 +31,6 @@ public class SplitsSyncHelper {
 
     private static final String SINCE_PARAM = "since";
     private static final String TILL_PARAM = "till";
-    private static final int ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES = 10;
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_WAIT;
 
     private final HttpFetcher<SplitChange> mSplitFetcher;
@@ -69,20 +68,20 @@ public class SplitsSyncHelper {
         mFlagsSpec = flagsSpec;
     }
 
-    public SplitTaskExecutionInfo sync(long till) {
-        return sync(till, false, true, false);
+    public SplitTaskExecutionInfo sync(long till, int onDemandFetchBackoffMaxRetries) {
+        return sync(till, false, true, false, onDemandFetchBackoffMaxRetries);
     }
 
-    public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean resetChangeNumber) {
-        return sync(till, clearBeforeUpdate, false, resetChangeNumber);
+    public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
+        return sync(till, clearBeforeUpdate, false, resetChangeNumber, onDemandFetchBackoffMaxRetries);
     }
 
-    private SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber) {
+    private SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
         try {
-            boolean successfulSync = attemptSplitSync(till, clearBeforeUpdate, avoidCache, false, resetChangeNumber);
+            boolean successfulSync = attemptSplitSync(till, clearBeforeUpdate, avoidCache, false, resetChangeNumber, onDemandFetchBackoffMaxRetries);
 
             if (!successfulSync) {
-                attemptSplitSync(till, clearBeforeUpdate, avoidCache, true, resetChangeNumber);
+                attemptSplitSync(till, clearBeforeUpdate, avoidCache, true, resetChangeNumber, onDemandFetchBackoffMaxRetries);
             }
         } catch (HttpFetcherException e) {
             logError("Network error while fetching feature flags" + e.getLocalizedMessage());
@@ -113,10 +112,11 @@ public class SplitsSyncHelper {
      * @param clearBeforeUpdate whether to clear splits storage before updating it
      * @param avoidCache        whether to send no-cache header to api
      * @param withCdnBypass     whether to add additional query param to bypass CDN
+     * @param onDemandFetchBackoffMaxRetries max backoff retries for CDN bypass
      * @return whether sync finished successfully
      */
-    private boolean attemptSplitSync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnBypass, boolean resetChangeNumber) throws Exception {
-        int remainingAttempts = ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES;
+    private boolean attemptSplitSync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnBypass, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) throws Exception {
+        int remainingAttempts = onDemandFetchBackoffMaxRetries;
         mBackoffCounter.resetCounter();
         while (true) {
             remainingAttempts--;
@@ -145,10 +145,11 @@ public class SplitsSyncHelper {
     private long fetchUntil(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnByPass, boolean resetChangeNumber) throws Exception {
         boolean shouldClearBeforeUpdate = clearBeforeUpdate;
 
+        long newTill = till;
         while (true) {
             long changeNumber = (resetChangeNumber) ? -1 : mSplitsStorage.getTill();
             resetChangeNumber = false;
-            if (till < changeNumber) {
+            if (newTill < changeNumber) {
                 return changeNumber;
             }
 
@@ -156,6 +157,7 @@ public class SplitsSyncHelper {
             updateStorage(shouldClearBeforeUpdate, splitChange);
             shouldClearBeforeUpdate = false;
 
+            newTill = splitChange.till;
             if (splitChange.till == splitChange.since) {
                 return splitChange.till;
             }
@@ -184,14 +186,14 @@ public class SplitsSyncHelper {
     }
 
     public boolean cacheHasExpired(long storedChangeNumber, long updateTimestamp, long cacheExpirationInSeconds) {
-        long elapsed = now() - updateTimestamp;
+        long elapsed = now() - TimeUnit.MILLISECONDS.toSeconds(updateTimestamp);
         return storedChangeNumber > -1
                 && updateTimestamp > 0
                 && (elapsed > cacheExpirationInSeconds);
     }
 
     private long now() {
-        return System.currentTimeMillis() / 1000;
+        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     }
 
     private void logError(String message) {

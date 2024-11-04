@@ -3,6 +3,7 @@ package helper;
 import android.content.Context;
 import android.util.Base64;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
@@ -20,9 +21,12 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.CountDownLatch;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -153,12 +157,27 @@ public class IntegrationHelper {
         return factory;
     }
 
-    public static String dummyMySegments() {
-        return "{\"mySegments\":[{ \"id\":\"id1\", \"name\":\"segment1\"}, { \"id\":\"id1\", \"name\":\"segment2\"}]}";
+    @Deprecated
+    public static String emptyMySegments() {
+        return emptyAllSegments();
     }
 
-    public static String emptyMySegments() {
-        return "{\"mySegments\":[]}";
+    public static String emptyAllSegments() {
+        return "{\"ms\":{\"k\":[],\"cn\":null},\"ls\":{\"k\":[],\"cn\":1702507130121}}";
+    }
+
+    public static String dummyAllSegments() {
+        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment1\"},{\"n\":\"large-segment2\"},{\"n\":\"large-segment3\"}],\"cn\":1702507130121}}";
+    }
+
+    public static String randomizedAllSegments() {
+        int randIntOne = (int) (Math.random() * 100);
+        int randIntTwo = (int) (Math.random() * 100);
+        return "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null},\"ls\":{\"k\":[{\"n\":\"large-segment" + randIntOne + "\"},{\"n\":\"large-segment" + randIntTwo + "\"}],\"cn\":1702507130121}}";
+    }
+
+    public static String dummySingleSegment(String segment) {
+        return "{\"ms\":{\"k\":[{\"n\":\"" + segment + "\"}],\"cn\":null},\"ls\":{\"k\":[],\"cn\":1702507130121}}";
     }
 
     public static String dummyApiKey() {
@@ -182,7 +201,7 @@ public class IntegrationHelper {
         return SplitClientConfig.builder()
                 .ready(30000)
                 .streamingEnabled(true)
-                .logLevel(SplitLogLevel.DEBUG)
+                .logLevel(SplitLogLevel.VERBOSE)
                 .trafficType("account")
                 .build();
     }
@@ -244,6 +263,15 @@ public class IntegrationHelper {
 
     }
 
+    @Deprecated
+    public static String streamingEnabledTokenLargeSegments() {
+        return "{" +
+                "    \"pushEnabled\": true," +
+                "    \"connDelay\": " + 0 + "," +
+                "    \"token\": \"eyJhbGciOiJIUzI1NiIsImtpZCI6IjVZOU05US45QnJtR0EiLCJ0eXAiOiJKV1QifQ.ewogICJ4LWFibHktY2FwYWJpbGl0eSI6ICJ7XCJNek01TmpjME9EY3lOZz09X01URXhNemd3TmpneF9NVGN3TlRJMk1UTTBNZz09X215U2VnbWVudHNcIjpbXCJzdWJzY3JpYmVcIl0sXCJNek01TmpjME9EY3lOZz09X01URXhNemd3TmpneF9NVGN3TlRJMk1UTTBNZz09X215bGFyZ2VzZWdtZW50c1wiOltcInN1YnNjcmliZVwiXSxcIk16TTVOamMwT0RjeU5nPT1fTVRFeE16Z3dOamd4X3NwbGl0c1wiOltcInN1YnNjcmliZVwiXSxcImNvbnRyb2xfcHJpXCI6W1wic3Vic2NyaWJlXCIsXCJjaGFubmVsLW1ldGFkYXRhOnB1Ymxpc2hlcnNcIl0sXCJjb250cm9sX3NlY1wiOltcInN1YnNjcmliZVwiLFwiY2hhbm5lbC1tZXRhZGF0YTpwdWJsaXNoZXJzXCJdfSIsCiAgIngtYWJseS1jbGllbnRJZCI6ICJjbGllbnRJZCIsCiAgImV4cCI6IDIyMDg5ODg4MDAsCiAgImlhdCI6IDE1ODc0MDQzODgKfQ==.LcKAXnkr-CiYVxZ7l38w9i98Y-BMAv9JlGP2i92nVQY\"" +
+                "}";
+    }
+
     public static String streamingDisabledToken() {
         return "{\"pushEnabled\": false }";
     }
@@ -276,13 +304,13 @@ public class IntegrationHelper {
     public static String splitChangeV2(String changeNumber, String previousChangeNumber, String compressionType, String compressedPayload) {
         return "id: vQQ61wzBRO:0:0\n" +
                 "event: message\n" +
-                "data: {\"id\":\"m2T85LA4fQ:0:0\",\"clientId\":\"pri:NzIyNjY1MzI4\",\"timestamp\":"+System.currentTimeMillis()+",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\":"+changeNumber+",\\\"pcn\\\":"+previousChangeNumber+",\\\"c\\\":"+compressionType+",\\\"d\\\":\\\""+compressedPayload+"\\\"}\"}\n";
+                "data: {\"id\":\"m2T85LA4fQ:0:0\",\"clientId\":\"pri:NzIyNjY1MzI4\",\"timestamp\":" + System.currentTimeMillis() + ",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_UPDATE\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"pcn\\\":" + previousChangeNumber + ",\\\"c\\\":" + compressionType + ",\\\"d\\\":\\\"" + compressedPayload + "\\\"}\"}\n";
     }
 
     public static String splitKill(String changeNumber, String splitName) {
         return "id:cf74eb42-f687-48e4-ad18-af2125110aac\n" +
                 "event:message\n" +
-                "data:{\"id\":\"-OT-rGuSwz:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:NDIxNjU0NTUyNw==\",\"timestamp\":"+System.currentTimeMillis()+",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_KILL\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"defaultTreatment\\\":\\\"off\\\",\\\"splitName\\\":\\\"" + splitName + "\\\"}\"}\n";
+                "data:{\"id\":\"-OT-rGuSwz:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:NDIxNjU0NTUyNw==\",\"timestamp\":" + System.currentTimeMillis() + ",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_KILL\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"defaultTreatment\\\":\\\"off\\\",\\\"splitName\\\":\\\"" + splitName + "\\\"}\"}\n";
     }
 
     public static String loadSplitChanges(Context context, String fileName) {
@@ -303,14 +331,18 @@ public class IntegrationHelper {
         return buildDispatcher(responses, null);
     }
 
+    public static HttpResponseMockDispatcher buildDispatcher(Map<String, ResponseClosure> responses, @Nullable BlockingQueue<String> streamingQueue) {
+        return buildDispatcher(responses, streamingQueue, null);
+    }
+
     /**
      * Builds a dispatcher with the given responses.
      *
-     * @param responses          The responses to be returned by the dispatcher. The keys are url paths.
+     * @param responses      The responses to be returned by the dispatcher. The keys are url paths.
      * @param streamingQueue The streaming responses to be returned by the dispatcher.
      * @return The dispatcher to be used in {@link HttpClientMock}
      */
-    public static HttpResponseMockDispatcher buildDispatcher(Map<String, ResponseClosure> responses, @Nullable BlockingQueue<String> streamingQueue) {
+    public static HttpResponseMockDispatcher buildDispatcher(Map<String, ResponseClosure> responses, @Nullable BlockingQueue<String> streamingQueue, CountDownLatch sseLatch) {
         return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
@@ -330,6 +362,9 @@ public class IntegrationHelper {
             @Override
             public HttpStreamResponseMock getStreamResponse(URI uri) {
                 try {
+                    if (sseLatch != null) {
+                        sseLatch.countDown();
+                    }
                     return new HttpStreamResponseMock(200, streamingQueue);
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -342,6 +377,17 @@ public class IntegrationHelper {
     public static String sha256(byte[] encoded) throws NoSuchAlgorithmException {
         MessageDigest digest = MessageDigest.getInstance("SHA-256");
         return Base64.encodeToString(digest.digest(encoded), Base64.NO_WRAP);
+    }
+
+    @NonNull
+    public static <T> Set<T> asSet(T... elements) {
+        if (elements.length == 0) {
+            return Collections.emptySet();
+        }
+        Set<T> result = new HashSet<>();
+        Collections.addAll(result, elements);
+
+        return result;
     }
 
     /**
@@ -385,5 +431,9 @@ public class IntegrationHelper {
      */
     public interface StreamingResponseClosure {
         HttpStreamResponseMock onResponse(URI uri);
+    }
+
+    public static class ServicePath {
+        public static final String MEMBERSHIPS = "memberships";
     }
 }

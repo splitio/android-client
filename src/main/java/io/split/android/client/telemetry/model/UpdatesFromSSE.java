@@ -10,9 +10,13 @@ public class UpdatesFromSSE {
     @SerializedName("ms")
     private long mMySegments;
 
-    public UpdatesFromSSE(long splits, long mySegments) {
+    @SerializedName("mls")
+    private long mMyLargeSegments;
+
+    public UpdatesFromSSE(long splits, long mySegments, long myLargeSegments) {
         mSplits = splits;
         mMySegments = mySegments;
+        mMyLargeSegments = myLargeSegments;
     }
 
     public long getSplits() {
@@ -21,5 +25,9 @@ public class UpdatesFromSSE {
 
     public long getMySegments() {
         return mMySegments;
+    }
+
+    public long getMyLargeSegments() {
+        return mMyLargeSegments;
     }
 }

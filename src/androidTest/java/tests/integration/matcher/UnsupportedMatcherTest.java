@@ -128,7 +128,7 @@ public class UnsupportedMatcherTest {
             }
         });
 
-        responses.put("mySegments/test", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
+        responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "/test", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyMySegments()));
 
         responses.put("v2/auth", (uri, httpMethod, body) -> {
             mAuthLatch.countDown();

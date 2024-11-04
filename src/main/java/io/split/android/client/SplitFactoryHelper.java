@@ -22,27 +22,29 @@ import java.util.concurrent.TimeUnit;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.SdkTargetPath;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
+import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactory;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryImpl;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyConfig;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
 import io.split.android.client.service.impressions.strategy.ProcessStrategy;
+import io.split.android.client.service.mysegments.AllSegmentsResponseParser;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
-import io.split.android.client.service.sseclient.notifications.MySegmentsPayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
-import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactory;
-import io.split.android.client.service.sseclient.notifications.mysegments.MySegmentsNotificationProcessorFactoryImpl;
+import io.split.android.client.service.sseclient.notifications.mysegments.MembershipsNotificationProcessorFactory;
+import io.split.android.client.service.sseclient.notifications.mysegments.MembershipsNotificationProcessorFactoryImpl;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
@@ -161,6 +163,7 @@ class SplitFactoryHelper {
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, splitCipher),
+                StorageFactory.getMyLargeSegmentsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getEventsStorage(persistentEventsStorage, isPersistenceEnabled),
                 persistentEventsStorage,
@@ -182,7 +185,8 @@ class SplitFactoryHelper {
                 ServiceFactory.getSplitsFetcher(httpClient,
                         splitClientConfig.endpoint(), splitsFilterQueryString),
                 new MySegmentsFetcherFactoryImpl(httpClient,
-                        splitClientConfig.endpoint()),
+                        splitClientConfig.endpoint(), new AllSegmentsResponseParser(),
+                        new MySegmentsUriBuilder(splitClientConfig.endpoint())),
                 ServiceFactory.getSseAuthenticationFetcher(httpClient,
                         splitClientConfig.authServiceUrl()),
                 ServiceFactory.getEventsRecorder(httpClient,
@@ -298,14 +302,11 @@ class SplitFactoryHelper {
         if (config.persistentAttributesEnabled()) {
             attributesStorage = storageContainer.getPersistentAttributesStorage();
         }
-        MySegmentsSynchronizerFactory mySegmentsSynchronizerFactory = new MySegmentsSynchronizerFactoryImpl(
-                new RetryBackoffCounterTimerFactory(),
-                taskExecutor,
-                config.segmentsRefreshRate());
+        MySegmentsSynchronizerFactory mySegmentsSynchronizerFactory = new MySegmentsSynchronizerFactoryImpl(new RetryBackoffCounterTimerFactory(), taskExecutor);
 
-        MySegmentsNotificationProcessorFactory mySegmentsNotificationProcessorFactory = null;
+        MembershipsNotificationProcessorFactory membershipsNotificationProcessorFactory = null;
         if (config.syncEnabled()) {
-            mySegmentsNotificationProcessorFactory = new MySegmentsNotificationProcessorFactoryImpl(notificationParser,
+            membershipsNotificationProcessorFactory = new MembershipsNotificationProcessorFactoryImpl(notificationParser,
                     taskExecutor,
                     mySegmentsV2PayloadDecoder,
                     compressionProvider);
@@ -322,7 +323,7 @@ class SplitFactoryHelper {
                 eventsManagerCoordinator,
                 sseAuthenticator,
                 notificationProcessor,
-                mySegmentsNotificationProcessorFactory,
+                membershipsNotificationProcessorFactory,
                 mySegmentsV2PayloadDecoder);
     }
 
@@ -343,7 +344,7 @@ class SplitFactoryHelper {
         NotificationParser notificationParser = new NotificationParser();
 
         NotificationProcessor notificationProcessor = new NotificationProcessor(splitTaskExecutor, splitTaskFactory,
-                notificationParser, splitsUpdateNotificationQueue, new MySegmentsPayloadDecoder());
+                notificationParser, splitsUpdateNotificationQueue);
 
         PushManagerEventBroadcaster pushManagerEventBroadcaster = new PushManagerEventBroadcaster();
 
@@ -468,5 +469,18 @@ class SplitFactoryHelper {
             return telemetryStorage;
         }
         return StorageFactory.getTelemetryStorage(shouldRecordTelemetry);
+    }
+
+    static class MySegmentsUriBuilder implements MySegmentsFetcherFactory.UriBuilder {
+        private final String mEndpoint;
+
+        public MySegmentsUriBuilder(String endpoint) {
+            mEndpoint = endpoint;
+        }
+
+        @Override
+        public URI build(String matchingKey) throws URISyntaxException {
+            return SdkTargetPath.mySegments(mEndpoint, matchingKey);
+        }
     }
 }

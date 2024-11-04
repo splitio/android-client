@@ -76,7 +76,7 @@ public class EventsRecorderTask implements SplitTask {
 
                     mTelemetryRuntimeProducer.recordSyncError(OperationType.EVENTS, e.getHttpStatus());
 
-                    if (HttpStatus.fromCode(e.getHttpStatus()) == HttpStatus.INTERNAL_NON_RETRYABLE) {
+                    if (HttpStatus.isNotRetryable(e.getHttpStatus())) {
                         doNotRetry = true;
                         break;
                     }
