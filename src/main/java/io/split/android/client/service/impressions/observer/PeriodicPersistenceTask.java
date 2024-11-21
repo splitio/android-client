@@ -1,9 +1,12 @@
 package io.split.android.client.service.impressions.observer;
 
 import java.lang.ref.WeakReference;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
+import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 import io.split.android.client.utils.logger.Logger;
 
 public class PeriodicPersistenceTask implements Runnable {
@@ -22,21 +25,28 @@ public class PeriodicPersistenceTask implements Runnable {
     public void run() {
         try {
             if (mCache != null) {
-                for (Map.Entry<Long, Long> entry : mCache.entrySet()) {
-                    try {
-                        mImpressionsObserverCacheDao.insert(entry.getKey(), entry.getValue(), System.currentTimeMillis());
-                    } catch (Exception ex) {
-                        Logger.e("Error while persisting element in observer cache: " + ex.getLocalizedMessage());
+                try {
+                    List<ImpressionsObserverCacheEntity> entities = new ArrayList<>();
+                    for (Map.Entry<Long, Long> entry : mCache.entrySet()) {
+                        try {
+                            entities.add(new ImpressionsObserverCacheEntity(entry.getKey(), entry.getValue(), System.currentTimeMillis()));
+                        } catch (Exception ex) {
+                            Logger.e("Error while creating observer cache entity");
+                        }
                     }
+
+                    if (!entities.isEmpty()) {
+                        mImpressionsObserverCacheDao.insert(entities);
+                    }
+
+                    mCache.clear();
+                } catch (Exception ex) {
+                    Logger.e("Error while persisting elements in observer cache: " + ex.getLocalizedMessage());
                 }
             }
         } catch (Exception ex) {
             Logger.e("Error while persisting observer cache: " + ex.getLocalizedMessage());
         } finally {
-            if (mCache != null) {
-                mCache.clear();
-            }
-
             if (mOnExecutedListener.get() != null) {
                 mOnExecutedListener.get().onExecuted();
             }

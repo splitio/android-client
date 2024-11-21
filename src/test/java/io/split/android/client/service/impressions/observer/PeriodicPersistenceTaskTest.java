@@ -1,25 +1,24 @@
 package io.split.android.client.service.impressions.observer;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
+import org.mockito.ArgumentMatcher;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
+import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 
 public class PeriodicPersistenceTaskTest {
 
@@ -39,7 +38,7 @@ public class PeriodicPersistenceTaskTest {
         PeriodicPersistenceTask task = new PeriodicPersistenceTask(mCache, mImpressionsObserverCacheDao, mOnExecutedListener);
         task.run();
 
-        verify(mImpressionsObserverCacheDao, times(0)).insert(any(), any(), any());
+        verify(mImpressionsObserverCacheDao, times(0)).insert(anyList());
     }
 
     @Test
@@ -50,8 +49,15 @@ public class PeriodicPersistenceTaskTest {
         PeriodicPersistenceTask task = new PeriodicPersistenceTask(mCache, mImpressionsObserverCacheDao, mOnExecutedListener);
         task.run();
 
-        verify(mImpressionsObserverCacheDao).insert(eq(1L), eq(1L), anyLong());
-        verify(mImpressionsObserverCacheDao).insert(eq(2L), eq(2L), anyLong());
+        verify(mImpressionsObserverCacheDao).insert(argThat(new ArgumentMatcher<List<ImpressionsObserverCacheEntity>>() {
+            @Override
+            public boolean matches(List<ImpressionsObserverCacheEntity> argument) {
+                return argument.size() == 2 && (argument.get(0).getHash() == 1L && argument.get(0).getTime() == 1L
+                        && argument.get(1).getHash() == 2L && argument.get(1).getTime() == 2L ||
+                        argument.get(1).getHash() == 1L && argument.get(1).getTime() == 1L
+                                && argument.get(0).getHash() == 2L && argument.get(0).getTime() == 2L);
+            }
+        }));
     }
 
     @Test
@@ -89,7 +95,7 @@ public class PeriodicPersistenceTaskTest {
     public void exceptionInInsertDoesNotThrow() {
         doAnswer(invocation -> {
             throw new RuntimeException();
-        }).when(mImpressionsObserverCacheDao).insert(eq(1L), eq(1L), any());
+        }).when(mImpressionsObserverCacheDao).insert(any());
 
         mCache.put(1L, 1L);
         mCache.put(2L, 2L);
@@ -97,6 +103,11 @@ public class PeriodicPersistenceTaskTest {
         PeriodicPersistenceTask task = new PeriodicPersistenceTask(mCache, mImpressionsObserverCacheDao, mOnExecutedListener);
         task.run();
 
-        verify(mImpressionsObserverCacheDao).insert(eq(2L), eq(2L), any());
+        verify(mImpressionsObserverCacheDao).insert(argThat(new ArgumentMatcher<List<ImpressionsObserverCacheEntity>>() {
+            @Override
+            public boolean matches(List<ImpressionsObserverCacheEntity> argument) {
+                return argument.size() == 2;
+            }
+        }));
     }
 }

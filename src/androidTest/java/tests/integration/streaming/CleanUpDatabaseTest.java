@@ -1,5 +1,7 @@
 package tests.integration.streaming;
 
+import static java.lang.Thread.sleep;
+
 import android.content.Context;
 
 import androidx.core.util.Pair;
@@ -12,6 +14,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
@@ -43,12 +46,10 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
-import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
-
-import static java.lang.Thread.sleep;
 
 public class CleanUpDatabaseTest {
     Context mContext;
@@ -109,9 +110,11 @@ public class CleanUpDatabaseTest {
         mUniqueKeysDao.insert(createUniqueKeyEntity(now() + 10, StorageRecordStatus.ACTIVE, "active"));
         mUniqueKeysDao.insert(createUniqueKeyEntity(expiratedTime(), StorageRecordStatus.ACTIVE, "expirated"));
 
-        mImpressionsObserverCacheDao.insert(1L, 2L, now());
-        mImpressionsObserverCacheDao.insert(5L, 6L, now());
-        mImpressionsObserverCacheDao.insert(3L, 4L, TimeUnit.SECONDS.toMillis(now()) - ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS);
+        List<ImpressionsObserverCacheEntity> entities = new ArrayList<>();
+        entities.add(new ImpressionsObserverCacheEntity(1L, 2L, now()));
+        entities.add(new ImpressionsObserverCacheEntity(5L, 6L, now()));
+        entities.add(new ImpressionsObserverCacheEntity(3L, 4L, TimeUnit.SECONDS.toMillis(now()) - ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS));
+        mImpressionsObserverCacheDao.insert(entities);
 
         // Load records to check if inserted correctly on assert stage
         List<EventEntity> insertedEvents = mEventDao.getBy(0, StorageRecordStatus.ACTIVE, 10);

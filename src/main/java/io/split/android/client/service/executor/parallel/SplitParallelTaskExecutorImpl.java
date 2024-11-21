@@ -21,16 +21,23 @@ public class SplitParallelTaskExecutorImpl<T> implements SplitParallelTaskExecut
 
     private final ExecutorService mScheduler;
 
-    public SplitParallelTaskExecutorImpl(int threads, ExecutorService scheduler) {
+    private final int mTimeoutInSeconds;
+
+    SplitParallelTaskExecutorImpl(int threads, ExecutorService scheduler) {
+        this(threads, scheduler, TIMEOUT_IN_SECONDS);
+    }
+
+    SplitParallelTaskExecutorImpl(int threads, ExecutorService scheduler, int timeoutInSeconds) {
         mThreads = threads;
         mScheduler = scheduler;
+        mTimeoutInSeconds = timeoutInSeconds;
     }
 
     @Override
     @WorkerThread
     public List<T> execute(Collection<SplitDeferredTaskItem<T>> splitDeferredTaskItems) {
         try {
-            List<Future<T>> futures = mScheduler.invokeAll(splitDeferredTaskItems, TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
+            List<Future<T>> futures = mScheduler.invokeAll(splitDeferredTaskItems, mTimeoutInSeconds, TimeUnit.SECONDS);
             ArrayList<T> results = new ArrayList<>();
 
             for (Future<T> future : futures) {

@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +42,7 @@ import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 import io.split.android.client.utils.Json;
 import tests.integration.shared.TestingHelper;
 
@@ -211,9 +213,11 @@ public class DedupeIntegrationTest {
     @Test
     public void expiredObserverCacheValuesExistingInDatabaseAreRemovedOnStartup() throws InterruptedException {
         // prepopulate DB with 2000 entries
+        List<ImpressionsObserverCacheEntity> entities = new ArrayList<>();
         for (int i = 0; i < 2000; i++) {
-            mDatabase.impressionsObserverCacheDao().insert((long) i, (long) i, System.currentTimeMillis());
+            entities.add(new ImpressionsObserverCacheEntity(i, i, System.currentTimeMillis()));
         }
+        mDatabase.impressionsObserverCacheDao().insert(entities);
 
         // wait for them to expire
         Thread.sleep(2000);
