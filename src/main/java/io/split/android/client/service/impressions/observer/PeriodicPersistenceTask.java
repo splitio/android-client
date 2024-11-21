@@ -12,8 +12,7 @@ public class PeriodicPersistenceTask implements Runnable {
     private final ImpressionsObserverCacheDao mImpressionsObserverCacheDao;
     private final WeakReference<OnExecutedListener> mOnExecutedListener;
 
-    PeriodicPersistenceTask(Map<Long, Long> cache, ImpressionsObserverCacheDao impressionsObserverCacheDao, OnExecutedListener onExecutedListener
-    ) {
+    PeriodicPersistenceTask(Map<Long, Long> cache, ImpressionsObserverCacheDao impressionsObserverCacheDao, OnExecutedListener onExecutedListener) {
         mCache = cache;
         mImpressionsObserverCacheDao = impressionsObserverCacheDao;
         mOnExecutedListener = new WeakReference<>(onExecutedListener);

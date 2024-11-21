@@ -77,6 +77,11 @@ class ImpressionsObserverCacheImpl implements ImpressionsObserverCache {
         }
     }
 
+    @Override
+    public void persist() {
+        mPersistentStorage.persist();
+    }
+
     @Nullable
     private Long getFromCache(long hash) {
         try {

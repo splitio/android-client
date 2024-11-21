@@ -177,6 +177,13 @@ class OptimizedStrategyTest {
     }
 
     @Test
+    fun `stopPeriodicRecording calls persist on ImpressionsObserver`() {
+        strategy.stopPeriodicRecording()
+
+        verify(impressionsObserver).persist()
+    }
+
+    @Test
     fun `enableTracking calls enableTracking on tracker`() {
         strategy.enableTracking(true)
 

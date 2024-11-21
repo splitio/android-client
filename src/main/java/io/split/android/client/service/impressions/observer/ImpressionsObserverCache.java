@@ -8,4 +8,6 @@ interface ImpressionsObserverCache {
     Long get(long hash);
 
     void put(long hash, long time);
+
+    void persist();
 }

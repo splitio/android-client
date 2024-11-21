@@ -4,6 +4,8 @@ import static androidx.annotation.RestrictTo.Scope.LIBRARY;
 
 import androidx.annotation.RestrictTo;
 
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.observer.PersistentImpressionsObserverCacheStorage;
 import io.split.android.client.service.impressions.observer.SqlitePersistentImpressionsObserverCacheStorage;
@@ -143,7 +145,7 @@ public class StorageFactory {
         return new AttributesStorageContainerImpl();
     }
 
-    public static PersistentImpressionsObserverCacheStorage getImpressionsObserverCachePersistentStorage(SplitRoomDatabase splitRoomDatabase, long expirationPeriod) {
-        return new SqlitePersistentImpressionsObserverCacheStorage(splitRoomDatabase.impressionsObserverCacheDao(), expirationPeriod);
+    public static PersistentImpressionsObserverCacheStorage getImpressionsObserverCachePersistentStorage(SplitRoomDatabase splitRoomDatabase, long expirationPeriod, ScheduledThreadPoolExecutor executorService) {
+        return new SqlitePersistentImpressionsObserverCacheStorage(splitRoomDatabase.impressionsObserverCacheDao(), expirationPeriod, executorService);
     }
 }

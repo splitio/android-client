@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.ThreadPoolExecutor;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.api.Key;
@@ -176,8 +178,10 @@ public class SplitFactoryImpl implements SplitFactory {
                 config.encryptionEnabled(),
                 mMigrationExecutionListener);
 
+        ScheduledThreadPoolExecutor impressionsObserverExecutor = new ScheduledThreadPoolExecutor(1,
+                new ThreadPoolExecutor.CallerRunsPolicy());
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
-                splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage, config.observerCacheExpirationPeriod());
+                splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage, config.observerCacheExpirationPeriod(), impressionsObserverExecutor);
 
         Pair<Map<SplitFilter.Type, SplitFilter>, String> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
         Map<SplitFilter.Type, SplitFilter> filters = filtersConfig.first;
@@ -290,6 +294,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     telemetrySynchronizer.destroy();
                     Logger.d("Successful shutdown of telemetry");
                     impressionsLoggingTaskExecutor.shutdown();
+                    impressionsObserverExecutor.shutdown();
                     Logger.d("Successful shutdown of impressions logging executor");
                     mSyncManager.stop();
                     Logger.d("Flushing impressions and events");

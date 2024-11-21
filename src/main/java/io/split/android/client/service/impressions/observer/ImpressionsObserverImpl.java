@@ -1,6 +1,9 @@
 package io.split.android.client.service.impressions.observer;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.impressions.ImpressionHasher;
@@ -10,7 +13,12 @@ public class ImpressionsObserverImpl implements ImpressionsObserver {
     private final ImpressionsObserverCache mCache;
 
     public ImpressionsObserverImpl(PersistentImpressionsObserverCacheStorage persistentStorage, int size) {
-        mCache = new ImpressionsObserverCacheImpl(persistentStorage, size);
+        this(new ImpressionsObserverCacheImpl(persistentStorage, size));
+    }
+
+    @VisibleForTesting
+    ImpressionsObserverImpl(ImpressionsObserverCache cache) {
+        mCache = checkNotNull(cache);
     }
 
     @Override
@@ -26,5 +34,10 @@ public class ImpressionsObserverImpl implements ImpressionsObserver {
         mCache.put(hash, impression.time());
 
         return (previous == null ? null : Math.min(previous, impression.time()));
+    }
+
+    @Override
+    public void persist() {
+        mCache.persist();
     }
 }
