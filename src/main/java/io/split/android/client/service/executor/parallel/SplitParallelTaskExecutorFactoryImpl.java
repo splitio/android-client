@@ -32,4 +32,9 @@ public class SplitParallelTaskExecutorFactoryImpl implements SplitParallelTaskEx
     public <T> SplitParallelTaskExecutor<T> create(Class<T> type) {
         return new SplitParallelTaskExecutorImpl<>(mThreads, mScheduler);
     }
+
+    @Override
+    public <T> SplitParallelTaskExecutor<T> create(Class<T> type, int timeoutInSeconds) {
+        return new SplitParallelTaskExecutorImpl<>(mThreads, mScheduler, timeoutInSeconds);
+    }
 }

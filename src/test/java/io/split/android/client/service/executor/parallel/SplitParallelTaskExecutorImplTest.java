@@ -17,7 +17,7 @@ public class SplitParallelTaskExecutorImplTest {
 
     @Before
     public void setUp() {
-        executor = new SplitParallelTaskExecutorFactoryImpl().create(String.class);
+        executor = new SplitParallelTaskExecutorFactoryImpl().create(String.class, 1);
     }
 
     @Test
@@ -76,10 +76,10 @@ public class SplitParallelTaskExecutorImplTest {
     }
 
     @Test
-    public void resultIsReturnedWhenComputationExceeds5Seconds() {
+    public void resultIsReturnedWhenComputationExceeds1Second() {
         List<SplitDeferredTaskItem<String>> splitDeferredTaskItems = Collections.singletonList(
                 new SplitDeferredTaskItem<>(() -> {
-                    Thread.sleep(6000);
+                    Thread.sleep(1000);
 
                     return "no";
                 })
@@ -88,6 +88,6 @@ public class SplitParallelTaskExecutorImplTest {
         long startTime = System.currentTimeMillis();
         executor.execute(splitDeferredTaskItems);
 
-        assertTrue(System.currentTimeMillis() - startTime < 6000);
+        assertTrue(System.currentTimeMillis() - startTime < 1010);
     }
 }

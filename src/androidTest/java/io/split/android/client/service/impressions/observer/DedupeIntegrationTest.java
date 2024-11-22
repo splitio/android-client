@@ -13,6 +13,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -24,6 +25,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
+import fake.LifecycleManagerStub;
+import fake.SynchronizerSpyImpl;
 import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
@@ -36,8 +39,10 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.impressions.ImpressionsMode;
+import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 import io.split.android.client.utils.Json;
 import tests.integration.shared.TestingHelper;
 
@@ -47,6 +52,8 @@ public class DedupeIntegrationTest {
     private AtomicInteger mImpressionsListenerCount;
     private HttpClientMock mHttpClient;
     private SplitRoomDatabase mDatabase;
+    private LifecycleManagerStub mLifecycleManager;
+    private SynchronizerSpy mSynchronizerSpy;
 
     @Before
     public void setUp() throws IOException {
@@ -54,6 +61,9 @@ public class DedupeIntegrationTest {
         mDatabase = DatabaseHelper.getTestDatabase(mContext);
         mDatabase.clearAllTables();
         mHttpClient = new HttpClientMock(getDispatcher());
+        mLifecycleManager = new LifecycleManagerStub();
+        mSynchronizerSpy = new SynchronizerSpyImpl();
+        mLifecycleManager.register(mSynchronizerSpy);
     }
 
     @Test
@@ -203,26 +213,34 @@ public class DedupeIntegrationTest {
     @Test
     public void expiredObserverCacheValuesExistingInDatabaseAreRemovedOnStartup() throws InterruptedException {
         // prepopulate DB with 2000 entries
+        List<ImpressionsObserverCacheEntity> entities = new ArrayList<>();
         for (int i = 0; i < 2000; i++) {
-            mDatabase.impressionsObserverCacheDao().insert((long) i, (long) i, System.currentTimeMillis());
+            entities.add(new ImpressionsObserverCacheEntity(i, i, System.currentTimeMillis()));
         }
+        mDatabase.impressionsObserverCacheDao().insert(entities);
 
         // wait for them to expire
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
         // initialize SDK
         SplitClient client = initSplitFactory(new TestableSplitConfigBuilder()
                 .impressionsMode(ImpressionsMode.DEBUG)
+                .streamingEnabled(false)
                 .enableDebug()
                 .impressionsDedupeTimeInterval(1)
                 .observerCacheExpirationPeriod(100), mHttpClient).client();
+        Thread.sleep(200);
 
         client.getTreatment("FACUNDO_TEST");
-        Thread.sleep(2000);
+        Thread.sleep(100);
+        mLifecycleManager.simulateOnPause();
+        Thread.sleep(500);
+        mLifecycleManager.simulateOnResume();
+
         while (mDatabase.impressionsObserverCacheDao().getAll(5).size() > 1) {
             Thread.sleep(100);
         }
-        Thread.sleep(100);
+        Thread.sleep(1000);
 
         int count = mDatabase.impressionsObserverCacheDao().getAll(3000).size();
         assertEquals(1, count);
@@ -309,7 +327,8 @@ public class DedupeIntegrationTest {
                 builder.build(),
                 mContext,
                 httpClient,
-                mDatabase);
+                mDatabase, mSynchronizerSpy, null,
+                mLifecycleManager);
 
         SplitClient client = factory.client();
         client.on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(innerLatch));

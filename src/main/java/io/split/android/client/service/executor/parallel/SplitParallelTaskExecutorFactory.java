@@ -7,4 +7,6 @@ public interface SplitParallelTaskExecutorFactory {
     <T> SplitParallelTaskExecutor<List<T>> createForList(Class<T> type);
 
     <T> SplitParallelTaskExecutor<T> create(Class<T> type);
+
+    <T> SplitParallelTaskExecutor<T> create(Class<T> type, int timeoutInSeconds);
 }

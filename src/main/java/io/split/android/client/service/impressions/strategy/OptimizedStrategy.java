@@ -152,6 +152,7 @@ class OptimizedStrategy implements ProcessStrategy {
     @Override
     public void stopPeriodicRecording() {
         mOptimizedTracker.stopPeriodicRecording();
+        mImpressionsObserver.persist();
     }
 
     @Override

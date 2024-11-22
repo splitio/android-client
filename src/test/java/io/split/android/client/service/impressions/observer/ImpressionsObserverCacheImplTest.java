@@ -153,4 +153,11 @@ public class ImpressionsObserverCacheImplTest {
 
         verify(mCache).put(1L, 2L);
     }
+
+    @Test
+    public void persistCallsPersistOnStorage() {
+        mImpressionsObserverCacheImpl.persist();
+
+        verify(mPersistentStorage).persist();
+    }
 }

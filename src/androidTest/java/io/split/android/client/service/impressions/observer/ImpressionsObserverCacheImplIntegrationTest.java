@@ -26,7 +26,7 @@ public class ImpressionsObserverCacheImplIntegrationTest {
     @Before
     public void setUp() {
         ImpressionsObserverCacheDao impressionsObserverCacheDao = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext()).impressionsObserverCacheDao();
-        mPersistentStorage = new SqlitePersistentImpressionsObserverCacheStorage(impressionsObserverCacheDao, 2000, 1, Executors.newSingleThreadScheduledExecutor(), new AtomicBoolean(false));
+        mPersistentStorage = new SqlitePersistentImpressionsObserverCacheStorage(impressionsObserverCacheDao, 2000, Executors.newSingleThreadScheduledExecutor(), new AtomicBoolean(false));
         mCache = new ListenableLruCache<>(5, mPersistentStorage);
         mImpressionsObserverCacheImpl = new ImpressionsObserverCacheImpl(mPersistentStorage, mCache);
     }
@@ -88,6 +88,7 @@ public class ImpressionsObserverCacheImplIntegrationTest {
     @Test
     public void putPutsValueInCacheAndPersistentStorage() throws InterruptedException {
         mImpressionsObserverCacheImpl.put(1L, 2L);
+        mImpressionsObserverCacheImpl.persist();
         Thread.sleep(100);
 
         assertEquals(2L, mPersistentStorage.get(1L).longValue());
@@ -98,6 +99,7 @@ public class ImpressionsObserverCacheImplIntegrationTest {
     public void putUpdatesValueInCacheAndPersistentStorage() throws InterruptedException {
         mImpressionsObserverCacheImpl.put(1L, 2L);
         mImpressionsObserverCacheImpl.put(1L, 3L);
+        mImpressionsObserverCacheImpl.persist();
         Thread.sleep(100);
 
         assertEquals(3L, mPersistentStorage.get(1L).longValue());
@@ -106,6 +108,7 @@ public class ImpressionsObserverCacheImplIntegrationTest {
 
     private void putInStorageAndWait() throws InterruptedException {
         mPersistentStorage.put(1L, 2L);
+        mPersistentStorage.persist();
         Thread.sleep(100);
     }
 }

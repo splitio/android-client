@@ -8,6 +8,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Arrays;
 import java.util.List;
 
 import helper.DatabaseHelper;
@@ -34,8 +35,7 @@ public class ImpressionsObserverCacheDaoTest {
 
     @Test
     public void valuesAreInsertedCorrectly() {
-        mImpressionsObserverCacheDao.insert(1L, 2L, 3L);
-        mImpressionsObserverCacheDao.insert(3L, 2L, 5L);
+        insertIntoDao();
 
         List<ImpressionsObserverCacheEntity> all = mImpressionsObserverCacheDao.getAll(3);
 
@@ -50,10 +50,17 @@ public class ImpressionsObserverCacheDaoTest {
         assertEquals(secondEntity.getCreatedAt(), 5L);
     }
 
+    private void insertIntoDao() {
+        List<ImpressionsObserverCacheEntity> entities = Arrays.asList(
+                new ImpressionsObserverCacheEntity(1L, 2L, 3L),
+                new ImpressionsObserverCacheEntity(3L, 2L, 5L));
+        mImpressionsObserverCacheDao.insert(entities);
+    }
+
     @Test
     public void valueWithNewHashReplacesOldOne() {
-        mImpressionsObserverCacheDao.insert(1L, 2L, 3L);
-        mImpressionsObserverCacheDao.insert(1L, 4L, 5L);
+        insertIntoDaoOnce(1L, 2L, 3L);
+        insertIntoDaoOnce(1L, 4L, 5L);
 
         List<ImpressionsObserverCacheEntity> all = mImpressionsObserverCacheDao.getAll(3);
 
@@ -64,10 +71,14 @@ public class ImpressionsObserverCacheDaoTest {
         assertEquals(firstEntity.getCreatedAt(), 5L);
     }
 
+    private void insertIntoDaoOnce(long hash, long time, long createdAt) {
+        ImpressionsObserverCacheEntity entity = new ImpressionsObserverCacheEntity(hash, time, createdAt);
+        mImpressionsObserverCacheDao.insert(Arrays.asList(entity));
+    }
+
     @Test
     public void deleteRemovesCorrectHash() {
-        mImpressionsObserverCacheDao.insert(1L, 2L, 3L);
-        mImpressionsObserverCacheDao.insert(3L, 2L, 5L);
+        insertIntoDao();
         mImpressionsObserverCacheDao.delete(1L);
 
         List<ImpressionsObserverCacheEntity> all = mImpressionsObserverCacheDao.getAll(3);
@@ -81,10 +92,9 @@ public class ImpressionsObserverCacheDaoTest {
 
     @Test
     public void getAllWithLimitReturnsTheCorrectAmount() {
-        mImpressionsObserverCacheDao.insert(1L, 2L, 3L);
-        mImpressionsObserverCacheDao.insert(3L, 2L, 5L);
-        mImpressionsObserverCacheDao.insert(4L, 2L, 6L);
-        mImpressionsObserverCacheDao.insert(5L, 2L, 7L);
+        insertIntoDao();
+        insertIntoDaoOnce(4L, 2L, 6L);
+        insertIntoDaoOnce(5L, 2L, 7L);
 
         List<ImpressionsObserverCacheEntity> all = mImpressionsObserverCacheDao.getAll(2);
 
@@ -93,10 +103,10 @@ public class ImpressionsObserverCacheDaoTest {
 
     @Test
     public void getAllReturnsElementsOrderedByCreatedAtAsc() {
-        mImpressionsObserverCacheDao.insert(3L, 2L, 3L);
-        mImpressionsObserverCacheDao.insert(4L, 6L, 5L);
-        mImpressionsObserverCacheDao.insert(5L, 4L, 6L);
-        mImpressionsObserverCacheDao.insert(1L, 1L, 7L);
+        insertIntoDaoOnce(3L, 2L, 3L);
+        insertIntoDaoOnce(4L, 6L, 5L);
+        insertIntoDaoOnce(5L, 4L, 6L);
+        insertIntoDaoOnce(1L, 1L, 7L);
 
         List<ImpressionsObserverCacheEntity> all = mImpressionsObserverCacheDao.getAll(4);
 
@@ -109,13 +119,13 @@ public class ImpressionsObserverCacheDaoTest {
 
     @Test
     public void deleteOldestRemovesCorrectValues() {
-        mImpressionsObserverCacheDao.insert(3L, 2L, 3L);
-        mImpressionsObserverCacheDao.insert(4L, 6L, 5L);
+        insertIntoDaoOnce(3L, 2L, 3L);
+        insertIntoDaoOnce(4L, 6L, 5L);
 
         // only these ones should remain
-        mImpressionsObserverCacheDao.insert(5L, 4L, 6L);
-        mImpressionsObserverCacheDao.insert(12L, 4L, 7L);
-        mImpressionsObserverCacheDao.insert(21L, 3L, 8L);
+        insertIntoDaoOnce(5L, 4L, 6L);
+        insertIntoDaoOnce(12L, 4L, 7L);
+        insertIntoDaoOnce(21L, 3L, 8L);
 
         mImpressionsObserverCacheDao.deleteOldest(6);
 
@@ -129,8 +139,8 @@ public class ImpressionsObserverCacheDaoTest {
 
     @Test
     public void getSingleValueReturnsCorrectValue() {
-        mImpressionsObserverCacheDao.insert(3L, 2L, 3L);
-        mImpressionsObserverCacheDao.insert(4L, 6L, 5L);
+        insertIntoDaoOnce(3L, 2L, 3L);
+        insertIntoDaoOnce(4L, 6L, 5L);
 
         ImpressionsObserverCacheEntity entity = mImpressionsObserverCacheDao.get(3L);
 
