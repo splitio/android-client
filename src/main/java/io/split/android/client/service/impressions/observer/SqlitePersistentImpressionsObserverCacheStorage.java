@@ -11,8 +11,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheDao;
@@ -21,35 +19,28 @@ import io.split.android.client.utils.logger.Logger;
 
 public class SqlitePersistentImpressionsObserverCacheStorage implements PersistentImpressionsObserverCacheStorage {
 
-    private static final long DEFAULT_PERSISTENCE_DELAY = 1000;
-
     private final ImpressionsObserverCacheDao mImpressionsObserverCacheDao;
     private final long mExpirationPeriod;
-    private final long mPersistenceDelay;
     private final ScheduledExecutorService mExecutorsService;
     private final Map<Long, Long> mCache = new ConcurrentHashMap<>();
     private final AtomicBoolean mDelayedSyncRunning;
     private final PeriodicPersistenceTask.OnExecutedListener mCallback;
 
     public SqlitePersistentImpressionsObserverCacheStorage(@NonNull ImpressionsObserverCacheDao impressionsObserverCacheDao,
-                                                           long expirationPeriod) {
+                                                           long expirationPeriod, ScheduledThreadPoolExecutor executorService) {
         this(impressionsObserverCacheDao,
                 expirationPeriod,
-                DEFAULT_PERSISTENCE_DELAY,
-                new ScheduledThreadPoolExecutor(1,
-                        new ThreadPoolExecutor.CallerRunsPolicy()),
+                executorService,
                 new AtomicBoolean(false));
     }
 
     @VisibleForTesting
     SqlitePersistentImpressionsObserverCacheStorage(@NonNull ImpressionsObserverCacheDao impressionsObserverCacheDao,
                                                     long expirationPeriod,
-                                                    long persistenceDelay,
                                                     ScheduledExecutorService executorService,
                                                     AtomicBoolean delayedSyncRunning) {
         mImpressionsObserverCacheDao = checkNotNull(impressionsObserverCacheDao);
         mExpirationPeriod = expirationPeriod;
-        mPersistenceDelay = persistenceDelay;
         mExecutorsService = executorService;
         mDelayedSyncRunning = delayedSyncRunning;
         mCallback = new PeriodicPersistenceTask.OnExecutedListener() {
@@ -65,13 +56,6 @@ public class SqlitePersistentImpressionsObserverCacheStorage implements Persiste
     @WorkerThread
     public void put(long hash, long time) {
         mCache.put(hash, time);
-
-        // If the task is not running, schedule it
-        if (mDelayedSyncRunning.compareAndSet(false, true)) {
-            mExecutorsService.schedule(new PeriodicPersistenceTask(mCache, mImpressionsObserverCacheDao, mCallback),
-                    mPersistenceDelay,
-                    TimeUnit.MILLISECONDS);
-        }
     }
 
     @Override
@@ -97,5 +81,12 @@ public class SqlitePersistentImpressionsObserverCacheStorage implements Persiste
     public void onRemoval(Long key) {
         mCache.remove(key);
         mImpressionsObserverCacheDao.delete(key);
+    }
+
+    @Override
+    public void persist() {
+        if (mDelayedSyncRunning.compareAndSet(false, true)) {
+            mExecutorsService.submit(new PeriodicPersistenceTask(mCache, mImpressionsObserverCacheDao, mCallback));
+        }
     }
 }

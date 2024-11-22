@@ -1,6 +1,8 @@
 package io.split.android.client.storage.db.impressions.observer;
 
 import androidx.room.Dao;
+import androidx.room.Insert;
+import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
 import java.util.List;
@@ -10,6 +12,9 @@ public interface ImpressionsObserverCacheDao {
 
     @Query("INSERT OR REPLACE INTO impressions_observer_cache (hash, time, created_at) VALUES (:hash, :time, :createdAt)")
     void insert(Long hash, Long time, Long createdAt);
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    void insert(List<ImpressionsObserverCacheEntity> entities);
 
     @Query("SELECT hash, time, created_at FROM impressions_observer_cache ORDER BY created_at ASC LIMIT :limit")
     List<ImpressionsObserverCacheEntity> getAll(int limit);

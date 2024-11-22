@@ -108,6 +108,7 @@ class DebugStrategy implements ProcessStrategy {
     @Override
     public void stopPeriodicRecording() {
         mDebugTracker.stopPeriodicRecording();
+        mImpressionsObserver.persist();
     }
 
     @Override

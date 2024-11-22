@@ -1,3 +1,6 @@
+5.0.1 (Nov 22, 2024)
+- Optimized persistence of impressions deduplication cache.
+
 5.0.0 (Nov 1, 2024)
 - Added support for targeting rules based on large segments.
 - BREAKING: Dropped support for Split Proxy below version 5.9.0. The SDK now requires Split Proxy 5.9.0 or above.

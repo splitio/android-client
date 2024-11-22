@@ -3,6 +3,8 @@ package io.split.android.client.service.impressions.observer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
@@ -32,7 +34,7 @@ public class ImpressionsObserverTest {
     @Before
     public void setUp() {
         ImpressionsObserverCacheDao dao = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext()).impressionsObserverCacheDao();
-        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(dao, 2000, 1, Executors.newSingleThreadScheduledExecutor(), new AtomicBoolean(false));
+        mStorage = new SqlitePersistentImpressionsObserverCacheStorage(dao, 2000, Executors.newSingleThreadScheduledExecutor(), new AtomicBoolean(false));
     }
 
     private List<Impression> generateImpressions(long count) {
@@ -89,6 +91,7 @@ public class ImpressionsObserverTest {
         // These are not in the cache, so they should return null
         Long firstImp = observer.testAndSet(imp);
         Long firstImp2 = observer.testAndSet(imp2);
+        observer.persist();
         Thread.sleep(2);
 
         // These are in the cache, so they should return a value
@@ -153,6 +156,15 @@ public class ImpressionsObserverTest {
         ImpressionsObserver observer = new ImpressionsObserverImpl(mStorage, 1);
 
         assertNull(observer.testAndSet(null));
+    }
+
+    @Test
+    public void persistCallsPersistOnStorage() {
+        ImpressionsObserverCache cache = mock(ImpressionsObserverCache.class);
+        ImpressionsObserver observer = new ImpressionsObserverImpl(cache);
+        observer.persist();
+
+        verify(cache).persist();
     }
 
     private void caller(ImpressionsObserver o, int count, ConcurrentLinkedQueue<Impression> imps) {

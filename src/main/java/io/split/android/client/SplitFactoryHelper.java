@@ -16,6 +16,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -153,7 +154,8 @@ class SplitFactoryHelper {
                                                 boolean shouldRecordTelemetry,
                                                 SplitCipher splitCipher,
                                                 TelemetryStorage telemetryStorage,
-                                                long observerCacheExpirationPeriod) {
+                                                long observerCacheExpirationPeriod,
+                                                ScheduledThreadPoolExecutor impressionsObserverExecutor) {
 
         boolean isPersistenceEnabled = userConsentStatus == UserConsent.GRANTED;
         PersistentEventsStorage persistentEventsStorage =
@@ -174,7 +176,7 @@ class SplitFactoryHelper {
                 StorageFactory.getAttributesStorage(),
                 StorageFactory.getPersistentAttributesStorage(splitRoomDatabase, splitCipher),
                 getTelemetryStorage(shouldRecordTelemetry, telemetryStorage),
-                StorageFactory.getImpressionsObserverCachePersistentStorage(splitRoomDatabase, observerCacheExpirationPeriod));
+                StorageFactory.getImpressionsObserverCachePersistentStorage(splitRoomDatabase, observerCacheExpirationPeriod, impressionsObserverExecutor));
     }
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
