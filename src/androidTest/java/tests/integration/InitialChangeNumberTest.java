@@ -95,7 +95,6 @@ public class InitialChangeNumberTest {
         String apiKey = apiKeyAndDb.first;
         SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
-        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, INITIAL_CHANGE_NUMBER));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, System.currentTimeMillis()));
 
