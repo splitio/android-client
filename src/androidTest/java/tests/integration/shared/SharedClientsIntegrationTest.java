@@ -61,7 +61,6 @@ public class SharedClientsIntegrationTest {
         }
         insertSplitsIntoDb();
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 10));
-        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, 1));
 
         ServerMock mWebServer = new ServerMock(mJsonChanges);
 

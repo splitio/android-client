@@ -31,7 +31,7 @@ public class GeneralInfoStorageImplTest {
     }
 
     @Test
-    public void setSplitsUpdateTimestampGetsValueFromDao() {
+    public void getSplitsUpdateTimestampGetsValueFromDao() {
         when(mGeneralInfoDao.getByName("splitsUpdateTimestamp")).thenReturn(new GeneralInfoEntity("splitsUpdateTimestamp", 123L));
         long splitsUpdateTimestamp = mGeneralInfoStorage.getSplitsUpdateTimestamp();
 
@@ -47,7 +47,7 @@ public class GeneralInfoStorageImplTest {
     }
 
     @Test
-    public void setChangeNumberGetsValueFromDao() {
+    public void getChangeNumberGetsValueFromDao() {
         when(mGeneralInfoDao.getByName("splitChangesChangeNumber")).thenReturn(new GeneralInfoEntity("splitChangesChangeNumber", 123L));
         long changeNumber = mGeneralInfoStorage.getChangeNumber();
 
