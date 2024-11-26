@@ -18,6 +18,8 @@ import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.events.EventsStorage;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.events.SqLitePersistentEventsStorage;
+import io.split.android.client.storage.general.GeneralInfoStorage;
+import io.split.android.client.storage.general.GeneralInfoStorageImpl;
 import io.split.android.client.storage.impressions.ImpressionsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
@@ -147,5 +149,9 @@ public class StorageFactory {
 
     public static PersistentImpressionsObserverCacheStorage getImpressionsObserverCachePersistentStorage(SplitRoomDatabase splitRoomDatabase, long expirationPeriod, ScheduledThreadPoolExecutor executorService) {
         return new SqlitePersistentImpressionsObserverCacheStorage(splitRoomDatabase.impressionsObserverCacheDao(), expirationPeriod, executorService);
+    }
+
+    public static GeneralInfoStorage getGeneralInfoStorage(SplitRoomDatabase splitRoomDatabase) {
+        return new GeneralInfoStorageImpl(splitRoomDatabase.generalInfoDao());
     }
 }

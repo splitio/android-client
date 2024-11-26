@@ -115,7 +115,6 @@ public class IntegrationTest {
 
         SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
-        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 2));
         SplitClient client;
         SplitManager manager;
@@ -249,7 +248,6 @@ public class IntegrationTest {
 
         SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
-        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, -1));
         SplitClient client;
         SplitManager manager;
@@ -304,7 +302,6 @@ public class IntegrationTest {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 10));
-        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, 1));
 
         SplitChange change = Json.fromJson(mJsonChanges.get(0), SplitChange.class);
         List<SplitEntity> entities = new ArrayList<>();
