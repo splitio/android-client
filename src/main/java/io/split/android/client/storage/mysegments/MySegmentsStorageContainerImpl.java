@@ -41,4 +41,13 @@ public class MySegmentsStorageContainerImpl implements MySegmentsStorageContaine
 
         return segments.size();
     }
+
+    @Override
+    public void clear() {
+        synchronized (lock) {
+            for (MySegmentsStorage mySegmentsStorage : mStorageMap.values()) {
+                mySegmentsStorage.clear();
+            }
+        }
+    }
 }

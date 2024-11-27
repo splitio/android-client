@@ -9,8 +9,9 @@ import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.dtos.Split;
+import io.split.android.client.storage.RolloutDefinitionsCache;
 
-public interface SplitsStorage {
+public interface SplitsStorage extends RolloutDefinitionsCache {
     void loadLocal();
 
     Split get(@NonNull String name);
@@ -37,8 +38,6 @@ public interface SplitsStorage {
     String getFlagsSpec();
 
     void updateFlagsSpec(String flagsSpec);
-
-    void clear();
 
     @NonNull
     Set<String> getNamesByFlagSets(Collection<String> flagSets);

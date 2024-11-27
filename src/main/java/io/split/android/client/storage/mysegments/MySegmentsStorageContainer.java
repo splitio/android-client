@@ -1,6 +1,8 @@
 package io.split.android.client.storage.mysegments;
 
-public interface MySegmentsStorageContainer {
+import io.split.android.client.storage.RolloutDefinitionsCache;
+
+public interface MySegmentsStorageContainer extends RolloutDefinitionsCache {
 
     MySegmentsStorage getStorageForKey(String matchingKey);
 

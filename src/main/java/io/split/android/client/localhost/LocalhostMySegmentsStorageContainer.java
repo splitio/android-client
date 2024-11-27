@@ -17,4 +17,9 @@ public class LocalhostMySegmentsStorageContainer implements MySegmentsStorageCon
     public long getUniqueAmount() {
         return mEmptyMySegmentsStorage.getAll().size();
     }
+
+    @Override
+    public void clear() {
+        // No-op
+    }
 }
