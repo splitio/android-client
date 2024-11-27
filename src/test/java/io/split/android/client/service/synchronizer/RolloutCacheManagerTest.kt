@@ -8,6 +8,9 @@ import io.split.android.fake.SplitTaskExecutorStub
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.any
+import org.mockito.ArgumentMatchers.anyLong
+import org.mockito.ArgumentMatchers.argThat
+import org.mockito.Mockito.longThat
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.times
 import org.mockito.Mockito.verify
@@ -88,6 +91,45 @@ class RolloutCacheManagerTest {
 
         verify(mSplitsCache, times(1)).clear()
         verify(mSegmentsCache, times(1)).clear()
+    }
+
+    @Test
+    fun `exception during clear still calls listener`() {
+        val mockedTimestamp = createMockedTimestamp(1L)
+        `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(mockedTimestamp)
+        `when`(mGeneralInfoStorage.rolloutCacheLastClearTimestamp).thenReturn(0L).thenReturn(TimeUnit.HOURS.toMillis(TimeUnit.MILLISECONDS.toHours(System.currentTimeMillis()) - 1))
+        mRolloutCacheManager = getCacheManager(10L, true)
+
+        val listener = mock(SplitTaskExecutionListener::class.java)
+        `when`(mSplitsCache.clear()).thenThrow(RuntimeException("Exception during clear"))
+
+        mRolloutCacheManager.validateCache(listener)
+
+        verify(listener).taskExecuted(any())
+    }
+
+    @Test
+    fun `validateCache updates last clear timestamp when storages are cleared`() {
+        val mockedTimestamp = createMockedTimestamp(1L)
+        `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(mockedTimestamp)
+        `when`(mGeneralInfoStorage.rolloutCacheLastClearTimestamp).thenReturn(0L).thenReturn(TimeUnit.HOURS.toMillis(TimeUnit.MILLISECONDS.toHours(System.currentTimeMillis()) - 1))
+        mRolloutCacheManager = getCacheManager(10L, true)
+
+        mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
+
+        verify(mGeneralInfoStorage).setRolloutCacheLastClearTimestamp(longThat { it > 0 })
+    }
+
+    @Test
+    fun `validateCache does not update last clear timestamp when storages are not cleared`() {
+        val mockedTimestamp = createMockedTimestamp(1L)
+        `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(mockedTimestamp)
+        `when`(mGeneralInfoStorage.rolloutCacheLastClearTimestamp).thenReturn(0L).thenReturn(TimeUnit.HOURS.toMillis(TimeUnit.MILLISECONDS.toHours(System.currentTimeMillis()) - 1))
+        mRolloutCacheManager = getCacheManager(10L, false)
+
+        mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
+
+        verify(mGeneralInfoStorage, times(0)).setRolloutCacheLastClearTimestamp(anyLong())
     }
 
     private fun getCacheManager(expiration: Long, clearOnInit: Boolean): RolloutCacheManager {

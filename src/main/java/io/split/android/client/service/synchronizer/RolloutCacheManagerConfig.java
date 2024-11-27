@@ -16,7 +16,7 @@ class RolloutCacheManagerConfig {
     }
 
     public static RolloutCacheManagerConfig from(SplitClientConfig splitClientConfig) {
-        return new RolloutCacheManagerConfig(splitClientConfig.cacheExpirationInSeconds(), false); // TODO
+        return new RolloutCacheManagerConfig(splitClientConfig.cacheExpirationInSeconds(), splitClientConfig.clearOnInit());
     }
 
     public long getCacheExpirationInDays() {

@@ -60,7 +60,10 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     @Override
     public SplitTaskExecutionInfo execute() {
         try {
-            validate();
+            boolean expired = validateExpiration();
+            if (expired) {
+                clear();
+            }
         } catch (Exception e) {
             Logger.e("Error occurred validating cache: " + e.getMessage());
 
@@ -69,30 +72,33 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
         return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
     }
 
-    private void validate() {
+    private boolean validateExpiration() {
         // calculate elapsed time since last update
         long lastUpdateTimestamp = mGeneralInfoStorage.getSplitsUpdateTimestamp();
         long daysSinceLastUpdate = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastUpdateTimestamp);
 
         if (daysSinceLastUpdate > mConfig.getCacheExpirationInDays()) {
-            clear();
+            Logger.v("Clearing rollout definitions cache due to expiration");
+            return true;
         } else if (mConfig.isClearOnInit()) {
             long lastCacheClearTimestamp = mGeneralInfoStorage.getRolloutCacheLastClearTimestamp();
             long daysSinceCacheClear = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastCacheClearTimestamp);
 
             // don't clear too soon
             if (daysSinceCacheClear > MIN_CACHE_CLEAR_DAYS) {
-                clear();
+                Logger.v("Forcing rollout definitions cache clear");
+                return true;
             }
         }
+
+        return false;
     }
 
     private void clear() {
-        if (mStorages.length > 0) {
-            for (RolloutDefinitionsCache storage : mStorages) {
-                storage.clear();
-            }
-            mGeneralInfoStorage.setRolloutCacheLastClearTimestamp(System.currentTimeMillis());
+        for (RolloutDefinitionsCache storage : mStorages) {
+            storage.clear();
         }
+        mGeneralInfoStorage.setRolloutCacheLastClearTimestamp(System.currentTimeMillis());
+        Logger.v("Rollout definitions cache cleared");
     }
 }

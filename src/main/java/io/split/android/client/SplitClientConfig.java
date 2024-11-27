@@ -486,6 +486,10 @@ public class SplitClientConfig {
         return mImpressionsDedupeTimeInterval;
     }
 
+    public boolean clearOnInit() {
+        return false; // TODO: to be implemented in the future
+    }
+
     public static final class Builder {
 
         static final int PROXY_PORT_DEFAULT = 80;
