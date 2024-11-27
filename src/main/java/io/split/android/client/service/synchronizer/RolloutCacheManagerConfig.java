@@ -15,15 +15,15 @@ class RolloutCacheManagerConfig {
         mClearOnInit = clearOnInit;
     }
 
-    public static RolloutCacheManagerConfig from(SplitClientConfig splitClientConfig) {
+    static RolloutCacheManagerConfig from(SplitClientConfig splitClientConfig) {
         return new RolloutCacheManagerConfig(splitClientConfig.cacheExpirationInSeconds(), splitClientConfig.clearOnInit());
     }
 
-    public long getCacheExpirationInDays() {
+    long getCacheExpirationInDays() {
         return mCacheExpirationInDays;
     }
 
-    public boolean isClearOnInit() {
+    boolean isClearOnInit() {
         return mClearOnInit;
     }
 }

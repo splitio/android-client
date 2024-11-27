@@ -4,7 +4,6 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
-import androidx.annotation.WorkerThread;
 
 import java.util.concurrent.TimeUnit;
 
@@ -21,15 +20,14 @@ import io.split.android.client.utils.logger.Logger;
 
 public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
 
-    public static final int MIN_CACHE_CLEAR_DAYS = 1;
+    public static final int MIN_CACHE_CLEAR_DAYS = 1; // TODO
+
     @NonNull
     private final GeneralInfoStorage mGeneralInfoStorage;
     @NonNull
-    private final SplitTaskExecutor mTaskExecutor;
-
-    @NonNull
     private final RolloutCacheManagerConfig mConfig;
-
+    @NonNull
+    private final SplitTaskExecutor mTaskExecutor;
     @NonNull
     private final RolloutDefinitionsCache[] mStorages;
 
@@ -50,7 +48,6 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
         mTaskExecutor = checkNotNull(splitTaskExecutor);
     }
 
-    @WorkerThread
     @Override
     public void validateCache(SplitTaskExecutionListener listener) {
         mTaskExecutor.submit(this, listener);
