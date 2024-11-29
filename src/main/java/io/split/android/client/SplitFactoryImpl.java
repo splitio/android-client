@@ -29,8 +29,6 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -38,6 +36,7 @@ import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
+import io.split.android.client.service.synchronizer.RolloutCacheManagerImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -49,6 +48,7 @@ import io.split.android.client.shared.ClientComponentsRegister;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.shared.SplitClientContainerImpl;
 import io.split.android.client.shared.UserConsent;
+import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -83,9 +83,6 @@ public class SplitFactoryImpl implements SplitFactory {
     private final SplitStorageContainer mStorageContainer;
     private final SplitClientContainer mClientContainer;
     private final UserConsentManager mUserConsentManager;
-
-    @SuppressWarnings("FieldCanBeLocal") // keeping the reference on purpose
-    private final SplitTaskExecutionListener mMigrationExecutionListener;
 
     public SplitFactoryImpl(@NonNull String apiToken, @NonNull Key key, @NonNull SplitClientConfig config, @NonNull Context context)
             throws URISyntaxException {
@@ -163,20 +160,11 @@ public class SplitFactoryImpl implements SplitFactory {
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
 
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
+        splitTaskExecutor.pause();
 
         EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
-        mMigrationExecutionListener = new SplitTaskExecutionListener() {
-            @Override
-            public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-                mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
-            }
-        };
-        SplitCipher splitCipher = factoryHelper.migrateEncryption(mApiKey,
-                splitDatabase,
-                splitTaskExecutor,
-                config.encryptionEnabled(),
-                mMigrationExecutionListener);
+        SplitCipher splitCipher = factoryHelper.getCipher(apiToken, config.encryptionEnabled());
 
         ScheduledThreadPoolExecutor impressionsObserverExecutor = new ScheduledThreadPoolExecutor(1,
                 new ThreadPoolExecutor.CallerRunsPolicy());
@@ -200,6 +188,7 @@ public class SplitFactoryImpl implements SplitFactory {
         cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
+        splitSingleThreadTaskExecutor.pause();
 
         ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
         final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
@@ -253,8 +242,6 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             mLifecycleManager = testLifecycleManager;
         }
-
-        mLifecycleManager.register(mSyncManager);
 
         ExecutorService impressionsLoggingTaskExecutor = factoryHelper.getImpressionsLoggingTaskExecutor();
         final ImpressionListener splitImpressionListener
@@ -335,14 +322,28 @@ public class SplitFactoryImpl implements SplitFactory {
                 mStorageContainer.getSplitsStorage(),
                 new SplitValidatorImpl(), mSplitParser);
 
-        mSyncManager.start();
+        Runnable initializer = new Runnable() {
+            @Override
+            public void run() {
+                Logger.v("Running initialization thread");
+                new RolloutCacheManagerImpl(config, splitTaskExecutor, mStorageContainer).execute();
+                new EncryptionMigrationTask(apiToken, splitDatabase, config.encryptionEnabled(), splitCipher).execute();
+                mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+                splitTaskExecutor.resume();
+                splitSingleThreadTaskExecutor.resume();
+                mSyncManager.start();
+                mLifecycleManager.register(mSyncManager);
+
+                Logger.i("Android SDK initialized!");
+            }
+        };
+        new Thread(initializer).start();
+
         if (config.shouldRecordTelemetry()) {
             int activeFactoriesCount = mFactoryMonitor.count(mApiKey);
             mStorageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
             mStorageContainer.getTelemetryStorage().recordRedundantFactories(activeFactoriesCount - 1);
         }
-
-        Logger.i("Android SDK initialized!");
     }
 
     private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {

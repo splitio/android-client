@@ -27,7 +27,6 @@ import io.split.android.client.network.SdkTargetPath;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
-import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactory;
@@ -70,7 +69,6 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.shared.ClientComponentsRegisterImpl;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
-import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.cipher.SplitEncryptionLevel;
@@ -399,21 +397,9 @@ class SplitFactoryHelper {
                 .getStrategy(config.impressionsMode());
     }
 
-    SplitCipher migrateEncryption(String apiKey,
-                                  SplitRoomDatabase splitDatabase,
-                                  SplitTaskExecutor splitTaskExecutor,
-                                  final boolean encryptionEnabled,
-                                  SplitTaskExecutionListener executionListener) {
-
-        SplitCipher toCipher = SplitCipherFactory.create(apiKey, encryptionEnabled ? SplitEncryptionLevel.AES_128_CBC :
+    @Nullable SplitCipher getCipher(String apiKey, boolean encryptionEnabled) {
+        return SplitCipherFactory.create(apiKey, encryptionEnabled ? SplitEncryptionLevel.AES_128_CBC :
                 SplitEncryptionLevel.NONE);
-        splitTaskExecutor.submit(new EncryptionMigrationTask(apiKey,
-                        splitDatabase,
-                        encryptionEnabled,
-                        toCipher),
-                executionListener);
-
-        return toCipher;
     }
 
     @Nullable

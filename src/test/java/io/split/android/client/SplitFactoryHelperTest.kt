@@ -47,22 +47,6 @@ class SplitFactoryHelperTest {
     }
 
     @Test
-    fun migrateEncryption() {
-
-        helper.migrateEncryption(
-            "abcdedfghijklmnopqrstuvwxyz",
-            splitRoomDatabase,
-            splitTaskExecutor,
-            true,
-            taskListener,
-        )
-
-        verify(splitTaskExecutor).submit(
-            argThat { it is EncryptionMigrationTask },
-            argThat { it?.equals(taskListener) == true })
-    }
-
-    @Test
     fun generateDatabaseNameWithoutPrefixAndKeyLongerThan4() {
         val path = mock(File::class.java)
         `when`(path.exists()).thenReturn(true)
