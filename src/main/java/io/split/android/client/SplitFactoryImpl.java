@@ -29,6 +29,8 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -153,7 +155,6 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             splitDatabase = testDatabase;
             Logger.d("Using test database");
-            System.out.println("USING TEST DB: " + testDatabase);
         }
 
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
@@ -326,15 +327,19 @@ public class SplitFactoryImpl implements SplitFactory {
             @Override
             public void run() {
                 Logger.v("Running initialization thread");
-                new RolloutCacheManagerImpl(config, splitTaskExecutor, mStorageContainer).execute();
-                new EncryptionMigrationTask(apiToken, splitDatabase, config.encryptionEnabled(), splitCipher).execute();
-                mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
-                splitTaskExecutor.resume();
-                splitSingleThreadTaskExecutor.resume();
-                mSyncManager.start();
-                mLifecycleManager.register(mSyncManager);
+                RolloutCacheManagerImpl rolloutCacheManager = new RolloutCacheManagerImpl(config, mStorageContainer, new EncryptionMigrationTask(apiToken, splitDatabase, config.encryptionEnabled(), splitCipher));
+                rolloutCacheManager.validateCache(new SplitTaskExecutionListener() {
+                    @Override
+                    public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                        mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+                        splitTaskExecutor.resume();
+                        splitSingleThreadTaskExecutor.resume();
+                        mSyncManager.start();
+                        mLifecycleManager.register(mSyncManager);
 
-                Logger.i("Android SDK initialized!");
+                        Logger.i("Android SDK initialized!");
+                    }
+                });
             }
         };
         new Thread(initializer).start();

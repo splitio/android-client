@@ -3,6 +3,7 @@ package io.split.android.client.service.synchronizer
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
 import io.split.android.client.storage.RolloutDefinitionsCache
+import io.split.android.client.storage.cipher.EncryptionMigrationTask
 import io.split.android.client.storage.general.GeneralInfoStorage
 import io.split.android.fake.SplitTaskExecutorStub
 import org.junit.Before
@@ -21,14 +22,14 @@ class RolloutCacheManagerTest {
 
     private lateinit var mRolloutCacheManager: RolloutCacheManager
     private lateinit var mGeneralInfoStorage: GeneralInfoStorage
-    private lateinit var mSplitTaskExecutor: SplitTaskExecutor
     private lateinit var mSplitsCache: RolloutDefinitionsCache
     private lateinit var mSegmentsCache: RolloutDefinitionsCache
+    private lateinit var mEncryptionMigrationTask: EncryptionMigrationTask
 
     @Before
     fun setup() {
         mGeneralInfoStorage = mock(GeneralInfoStorage::class.java)
-        mSplitTaskExecutor = SplitTaskExecutorStub()
+        mEncryptionMigrationTask = mock(EncryptionMigrationTask::class.java);
         mSplitsCache = mock(RolloutDefinitionsCache::class.java)
         mSegmentsCache = mock(RolloutDefinitionsCache::class.java)
     }
@@ -133,7 +134,7 @@ class RolloutCacheManagerTest {
     }
 
     private fun getCacheManager(expiration: Long, clearOnInit: Boolean): RolloutCacheManager {
-        return RolloutCacheManagerImpl(mGeneralInfoStorage, RolloutCacheManagerConfig(expiration, clearOnInit), mSplitTaskExecutor, mSplitsCache, mSegmentsCache)
+        return RolloutCacheManagerImpl(mGeneralInfoStorage, RolloutCacheManagerConfig(expiration, clearOnInit), mEncryptionMigrationTask, mSplitsCache, mSegmentsCache)
     }
 
     private fun createMockedTimestamp(period: Long): Long {
