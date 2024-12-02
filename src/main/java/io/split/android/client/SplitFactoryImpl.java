@@ -323,13 +323,6 @@ public class SplitFactoryImpl implements SplitFactory {
                 mSyncManager,
                 mLifecycleManager);
 
-        // Initialize default client
-        client();
-        SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer(), mStorageContainer.getMyLargeSegmentsStorageContainer());
-        mManager = new SplitManagerImpl(
-                mStorageContainer.getSplitsStorage(),
-                new SplitValidatorImpl(), mSplitParser);
-
         if (config.shouldRecordTelemetry()) {
             int activeFactoriesCount = mFactoryMonitor.count(mApiKey);
             mStorageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
@@ -338,6 +331,14 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Run initializer
         new Thread(initializer).start();
+
+        // Initialize default client
+        client();
+        SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer(), mStorageContainer.getMyLargeSegmentsStorageContainer());
+        mManager = new SplitManagerImpl(
+                mStorageContainer.getSplitsStorage(),
+                new SplitValidatorImpl(), mSplitParser);
+
     }
 
     private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {
