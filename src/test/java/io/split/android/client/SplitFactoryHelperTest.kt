@@ -1,10 +1,17 @@
 package io.split.android.client
 
 import android.content.Context
+import io.split.android.client.SplitFactoryHelper.Initializer.Listener
+import io.split.android.client.events.EventsManagerCoordinator
+import io.split.android.client.events.SplitInternalEvent
+import io.split.android.client.lifecycle.SplitLifecycleManager
+import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor
+import io.split.android.client.service.executor.SplitTaskExecutionInfo
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
-import io.split.android.client.storage.cipher.EncryptionMigrationTask
-import io.split.android.client.storage.db.SplitRoomDatabase
+import io.split.android.client.service.executor.SplitTaskType
+import io.split.android.client.service.synchronizer.RolloutCacheManager
+import io.split.android.client.service.synchronizer.SyncManager
 import junit.framework.TestCase.assertEquals
 import org.junit.After
 import org.junit.Before
@@ -12,7 +19,6 @@ import org.junit.Test
 import org.mockito.Mock
 import org.mockito.Mockito
 import org.mockito.Mockito.any
-import org.mockito.Mockito.argThat
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
@@ -24,12 +30,6 @@ class SplitFactoryHelperTest {
 
     private lateinit var mocks: AutoCloseable
 
-    @Mock
-    private lateinit var splitRoomDatabase: SplitRoomDatabase
-    @Mock
-    private lateinit var splitTaskExecutor: SplitTaskExecutor
-    @Mock
-    private lateinit var taskListener: SplitTaskExecutionListener
     @Mock
     private lateinit var context: Context
 
@@ -135,5 +135,45 @@ class SplitFactoryHelperTest {
 
         verify(existingPath).renameTo(nonExistingPath)
         assertEquals("abcdwxyz", databaseName)
+    }
+
+    @Test
+    fun `Initializer test`() {
+        val rolloutCacheManager = mock(RolloutCacheManager::class.java)
+        val splitTaskExecutionListener = mock(SplitTaskExecutionListener::class.java)
+
+        val initializer = SplitFactoryHelper.Initializer(
+            rolloutCacheManager,
+            splitTaskExecutionListener
+        )
+
+        initializer.run()
+
+        verify(rolloutCacheManager).validateCache(splitTaskExecutionListener)
+    }
+
+    @Test
+    fun `Initializer Listener test`() {
+        val eventsManagerCoordinator = mock(EventsManagerCoordinator::class.java)
+        val taskExecutor = mock(SplitTaskExecutor::class.java)
+        val singleThreadTaskExecutor = mock(SplitSingleThreadTaskExecutor::class.java)
+        val syncManager = mock(SyncManager::class.java)
+        val lifecycleManager = mock(SplitLifecycleManager::class.java)
+
+        val listener = Listener(
+            eventsManagerCoordinator,
+            taskExecutor,
+            singleThreadTaskExecutor,
+            syncManager,
+            lifecycleManager
+        )
+
+        listener.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK))
+
+        verify(eventsManagerCoordinator).notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE)
+        verify(taskExecutor).resume()
+        verify(singleThreadTaskExecutor).resume()
+        verify(syncManager).start()
+        verify(lifecycleManager).register(syncManager)
     }
 }

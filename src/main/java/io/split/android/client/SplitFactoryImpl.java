@@ -18,7 +18,6 @@ import io.split.android.android_client.BuildConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
-import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.ImpressionListener;
@@ -29,8 +28,6 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -38,7 +35,6 @@ import io.split.android.client.service.executor.SplitTaskFactoryImpl;
 import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
-import io.split.android.client.service.synchronizer.RolloutCacheManagerImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
@@ -314,6 +310,19 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
+        // Set up async initialization
+        final SplitFactoryHelper.Initializer initializer = new SplitFactoryHelper.Initializer(apiToken,
+                config,
+                splitTaskFactory,
+                splitDatabase,
+                splitCipher,
+                mEventsManagerCoordinator,
+                splitTaskExecutor,
+                splitSingleThreadTaskExecutor,
+                mStorageContainer,
+                mSyncManager,
+                mLifecycleManager);
+
         // Initialize default client
         client();
         SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer(), mStorageContainer.getMyLargeSegmentsStorageContainer());
@@ -321,37 +330,14 @@ public class SplitFactoryImpl implements SplitFactory {
                 mStorageContainer.getSplitsStorage(),
                 new SplitValidatorImpl(), mSplitParser);
 
-        Runnable initializer = new Runnable() {
-            @Override
-            public void run() {
-                RolloutCacheManagerImpl rolloutCacheManager = new RolloutCacheManagerImpl(config,
-                        mStorageContainer,
-                        splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000),
-                        splitTaskFactory.createEncryptionMigrationTask(apiToken, splitDatabase, config.encryptionEnabled(), splitCipher));
-
-                rolloutCacheManager.validateCache(new SplitTaskExecutionListener() {
-                    @Override
-                    public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-                        mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
-
-                        splitTaskExecutor.resume();
-                        splitSingleThreadTaskExecutor.resume();
-
-                        mSyncManager.start();
-                        mLifecycleManager.register(mSyncManager);
-
-                        Logger.i("Android SDK initialized!");
-                    }
-                });
-            }
-        };
-        new Thread(initializer).start();
-
         if (config.shouldRecordTelemetry()) {
             int activeFactoriesCount = mFactoryMonitor.count(mApiKey);
             mStorageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
             mStorageContainer.getTelemetryStorage().recordRedundantFactories(activeFactoriesCount - 1);
         }
+
+        // Run initializer
+        new Thread(initializer).start();
     }
 
     private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {

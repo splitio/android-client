@@ -4,6 +4,7 @@ import android.content.Context;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.core.util.Pair;
 import androidx.work.WorkManager;
 
@@ -22,11 +23,16 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
+import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SdkTargetPath;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
+import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactory;
@@ -55,6 +61,8 @@ import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
+import io.split.android.client.service.synchronizer.RolloutCacheManager;
+import io.split.android.client.service.synchronizer.RolloutCacheManagerImpl;
 import io.split.android.client.service.synchronizer.SyncGuardian;
 import io.split.android.client.service.synchronizer.SyncGuardianImpl;
 import io.split.android.client.service.synchronizer.SyncManager;
@@ -84,6 +92,7 @@ import io.split.android.client.telemetry.TelemetrySynchronizerStub;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Utils;
+import io.split.android.client.utils.logger.Logger;
 
 class SplitFactoryHelper {
     private static final int DB_MAGIC_CHARS_COUNT = 4;
@@ -397,7 +406,8 @@ class SplitFactoryHelper {
                 .getStrategy(config.impressionsMode());
     }
 
-    @Nullable SplitCipher getCipher(String apiKey, boolean encryptionEnabled) {
+    @Nullable
+    SplitCipher getCipher(String apiKey, boolean encryptionEnabled) {
         return SplitCipherFactory.create(apiKey, encryptionEnabled ? SplitEncryptionLevel.AES_128_CBC :
                 SplitEncryptionLevel.NONE);
     }
@@ -470,6 +480,77 @@ class SplitFactoryHelper {
         @Override
         public URI build(String matchingKey) throws URISyntaxException {
             return SdkTargetPath.mySegments(mEndpoint, matchingKey);
+        }
+    }
+
+    static class Initializer implements Runnable {
+
+        private final RolloutCacheManager mRolloutCacheManager;
+        private final SplitTaskExecutionListener mListener;
+
+        Initializer(
+                String apiToken,
+                SplitClientConfig config,
+                SplitTaskFactory splitTaskFactory,
+                SplitRoomDatabase splitDatabase,
+                SplitCipher splitCipher,
+                EventsManagerCoordinator eventsManagerCoordinator,
+                SplitTaskExecutor splitTaskExecutor,
+                SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor,
+                SplitStorageContainer storageContainer,
+                SyncManager syncManager,
+                SplitLifecycleManager lifecycleManager) {
+
+            this(new RolloutCacheManagerImpl(config,
+                            storageContainer,
+                            splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000),
+                            splitTaskFactory.createEncryptionMigrationTask(apiToken, splitDatabase, config.encryptionEnabled(), splitCipher)),
+                    new Listener(eventsManagerCoordinator, splitTaskExecutor, splitSingleThreadTaskExecutor, syncManager, lifecycleManager));
+        }
+
+        @VisibleForTesting
+        Initializer(RolloutCacheManager rolloutCacheManager, SplitTaskExecutionListener listener) {
+            mRolloutCacheManager = rolloutCacheManager;
+            mListener = listener;
+        }
+
+        @Override
+        public void run() {
+            mRolloutCacheManager.validateCache(mListener);
+        }
+
+        static class Listener implements SplitTaskExecutionListener {
+
+            private final EventsManagerCoordinator mEventsManagerCoordinator;
+            private final SplitTaskExecutor mSplitTaskExecutor;
+            private final SplitSingleThreadTaskExecutor mSplitSingleThreadTaskExecutor;
+            private final SyncManager mSyncManager;
+            private final SplitLifecycleManager mLifecycleManager;
+
+            Listener(EventsManagerCoordinator eventsManagerCoordinator,
+                     SplitTaskExecutor splitTaskExecutor,
+                     SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor,
+                     SyncManager syncManager,
+                     SplitLifecycleManager lifecycleManager) {
+                mEventsManagerCoordinator = eventsManagerCoordinator;
+                mSplitTaskExecutor = splitTaskExecutor;
+                mSplitSingleThreadTaskExecutor = splitSingleThreadTaskExecutor;
+                mSyncManager = syncManager;
+                mLifecycleManager = lifecycleManager;
+            }
+
+            @Override
+            public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+
+                mSplitTaskExecutor.resume();
+                mSplitSingleThreadTaskExecutor.resume();
+
+                mSyncManager.start();
+                mLifecycleManager.register(mSyncManager);
+
+                Logger.i("Android SDK initialized!");
+            }
         }
     }
 }
