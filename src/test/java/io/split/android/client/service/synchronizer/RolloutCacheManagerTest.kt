@@ -1,16 +1,14 @@
 package io.split.android.client.service.synchronizer
 
+import io.split.android.client.service.CleanUpDatabaseTask
 import io.split.android.client.service.executor.SplitTaskExecutionListener
-import io.split.android.client.service.executor.SplitTaskExecutor
 import io.split.android.client.storage.RolloutDefinitionsCache
 import io.split.android.client.storage.cipher.EncryptionMigrationTask
 import io.split.android.client.storage.general.GeneralInfoStorage
-import io.split.android.fake.SplitTaskExecutorStub
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.any
 import org.mockito.ArgumentMatchers.anyLong
-import org.mockito.ArgumentMatchers.argThat
 import org.mockito.Mockito.longThat
 import org.mockito.Mockito.mock
 import org.mockito.Mockito.times
@@ -25,11 +23,13 @@ class RolloutCacheManagerTest {
     private lateinit var mSplitsCache: RolloutDefinitionsCache
     private lateinit var mSegmentsCache: RolloutDefinitionsCache
     private lateinit var mEncryptionMigrationTask: EncryptionMigrationTask
+    private lateinit var mCleanUpDatabaseTask: CleanUpDatabaseTask
 
     @Before
     fun setup() {
         mGeneralInfoStorage = mock(GeneralInfoStorage::class.java)
-        mEncryptionMigrationTask = mock(EncryptionMigrationTask::class.java);
+        mEncryptionMigrationTask = mock(EncryptionMigrationTask::class.java)
+        mCleanUpDatabaseTask = mock(CleanUpDatabaseTask::class.java)
         mSplitsCache = mock(RolloutDefinitionsCache::class.java)
         mSegmentsCache = mock(RolloutDefinitionsCache::class.java)
     }
@@ -133,8 +133,26 @@ class RolloutCacheManagerTest {
         verify(mGeneralInfoStorage, times(0)).setRolloutCacheLastClearTimestamp(anyLong())
     }
 
+    @Test
+    fun `validateCache executes cleanUpDatabaseTask`() {
+        mRolloutCacheManager = getCacheManager(10L, false)
+
+        mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
+
+        verify(mCleanUpDatabaseTask).execute()
+    }
+
+    @Test
+    fun `validateCache executes encryptionMigrationTask`() {
+        mRolloutCacheManager = getCacheManager(10L, false)
+
+        mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
+
+        verify(mEncryptionMigrationTask).execute()
+    }
+
     private fun getCacheManager(expiration: Long, clearOnInit: Boolean): RolloutCacheManager {
-        return RolloutCacheManagerImpl(mGeneralInfoStorage, RolloutCacheManagerConfig(expiration, clearOnInit), mEncryptionMigrationTask, mSplitsCache, mSegmentsCache)
+        return RolloutCacheManagerImpl(mGeneralInfoStorage, RolloutCacheManagerConfig(expiration, clearOnInit), mCleanUpDatabaseTask, mEncryptionMigrationTask, mSplitsCache, mSegmentsCache)
     }
 
     private fun createMockedTimestamp(period: Long): Long {

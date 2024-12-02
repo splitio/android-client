@@ -9,6 +9,7 @@ import androidx.annotation.WorkerThread;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -30,11 +31,16 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     @NonNull
     private final RolloutDefinitionsCache[] mStorages;
     @NonNull
+    private final CleanUpDatabaseTask mCleanUpDatabaseTask;
+    @NonNull
     private final EncryptionMigrationTask mEncryptionMigrationTask;
 
-    public RolloutCacheManagerImpl(@NonNull SplitClientConfig splitClientConfig, @NonNull SplitStorageContainer storageContainer, @NonNull EncryptionMigrationTask encryptionMigrationTask) {
+    public RolloutCacheManagerImpl(@NonNull SplitClientConfig splitClientConfig, @NonNull SplitStorageContainer storageContainer,
+                                   @NonNull CleanUpDatabaseTask cleanUpDatabaseTask,
+                                   @NonNull EncryptionMigrationTask encryptionMigrationTask) {
         this(storageContainer.getGeneralInfoStorage(),
                 RolloutCacheManagerConfig.from(splitClientConfig),
+                cleanUpDatabaseTask,
                 encryptionMigrationTask,
                 storageContainer.getSplitsStorage(),
                 storageContainer.getMySegmentsStorageContainer(),
@@ -42,8 +48,13 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     }
 
     @VisibleForTesting
-    RolloutCacheManagerImpl(@NonNull GeneralInfoStorage generalInfoStorage, @NonNull RolloutCacheManagerConfig config, @NonNull EncryptionMigrationTask encryptionMigrationTask, @NonNull RolloutDefinitionsCache... storages) {
+    RolloutCacheManagerImpl(@NonNull GeneralInfoStorage generalInfoStorage,
+                            @NonNull RolloutCacheManagerConfig config,
+                            @NonNull CleanUpDatabaseTask clean,
+                            @NonNull EncryptionMigrationTask encryptionMigrationTask,
+                            @NonNull RolloutDefinitionsCache... storages) {
         mGeneralInfoStorage = checkNotNull(generalInfoStorage);
+        mCleanUpDatabaseTask = checkNotNull(clean);
         mEncryptionMigrationTask = checkNotNull(encryptionMigrationTask);
         mStorages = checkNotNull(storages);
         mConfig = checkNotNull(config);
@@ -52,9 +63,19 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     @WorkerThread
     @Override
     public void validateCache(SplitTaskExecutionListener listener) {
-        execute();
-        mEncryptionMigrationTask.execute();
-        listener.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
+        try {
+            Logger.v("Rollout cache manager: Executing clearing task");
+            mCleanUpDatabaseTask.execute();
+            Logger.v("Rollout cache manager: Validating cache");
+            execute();
+            Logger.v("Rollout cache manager: Migrating encryption");
+            mEncryptionMigrationTask.execute();
+            Logger.v("Rollout cache manager: validation finished");
+            listener.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
+        } catch (Exception ex) {
+            Logger.e("Error occurred validating cache: " + ex.getMessage());
+            listener.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK));
+        }
     }
 
     @NonNull

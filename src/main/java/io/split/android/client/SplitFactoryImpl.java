@@ -50,7 +50,6 @@ import io.split.android.client.shared.ClientComponentsRegister;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.shared.SplitClientContainerImpl;
 import io.split.android.client.shared.UserConsent;
-import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -186,7 +185,6 @@ public class SplitFactoryImpl implements SplitFactory {
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig,
                 getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
 
-        cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
         splitSingleThreadTaskExecutor.pause();
@@ -326,14 +324,19 @@ public class SplitFactoryImpl implements SplitFactory {
         Runnable initializer = new Runnable() {
             @Override
             public void run() {
-                Logger.v("Running initialization thread");
-                RolloutCacheManagerImpl rolloutCacheManager = new RolloutCacheManagerImpl(config, mStorageContainer, new EncryptionMigrationTask(apiToken, splitDatabase, config.encryptionEnabled(), splitCipher));
+                RolloutCacheManagerImpl rolloutCacheManager = new RolloutCacheManagerImpl(config,
+                        mStorageContainer,
+                        splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000),
+                        splitTaskFactory.createEncryptionMigrationTask(apiToken, splitDatabase, config.encryptionEnabled(), splitCipher));
+
                 rolloutCacheManager.validateCache(new SplitTaskExecutionListener() {
                     @Override
                     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
                         mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+
                         splitTaskExecutor.resume();
                         splitSingleThreadTaskExecutor.resume();
+
                         mSyncManager.start();
                         mLifecycleManager.register(mSyncManager);
 
