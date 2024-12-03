@@ -152,6 +152,30 @@ class RolloutCacheManagerTest {
         verify(mEncryptionMigrationTask).execute()
     }
 
+    @Test
+    fun `default value for update timestamp does not clear cache`() {
+        `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(0L)
+        `when`(mGeneralInfoStorage.rolloutCacheLastClearTimestamp).thenReturn(0L)
+        mRolloutCacheManager = getCacheManager(10, false)
+
+        mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
+
+        verify(mSplitsCache, times(0)).clear()
+        verify(mSegmentsCache, times(0)).clear()
+    }
+
+    @Test
+    fun `default value for last clear timestamp clears cache when clearOnInit is true`() {
+        `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(createMockedTimestamp(System.currentTimeMillis()))
+        `when`(mGeneralInfoStorage.rolloutCacheLastClearTimestamp).thenReturn(0L)
+        mRolloutCacheManager = getCacheManager(10, true)
+
+        mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
+
+        verify(mSplitsCache).clear()
+        verify(mSegmentsCache).clear()
+    }
+
     private fun getCacheManager(expiration: Int, clearOnInit: Boolean): RolloutCacheManager {
         return RolloutCacheManagerImpl(mGeneralInfoStorage, RolloutCacheConfiguration.builder().expiration(expiration).clearOnInit(clearOnInit).build(), mCleanUpDatabaseTask, mEncryptionMigrationTask, mSplitsCache, mSegmentsCache)
     }

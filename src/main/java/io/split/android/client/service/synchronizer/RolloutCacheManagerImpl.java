@@ -72,7 +72,7 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
             execute();
             Logger.v("Rollout cache manager: Migrating encryption");
             mEncryptionMigrationTask.execute();
-            Logger.v("Rollout cache manager: validation finished");
+            Logger.v("Rollout cache manager: Validation finished");
             listener.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
         } catch (Exception ex) {
             Logger.e("Error occurred validating cache: " + ex.getMessage());
@@ -97,15 +97,18 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     }
 
     private boolean validateExpiration() {
-        // calculate elapsed time since last update
         long lastUpdateTimestamp = mGeneralInfoStorage.getSplitsUpdateTimestamp();
+        // calculate elapsed time since last update
         long daysSinceLastUpdate = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastUpdateTimestamp);
 
-        if (daysSinceLastUpdate > mConfig.getExpiration()) {
+        if (lastUpdateTimestamp > 0 && daysSinceLastUpdate > mConfig.getExpiration()) {
             Logger.v("Clearing rollout definitions cache due to expiration");
             return true;
         } else if (mConfig.clearOnInit()) {
             long lastCacheClearTimestamp = mGeneralInfoStorage.getRolloutCacheLastClearTimestamp();
+            if (lastCacheClearTimestamp < 1) {
+                return true;
+            }
             long daysSinceCacheClear = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastCacheClearTimestamp);
 
             // don't clear too soon
