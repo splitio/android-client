@@ -8,6 +8,7 @@ import androidx.annotation.WorkerThread;
 
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.RolloutCacheConfiguration;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.executor.SplitTask;
@@ -27,7 +28,7 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     @NonNull
     private final GeneralInfoStorage mGeneralInfoStorage;
     @NonNull
-    private final RolloutCacheManagerConfig mConfig;
+    private final RolloutCacheConfiguration mConfig;
     @NonNull
     private final RolloutDefinitionsCache[] mStorages;
     @NonNull
@@ -35,11 +36,12 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     @NonNull
     private final EncryptionMigrationTask mEncryptionMigrationTask;
 
-    public RolloutCacheManagerImpl(@NonNull SplitClientConfig splitClientConfig, @NonNull SplitStorageContainer storageContainer,
+    public RolloutCacheManagerImpl(@NonNull SplitClientConfig splitClientConfig,
+                                   @NonNull SplitStorageContainer storageContainer,
                                    @NonNull CleanUpDatabaseTask cleanUpDatabaseTask,
                                    @NonNull EncryptionMigrationTask encryptionMigrationTask) {
         this(storageContainer.getGeneralInfoStorage(),
-                RolloutCacheManagerConfig.from(splitClientConfig),
+                splitClientConfig.rolloutCacheConfiguration(),
                 cleanUpDatabaseTask,
                 encryptionMigrationTask,
                 storageContainer.getSplitsStorage(),
@@ -49,7 +51,7 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
 
     @VisibleForTesting
     RolloutCacheManagerImpl(@NonNull GeneralInfoStorage generalInfoStorage,
-                            @NonNull RolloutCacheManagerConfig config,
+                            @NonNull RolloutCacheConfiguration config,
                             @NonNull CleanUpDatabaseTask clean,
                             @NonNull EncryptionMigrationTask encryptionMigrationTask,
                             @NonNull RolloutDefinitionsCache... storages) {
@@ -99,10 +101,10 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
         long lastUpdateTimestamp = mGeneralInfoStorage.getSplitsUpdateTimestamp();
         long daysSinceLastUpdate = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastUpdateTimestamp);
 
-        if (daysSinceLastUpdate > mConfig.getCacheExpirationInDays()) {
+        if (daysSinceLastUpdate > mConfig.getExpiration()) {
             Logger.v("Clearing rollout definitions cache due to expiration");
             return true;
-        } else if (mConfig.isClearOnInit()) {
+        } else if (mConfig.clearOnInit()) {
             long lastCacheClearTimestamp = mGeneralInfoStorage.getRolloutCacheLastClearTimestamp();
             long daysSinceCacheClear = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastCacheClearTimestamp);
 

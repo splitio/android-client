@@ -3,6 +3,7 @@ package io.split.android.client;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertTrue;
 
 import androidx.annotation.NonNull;
 
@@ -222,6 +223,37 @@ public class SplitClientConfigTest {
         assertEquals(TimeUnit.HOURS.toMillis(5), config.observerCacheExpirationPeriod());
         assertEquals(TimeUnit.HOURS.toMillis(24), config2.observerCacheExpirationPeriod());
         assertEquals(TimeUnit.HOURS.toMillis(4), config3.observerCacheExpirationPeriod());
+    }
+
+    @Test
+    public void rolloutCacheConfigurationDefaults() {
+        RolloutCacheConfiguration config = SplitClientConfig.builder().build().rolloutCacheConfiguration();
+
+        assertEquals(10, config.getExpiration());
+        assertFalse(config.clearOnInit());
+    }
+
+    @Test
+    public void rolloutCacheConfigurationExpirationIsCorrectlySet() {
+        RolloutCacheConfiguration config = SplitClientConfig.builder()
+                .rolloutCacheConfiguration(RolloutCacheConfiguration.builder().expiration(1).clearOnInit(true).build())
+                .build().rolloutCacheConfiguration();
+
+        assertEquals(1, config.getExpiration());
+        assertTrue(config.clearOnInit());
+    }
+
+    @Test
+    public void nullRolloutCacheConfigurationSetsDefault() {
+        Queue<String> logMessages = getLogMessagesQueue();
+        RolloutCacheConfiguration config = SplitClientConfig.builder()
+                .logLevel(SplitLogLevel.WARNING)
+                .rolloutCacheConfiguration(null)
+                .build().rolloutCacheConfiguration();
+
+        assertEquals(10, config.getExpiration());
+        assertFalse(config.clearOnInit());
+        assertEquals(1, logMessages.size());
     }
 
     @NonNull

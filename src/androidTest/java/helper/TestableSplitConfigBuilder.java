@@ -2,6 +2,7 @@ package helper;
 
 import java.lang.reflect.Constructor;
 
+import io.split.android.client.RolloutCacheConfiguration;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SyncConfig;
@@ -64,6 +65,7 @@ public class TestableSplitConfigBuilder {
     private String mPrefix = "";
     private CertificatePinningConfiguration mCertificatePinningConfiguration;
     private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
+    private RolloutCacheConfiguration mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -274,6 +276,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder rolloutCacheConfiguration(RolloutCacheConfiguration rolloutCacheConfiguration) {
+        this.mRolloutCacheConfiguration = rolloutCacheConfiguration;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -329,7 +336,8 @@ public class TestableSplitConfigBuilder {
                     mPrefix,
                     mObserverCacheExpirationPeriod,
                     mCertificatePinningConfiguration,
-                    mImpressionsDedupeTimeInterval);
+                    mImpressionsDedupeTimeInterval,
+                    mRolloutCacheConfiguration);
 
             Logger.instance().setLevel(mLogLevel);
             return config;

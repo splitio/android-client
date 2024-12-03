@@ -131,6 +131,8 @@ public class SplitClientConfig {
     private final long mObserverCacheExpirationPeriod;
     private final CertificatePinningConfiguration mCertificatePinningConfiguration;
     private final long mImpressionsDedupeTimeInterval;
+    @NonNull
+    private final RolloutCacheConfiguration mRolloutCacheConfiguration;
 
     public static Builder builder() {
         return new Builder();
@@ -185,7 +187,8 @@ public class SplitClientConfig {
                               String prefix,
                               long observerCacheExpirationPeriod,
                               CertificatePinningConfiguration certificatePinningConfiguration,
-                              long impressionsDedupeTimeInterval) {
+                              long impressionsDedupeTimeInterval,
+                              RolloutCacheConfiguration rolloutCacheConfiguration) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -243,6 +246,7 @@ public class SplitClientConfig {
         mObserverCacheExpirationPeriod = observerCacheExpirationPeriod;
         mCertificatePinningConfiguration = certificatePinningConfiguration;
         mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
+        mRolloutCacheConfiguration = rolloutCacheConfiguration;
     }
 
     public String trafficType() {
@@ -486,8 +490,8 @@ public class SplitClientConfig {
         return mImpressionsDedupeTimeInterval;
     }
 
-    public boolean clearOnInit() {
-        return false; // TODO: to be implemented in the future
+    public RolloutCacheConfiguration rolloutCacheConfiguration() {
+        return mRolloutCacheConfiguration;
     }
 
     public static final class Builder {
@@ -565,6 +569,8 @@ public class SplitClientConfig {
         private CertificatePinningConfiguration mCertificatePinningConfiguration = null;
 
         private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
+
+        private RolloutCacheConfiguration mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -1106,6 +1112,22 @@ public class SplitClientConfig {
             return this;
         }
 
+        /**
+         * Configuration for rollout definitions cache.
+         *
+         * @param rolloutCacheConfiguration Configuration object
+         * @return This builder
+         */
+        public Builder rolloutCacheConfiguration(@NonNull RolloutCacheConfiguration rolloutCacheConfiguration) {
+            if (rolloutCacheConfiguration == null) {
+                Logger.w("Rollout cache configuration is null. Setting to default value.");
+                mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();
+            } else {
+                mRolloutCacheConfiguration = rolloutCacheConfiguration;
+            }
+            return this;
+        }
+
         public SplitClientConfig build() {
             Logger.instance().setLevel(mLogLevel);
 
@@ -1237,7 +1259,8 @@ public class SplitClientConfig {
                     mPrefix,
                     mObserverCacheExpirationPeriod,
                     mCertificatePinningConfiguration,
-                    mImpressionsDedupeTimeInterval);
+                    mImpressionsDedupeTimeInterval,
+                    mRolloutCacheConfiguration);
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {
