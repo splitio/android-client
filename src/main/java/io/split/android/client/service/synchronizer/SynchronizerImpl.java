@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.impressions.Impression;
@@ -259,13 +260,13 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     @Override
-    public void registerMySegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
-        mMySegmentsSynchronizerRegistry.registerMySegmentsSynchronizer(userKey, mySegmentsSynchronizer);
+    public void registerMySegmentsSynchronizer(Key key, MySegmentsSynchronizer mySegmentsSynchronizer) {
+        mMySegmentsSynchronizerRegistry.registerMySegmentsSynchronizer(key, mySegmentsSynchronizer);
     }
 
     @Override
-    public void unregisterMySegmentsSynchronizer(String userKey) {
-        mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(userKey);
+    public void unregisterMySegmentsSynchronizer(Key key) {
+        mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(key);
     }
 
     @Override

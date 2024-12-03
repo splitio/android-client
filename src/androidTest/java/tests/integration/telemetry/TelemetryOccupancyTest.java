@@ -58,7 +58,14 @@ public class TelemetryOccupancyTest extends OccupancyBaseTest {
         pushOccupancy(SECONDARY_CHANNEL, 1);
         sleep(2000);
 
-        List<StreamingEvent> streamingEvents = mTelemetryStorage.popStreamingEvents();
+        long startTime = System.currentTimeMillis();
+        List<StreamingEvent> streamingEvents = new ArrayList<>();
+        streamingEvents = mTelemetryStorage.popStreamingEvents();
+        while (System.currentTimeMillis() - startTime < 5000 &&
+                !streamingEvents.stream().anyMatch(event -> event instanceof OccupancySecStreamingEvent)) {
+            Thread.sleep(100);
+            streamingEvents = mTelemetryStorage.popStreamingEvents();
+        }
         assertTrue(streamingEvents.stream().anyMatch(event -> event instanceof OccupancySecStreamingEvent));
     }
 

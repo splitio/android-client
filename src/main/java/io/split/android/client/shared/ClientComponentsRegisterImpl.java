@@ -95,7 +95,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     @Override
     public void unregisterComponentsForKey(Key key) {
         mAttributesSynchronizerRegistry.unregisterAttributesSynchronizer(key.matchingKey());
-        mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(key.matchingKey());
+        mMySegmentsSynchronizerRegistry.unregisterMySegmentsSynchronizer(key);
         mEventsManagerRegistry.unregisterEventsManager(key);
 
         if (isSyncEnabled()) {
@@ -116,7 +116,7 @@ public class ClientComponentsRegisterImpl implements ClientComponentsRegister {
     }
 
     private void registerMySegmentsSynchronizer(Key key, MySegmentsSynchronizer mySegmentsSynchronizer) {
-        mMySegmentsSynchronizerRegistry.registerMySegmentsSynchronizer(key.matchingKey(),
+        mMySegmentsSynchronizerRegistry.registerMySegmentsSynchronizer(key,
                 mySegmentsSynchronizer);
     }
 

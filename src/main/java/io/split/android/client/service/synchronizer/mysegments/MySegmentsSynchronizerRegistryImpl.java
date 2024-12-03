@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.split.android.client.api.Key;
 import io.split.android.client.service.mysegments.MySegmentUpdateParams;
 
 public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronizerRegistry,
@@ -15,23 +16,23 @@ public class MySegmentsSynchronizerRegistryImpl implements MySegmentsSynchronize
     private final AtomicBoolean mSynchronizedSegments = new AtomicBoolean(false);
     private final AtomicBoolean mScheduledSegmentsSyncTask = new AtomicBoolean(false);
     private final AtomicBoolean mStoppedPeriodicFetching = new AtomicBoolean(false);
-    private final ConcurrentMap<String, MySegmentsSynchronizer> mMySegmentsSynchronizers = new ConcurrentHashMap<>();
+    private final ConcurrentMap<Key, MySegmentsSynchronizer> mMySegmentsSynchronizers = new ConcurrentHashMap<>();
 
     @Override
-    public synchronized void registerMySegmentsSynchronizer(String userKey, MySegmentsSynchronizer mySegmentsSynchronizer) {
-        mMySegmentsSynchronizers.put(userKey, mySegmentsSynchronizer);
+    public synchronized void registerMySegmentsSynchronizer(Key key, MySegmentsSynchronizer mySegmentsSynchronizer) {
+        mMySegmentsSynchronizers.put(key, mySegmentsSynchronizer);
         triggerPendingActions(mySegmentsSynchronizer);
     }
 
     @Override
-    public synchronized void unregisterMySegmentsSynchronizer(String userKey) {
-        MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizers.get(userKey);
+    public synchronized void unregisterMySegmentsSynchronizer(Key key) {
+        MySegmentsSynchronizer mySegmentsSynchronizer = mMySegmentsSynchronizers.get(key);
         if (mySegmentsSynchronizer != null) {
             mySegmentsSynchronizer.stopPeriodicFetching();
             mySegmentsSynchronizer.destroy();
         }
 
-        mMySegmentsSynchronizers.remove(userKey);
+        mMySegmentsSynchronizers.remove(key);
     }
 
     @Override
