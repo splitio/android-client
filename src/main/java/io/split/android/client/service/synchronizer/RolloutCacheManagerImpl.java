@@ -52,11 +52,11 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     @VisibleForTesting
     RolloutCacheManagerImpl(@NonNull GeneralInfoStorage generalInfoStorage,
                             @NonNull RolloutCacheConfiguration config,
-                            @NonNull CleanUpDatabaseTask clean,
+                            @NonNull CleanUpDatabaseTask cleanUpDatabaseTask,
                             @NonNull EncryptionMigrationTask encryptionMigrationTask,
                             @NonNull RolloutDefinitionsCache... storages) {
         mGeneralInfoStorage = checkNotNull(generalInfoStorage);
-        mCleanUpDatabaseTask = checkNotNull(clean);
+        mCleanUpDatabaseTask = checkNotNull(cleanUpDatabaseTask);
         mEncryptionMigrationTask = checkNotNull(encryptionMigrationTask);
         mStorages = checkNotNull(storages);
         mConfig = checkNotNull(config);
@@ -106,7 +106,7 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
             return true;
         } else if (mConfig.isClearOnInit()) {
             long lastCacheClearTimestamp = mGeneralInfoStorage.getRolloutCacheLastClearTimestamp();
-            if (lastCacheClearTimestamp < 1) {
+            if (lastCacheClearTimestamp < 1) { // 0 is default value for rollout cache timestamp
                 return true;
             }
             long daysSinceCacheClear = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastCacheClearTimestamp);
