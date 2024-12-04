@@ -52,11 +52,11 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     @VisibleForTesting
     RolloutCacheManagerImpl(@NonNull GeneralInfoStorage generalInfoStorage,
                             @NonNull RolloutCacheConfiguration config,
-                            @NonNull CleanUpDatabaseTask clean,
+                            @NonNull CleanUpDatabaseTask cleanUpDatabaseTask,
                             @NonNull EncryptionMigrationTask encryptionMigrationTask,
                             @NonNull RolloutDefinitionsCache... storages) {
         mGeneralInfoStorage = checkNotNull(generalInfoStorage);
-        mCleanUpDatabaseTask = checkNotNull(clean);
+        mCleanUpDatabaseTask = checkNotNull(cleanUpDatabaseTask);
         mEncryptionMigrationTask = checkNotNull(encryptionMigrationTask);
         mStorages = checkNotNull(storages);
         mConfig = checkNotNull(config);
