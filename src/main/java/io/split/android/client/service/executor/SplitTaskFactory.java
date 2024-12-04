@@ -11,6 +11,9 @@ import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
+import io.split.android.client.storage.cipher.EncryptionMigrationTask;
+import io.split.android.client.storage.cipher.SplitCipher;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 
 public interface SplitTaskFactory extends TelemetryTaskFactory, ImpressionsTaskFactory {
 
@@ -29,4 +32,6 @@ public interface SplitTaskFactory extends TelemetryTaskFactory, ImpressionsTaskF
     FilterSplitsInCacheTask createFilterSplitsInCacheTask();
 
     CleanUpDatabaseTask createCleanUpDatabaseTask(long maxTimestamp);
+
+    EncryptionMigrationTask createEncryptionMigrationTask(String sdkKey, SplitRoomDatabase splitRoomDatabase, boolean encryptionEnabled, SplitCipher splitCipher);
 }

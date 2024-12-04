@@ -4,16 +4,18 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
+import androidx.annotation.WorkerThread;
 
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
-import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.RolloutDefinitionsCache;
+import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.utils.logger.Logger;
@@ -27,30 +29,53 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     @NonNull
     private final RolloutCacheManagerConfig mConfig;
     @NonNull
-    private final SplitTaskExecutor mTaskExecutor;
-    @NonNull
     private final RolloutDefinitionsCache[] mStorages;
+    @NonNull
+    private final CleanUpDatabaseTask mCleanUpDatabaseTask;
+    @NonNull
+    private final EncryptionMigrationTask mEncryptionMigrationTask;
 
-    public RolloutCacheManagerImpl(@NonNull SplitClientConfig splitClientConfig, @NonNull SplitTaskExecutor splitTaskExecutor, @NonNull SplitStorageContainer storageContainer) {
+    public RolloutCacheManagerImpl(@NonNull SplitClientConfig splitClientConfig, @NonNull SplitStorageContainer storageContainer,
+                                   @NonNull CleanUpDatabaseTask cleanUpDatabaseTask,
+                                   @NonNull EncryptionMigrationTask encryptionMigrationTask) {
         this(storageContainer.getGeneralInfoStorage(),
                 RolloutCacheManagerConfig.from(splitClientConfig),
-                splitTaskExecutor,
+                cleanUpDatabaseTask,
+                encryptionMigrationTask,
                 storageContainer.getSplitsStorage(),
                 storageContainer.getMySegmentsStorageContainer(),
                 storageContainer.getMyLargeSegmentsStorageContainer());
     }
 
     @VisibleForTesting
-    RolloutCacheManagerImpl(@NonNull GeneralInfoStorage generalInfoStorage, @NonNull RolloutCacheManagerConfig config, @NonNull SplitTaskExecutor splitTaskExecutor, @NonNull RolloutDefinitionsCache... storages) {
+    RolloutCacheManagerImpl(@NonNull GeneralInfoStorage generalInfoStorage,
+                            @NonNull RolloutCacheManagerConfig config,
+                            @NonNull CleanUpDatabaseTask clean,
+                            @NonNull EncryptionMigrationTask encryptionMigrationTask,
+                            @NonNull RolloutDefinitionsCache... storages) {
         mGeneralInfoStorage = checkNotNull(generalInfoStorage);
+        mCleanUpDatabaseTask = checkNotNull(clean);
+        mEncryptionMigrationTask = checkNotNull(encryptionMigrationTask);
         mStorages = checkNotNull(storages);
         mConfig = checkNotNull(config);
-        mTaskExecutor = checkNotNull(splitTaskExecutor);
     }
 
+    @WorkerThread
     @Override
     public void validateCache(SplitTaskExecutionListener listener) {
-        mTaskExecutor.submit(this, listener);
+        try {
+            Logger.v("Rollout cache manager: Executing clearing task");
+            mCleanUpDatabaseTask.execute();
+            Logger.v("Rollout cache manager: Validating cache");
+            execute();
+            Logger.v("Rollout cache manager: Migrating encryption");
+            mEncryptionMigrationTask.execute();
+            Logger.v("Rollout cache manager: validation finished");
+            listener.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
+        } catch (Exception ex) {
+            Logger.e("Error occurred validating cache: " + ex.getMessage());
+            listener.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK));
+        }
     }
 
     @NonNull

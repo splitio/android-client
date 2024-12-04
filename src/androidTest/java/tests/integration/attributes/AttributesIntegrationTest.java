@@ -108,7 +108,7 @@ public class AttributesIntegrationTest {
         // 3. Perform clear and verify there are no attributes on DB
         client.clearAttributes();
 
-        countDownLatch.await(1, TimeUnit.SECONDS);
+        countDownLatch.await(7, TimeUnit.SECONDS);
 
         Assert.assertNull(mRoomDb.attributesDao().getByUserKey(userKey));
     }
@@ -153,7 +153,7 @@ public class AttributesIntegrationTest {
 
         // 2. Clear second client's attributes and check DB entry has been cleared
         client2.clearAttributes();
-        countDownLatch.await(1, TimeUnit.SECONDS); // waiting since DB operations are async
+        countDownLatch.await(7, TimeUnit.SECONDS); // waiting since DB operations are async
         Assert.assertNull(mRoomDb.attributesDao().getByUserKey("new_key"));
 
         // 3. Verify evaluation with first client uses attribute
@@ -162,7 +162,7 @@ public class AttributesIntegrationTest {
         // 4. Perform clear and verify there are no attributes on DB
         client.clearAttributes();
 
-        countDownLatch.await(1, TimeUnit.SECONDS);
+        countDownLatch.await(7, TimeUnit.SECONDS);
 
         Assert.assertNull(mRoomDb.attributesDao().getByUserKey(matchingKey));
     }

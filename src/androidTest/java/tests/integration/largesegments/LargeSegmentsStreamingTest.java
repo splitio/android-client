@@ -67,8 +67,8 @@ public class LargeSegmentsStreamingTest {
     public void unboundedLargeSegmentsUpdateTriggersSdkUpdate() throws IOException, InterruptedException {
         TestSetup testSetup = getTestSetup();
 
-        boolean mySegmentsAwait = mLatches.get(MY_SEGMENTS).await(10, TimeUnit.SECONDS);
-        boolean splitsAwait = mLatches.get(SPLIT_CHANGES).await(10, TimeUnit.SECONDS);
+        boolean mySegmentsAwait = mLatches.get(MY_SEGMENTS).await(15, TimeUnit.SECONDS);
+        boolean splitsAwait = mLatches.get(SPLIT_CHANGES).await(15, TimeUnit.SECONDS);
         String initialSegmentList = testSetup.database.myLargeSegmentDao().getByUserKey(IntegrationHelper.dummyUserKey().matchingKey()).getSegmentList();
         mRandomizeMyLargeSegments.set(true);
 

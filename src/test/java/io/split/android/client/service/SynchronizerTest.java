@@ -39,6 +39,7 @@ import java.util.UUID;
 
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.SplitChange;
@@ -243,7 +244,7 @@ public class SynchronizerTest {
         verify(mWorkManagerWrapper).removeWork();
         verify(mWorkManagerWrapper, never()).scheduleWork();
 
-        mSynchronizer.unregisterMySegmentsSynchronizer("userKey");
+        mSynchronizer.unregisterMySegmentsSynchronizer(new Key("userKey"));
     }
 
     @Test
@@ -544,7 +545,7 @@ public class SynchronizerTest {
         when(loadMySegmentsTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_MY_SEGMENTS));
         when(mMySegmentsTaskFactory.createLoadMySegmentsTask()).thenReturn(loadMySegmentsTask);
 
-        ((MySegmentsSynchronizerRegistry) mSynchronizer).registerMySegmentsSynchronizer("", mMySegmentsSynchronizer);
+        ((MySegmentsSynchronizerRegistry) mSynchronizer).registerMySegmentsSynchronizer(new Key(""), mMySegmentsSynchronizer);
 
         mSynchronizer.loadAndSynchronizeSplits();
         mSynchronizer.loadMySegmentsFromCache();
@@ -775,9 +776,9 @@ public class SynchronizerTest {
     public void registerMySegmentsSynchronizerDelegatesToRegistry() {
         setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
 
-        mSynchronizer.registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
+        mSynchronizer.registerMySegmentsSynchronizer(new Key("userKey"), mMySegmentsSynchronizer);
 
-        verify(mMySegmentsSynchronizerRegistry).registerMySegmentsSynchronizer("userKey", mMySegmentsSynchronizer);
+        verify(mMySegmentsSynchronizerRegistry).registerMySegmentsSynchronizer(new Key("userKey"), mMySegmentsSynchronizer);
     }
 
     @Test

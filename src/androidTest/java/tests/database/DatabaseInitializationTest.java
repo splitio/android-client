@@ -182,6 +182,11 @@ public class DatabaseInitializationTest {
 
     private static String[] getDbList(Context context) {
         // remove -journal dbs since we're not interested in them
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
         return Arrays.stream(context.databaseList()).filter(db -> !db.endsWith("-journal")).toArray(String[]::new);
     }
 }

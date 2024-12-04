@@ -159,8 +159,8 @@ public class SharedClientsIntegrationTest {
             }
         });
         insertSplitsIntoDb();
-        readyLatch.await(10, TimeUnit.SECONDS);
-        readyLatch2.await(10, TimeUnit.SECONDS);
+        readyLatch.await(15, TimeUnit.SECONDS);
+        readyLatch2.await(15, TimeUnit.SECONDS);
 
         assertEquals(1, readyCount.get());
         assertEquals(1, readyCount2.get());

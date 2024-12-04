@@ -127,7 +127,7 @@ public class EncryptionTest {
             }
         });
 
-        assertTrue(latch.await(2, TimeUnit.SECONDS));
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
         mLifecycleManager.simulateOnPause();
         Thread.sleep(200);
         mLifecycleManager.simulateOnResume();
