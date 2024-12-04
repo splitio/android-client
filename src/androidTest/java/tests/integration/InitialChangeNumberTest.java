@@ -1,6 +1,6 @@
 package tests.integration;
 
-import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
+import static helper.IntegrationHelper.getSinceFromUri;
 
 import android.content.Context;
 

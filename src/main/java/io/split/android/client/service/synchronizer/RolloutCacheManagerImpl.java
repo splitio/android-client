@@ -101,7 +101,7 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
         // calculate elapsed time since last update
         long daysSinceLastUpdate = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastUpdateTimestamp);
 
-        if (lastUpdateTimestamp > 0 && daysSinceLastUpdate > mConfig.getExpiration()) {
+        if (lastUpdateTimestamp > 0 && daysSinceLastUpdate >= mConfig.getExpiration()) {
             Logger.v("Clearing rollout definitions cache due to expiration");
             return true;
         } else if (mConfig.clearOnInit()) {
@@ -112,7 +112,7 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
             long daysSinceCacheClear = TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - lastCacheClearTimestamp);
 
             // don't clear too soon
-            if (daysSinceCacheClear > MIN_CACHE_CLEAR_DAYS) {
+            if (daysSinceCacheClear >= MIN_CACHE_CLEAR_DAYS) {
                 Logger.v("Forcing rollout definitions cache clear");
                 return true;
             }
