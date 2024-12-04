@@ -104,7 +104,7 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
         if (lastUpdateTimestamp > 0 && daysSinceLastUpdate >= mConfig.getExpiration()) {
             Logger.v("Clearing rollout definitions cache due to expiration");
             return true;
-        } else if (mConfig.clearOnInit()) {
+        } else if (mConfig.isClearOnInit()) {
             long lastCacheClearTimestamp = mGeneralInfoStorage.getRolloutCacheLastClearTimestamp();
             if (lastCacheClearTimestamp < 1) {
                 return true;

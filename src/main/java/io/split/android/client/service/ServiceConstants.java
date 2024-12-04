@@ -10,8 +10,8 @@ public class ServiceConstants {
     public static final long DEFAULT_INITIAL_DELAY = 15L;
     public static final long MIN_INITIAL_DELAY = 5L;
     public static final int DEFAULT_RECORDS_PER_PUSH = 100;
-    public static final long DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS = TimeUnit.DAYS.toSeconds(10); // 10 days
     public static final int DEFAULT_ROLLOUT_CACHE_EXPIRATION = 10; // 10 days
+    public static final long DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS = TimeUnit.DAYS.toSeconds(DEFAULT_ROLLOUT_CACHE_EXPIRATION); // 10 days
 
     public static final int MAX_ROWS_PER_QUERY = 100;
 

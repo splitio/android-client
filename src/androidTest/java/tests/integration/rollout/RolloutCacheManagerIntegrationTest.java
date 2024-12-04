@@ -1,11 +1,11 @@
 package tests.integration.rollout;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static helper.IntegrationHelper.buildFactory;
 import static helper.IntegrationHelper.dummyApiKey;
 import static helper.IntegrationHelper.dummyUserKey;
-import static helper.IntegrationHelper.emptySplitChanges;
 import static helper.IntegrationHelper.getTimestampDaysAgo;
 import static helper.IntegrationHelper.randomizedAllSegments;
 
@@ -29,6 +29,7 @@ import io.split.android.client.RolloutCacheConfiguration;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
@@ -50,7 +51,8 @@ public class RolloutCacheManagerIntegrationTest {
     private final AtomicReference<String> mSinceFromUri = new AtomicReference<>(null);
     private MockWebServer mWebServer;
     private SplitRoomDatabase mRoomDb;
-    private Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
+    private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
+    private CountDownLatch mRequestCountdownLatch;
 
     @Before
     public void setUp() {
@@ -58,18 +60,24 @@ public class RolloutCacheManagerIntegrationTest {
         setupServer();
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
+        mRequestCountdownLatch = new CountDownLatch(1);
     }
 
     @Test
     public void expirationPeriodIsUsed() throws InterruptedException {
+        test(getTimestampDaysAgo(1), RolloutCacheConfiguration.builder().expiration(1));
+    }
 
+    @Test
+    public void clearOnInitClearsCacheOnStartup() throws InterruptedException {
+        test(System.currentTimeMillis(), RolloutCacheConfiguration.builder().clearOnInit(true));
+    }
 
-//
-//        Verify persistent storage of flags & segments is cleared
-
+    @Test
+    public void repeatedInitWithClearOnInitSetToTrueDoesNotClearIfMinDaysHasNotElapsed() throws InterruptedException {
         // Preload DB with update timestamp of 1 day ago
-        long oldTimestamp = getTimestampDaysAgo(1);
-        preloadDb(oldTimestamp, 0L, 18000L);
+        long oldTimestamp = System.currentTimeMillis();
+        preloadDb(oldTimestamp, 0L, 8000L);
 
         // Track initial values
         List<SplitEntity> initialFlags = mRoomDb.splitDao().getAll();
@@ -77,28 +85,108 @@ public class RolloutCacheManagerIntegrationTest {
         List<MyLargeSegmentEntity> initialLargeSegments = mRoomDb.myLargeSegmentDao().getAll();
         long initialChangeNumber = mRoomDb.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO).getLongValue();
 
-        // Initialize SDK with an expiration of 1 day
         CountDownLatch readyLatch = new CountDownLatch(1);
-        SplitFactory factory = getSplitFactory(RolloutCacheConfiguration.builder().expiration(1).build());
+        SplitFactory factory = getSplitFactory(RolloutCacheConfiguration.builder().clearOnInit(true).build());
+        Thread.sleep(1000);
 
+        // Track intermediate values
+        List<SplitEntity> intermediateFlags = mRoomDb.splitDao().getAll();
+        List<MySegmentEntity> intermediateSegments = mRoomDb.mySegmentDao().getAll();
+        List<MyLargeSegmentEntity> intermediateLargeSegments = mRoomDb.myLargeSegmentDao().getAll();
+        long intermediateChangeNumber = mRoomDb.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO).getLongValue();
+
+        // Resume server responses after tracking DB values
+        mRequestCountdownLatch.countDown();
+
+        // Wait for ready
+        factory.client().on(SplitEvent.SDK_READY, TestingHelper.testTask(readyLatch));
+        boolean readyAwait = readyLatch.await(10, TimeUnit.SECONDS);
+
+        factory.destroy();
+        mRequestCountdownLatch = new CountDownLatch(1);
+
+        preloadDb(null, null, null);
+        SplitFactory factory2 = getSplitFactory(RolloutCacheConfiguration.builder().clearOnInit(true).build());
+        Thread.sleep(1000);
+
+        // Track intermediate values
+        List<SplitEntity> factory2Flags = mRoomDb.splitDao().getAll();
+        List<MySegmentEntity> factory2Segments = mRoomDb.mySegmentDao().getAll();
+        List<MyLargeSegmentEntity> factory2LargeSegments = mRoomDb.myLargeSegmentDao().getAll();
+        long factory2ChangeNumber = mRoomDb.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO).getLongValue();
+
+        // initial values
+        assertTrue(readyAwait);
+        assertEquals(2, initialFlags.size());
+        assertEquals(1, initialSegments.size());
+        assertFalse(Json.fromJson(initialSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
+        assertFalse(Json.fromJson(initialLargeSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
+        assertEquals(8000L, initialChangeNumber);
+
+        // values after clear
+        assertEquals(1, intermediateSegments.size());
+        assertTrue(Json.fromJson(intermediateSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
+        assertEquals(1, intermediateLargeSegments.size());
+        assertEquals(0, intermediateFlags.size());
+        assertTrue(Json.fromJson(intermediateLargeSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
+        assertEquals(-1, intermediateChangeNumber);
+
+        // values after second init (values were reinserted into DB); no clear
+        assertEquals(2, factory2Flags.size());
+        assertEquals(1, factory2Segments.size());
+        assertFalse(Json.fromJson(factory2Segments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
+        assertFalse(Json.fromJson(factory2LargeSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
+        assertEquals(10000L, factory2ChangeNumber);
+        assertTrue(0L < mRoomDb.generalInfoDao()
+                .getByName("rolloutCacheLastClearTimestamp").getLongValue());
+    }
+
+    private void test(long timestampDaysAgo, RolloutCacheConfiguration.Builder configBuilder) throws InterruptedException {
+        // Preload DB with update timestamp of 1 day ago
+        long oldTimestamp = timestampDaysAgo;
+        preloadDb(oldTimestamp, 0L, 8000L);
+
+        // Track initial values
+        List<SplitEntity> initialFlags = mRoomDb.splitDao().getAll();
+        List<MySegmentEntity> initialSegments = mRoomDb.mySegmentDao().getAll();
+        List<MyLargeSegmentEntity> initialLargeSegments = mRoomDb.myLargeSegmentDao().getAll();
+        long initialChangeNumber = mRoomDb.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO).getLongValue();
+
+        // Initialize SDK
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        SplitFactory factory = getSplitFactory(configBuilder.build());
+        Thread.sleep(1000);
+
+        // Track final values
+        verify(factory, readyLatch, initialFlags, initialSegments, initialLargeSegments, initialChangeNumber);
+    }
+
+    private void verify(SplitFactory factory, CountDownLatch readyLatch, List<SplitEntity> initialFlags, List<MySegmentEntity> initialSegments, List<MyLargeSegmentEntity> initialLargeSegments, long initialChangeNumber) throws InterruptedException {
         // Track final values
         List<SplitEntity> finalFlags = mRoomDb.splitDao().getAll();
         List<MySegmentEntity> finalSegments = mRoomDb.mySegmentDao().getAll();
         List<MyLargeSegmentEntity> finalLargeSegments = mRoomDb.myLargeSegmentDao().getAll();
         long finalChangeNumber = mRoomDb.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO).getLongValue();
 
+        // Resume server responses after tracking DB values
+        mRequestCountdownLatch.countDown();
+
         // Wait for ready
         factory.client().on(SplitEvent.SDK_READY, TestingHelper.testTask(readyLatch));
         boolean readyAwait = readyLatch.await(10, TimeUnit.SECONDS);
 
+        // Verify
         assertTrue(readyAwait);
         assertEquals(2, initialFlags.size());
         assertEquals(1, initialSegments.size());
-        assertEquals(1, initialLargeSegments.size());
-        assertEquals(18000L, initialChangeNumber);
+        assertFalse(Json.fromJson(initialSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
+        assertFalse(Json.fromJson(initialLargeSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
+        assertEquals(8000L, initialChangeNumber);
+        assertEquals(1, finalSegments.size());
+        assertTrue(Json.fromJson(finalSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
         assertEquals(0, finalFlags.size());
-        assertEquals(0, finalSegments.size());
-        assertEquals(0, finalLargeSegments.size());
+        assertEquals(1, finalLargeSegments.size());
+        assertTrue(Json.fromJson(finalLargeSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
         assertEquals(-1, finalChangeNumber);
         assertTrue(0L < mRoomDb.generalInfoDao()
                 .getByName("rolloutCacheLastClearTimestamp").getLongValue());
@@ -137,13 +225,13 @@ public class RolloutCacheManagerIntegrationTest {
 
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
-                Thread.sleep(1000);
+                mRequestCountdownLatch.await();
                 if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     return new MockResponse().setResponseCode(200).setBody(randomizedAllSegments());
                 } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.SPLIT_CHANGES)) {
                     mSinceFromUri.compareAndSet(null, IntegrationHelper.getSinceFromUri(request.getRequestUrl().uri()));
                     return new MockResponse().setResponseCode(200)
-                            .setBody(emptySplitChanges(-1, 10000));
+                            .setBody(IntegrationHelper.emptySplitChanges(-1, 10000L));
                 } else {
                     return new MockResponse().setResponseCode(404);
                 }
@@ -152,7 +240,7 @@ public class RolloutCacheManagerIntegrationTest {
         mWebServer.setDispatcher(dispatcher);
     }
 
-    private void preloadDb(long updateTimestamp, long lastClearTimestamp, long changeNumber) {
+    private void preloadDb(Long updateTimestamp, Long lastClearTimestamp, Long changeNumber) {
         List<Split> splitListFromJson = getSplitListFromJson();
         List<SplitEntity> entities = splitListFromJson.stream()
                 .filter(split -> split.name != null)
@@ -164,19 +252,24 @@ public class RolloutCacheManagerIntegrationTest {
                     return result;
                 }).collect(Collectors.toList());
 
-        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 1));
-        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, updateTimestamp));
-        mRoomDb.generalInfoDao().update(new GeneralInfoEntity("rolloutCacheLastClearTimestamp", lastClearTimestamp));
-        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, changeNumber));
+        if (updateTimestamp != null) {
+            mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, updateTimestamp));
+        }
+        if (lastClearTimestamp != null) {
+            mRoomDb.generalInfoDao().update(new GeneralInfoEntity("rolloutCacheLastClearTimestamp", lastClearTimestamp));
+        }
+        if (changeNumber != null) {
+            mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, changeNumber));
+        }
 
         MyLargeSegmentEntity largeSegment = new MyLargeSegmentEntity();
-        largeSegment.setSegmentList("{\"m1\":1,\"m2\":1}");
+        largeSegment.setSegmentList("{\"k\":[{\"n\":\"ls1\"},{\"n\":\"ls2\"}],\"cn\":null}");
         largeSegment.setUserKey(dummyUserKey().matchingKey());
         largeSegment.setUpdatedAt(System.currentTimeMillis());
         mRoomDb.myLargeSegmentDao().update(largeSegment);
 
         MySegmentEntity segment = new MySegmentEntity();
-        segment.setSegmentList("m1,m2");
+        segment.setSegmentList("{\"k\":[{\"n\":\"s1\"},{\"n\":\"s2\"}],\"cn\":null}");
         segment.setUserKey(dummyUserKey().matchingKey());
         segment.setUpdatedAt(System.currentTimeMillis());
         mRoomDb.mySegmentDao().update(segment);

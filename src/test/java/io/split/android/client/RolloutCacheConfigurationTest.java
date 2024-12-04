@@ -12,7 +12,7 @@ public class RolloutCacheConfigurationTest {
     public void defaultValues() {
         RolloutCacheConfiguration config = RolloutCacheConfiguration.builder().build();
         assertEquals(10, config.getExpiration());
-        assertFalse(config.clearOnInit());
+        assertFalse(config.isClearOnInit());
     }
 
     @Test
@@ -28,7 +28,7 @@ public class RolloutCacheConfigurationTest {
         RolloutCacheConfiguration.Builder builder = RolloutCacheConfiguration.builder();
         builder.clearOnInit(true);
         RolloutCacheConfiguration config = builder.build();
-        assertTrue(config.clearOnInit());
+        assertTrue(config.isClearOnInit());
     }
 
     @Test

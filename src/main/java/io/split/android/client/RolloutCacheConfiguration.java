@@ -17,7 +17,7 @@ public class RolloutCacheConfiguration {
         return mExpiration;
     }
 
-    public boolean clearOnInit() {
+    public boolean isClearOnInit() {
         return mClearOnInit;
     }
 

@@ -65,7 +65,6 @@ public class SplitClientConfig {
     // Data folder
     private static final String DEFAULT_DATA_FOLDER = "split_data";
 
-    private static final long SPLITS_CACHE_EXPIRATION_IN_SECONDS = ServiceConstants.DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS;
     private static final long OBSERVER_CACHE_EXPIRATION_PERIOD = ServiceConstants.DEFAULT_OBSERVER_CACHE_EXPIRATION_PERIOD_MS;
 
     private final String mEndpoint;
@@ -253,8 +252,9 @@ public class SplitClientConfig {
         return mTrafficType;
     }
 
+    @Deprecated
     public long cacheExpirationInSeconds() {
-        return SPLITS_CACHE_EXPIRATION_IN_SECONDS;
+        return TimeUnit.DAYS.toSeconds(rolloutCacheConfiguration().getExpiration());
     }
 
     public long eventFlushInterval() {
