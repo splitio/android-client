@@ -1,5 +1,6 @@
 package io.split.android.client.service.synchronizer
 
+import io.split.android.client.RolloutCacheConfiguration
 import io.split.android.client.service.CleanUpDatabaseTask
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.storage.RolloutDefinitionsCache
@@ -36,7 +37,7 @@ class RolloutCacheManagerTest {
 
     @Test
     fun `validateCache calls listener`() {
-        mRolloutCacheManager = getCacheManager(10L, false)
+        mRolloutCacheManager = getCacheManager(10, false)
 
         val listener = mock(SplitTaskExecutionListener::class.java)
         mRolloutCacheManager.validateCache(listener)
@@ -46,9 +47,9 @@ class RolloutCacheManagerTest {
 
     @Test
     fun `validateCache calls clear on storages when expiration is surpassed`() {
-        val mockedTimestamp = createMockedTimestamp(10L)
+        val mockedTimestamp = createMockedTimestamp(10)
         `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(mockedTimestamp)
-        mRolloutCacheManager = getCacheManager(9L, false)
+        mRolloutCacheManager = getCacheManager(9, false)
 
         mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
 
@@ -60,7 +61,7 @@ class RolloutCacheManagerTest {
     fun `validateCache does not call clear on storages when expiration is not surpassed and clearOnInit is false`() {
         val mockedTimestamp = createMockedTimestamp(1L)
         `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(mockedTimestamp)
-        mRolloutCacheManager = getCacheManager(10L, false)
+        mRolloutCacheManager = getCacheManager(10, false)
 
         mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
 
@@ -72,7 +73,7 @@ class RolloutCacheManagerTest {
     fun `validateCache calls clear on storages when expiration is not surpassed and clearOnInit is true`() {
         val mockedTimestamp = createMockedTimestamp(1L)
         `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(mockedTimestamp)
-        mRolloutCacheManager = getCacheManager(10L, true)
+        mRolloutCacheManager = getCacheManager(10, true)
 
         mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
 
@@ -85,7 +86,7 @@ class RolloutCacheManagerTest {
         val mockedTimestamp = createMockedTimestamp(1L)
         `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(mockedTimestamp)
         `when`(mGeneralInfoStorage.rolloutCacheLastClearTimestamp).thenReturn(0L).thenReturn(TimeUnit.HOURS.toMillis(TimeUnit.MILLISECONDS.toHours(System.currentTimeMillis()) - 1))
-        mRolloutCacheManager = getCacheManager(10L, true)
+        mRolloutCacheManager = getCacheManager(10, true)
 
         mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
         mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
@@ -99,7 +100,7 @@ class RolloutCacheManagerTest {
         val mockedTimestamp = createMockedTimestamp(1L)
         `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(mockedTimestamp)
         `when`(mGeneralInfoStorage.rolloutCacheLastClearTimestamp).thenReturn(0L).thenReturn(TimeUnit.HOURS.toMillis(TimeUnit.MILLISECONDS.toHours(System.currentTimeMillis()) - 1))
-        mRolloutCacheManager = getCacheManager(10L, true)
+        mRolloutCacheManager = getCacheManager(10, true)
 
         val listener = mock(SplitTaskExecutionListener::class.java)
         `when`(mSplitsCache.clear()).thenThrow(RuntimeException("Exception during clear"))
@@ -114,7 +115,7 @@ class RolloutCacheManagerTest {
         val mockedTimestamp = createMockedTimestamp(1L)
         `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(mockedTimestamp)
         `when`(mGeneralInfoStorage.rolloutCacheLastClearTimestamp).thenReturn(0L).thenReturn(TimeUnit.HOURS.toMillis(TimeUnit.MILLISECONDS.toHours(System.currentTimeMillis()) - 1))
-        mRolloutCacheManager = getCacheManager(10L, true)
+        mRolloutCacheManager = getCacheManager(10, true)
 
         mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
 
@@ -126,7 +127,7 @@ class RolloutCacheManagerTest {
         val mockedTimestamp = createMockedTimestamp(1L)
         `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(mockedTimestamp)
         `when`(mGeneralInfoStorage.rolloutCacheLastClearTimestamp).thenReturn(0L).thenReturn(TimeUnit.HOURS.toMillis(TimeUnit.MILLISECONDS.toHours(System.currentTimeMillis()) - 1))
-        mRolloutCacheManager = getCacheManager(10L, false)
+        mRolloutCacheManager = getCacheManager(10, false)
 
         mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
 
@@ -135,7 +136,7 @@ class RolloutCacheManagerTest {
 
     @Test
     fun `validateCache executes cleanUpDatabaseTask`() {
-        mRolloutCacheManager = getCacheManager(10L, false)
+        mRolloutCacheManager = getCacheManager(10, false)
 
         mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
 
@@ -144,15 +145,39 @@ class RolloutCacheManagerTest {
 
     @Test
     fun `validateCache executes encryptionMigrationTask`() {
-        mRolloutCacheManager = getCacheManager(10L, false)
+        mRolloutCacheManager = getCacheManager(10, false)
 
         mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
 
         verify(mEncryptionMigrationTask).execute()
     }
 
-    private fun getCacheManager(expiration: Long, clearOnInit: Boolean): RolloutCacheManager {
-        return RolloutCacheManagerImpl(mGeneralInfoStorage, RolloutCacheManagerConfig(expiration, clearOnInit), mCleanUpDatabaseTask, mEncryptionMigrationTask, mSplitsCache, mSegmentsCache)
+    @Test
+    fun `default value for update timestamp does not clear cache`() {
+        `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(0L)
+        `when`(mGeneralInfoStorage.rolloutCacheLastClearTimestamp).thenReturn(0L)
+        mRolloutCacheManager = getCacheManager(10, false)
+
+        mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
+
+        verify(mSplitsCache, times(0)).clear()
+        verify(mSegmentsCache, times(0)).clear()
+    }
+
+    @Test
+    fun `default value for last clear timestamp clears cache when clearOnInit is true`() {
+        `when`(mGeneralInfoStorage.splitsUpdateTimestamp).thenReturn(createMockedTimestamp(System.currentTimeMillis()))
+        `when`(mGeneralInfoStorage.rolloutCacheLastClearTimestamp).thenReturn(0L)
+        mRolloutCacheManager = getCacheManager(10, true)
+
+        mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
+
+        verify(mSplitsCache).clear()
+        verify(mSegmentsCache).clear()
+    }
+
+    private fun getCacheManager(expiration: Int, clearOnInit: Boolean): RolloutCacheManager {
+        return RolloutCacheManagerImpl(mGeneralInfoStorage, RolloutCacheConfiguration.builder().expiration(expiration).clearOnInit(clearOnInit).build(), mCleanUpDatabaseTask, mEncryptionMigrationTask, mSplitsCache, mSegmentsCache)
     }
 
     private fun createMockedTimestamp(period: Long): Long {
