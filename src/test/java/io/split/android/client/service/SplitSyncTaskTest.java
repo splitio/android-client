@@ -91,7 +91,6 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
-        when(mSplitsSyncHelper.cacheHasExpired()).thenReturn(false);
 
         mTask.execute();
 
@@ -109,7 +108,6 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
-        when(mSplitsSyncHelper.cacheHasExpired()).thenReturn(false);
 
         mTask.execute();
 

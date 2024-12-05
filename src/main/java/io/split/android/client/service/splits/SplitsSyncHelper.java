@@ -185,10 +185,6 @@ public class SplitsSyncHelper {
         mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
     }
 
-    public boolean cacheHasExpired() {
-        return false;
-    }
-
     private long now() {
         return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
     }
