@@ -191,6 +191,9 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
         if ((wasTriggered(SplitInternalEvent.MY_SEGMENTS_UPDATED) || wasTriggered(SplitInternalEvent.MY_SEGMENTS_FETCHED) || wasTriggered(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED)) &&
                 (wasTriggered(SplitInternalEvent.SPLITS_UPDATED) || wasTriggered(SplitInternalEvent.SPLITS_FETCHED)) &&
                 !isTriggered(SplitEvent.SDK_READY)) {
+            if (!isTriggered(SplitEvent.SDK_READY_FROM_CACHE)) {
+                trigger(SplitEvent.SDK_READY_FROM_CACHE);
+            }
             trigger(SplitEvent.SDK_READY);
         }
     }

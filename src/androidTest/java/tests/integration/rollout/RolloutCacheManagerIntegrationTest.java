@@ -142,6 +142,23 @@ public class RolloutCacheManagerIntegrationTest {
                 .getByName("rolloutCacheLastClearTimestamp").getLongValue());
     }
 
+    @Test
+    public void sdkReadyFromCacheIsEmittedOnFreshInit() throws InterruptedException {
+        SplitFactory splitFactory = getSplitFactory(RolloutCacheConfiguration.builder().build());
+
+        CountDownLatch latch1 = new CountDownLatch(1);
+        CountDownLatch latch2 = new CountDownLatch(1);
+        splitFactory.client().on(SplitEvent.SDK_READY_FROM_CACHE, TestingHelper.testTask(latch1));
+        splitFactory.client("two").on(SplitEvent.SDK_READY_FROM_CACHE, TestingHelper.testTask(latch2));
+        mRequestCountdownLatch.countDown();
+
+        boolean await1 = latch1.await(10, TimeUnit.SECONDS);
+        boolean await2 = latch2.await(10, TimeUnit.SECONDS);
+
+        assertTrue(await1);
+        assertTrue(await2);
+    }
+
     private void test(long timestampDaysAgo, RolloutCacheConfiguration.Builder configBuilder) throws InterruptedException {
         // Preload DB with update timestamp of 1 day ago
         long oldTimestamp = timestampDaysAgo;
