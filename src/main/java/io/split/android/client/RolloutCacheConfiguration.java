@@ -5,16 +5,16 @@ import io.split.android.client.utils.logger.Logger;
 
 public class RolloutCacheConfiguration {
 
-    private final int mExpiration;
+    private final int mExpirationDays;
     private final boolean mClearOnInit;
 
     private RolloutCacheConfiguration(int expiration, boolean clearOnInit) {
-        mExpiration = expiration;
+        mExpirationDays = expiration;
         mClearOnInit = clearOnInit;
     }
 
-    public int getExpiration() {
-        return mExpiration;
+    public int getExpirationDays() {
+        return mExpirationDays;
     }
 
     public boolean isClearOnInit() {
@@ -38,15 +38,15 @@ public class RolloutCacheConfiguration {
 
         /**
          * Set the expiration time for the rollout definitions cache, in days. Default is 10 days.
-         * @param expiration in days
+         * @param expirationDays in days
          * @return This builder
          */
-        public Builder expiration(int expiration) {
-            if (expiration < MIN_EXPIRATION_DAYS) {
+        public Builder expirationDays(int expirationDays) {
+            if (expirationDays < MIN_EXPIRATION_DAYS) {
                 Logger.w("Cache expiration must be at least 1 day. Using default value.");
                 mExpiration = ServiceConstants.DEFAULT_ROLLOUT_CACHE_EXPIRATION;
             } else {
-                mExpiration = expiration;
+                mExpiration = expirationDays;
             }
 
             return this;

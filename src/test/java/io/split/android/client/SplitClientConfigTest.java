@@ -229,17 +229,17 @@ public class SplitClientConfigTest {
     public void rolloutCacheConfigurationDefaults() {
         RolloutCacheConfiguration config = SplitClientConfig.builder().build().rolloutCacheConfiguration();
 
-        assertEquals(10, config.getExpiration());
+        assertEquals(10, config.getExpirationDays());
         assertFalse(config.isClearOnInit());
     }
 
     @Test
     public void rolloutCacheConfigurationExpirationIsCorrectlySet() {
         RolloutCacheConfiguration config = SplitClientConfig.builder()
-                .rolloutCacheConfiguration(RolloutCacheConfiguration.builder().expiration(1).clearOnInit(true).build())
+                .rolloutCacheConfiguration(RolloutCacheConfiguration.builder().expirationDays(1).clearOnInit(true).build())
                 .build().rolloutCacheConfiguration();
 
-        assertEquals(1, config.getExpiration());
+        assertEquals(1, config.getExpirationDays());
         assertTrue(config.isClearOnInit());
     }
 
@@ -251,7 +251,7 @@ public class SplitClientConfigTest {
                 .rolloutCacheConfiguration(null)
                 .build().rolloutCacheConfiguration();
 
-        assertEquals(10, config.getExpiration());
+        assertEquals(10, config.getExpirationDays());
         assertFalse(config.isClearOnInit());
         assertEquals(1, logMessages.size());
     }

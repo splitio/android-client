@@ -65,7 +65,7 @@ public class RolloutCacheManagerIntegrationTest {
 
     @Test
     public void expirationPeriodIsUsed() throws InterruptedException {
-        test(getTimestampDaysAgo(1), RolloutCacheConfiguration.builder().expiration(1));
+        test(getTimestampDaysAgo(1), RolloutCacheConfiguration.builder().expirationDays(1));
     }
 
     @Test
