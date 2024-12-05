@@ -185,10 +185,6 @@ public class SplitsSyncHelper {
         mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
     }
 
-    private long now() {
-        return TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis());
-    }
-
     private void logError(String message) {
         Logger.e("Error while executing splits sync/update task: " + message);
     }
