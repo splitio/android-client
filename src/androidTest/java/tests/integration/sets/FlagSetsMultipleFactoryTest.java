@@ -2,7 +2,7 @@ package tests.integration.sets;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
+import static helper.IntegrationHelper.getSinceFromUri;
 
 import android.content.Context;
 import android.database.Cursor;

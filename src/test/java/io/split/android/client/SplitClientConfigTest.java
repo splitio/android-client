@@ -230,7 +230,7 @@ public class SplitClientConfigTest {
         RolloutCacheConfiguration config = SplitClientConfig.builder().build().rolloutCacheConfiguration();
 
         assertEquals(10, config.getExpiration());
-        assertFalse(config.clearOnInit());
+        assertFalse(config.isClearOnInit());
     }
 
     @Test
@@ -240,7 +240,7 @@ public class SplitClientConfigTest {
                 .build().rolloutCacheConfiguration();
 
         assertEquals(1, config.getExpiration());
-        assertTrue(config.clearOnInit());
+        assertTrue(config.isClearOnInit());
     }
 
     @Test
@@ -252,7 +252,7 @@ public class SplitClientConfigTest {
                 .build().rolloutCacheConfiguration();
 
         assertEquals(10, config.getExpiration());
-        assertFalse(config.clearOnInit());
+        assertFalse(config.isClearOnInit());
         assertEquals(1, logMessages.size());
     }
 
