@@ -286,7 +286,7 @@ public class IntegrationTest {
         latch.await(40, TimeUnit.SECONDS);
 
         Assert.assertTrue(client.isReady());
-        Assert.assertFalse(readyFromCacheTask.isOnPostExecutionCalled);
+        Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertTrue(readyTask.isOnPostExecutionCalled);
         Assert.assertFalse(readyTimeOutTask.isOnPostExecutionCalled);
 
