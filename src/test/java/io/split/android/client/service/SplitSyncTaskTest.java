@@ -67,7 +67,7 @@ public class SplitSyncTaskTest {
         // And updateTimestamp is 0
         // Retry is off, so splitSyncHelper.sync should be called
         mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage,
-                false, 1000, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -75,38 +75,6 @@ public class SplitSyncTaskTest {
         mTask.execute();
 
         verify(mSplitsSyncHelper, times(1)).sync(-1, false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
-    }
-
-    @Test
-    public void cleanOldCacheDisabled() throws HttpFetcherException {
-    // Cache should not be cleared when cache expired
-        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage,
-                false, 100L, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
-        when(mSplitsStorage.getTill()).thenReturn(300L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(100L);
-        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
-        // This value function checks that cache is expired, here we simulate cache expired
-        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(true);
-
-        mTask.execute();
-
-        verify(mSplitsStorage, never()).clear();
-    }
-
-    @Test
-    public void cleanOldCacheEnabled() throws HttpFetcherException {
-
-        // Cache should be cleared when cache expired
-        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage,
-                true, 100L, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
-        when(mSplitsStorage.getTill()).thenReturn(100L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(100L); // Dummy value clearing depends on cacheHasExpired function value
-        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
-        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(true);
-
-        mTask.execute();
-
-        verify(mSplitsSyncHelper, times(1)).sync(100L, true, true, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
     }
 
     @Test
@@ -119,11 +87,11 @@ public class SplitSyncTaskTest {
         Map<String, Object> params = new HashMap<>();
         params.put("since", 100L);
         mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage,
-                true, 100L, otherQs, mEventsManager, mTelemetryRuntimeProducer);
+                otherQs, mEventsManager, mTelemetryRuntimeProducer);
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
-        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(false);
+        when(mSplitsSyncHelper.cacheHasExpired()).thenReturn(false);
 
         mTask.execute();
 
@@ -137,11 +105,11 @@ public class SplitSyncTaskTest {
         // Setting up cache not expired
 
         mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage,
-                true,100L, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
-        when(mSplitsSyncHelper.cacheHasExpired(anyLong(), anyLong(), anyLong())).thenReturn(false);
+        when(mSplitsSyncHelper.cacheHasExpired()).thenReturn(false);
 
         mTask.execute();
 
@@ -156,7 +124,7 @@ public class SplitSyncTaskTest {
         // And updateTimestamp is 0
         // Retry is off, so splitSyncHelper.sync should be called
         mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage,
-                false, 1000, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
         when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -174,7 +142,7 @@ public class SplitSyncTaskTest {
         // And updateTimestamp is 0
         // Retry is off, so splitSyncHelper.sync should be called
         mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage,
-                false, 1000, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -188,7 +156,7 @@ public class SplitSyncTaskTest {
     @Test
     public void syncIsTrackedInTelemetry() {
         mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage,
-                false, 1000, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
@@ -202,7 +170,7 @@ public class SplitSyncTaskTest {
     @Test
     public void recordSuccessInTelemetry() {
         mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage,
-                false, 1000, mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);

@@ -15,7 +15,6 @@ import io.split.android.client.utils.logger.Logger;
  */
 class SplitsSyncWorkerTaskBuilder {
 
-    private final long mCacheExpirationInSeconds;
     private final StorageProvider mStorageProvider;
     private final FetcherProvider mFetcherProvider;
     private final SplitChangeProcessor mSplitChangeProcessor;
@@ -26,13 +25,11 @@ class SplitsSyncWorkerTaskBuilder {
                                 FetcherProvider fetcherProvider,
                                 SplitChangeProcessor splitChangeProcessor,
                                 SyncHelperProvider splitsSyncHelperProvider,
-                                long cacheExpirationInSeconds,
                                 String flagsSpec) {
         mStorageProvider = storageProvider;
         mFetcherProvider = fetcherProvider;
         mSplitsSyncHelperProvider = splitsSyncHelperProvider;
         mSplitChangeProcessor = splitChangeProcessor;
-        mCacheExpirationInSeconds = cacheExpirationInSeconds;
         mFlagsSpec = flagsSpec;
     }
 
@@ -51,8 +48,6 @@ class SplitsSyncWorkerTaskBuilder {
 
             return SplitsSyncTask.buildForBackground(splitsSyncHelper,
                     splitsStorage,
-                    false,
-                    mCacheExpirationInSeconds,
                     splitsFilterQueryString,
                     telemetryStorage);
         } catch (URISyntaxException e) {

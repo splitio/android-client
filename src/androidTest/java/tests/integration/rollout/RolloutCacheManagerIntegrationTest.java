@@ -75,7 +75,7 @@ public class RolloutCacheManagerIntegrationTest {
 
     @Test
     public void repeatedInitWithClearOnInitSetToTrueDoesNotClearIfMinDaysHasNotElapsed() throws InterruptedException {
-        // Preload DB with update timestamp of 1 day ago
+        // Preload DB with update timestamp of now
         long oldTimestamp = System.currentTimeMillis();
         preloadDb(oldTimestamp, 0L, 8000L);
 
@@ -102,6 +102,7 @@ public class RolloutCacheManagerIntegrationTest {
         factory.client().on(SplitEvent.SDK_READY, TestingHelper.testTask(readyLatch));
         boolean readyAwait = readyLatch.await(10, TimeUnit.SECONDS);
 
+        // Destroy factory
         factory.destroy();
         mRequestCountdownLatch = new CountDownLatch(1);
 

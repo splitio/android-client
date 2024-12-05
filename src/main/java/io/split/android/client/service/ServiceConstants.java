@@ -11,7 +11,6 @@ public class ServiceConstants {
     public static final long MIN_INITIAL_DELAY = 5L;
     public static final int DEFAULT_RECORDS_PER_PUSH = 100;
     public static final int DEFAULT_ROLLOUT_CACHE_EXPIRATION = 10; // 10 days
-    public static final long DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS = TimeUnit.DAYS.toSeconds(DEFAULT_ROLLOUT_CACHE_EXPIRATION); // 10 days
 
     public static final int MAX_ROWS_PER_QUERY = 100;
 
@@ -28,7 +27,6 @@ public class ServiceConstants {
     public final static String WORKER_PARAM_ENDPOINT = "endpoint";
     public final static String WORKER_PARAM_IMPRESSIONS_PER_PUSH = "impressionsPerPush";
     public final static String WORKER_PARAM_EVENTS_PER_PUSH = "eventsPerPush";
-    public final static String WORKER_PARAM_SPLIT_CACHE_EXPIRATION = "splitCacheExpiration";
     public static final String WORKER_PARAM_UNIQUE_KEYS_PER_PUSH = "unique_keys_per_push";
     public static final String WORKER_PARAM_UNIQUE_KEYS_ESTIMATED_SIZE_IN_BYTES = "unique_keys_estimated_size_in_bytes";
     public static final String WORKER_PARAM_ENCRYPTION_ENABLED = "encryptionEnabled";

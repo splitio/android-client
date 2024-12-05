@@ -128,8 +128,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     @Override
     public SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration) {
-        return SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), checkCacheExpiration,
-                mSplitClientConfig.cacheExpirationInSeconds(), mSplitsFilterQueryStringFromConfig, mEventsManager, mSplitsStorageContainer.getTelemetryStorage());
+        return SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(),
+                mSplitsFilterQueryStringFromConfig, mEventsManager, mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override

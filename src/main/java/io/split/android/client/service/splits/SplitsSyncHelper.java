@@ -185,11 +185,8 @@ public class SplitsSyncHelper {
         mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
     }
 
-    public boolean cacheHasExpired(long storedChangeNumber, long updateTimestamp, long cacheExpirationInSeconds) {
-        long elapsed = now() - TimeUnit.MILLISECONDS.toSeconds(updateTimestamp);
-        return storedChangeNumber > -1
-                && updateTimestamp > 0
-                && (elapsed > cacheExpirationInSeconds);
+    public boolean cacheHasExpired() {
+        return false;
     }
 
     private long now() {
