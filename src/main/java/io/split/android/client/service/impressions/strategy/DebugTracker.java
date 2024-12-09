@@ -8,6 +8,7 @@ import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
+import io.split.android.client.service.impressions.observer.ImpressionsObserver;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 
@@ -18,13 +19,16 @@ class DebugTracker implements PeriodicTracker {
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
     private final RetryBackoffCounterTimer mRetryTimer;
     private final int mImpressionsRefreshRate;
+    private final ImpressionsObserver mImpressionsObserver;
     private String mImpressionsRecorderTaskId;
 
-    DebugTracker(@NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
+    DebugTracker(@NonNull ImpressionsObserver impressionsObserver,
+                 @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
                  @NonNull SplitTaskExecutor taskExecutor,
                  @NonNull ImpressionsTaskFactory taskFactory,
                  @NonNull RetryBackoffCounterTimer retryTimer,
                  int impressionsRefreshRate) {
+        mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
@@ -63,6 +67,7 @@ class DebugTracker implements PeriodicTracker {
     @Override
     public void stopPeriodicRecording() {
         mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
+        mImpressionsObserver.persist();
     }
 
     @Override

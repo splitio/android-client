@@ -39,7 +39,6 @@ import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactory;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactoryImpl;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyConfig;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
-import io.split.android.client.service.impressions.strategy.ProcessStrategy;
 import io.split.android.client.service.mysegments.AllSegmentsResponseParser;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
@@ -387,10 +386,10 @@ class SplitFactoryHelper {
                 syncGuardian);
     }
 
-    public ProcessStrategy getImpressionStrategy(SplitTaskExecutor splitTaskExecutor,
-                                                 SplitTaskFactory splitTaskFactory,
-                                                 SplitStorageContainer splitStorageContainer,
-                                                 SplitClientConfig config) {
+    public ImpressionStrategyProvider getImpressionStrategyProvider(SplitTaskExecutor splitTaskExecutor,
+                                                                    SplitTaskFactory splitTaskFactory,
+                                                                    SplitStorageContainer splitStorageContainer,
+                                                                    SplitClientConfig config) {
         return new ImpressionStrategyProvider(splitTaskExecutor,
                 splitStorageContainer,
                 splitTaskFactory,
@@ -402,8 +401,7 @@ class SplitFactoryHelper {
                         config.impressionsCounterRefreshRate(),
                         config.mtkRefreshRate(),
                         config.userConsent() == UserConsent.GRANTED,
-                        config.impressionsDedupeTimeInterval()))
-                .getStrategy(config.impressionsMode());
+                        config.impressionsDedupeTimeInterval()));
     }
 
     @Nullable
