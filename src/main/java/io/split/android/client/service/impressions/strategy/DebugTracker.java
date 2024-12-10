@@ -4,8 +4,13 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.impressions.observer.ImpressionsObserver;
@@ -19,7 +24,21 @@ class DebugTracker implements PeriodicTracker {
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
     private final RetryBackoffCounterTimer mRetryTimer;
     private final int mImpressionsRefreshRate;
+    private final AtomicBoolean mIsSynchronizing = new AtomicBoolean(true);
     private final ImpressionsObserver mImpressionsObserver;
+    /** @noinspection FieldCanBeLocal*/
+    private final SplitTaskExecutionListener mTaskExecutionListener = new SplitTaskExecutionListener() {
+        @Override
+        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+            // this listener intercepts impressions recording task
+            if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+                if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
+                    mIsSynchronizing.compareAndSet(true, false);
+                    stopPeriodicRecording();
+                }
+            }
+        }
+    };
     private String mImpressionsRecorderTaskId;
 
     DebugTracker(@NonNull ImpressionsObserver impressionsObserver,
@@ -30,6 +49,7 @@ class DebugTracker implements PeriodicTracker {
                  int impressionsRefreshRate) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
+        mImpressionsSyncHelper.addListener(mTaskExecutionListener);
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
         mRetryTimer = retryTimer;
@@ -50,7 +70,9 @@ class DebugTracker implements PeriodicTracker {
 
     @Override
     public void startPeriodicRecording() {
-        scheduleImpressionsRecorderTask();
+        if (mIsSynchronizing.get()) {
+            scheduleImpressionsRecorderTask();
+        }
     }
 
     private void scheduleImpressionsRecorderTask() {

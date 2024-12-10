@@ -1,7 +1,10 @@
 package io.split.android.client.service.impressions.strategy
 
 import io.split.android.client.dtos.KeyImpression
+import io.split.android.client.service.executor.SplitTaskExecutionInfo
+import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
+import io.split.android.client.service.executor.SplitTaskType
 import io.split.android.client.service.impressions.ImpressionsRecorderTask
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
 import io.split.android.client.service.impressions.observer.ImpressionsObserver
@@ -9,6 +12,7 @@ import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTi
 import io.split.android.client.service.synchronizer.RecorderSyncHelper
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
@@ -98,6 +102,52 @@ class DebugTrackerTest {
     fun `stopPeriodicRecording calls persist on observer`() {
         tracker.stopPeriodicRecording()
 
+        verify(impressionsObserver).persist()
+    }
+
+    @Test
+    fun `call stop periodic tracking when sync listener returns do not retry`() {
+        val listenerCaptor = ArgumentCaptor.forClass(SplitTaskExecutionListener::class.java)
+
+        val impressionsRecorderTask = mock(ImpressionsRecorderTask::class.java)
+        `when`(taskFactory.createImpressionsRecorderTask()).thenReturn(impressionsRecorderTask)
+        `when`(taskExecutor.schedule(eq(impressionsRecorderTask), eq(0L), eq(30L), any())).thenReturn("250")
+        `when`(syncHelper.addListener(listenerCaptor.capture())).thenAnswer { it }
+        `when`(syncHelper.taskExecuted(argThat {
+            it.taskType == SplitTaskType.IMPRESSIONS_RECORDER
+        })).thenAnswer {
+            listenerCaptor.value.taskExecuted(
+                SplitTaskExecutionInfo.error(
+                    SplitTaskType.IMPRESSIONS_RECORDER,
+                    mapOf(SplitTaskExecutionInfo.DO_NOT_RETRY to true)
+                )
+            )
+            it
+        }
+
+        tracker = DebugTracker(
+            impressionsObserver,
+            syncHelper,
+            taskExecutor,
+            taskFactory,
+            retryBackoffCounterTimer,
+            30
+        )
+
+        tracker.startPeriodicRecording()
+        val spy = spy(tracker)
+        // simulate sync helper trigger
+        syncHelper.taskExecuted(
+            SplitTaskExecutionInfo.error(
+                SplitTaskType.IMPRESSIONS_RECORDER,
+                mapOf(SplitTaskExecutionInfo.DO_NOT_RETRY to true)
+            )
+        )
+
+        // start periodic recording again to verify it is not working anymore
+        spy.startPeriodicRecording()
+
+        verify(taskExecutor).stopTask("250")
         verify(impressionsObserver).persist()
     }
 }

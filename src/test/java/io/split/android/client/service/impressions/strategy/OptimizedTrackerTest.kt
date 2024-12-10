@@ -1,15 +1,19 @@
 package io.split.android.client.service.impressions.strategy
 
 import io.split.android.client.dtos.KeyImpression
+import io.split.android.client.service.executor.SplitTaskExecutionInfo
+import io.split.android.client.service.executor.SplitTaskExecutionInfo.DO_NOT_RETRY
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
 import io.split.android.client.service.executor.SplitTaskSerialWrapper
+import io.split.android.client.service.executor.SplitTaskType
 import io.split.android.client.service.impressions.*
 import io.split.android.client.service.impressions.observer.ImpressionsObserver
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer
 import io.split.android.client.service.synchronizer.RecorderSyncHelper
 import org.junit.Before
 import org.junit.Test
+import org.mockito.ArgumentCaptor
 import org.mockito.Mock
 import org.mockito.Mockito.*
 import org.mockito.MockitoAnnotations
@@ -48,6 +52,16 @@ class OptimizedTrackerTest {
     }
 
     @Test
+    fun `start periodic recording schedules impression recorder task`() {
+        val task = mock(ImpressionsRecorderTask::class.java)
+        `when`(taskFactory.createImpressionsRecorderTask()).thenReturn(task)
+
+        tracker.startPeriodicRecording()
+
+        verify(taskExecutor).schedule(task, 0L, 30L, syncHelper)
+    }
+
+    @Test
     fun `flush flushes impressions`() {
         val task = mock(ImpressionsRecorderTask::class.java)
         `when`(taskFactory.createImpressionsRecorderTask()).thenReturn(task)
@@ -83,27 +97,56 @@ class OptimizedTrackerTest {
     }
 
     @Test
-    fun `stop periodic recording does not save impression count when tracking is disabled`() {
-        val countTask = mock(SaveImpressionsCountTask::class.java)
-        `when`(taskFactory.createSaveImpressionsCountTask(any())).thenReturn(countTask)
-        `when`(
-            taskExecutor.schedule(
-                any(SaveImpressionsCountTask::class.java),
-                eq(0L),
-                eq(40L),
-                eq<SplitTaskExecutionListener?>(null)
-            )
-        ).thenReturn("id_1")
-        tracker.enableTracking(false)
-        tracker.stopPeriodicRecording()
-
-        verify(taskExecutor, never()).submit(eq(countTask), any())
-    }
-
-    @Test
     fun `stopPeriodicRecording calls persist on ImpressionsObserver`() {
         tracker.stopPeriodicRecording()
 
+        verify(impressionsObserver).persist()
+    }
+
+    @Test
+    fun `call stop periodic tracking when sync listener returns do not retry`() {
+        val listenerCaptor = ArgumentCaptor.forClass(SplitTaskExecutionListener::class.java)
+
+        val impressionsRecorderTask = mock(ImpressionsRecorderTask::class.java)
+        `when`(taskFactory.createImpressionsRecorderTask()).thenReturn(impressionsRecorderTask)
+        `when`(taskExecutor.schedule(eq(impressionsRecorderTask), eq(0L), eq(30L), any())).thenReturn("250")
+        `when`(syncHelper.addListener(listenerCaptor.capture())).thenAnswer { it }
+        `when`(syncHelper.taskExecuted(argThat {
+            it.taskType == SplitTaskType.IMPRESSIONS_RECORDER
+        })).thenAnswer {
+            listenerCaptor.value.taskExecuted(
+                SplitTaskExecutionInfo.error(
+                    SplitTaskType.IMPRESSIONS_RECORDER,
+                    mapOf(DO_NOT_RETRY to true)
+                )
+            )
+            it
+        }
+
+        tracker = OptimizedTracker(
+            impressionsObserver,
+            syncHelper,
+            taskExecutor,
+            taskFactory,
+            impressionTimer,
+            30,
+            true
+        )
+
+        val spy = spy(tracker)
+        tracker.startPeriodicRecording()
+        // simulate sync helper trigger
+        syncHelper.taskExecuted(
+            SplitTaskExecutionInfo.error(
+                SplitTaskType.IMPRESSIONS_RECORDER,
+                mapOf(DO_NOT_RETRY to true)
+            )
+        )
+
+        // start periodic recording again to verify it is not working anymore
+        spy.startPeriodicRecording()
+
+        verify(taskExecutor).stopTask("250")
         verify(impressionsObserver).persist()
     }
 }

@@ -1,7 +1,6 @@
 package io.split.android.client.service.impressions.strategy
 
 import io.split.android.client.dtos.KeyImpression
-import io.split.android.client.impressions.Impression
 import io.split.android.client.service.executor.SplitTaskExecutionInfo
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
@@ -17,7 +16,14 @@ import org.junit.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mock
-import org.mockito.Mockito.*
+import org.mockito.Mockito.argThat
+import org.mockito.Mockito.eq
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.spy
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 import org.mockito.invocation.InvocationOnMock
 
@@ -100,47 +106,6 @@ class DebugStrategyTest {
 
         spy(impression).withPreviousTime(20421)
     }
-
-//    @Test
-//    fun `call stop periodic tracking when sync listener returns do not retry`() {
-//        val listenerCaptor = ArgumentCaptor.forClass(SplitTaskExecutionListener::class.java)
-//
-//        `when`(impressionsSyncHelper.addListener(listenerCaptor.capture())).thenAnswer { it }
-//        `when`(impressionsSyncHelper.taskExecuted(argThat {
-//            it.taskType == SplitTaskType.IMPRESSIONS_RECORDER
-//        })).thenAnswer {
-//            listenerCaptor.value.taskExecuted(
-//                SplitTaskExecutionInfo.error(
-//                    SplitTaskType.IMPRESSIONS_RECORDER,
-//                    mapOf(SplitTaskExecutionInfo.DO_NOT_RETRY to true)
-//                )
-//            )
-//            it
-//        }
-//
-//        strategy = DebugStrategy(
-//            impressionsObserver,
-//            impressionsSyncHelper,
-//            taskExecutor,
-//            taskFactory,
-//            telemetryRuntimeProducer,
-//        )
-//
-//        strategy.startPeriodicRecording()
-//        // simulate sync helper trigger
-//        impressionsSyncHelper.taskExecuted(
-//            SplitTaskExecutionInfo.error(
-//                SplitTaskType.IMPRESSIONS_RECORDER,
-//                mapOf(SplitTaskExecutionInfo.DO_NOT_RETRY to true)
-//            )
-//        )
-//
-//        // start periodic recording again to verify it is not working anymore
-//        strategy.startPeriodicRecording()
-//
-//        verify(tracker, times(1)).startPeriodicRecording()
-//        verify(tracker).stopPeriodicRecording()
-//    }
 
     @Test
     fun `do not submit recording task when push fails with do not retry`() {

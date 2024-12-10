@@ -7,7 +7,6 @@ import io.split.android.client.service.impressions.ImpressionsCounter
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
 import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker
-import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.any
@@ -30,15 +29,6 @@ class NoneStrategyTest {
 
     @Mock
     private lateinit var uniqueKeysTracker: UniqueKeysTracker
-
-    @Mock
-    private lateinit var countRetryTimer: RetryBackoffCounterTimer
-
-    @Mock
-    private lateinit var uniqueKeysRetryTimer: RetryBackoffCounterTimer
-
-    @Mock
-    private lateinit var tracker: PeriodicTracker
 
     private lateinit var strategy: NoneStrategy
 

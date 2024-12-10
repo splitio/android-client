@@ -8,6 +8,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.impressions.observer.ImpressionsObserver;
@@ -25,6 +28,22 @@ class OptimizedTracker implements PeriodicTracker {
     private final int mImpressionsRefreshRate;
     private String mImpressionsRecorderTaskId;
     private final AtomicBoolean mTrackingIsEnabled;
+    private final AtomicBoolean mIsSynchronizing = new AtomicBoolean(true);
+    /**
+     * @noinspection FieldCanBeLocal
+     */
+    private final SplitTaskExecutionListener mTaskExecutionListener = new SplitTaskExecutionListener() {
+        @Override
+        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+            // this listener intercepts impressions recording task
+            if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+                if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
+                    mIsSynchronizing.compareAndSet(true, false);
+                    stopPeriodicRecording();
+                }
+            }
+        }
+    };
 
     OptimizedTracker(@NonNull ImpressionsObserver impressionsObserver,
                      @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
@@ -36,6 +55,7 @@ class OptimizedTracker implements PeriodicTracker {
                      boolean isTrackingEnabled) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
+        mImpressionsSyncHelper.addListener(mTaskExecutionListener);
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
 
@@ -51,7 +71,9 @@ class OptimizedTracker implements PeriodicTracker {
 
     @Override
     public void startPeriodicRecording() {
-        scheduleImpressionsRecorderTask();
+        if (mIsSynchronizing.get()) {
+            scheduleImpressionsRecorderTask();
+        }
     }
 
     @Override
