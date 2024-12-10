@@ -5,6 +5,8 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 import androidx.annotation.NonNull;
 
 import java.lang.ref.WeakReference;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -26,7 +28,7 @@ public class RecorderSyncHelperImpl<T extends InBytesSizable> implements Recorde
     private final int mMaxQueueSize;
     private final long mMaxQueueSizeInBytes;
     private final SplitTaskType mTaskType;
-    private WeakReference<SplitTaskExecutionListener> mTaskExecutionListener;
+    private final Set<WeakReference<SplitTaskExecutionListener>> mTaskExecutionListener;
 
     public RecorderSyncHelperImpl(SplitTaskType taskType,
                                   StoragePusher<T> storage,
@@ -40,7 +42,7 @@ public class RecorderSyncHelperImpl<T extends InBytesSizable> implements Recorde
         mTotalPushedSizeInBytes = new AtomicLong(0);
         mMaxQueueSize = maxQueueSize;
         mMaxQueueSizeInBytes = maxQueueSizeInBytes;
-        mTaskExecutionListener = new WeakReference<>(null);
+        mTaskExecutionListener = new HashSet<>();
     }
 
     @Override
@@ -67,19 +69,28 @@ public class RecorderSyncHelperImpl<T extends InBytesSizable> implements Recorde
                     SplitTaskExecutionInfo.NON_SENT_BYTES));
         }
 
-        if (mTaskExecutionListener.get() != null) {
-            mTaskExecutionListener.get().taskExecuted(taskInfo);
+        for (WeakReference<SplitTaskExecutionListener> reference : mTaskExecutionListener) {
+            SplitTaskExecutionListener listener = reference.get();
+            if (listener != null) {
+                listener.taskExecuted(taskInfo);
+            }
         }
     }
 
     @Override
     public void addListener(SplitTaskExecutionListener listener) {
-        mTaskExecutionListener = new WeakReference<>(listener);
+        mTaskExecutionListener.add(new WeakReference<>(listener));
     }
 
     @Override
     public void removeListener(SplitTaskExecutionListener listener) {
-        mTaskExecutionListener = new WeakReference<>(null);
+        for (WeakReference<SplitTaskExecutionListener> reference : mTaskExecutionListener) {
+            SplitTaskExecutionListener listenerRef = reference.get();
+            if (listenerRef != null && listenerRef.equals(listener)) {
+                mTaskExecutionListener.remove(reference);
+                break;
+            }
+        }
     }
 
     private void pushAsync(T entity) {
