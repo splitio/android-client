@@ -202,7 +202,7 @@ class UserConsentModeNoneTest {
         mCountDao = splitRoomDatabase.impressionsCountDao()
         val dispatcher: HttpResponseMockDispatcher = buildDispatcher()
         val config = TestableSplitConfigBuilder().ready(30000)
-            .trafficType("client")
+            .trafficType("account")
             .impressionsMode(ImpressionsMode.NONE)
             .impressionsRefreshRate(3)
             .eventFlushInterval(3)
