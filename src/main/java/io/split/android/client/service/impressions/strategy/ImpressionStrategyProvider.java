@@ -26,6 +26,8 @@ public class ImpressionStrategyProvider {
     private final ImpressionStrategyConfig mImpressionStrategyConfig;
     private final ImpressionsCounter mImpressionsCounter;
     private final ImpressionManagerRetryTimerProviderImpl mImpressionManagerRetryTimerProvider;
+    private final NoneStrategy mNoneStrategy;
+    private final NoneTracker mNoneTracker;
 
     public ImpressionStrategyProvider(SplitTaskExecutor splitTaskExecutor,
                                       SplitStorageContainer storageContainer,
@@ -39,6 +41,24 @@ public class ImpressionStrategyProvider {
         mImpressionStrategyConfig = config;
         mImpressionsCounter = new ImpressionsCounter(mImpressionStrategyConfig.getDedupeTimeIntervalInMs());
         mImpressionManagerRetryTimerProvider = new ImpressionManagerRetryTimerProviderImpl(mSplitTaskExecutor);
+
+        UniqueKeysTracker uniqueKeysTracker = new UniqueKeysTrackerImpl();
+        mNoneStrategy = new NoneStrategy(
+                mSplitTaskExecutor,
+                mSplitTaskFactory,
+                mImpressionsCounter,
+                uniqueKeysTracker,
+                mImpressionStrategyConfig.isUserConsentGranted());
+        mNoneTracker = new NoneTracker(
+                mSplitTaskExecutor,
+                mSplitTaskFactory,
+                mImpressionsCounter,
+                uniqueKeysTracker,
+                mImpressionManagerRetryTimerProvider.getImpressionsCountTimer(),
+                mImpressionManagerRetryTimerProvider.getUniqueKeysTimer(),
+                mImpressionStrategyConfig.getImpressionsCounterRefreshRate(),
+                mImpressionStrategyConfig.getUniqueKeysRefreshRate(),
+                mImpressionStrategyConfig.isUserConsentGranted());
     }
 
     public Pair<ProcessStrategy, PeriodicTracker> getStrategy(ImpressionsMode mode) {
@@ -49,63 +69,47 @@ public class ImpressionStrategyProvider {
                 mImpressionStrategyConfig.getImpressionsQueueSize(),
                 mImpressionStrategyConfig.getImpressionsChunkSize(),
                 mSplitTaskExecutor);
-        if (mode == ImpressionsMode.DEBUG) {
-            DebugTracker tracker = new DebugTracker(
-                    impressionsObserver,
-                    impressionsSyncHelper,
-                    mSplitTaskExecutor,
-                    mSplitTaskFactory,
-                    mImpressionManagerRetryTimerProvider.getImpressionsTimer(),
-                    mImpressionStrategyConfig.getImpressionsRefreshRate());
-            DebugStrategy debugStrategy = new DebugStrategy(
-                    impressionsObserver,
-                    impressionsSyncHelper,
-                    mSplitTaskExecutor,
-                    mSplitTaskFactory,
-                    mTelemetryStorage);
-            return new Pair<>(debugStrategy, tracker);
-        } else if (mode == ImpressionsMode.NONE) {
-            return new Pair<>(null, null);
-        } else {
-            OptimizedStrategy optimizedStrategy = new OptimizedStrategy(
-                    impressionsObserver,
-                    mImpressionsCounter,
-                    impressionsSyncHelper,
-                    mSplitTaskExecutor,
-                    mSplitTaskFactory,
-                    mTelemetryStorage,
-                    mImpressionStrategyConfig.getDedupeTimeIntervalInMs());
-            OptimizedTracker optimizedTracker = new OptimizedTracker(
-                    impressionsObserver,
-                    impressionsSyncHelper,
-                    mSplitTaskExecutor,
-                    mSplitTaskFactory,
-                    mImpressionManagerRetryTimerProvider.getImpressionsTimer(),
-                    mImpressionStrategyConfig.getImpressionsRefreshRate(),
-                    mImpressionStrategyConfig.isUserConsentGranted()
-            );
-            return new Pair<>(optimizedStrategy, optimizedTracker);
+        switch (mode) {
+            case DEBUG:
+                DebugTracker tracker = new DebugTracker(
+                        impressionsObserver,
+                        impressionsSyncHelper,
+                        mSplitTaskExecutor,
+                        mSplitTaskFactory,
+                        mImpressionManagerRetryTimerProvider.getImpressionsTimer(),
+                        mImpressionStrategyConfig.getImpressionsRefreshRate());
+                DebugStrategy debugStrategy = new DebugStrategy(
+                        impressionsObserver,
+                        impressionsSyncHelper,
+                        mSplitTaskExecutor,
+                        mSplitTaskFactory,
+                        mTelemetryStorage);
+                return new Pair<>(debugStrategy, tracker);
+            case NONE:
+                return getNoneComponents();
+            default:
+                OptimizedStrategy optimizedStrategy = new OptimizedStrategy(
+                        impressionsObserver,
+                        mImpressionsCounter,
+                        impressionsSyncHelper,
+                        mSplitTaskExecutor,
+                        mSplitTaskFactory,
+                        mTelemetryStorage,
+                        mImpressionStrategyConfig.getDedupeTimeIntervalInMs());
+                OptimizedTracker optimizedTracker = new OptimizedTracker(
+                        impressionsObserver,
+                        impressionsSyncHelper,
+                        mSplitTaskExecutor,
+                        mSplitTaskFactory,
+                        mImpressionManagerRetryTimerProvider.getImpressionsTimer(),
+                        mImpressionStrategyConfig.getImpressionsRefreshRate(),
+                        mImpressionStrategyConfig.isUserConsentGranted()
+                );
+                return new Pair<>(optimizedStrategy, optimizedTracker);
         }
     }
 
     public Pair<ProcessStrategy, PeriodicTracker> getNoneComponents() {
-        UniqueKeysTracker uniqueKeysTracker = new UniqueKeysTrackerImpl();
-        NoneStrategy noneStrategy = new NoneStrategy(
-                mSplitTaskExecutor,
-                mSplitTaskFactory,
-                mImpressionsCounter,
-                uniqueKeysTracker,
-                mImpressionStrategyConfig.isUserConsentGranted());
-        NoneTracker noneTracker = new NoneTracker(
-                mSplitTaskExecutor,
-                mSplitTaskFactory,
-                mImpressionsCounter,
-                uniqueKeysTracker,
-                mImpressionManagerRetryTimerProvider.getImpressionsCountTimer(),
-                mImpressionManagerRetryTimerProvider.getUniqueKeysTimer(),
-                mImpressionStrategyConfig.getImpressionsCounterRefreshRate(),
-                mImpressionStrategyConfig.getUniqueKeysRefreshRate(),
-                mImpressionStrategyConfig.isUserConsentGranted());
-        return new Pair<>(noneStrategy, noneTracker);
+        return new Pair<>(mNoneStrategy, mNoneTracker);
     }
 }

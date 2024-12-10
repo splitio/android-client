@@ -72,8 +72,8 @@ class UserConsentModeNoneTest {
         mKeysLatch?.await(10, TimeUnit.SECONDS)
         mCountLatch?.await(10, TimeUnit.SECONDS)
 
-        Assert.assertTrue(mKeysPosted)
         Assert.assertTrue(mCountPosted)
+        Assert.assertTrue(mKeysPosted)
     }
 
     @Test
@@ -207,6 +207,7 @@ class UserConsentModeNoneTest {
             .impressionsRefreshRate(3)
             .eventFlushInterval(3)
             .mtkRefreshRate(3)
+            .enableDebug()
             .userConsent(userConsent)
             .build()
 
@@ -228,7 +229,7 @@ class UserConsentModeNoneTest {
                 return HttpStreamResponseMock(200, null)
             }
 
-            override fun getResponse(uri: URI, method: HttpMethod, body: String): HttpResponseMock {
+            override fun getResponse(uri: URI, method: HttpMethod, body: String?): HttpResponseMock {
                 println(uri.path)
                 return if (uri.path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     HttpResponseMock(200, IntegrationHelper.emptyAllSegments())

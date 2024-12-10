@@ -1,7 +1,11 @@
 package io.split.android.client.service.impressions;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.core.util.Pair;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.impressions.Impression;
@@ -14,16 +18,18 @@ public class StrategyImpressionManager implements ImpressionManager, PeriodicTra
     private final AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
     private final ProcessStrategy mProcessStrategy;
     private final ProcessStrategy mNoneStrategy;
-    private final PeriodicTracker[] mPeriodicTracker;
+    private final Set<PeriodicTracker> mPeriodicTrackers;
 
     public StrategyImpressionManager(Pair<ProcessStrategy, PeriodicTracker> noneComponents, Pair<ProcessStrategy, PeriodicTracker> strategy) {
         this(noneComponents.first, noneComponents.second, strategy.first, strategy.second);
     }
 
     StrategyImpressionManager(ProcessStrategy noneStrategy, PeriodicTracker noneTracker, ProcessStrategy strategy, PeriodicTracker strategyTracker) {
-        mProcessStrategy = strategy;
-        mNoneStrategy = noneStrategy;
-        mPeriodicTracker = new PeriodicTracker[]{noneTracker, strategyTracker};
+        mProcessStrategy = checkNotNull(strategy);
+        mNoneStrategy = checkNotNull(noneStrategy);
+        mPeriodicTrackers = new HashSet<>();
+        mPeriodicTrackers.add(noneTracker);
+        mPeriodicTrackers.add(strategyTracker);
     }
 
     @Override
@@ -47,21 +53,21 @@ public class StrategyImpressionManager implements ImpressionManager, PeriodicTra
 
     @Override
     public void flush() {
-        for (PeriodicTracker tracker : mPeriodicTracker) {
+        for (PeriodicTracker tracker : mPeriodicTrackers) {
             tracker.flush();
         }
     }
 
     @Override
     public void startPeriodicRecording() {
-        for (PeriodicTracker tracker : mPeriodicTracker) {
+        for (PeriodicTracker tracker : mPeriodicTrackers) {
             tracker.startPeriodicRecording();
         }
     }
 
     @Override
     public void stopPeriodicRecording() {
-        for (PeriodicTracker tracker : mPeriodicTracker) {
+        for (PeriodicTracker tracker : mPeriodicTrackers) {
             tracker.stopPeriodicRecording();
         }
     }
