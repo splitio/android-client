@@ -17,9 +17,13 @@ public class StrategyImpressionManager implements ImpressionManager, PeriodicTra
     private final PeriodicTracker[] mPeriodicTracker;
 
     public StrategyImpressionManager(Pair<ProcessStrategy, PeriodicTracker> noneComponents, Pair<ProcessStrategy, PeriodicTracker> strategy) {
-        mProcessStrategy = strategy.first;
-        mNoneStrategy = noneComponents.first;
-        mPeriodicTracker = new PeriodicTracker[]{noneComponents.second, strategy.second};
+        this(noneComponents.first, noneComponents.second, strategy.first, strategy.second);
+    }
+
+    StrategyImpressionManager(ProcessStrategy noneStrategy, PeriodicTracker noneTracker, ProcessStrategy strategy, PeriodicTracker strategyTracker) {
+        mProcessStrategy = strategy;
+        mNoneStrategy = noneStrategy;
+        mPeriodicTracker = new PeriodicTracker[]{noneTracker, strategyTracker};
     }
 
     @Override

@@ -95,8 +95,7 @@ public class ImpressionStrategyProvider {
                 mSplitTaskFactory,
                 mImpressionsCounter,
                 uniqueKeysTracker,
-                mImpressionStrategyConfig.isUserConsentGranted()
-        );
+                mImpressionStrategyConfig.isUserConsentGranted());
         NoneTracker noneTracker = new NoneTracker(
                 mSplitTaskExecutor,
                 mSplitTaskFactory,
@@ -107,6 +106,6 @@ public class ImpressionStrategyProvider {
                 mImpressionStrategyConfig.getImpressionsCounterRefreshRate(),
                 mImpressionStrategyConfig.getUniqueKeysRefreshRate(),
                 mImpressionStrategyConfig.isUserConsentGranted());
-        return new Pair<>(noneStrategy, noneTracker); // TODO
+        return new Pair<>(noneStrategy, noneTracker);
     }
 }

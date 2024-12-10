@@ -55,12 +55,12 @@ import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
-import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.ImpressionManagerConfig;
 import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
+import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
@@ -141,7 +141,7 @@ public class SynchronizerTest {
     private AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
     @Mock
     private FeatureFlagsSynchronizer mFeatureFlagsSynchronizer;
-    ImpressionManager mImpressionManager;
+    private StrategyImpressionManager mImpressionManager;
 
     private final String mUserKey = "user_key";
 
@@ -195,7 +195,7 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
         when(mRetryBackoffFactory.createWithFixedInterval(any(), eq(1), eq(3)))
                 .thenReturn(mRetryTimerEventsRecorder);
-        mImpressionManager = Mockito.mock(ImpressionManager.class);
+        mImpressionManager = Mockito.mock(StrategyImpressionManager.class);
 
         mSynchronizer = new SynchronizerImpl(splitClientConfig, mTaskExecutor, mSingleThreadedTaskExecutor,
                 mTaskFactory, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager, mFeatureFlagsSynchronizer, mSplitStorageContainer.getEventsStorage());
@@ -587,7 +587,7 @@ public class SynchronizerTest {
                 .synchronizeInBackground(false)
                 .build();
         setup(config);
-        ImpressionManager impressionManager = mock(ImpressionManager.class);
+        StrategyImpressionManager impressionManager = mock(StrategyImpressionManager.class);
         when(mRetryBackoffFactory.create(any(), anyInt()))
                 .thenReturn(mRetryTimerSplitsSync)
                 .thenReturn(mRetryTimerSplitsUpdate);

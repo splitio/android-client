@@ -18,12 +18,18 @@ class StrategyImpressionManagerTest {
     @Mock
     private lateinit var strategy: ProcessStrategy
 
+    @Mock
+    private lateinit var noneStrategy: ProcessStrategy
+
+    @Mock
+    private lateinit var noneTracker: PeriodicTracker
+
     private lateinit var impressionManager: StrategyImpressionManager
 
     @Before
     fun setUp() {
         MockitoAnnotations.openMocks(this)
-        impressionManager = StrategyImpressionManager(strategy, tracker)
+        impressionManager = StrategyImpressionManager(noneStrategy, noneTracker, strategy, tracker)
     }
 
     @Test

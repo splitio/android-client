@@ -4,6 +4,7 @@ import io.split.android.client.dtos.KeyImpression
 import io.split.android.client.service.executor.SplitTaskExecutor
 import io.split.android.client.service.impressions.ImpressionsRecorderTask
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
+import io.split.android.client.service.impressions.observer.ImpressionsObserver
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer
 import io.split.android.client.service.synchronizer.RecorderSyncHelper
 import org.junit.Before
@@ -14,6 +15,8 @@ import org.mockito.MockitoAnnotations
 
 class DebugTrackerTest {
 
+    @Mock
+    private lateinit var impressionsObserver: ImpressionsObserver
     @Mock
     private lateinit var syncHelper: RecorderSyncHelper<KeyImpression>
     @Mock
@@ -29,6 +32,7 @@ class DebugTrackerTest {
     fun setUp() {
         MockitoAnnotations.openMocks(this)
         tracker = DebugTracker(
+            impressionsObserver,
             syncHelper,
             taskExecutor,
             taskFactory,
@@ -88,5 +92,12 @@ class DebugTrackerTest {
         verify(taskExecutor).schedule(task, 0L, 30L, syncHelper)
         verify(taskExecutor).stopTask("250")
         verify(taskExecutor).schedule(task2, 0L, 30L, syncHelper)
+    }
+
+    @Test
+    fun `stopPeriodicRecording calls persist on observer`() {
+        tracker.stopPeriodicRecording()
+
+        verify(impressionsObserver).persist()
     }
 }

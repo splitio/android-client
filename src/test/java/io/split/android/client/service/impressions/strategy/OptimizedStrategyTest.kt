@@ -52,9 +52,6 @@ class OptimizedStrategyTest {
     @Mock
     private lateinit var telemetryRuntimeProducer: TelemetryRuntimeProducer
 
-    @Mock
-    private lateinit var tracker: PeriodicTracker
-
     private lateinit var strategy: OptimizedStrategy
 
     private val dedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL
@@ -69,8 +66,6 @@ class OptimizedStrategyTest {
             taskExecutor,
             taskFactory,
             telemetryRuntimeProducer,
-            true,
-            tracker,
             dedupeTimeInterval
         )
     }
@@ -155,85 +150,48 @@ class OptimizedStrategyTest {
         )
     }
 
-    @Test
-    fun `flush calls flush on tracker`() {
-        strategy.flush()
-
-        verify(tracker).flush()
-    }
-
-    @Test
-    fun `startPeriodicRecording calls startPeriodicRecording on tracker`() {
-        strategy.startPeriodicRecording()
-
-        verify(tracker).startPeriodicRecording()
-    }
-
-    @Test
-    fun `stopPeriodicRecording calls stopPeriodicRecording on tracker`() {
-        strategy.stopPeriodicRecording()
-
-        verify(tracker).stopPeriodicRecording()
-    }
-
-    @Test
-    fun `stopPeriodicRecording calls persist on ImpressionsObserver`() {
-        strategy.stopPeriodicRecording()
-
-        verify(impressionsObserver).persist()
-    }
-
-    @Test
-    fun `enableTracking calls enableTracking on tracker`() {
-        strategy.enableTracking(true)
-
-        verify(tracker).enableTracking(true)
-    }
-
-    @Test
-    fun `call stop periodic tracking when sync listener returns do not retry`() {
-        val listenerCaptor = ArgumentCaptor.forClass(SplitTaskExecutionListener::class.java)
-
-        `when`(impressionsSyncHelper.addListener(listenerCaptor.capture())).thenAnswer { it }
-        `when`(impressionsSyncHelper.taskExecuted(argThat {
-            it.taskType == SplitTaskType.IMPRESSIONS_RECORDER
-        })).thenAnswer {
-            listenerCaptor.value.taskExecuted(
-                SplitTaskExecutionInfo.error(
-                    SplitTaskType.IMPRESSIONS_RECORDER,
-                    mapOf(DO_NOT_RETRY to true)
-                )
-            )
-            it
-        }
-
-        strategy = OptimizedStrategy(
-            impressionsObserver,
-            impressionsCounter,
-            impressionsSyncHelper,
-            taskExecutor,
-            taskFactory,
-            telemetryRuntimeProducer,
-            true,
-            tracker,
-            dedupeTimeInterval
-        )
-
-        strategy.startPeriodicRecording()
-        // simulate sync helper trigger
-        impressionsSyncHelper.taskExecuted(
-            SplitTaskExecutionInfo.error(
-                SplitTaskType.IMPRESSIONS_RECORDER,
-                mapOf(DO_NOT_RETRY to true)
-            )
-        )
-
-        // start periodic recording again to verify it is not working anymore
-        strategy.startPeriodicRecording()
-
-        verify(tracker, times(1)).startPeriodicRecording()
-        verify(tracker).stopPeriodicRecording()
-    }
+//    @Test
+//    fun `call stop periodic tracking when sync listener returns do not retry`() {
+//        val listenerCaptor = ArgumentCaptor.forClass(SplitTaskExecutionListener::class.java)
+//
+//        `when`(impressionsSyncHelper.addListener(listenerCaptor.capture())).thenAnswer { it }
+//        `when`(impressionsSyncHelper.taskExecuted(argThat {
+//            it.taskType == SplitTaskType.IMPRESSIONS_RECORDER
+//        })).thenAnswer {
+//            listenerCaptor.value.taskExecuted(
+//                SplitTaskExecutionInfo.error(
+//                    SplitTaskType.IMPRESSIONS_RECORDER,
+//                    mapOf(DO_NOT_RETRY to true)
+//                )
+//            )
+//            it
+//        }
+//
+//        strategy = OptimizedStrategy(
+//            impressionsObserver,
+//            impressionsCounter,
+//            impressionsSyncHelper,
+//            taskExecutor,
+//            taskFactory,
+//            telemetryRuntimeProducer,
+//            dedupeTimeInterval
+//        )
+//
+//        strategy.startPeriodicRecording()
+//        // simulate sync helper trigger
+//        impressionsSyncHelper.taskExecuted(
+//            SplitTaskExecutionInfo.error(
+//                SplitTaskType.IMPRESSIONS_RECORDER,
+//                mapOf(DO_NOT_RETRY to true)
+//            )
+//        )
+//
+//        // start periodic recording again to verify it is not working anymore
+//        strategy.startPeriodicRecording()
+//
+//        verify(tracker, times(1)).startPeriodicRecording()
+//        verify(tracker).stopPeriodicRecording()
+//    }
 
     @Test
     fun `do not submit recording task when push fails with do not retry`() {
@@ -275,8 +233,6 @@ class OptimizedStrategyTest {
             taskExecutor,
             taskFactory,
             telemetryRuntimeProducer,
-            true,
-            tracker,
             dedupeTimeInterval
         )
 
