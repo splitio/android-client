@@ -2,6 +2,7 @@ package io.split.android.client;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -27,6 +28,7 @@ import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
@@ -314,6 +316,20 @@ public class TreatmentManagerTest {
                 .getTreatment("test_split", null, false);
 
         verify(validationMessageLogger).w(eq("the SDK is not ready, results may be incorrect for feature flag test_split. Make sure to wait for SDK readiness before using this method"), any());
+    }
+
+    @Test
+    public void trackValueFromEvaluationResultGetsPassedInToImpression() {
+        Evaluator evaluatorMock = mock(Evaluator.class);
+        when(evaluatorMock.getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_split"), anyMap()))
+                .thenReturn(new EvaluationResult("test", "test"));
+        TreatmentManagerImpl tManager = initializeTreatmentManager(evaluatorMock);
+
+        tManager.getTreatment("test_split", null, false);
+
+        verify(impressionListener).log(argThat(argument -> {
+            return ((DecoratedImpression) argument).getTrackImpressions();
+        }));
     }
 
     private void assertControl(List<String> splitList, String treatment, Map<String, String> treatmentList, SplitResult splitResult, Map<String, SplitResult> splitResultList) {

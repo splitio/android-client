@@ -28,16 +28,16 @@ public class EvaluatorImpl implements Evaluator {
         try {
             ParsedSplit parsedSplit = mSplitParser.parse(mSplitsStorage.get(splitName), matchingKey);
             if (parsedSplit == null) {
-                return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.DEFINITION_NOT_FOUND);
+                return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.DEFINITION_NOT_FOUND, true);
             }
 
             return getTreatment(matchingKey, bucketingKey, parsedSplit, attributes);
         } catch (ChangeNumberExceptionWrapper ex) {
             Logger.e(ex, "Catch Change Number Exception");
-            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION, ex.changeNumber());
+            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION, ex.changeNumber(), true);
         } catch (Exception e) {
             Logger.e(e, "Catch All Exception");
-            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION);
+            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION, true);
         }
     }
 
@@ -52,7 +52,7 @@ public class EvaluatorImpl implements Evaluator {
     private EvaluationResult getTreatment(String matchingKey, String bucketingKey, ParsedSplit parsedSplit, Map<String, Object> attributes) throws ChangeNumberExceptionWrapper {
         try {
             if (parsedSplit.killed()) {
-                return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.KILLED, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()));
+                return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.KILLED, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()), parsedSplit.trackImpression());
             }
 
             /*
@@ -75,7 +75,7 @@ public class EvaluatorImpl implements Evaluator {
 
                         if (bucket > parsedSplit.trafficAllocation()) {
                             // out of split
-                            return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.NOT_IN_SPLIT, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()));
+                            return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.NOT_IN_SPLIT, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()), parsedSplit.trackImpression());
                         }
 
                     }
@@ -84,11 +84,11 @@ public class EvaluatorImpl implements Evaluator {
 
                 if (parsedCondition.matcher().match(matchingKey, bucketingKey, attributes, this)) {
                     String treatment = Splitter.getTreatment(bk, parsedSplit.seed(), parsedCondition.partitions(), parsedSplit.algo());
-                    return new EvaluationResult(treatment, parsedCondition.label(), parsedSplit.changeNumber(), configForTreatment(parsedSplit, treatment));
+                    return new EvaluationResult(treatment, parsedCondition.label(), parsedSplit.changeNumber(), configForTreatment(parsedSplit, treatment), parsedSplit.trackImpression());
                 }
             }
 
-            return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.DEFAULT_RULE, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()));
+            return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.DEFAULT_RULE, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()), parsedSplit.trackImpression());
         } catch (Exception e) {
             throw new ChangeNumberExceptionWrapper(e, parsedSplit.changeNumber());
         }

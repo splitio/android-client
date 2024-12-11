@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.impressions.strategy.PeriodicTracker;
 import io.split.android.client.service.impressions.strategy.ProcessStrategy;
@@ -39,7 +40,7 @@ public class StrategyImpressionManager implements ImpressionManager, PeriodicTra
             return;
         }
 
-        if (track(impression)) {
+        if (shouldTrack(impression)) {
             mProcessStrategy.apply(impression);
         } else {
             mNoneStrategy.apply(impression);
@@ -72,7 +73,12 @@ public class StrategyImpressionManager implements ImpressionManager, PeriodicTra
         }
     }
 
-    private static boolean track(Impression impression) {
-        return true; // TODO: Placeholder method
+    private static boolean shouldTrack(Impression impression) {
+        if (impression instanceof DecoratedImpression) {
+            return ((DecoratedImpression) impression).getTrackImpressions();
+        } else {
+            // default behaviour; will never get here.
+            return true;
+        }
     }
 }

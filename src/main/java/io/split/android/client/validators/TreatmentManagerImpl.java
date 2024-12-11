@@ -21,7 +21,7 @@ import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.impressions.Impression;
+import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
@@ -294,7 +294,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     evaluationResult.getTreatment(),
                     mLabelsEnabled ? evaluationResult.getLabel() : null,
                     evaluationResult.getChangeNumber(),
-                    mergedAttributes);
+                    mergedAttributes,
+                    evaluationResult.getTrackImpression());
 
             return new TreatmentResult(splitResult, false);
         } catch (Exception ex) {
@@ -307,16 +308,17 @@ public class TreatmentManagerImpl implements TreatmentManager {
                         Treatments.CONTROL,
                         TreatmentLabels.EXCEPTION,
                         (evaluationResult != null) ? evaluationResult.getChangeNumber() : null,
-                        mergedAttributes);
+                        mergedAttributes,
+                        evaluationResult == null || evaluationResult.getTrackImpression());
             }
 
             return new TreatmentResult(new SplitResult(Treatments.CONTROL), true);
         }
     }
 
-    private void logImpression(String matchingKey, String bucketingKey, String splitName, String result, String label, Long changeNumber, Map<String, Object> attributes) {
+    private void logImpression(String matchingKey, String bucketingKey, String splitName, String result, String label, Long changeNumber, Map<String, Object> attributes, boolean trackImpression) {
         try {
-            mImpressionListener.log(new Impression(matchingKey, bucketingKey, splitName, result, System.currentTimeMillis(), label, changeNumber, attributes));
+            mImpressionListener.log(new DecoratedImpression(matchingKey, bucketingKey, splitName, result, System.currentTimeMillis(), label, changeNumber, attributes, trackImpression));
         } catch (Throwable t) {
             Logger.e("An error occurred logging impression: " + t.getLocalizedMessage());
         }
@@ -339,7 +341,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             mValidationLogger.w("the SDK is not ready, results may be incorrect for feature flag " + featureFlagName + ". Make sure to wait for SDK readiness before using this method", validationTag);
             mTelemetryStorageProducer.recordNonReadyUsage();
 
-            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null);
+            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null, true);
         }
         return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, featureFlagName, attributes);
     }
