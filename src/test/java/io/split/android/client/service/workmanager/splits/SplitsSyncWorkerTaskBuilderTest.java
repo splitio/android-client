@@ -56,7 +56,6 @@ public class SplitsSyncWorkerTaskBuilderTest {
                 mFetcherProvider,
                 mSplitChangeProcessor,
                 mSplitsSyncHelperProvider,
-                0,
                 null);
 
         builder.getTask();
@@ -71,7 +70,6 @@ public class SplitsSyncWorkerTaskBuilderTest {
                 mFetcherProvider,
                 mSplitChangeProcessor,
                 mSplitsSyncHelperProvider,
-                0,
                 null);
 
         builder.getTask();
@@ -86,7 +84,6 @@ public class SplitsSyncWorkerTaskBuilderTest {
                 mFetcherProvider,
                 mSplitChangeProcessor,
                 mSplitsSyncHelperProvider,
-                0,
                 null);
 
         builder.getTask();
@@ -104,7 +101,6 @@ public class SplitsSyncWorkerTaskBuilderTest {
                 mFetcherProvider,
                 mSplitChangeProcessor,
                 mSplitsSyncHelperProvider,
-                0,
                 "1.5");
 
         builder.getTask();
@@ -127,7 +123,6 @@ public class SplitsSyncWorkerTaskBuilderTest {
                 mFetcherProvider,
                 mSplitChangeProcessor,
                 mSplitsSyncHelperProvider,
-                0,
                 null);
 
         SplitTask task = builder.getTask();
@@ -145,12 +140,11 @@ public class SplitsSyncWorkerTaskBuilderTest {
                     mFetcherProvider,
                     mSplitChangeProcessor,
                     mSplitsSyncHelperProvider,
-                    250,
                     "2.5");
 
             builder.getTask();
 
-            mockedStatic.verify(() -> SplitsSyncTask.buildForBackground(splitsSyncHelper, mSplitsStorage, false, 250, "filterQueryString", mTelemetryStorage));
+            mockedStatic.verify(() -> SplitsSyncTask.buildForBackground(splitsSyncHelper, mSplitsStorage, "filterQueryString", mTelemetryStorage));
         }
     }
 }

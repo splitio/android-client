@@ -28,7 +28,6 @@ public class ServiceConstants {
     public final static String WORKER_PARAM_ENDPOINT = "endpoint";
     public final static String WORKER_PARAM_IMPRESSIONS_PER_PUSH = "impressionsPerPush";
     public final static String WORKER_PARAM_EVENTS_PER_PUSH = "eventsPerPush";
-    public final static String WORKER_PARAM_SPLIT_CACHE_EXPIRATION = "splitCacheExpiration";
     public static final String WORKER_PARAM_UNIQUE_KEYS_PER_PUSH = "unique_keys_per_push";
     public static final String WORKER_PARAM_UNIQUE_KEYS_ESTIMATED_SIZE_IN_BYTES = "unique_keys_estimated_size_in_bytes";
     public static final String WORKER_PARAM_ENCRYPTION_ENABLED = "encryptionEnabled";

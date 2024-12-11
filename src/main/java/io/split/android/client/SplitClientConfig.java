@@ -254,7 +254,7 @@ public class SplitClientConfig {
 
     @Deprecated
     public long cacheExpirationInSeconds() {
-        return TimeUnit.DAYS.toSeconds(rolloutCacheConfiguration().getExpiration());
+        return TimeUnit.DAYS.toSeconds(rolloutCacheConfiguration().getExpirationDays());
     }
 
     public long eventFlushInterval() {

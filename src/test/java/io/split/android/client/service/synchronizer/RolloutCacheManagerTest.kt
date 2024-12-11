@@ -177,7 +177,7 @@ class RolloutCacheManagerTest {
     }
 
     private fun getCacheManager(expiration: Int, clearOnInit: Boolean): RolloutCacheManager {
-        return RolloutCacheManagerImpl(mGeneralInfoStorage, RolloutCacheConfiguration.builder().expiration(expiration).clearOnInit(clearOnInit).build(), mCleanUpDatabaseTask, mEncryptionMigrationTask, mSplitsCache, mSegmentsCache)
+        return RolloutCacheManagerImpl(mGeneralInfoStorage, RolloutCacheConfiguration.builder().expirationDays(expiration).clearOnInit(clearOnInit).build(), mCleanUpDatabaseTask, mEncryptionMigrationTask, mSplitsCache, mSegmentsCache)
     }
 
     private fun createMockedTimestamp(period: Long): Long {

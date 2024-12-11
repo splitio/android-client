@@ -195,7 +195,7 @@ public class MySegmentsServerErrorTest {
             Assert.fail("Impressions request timeout");
         }
 
-        Assert.assertFalse(readyFromCacheTask.isOnPostExecutionCalled);
+        Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertEquals("on_s1", treatments.get(0));
         Assert.assertEquals("on_s1", treatments.get(1));
         Assert.assertEquals("on_s1", treatments.get(2));

@@ -124,7 +124,6 @@ public class WorkManagerWrapperTest {
         mWrapper.scheduleWork();
 
         Data inputData = new Data.Builder()
-                .putLong("splitCacheExpiration", 864000)
                 .putString("endpoint", "https://test.split.io/api")
                 .putBoolean("shouldRecordTelemetry", true)
                 .putStringArray("configuredFilterValues", new String[]{"set_1", "set_2"})
@@ -252,7 +251,6 @@ public class WorkManagerWrapperTest {
         mWrapper.scheduleWork();
 
         Data inputData = new Data.Builder()
-                .putLong("splitCacheExpiration", 864000)
                 .putString("endpoint", "https://test.split.io/api")
                 .putBoolean("shouldRecordTelemetry", true)
                 .putStringArray("configuredFilterValues", new String[]{"set_1", "set_2"})
