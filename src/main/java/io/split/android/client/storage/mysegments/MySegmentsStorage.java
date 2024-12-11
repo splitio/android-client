@@ -1,12 +1,11 @@
 package io.split.android.client.storage.mysegments;
 
-import androidx.annotation.VisibleForTesting;
-
 import java.util.Set;
 
 import io.split.android.client.dtos.SegmentsChange;
+import io.split.android.client.storage.RolloutDefinitionsCache;
 
-public interface MySegmentsStorage {
+public interface MySegmentsStorage extends RolloutDefinitionsCache {
     void loadLocal();
 
     Set<String> getAll();
@@ -14,7 +13,4 @@ public interface MySegmentsStorage {
     void set(SegmentsChange segmentsChange);
 
     long getChangeNumber();
-
-    @VisibleForTesting
-    void clear();
 }

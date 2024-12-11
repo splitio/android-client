@@ -22,7 +22,6 @@ public class SplitsSyncWorker extends SplitWorker {
                 new FetcherProvider(getHttpClient(), getEndPoint()),
                 new SplitChangeProcessorProvider().provideSplitChangeProcessor(params.configuredFilterType(), params.configuredFilterValues()),
                 new SyncHelperProvider(),
-                getCacheExpirationInSeconds(),
                 params.flagsSpec());
 
         mSplitTask = builder.getTask();

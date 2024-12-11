@@ -92,7 +92,7 @@ public class AttributesManagerImplTest {
         attributeClient.setAttribute(name, attribute);
 
         verify(attributeTaskFactory).createAttributeUpdateTask(persistentAttributesStorage, attributeMap);
-        verify(splitTaskExecutor).submit(updateAttributesInPersistentStorageTask, null);
+        verify(splitTaskExecutor).schedule(updateAttributesInPersistentStorageTask, 5L, null);
     }
 
     @Test
@@ -170,7 +170,7 @@ public class AttributesManagerImplTest {
         attributeClient.setAttributes(attributeMap);
 
         verify(attributeTaskFactory).createAttributeUpdateTask(persistentAttributesStorage, attributeMap);
-        verify(splitTaskExecutor).submit(updateAttributesInPersistentStorageTask, null);
+        verify(splitTaskExecutor).schedule(updateAttributesInPersistentStorageTask, 5L, null);
     }
 
     @Test
@@ -225,7 +225,7 @@ public class AttributesManagerImplTest {
         attributeClient.clearAttributes();
 
         verify(attributeTaskFactory).createAttributeClearTask(persistentAttributesStorage);
-        verify(splitTaskExecutor).submit(clearAttributesInPersistentStorageTask, null);
+        verify(splitTaskExecutor).schedule(clearAttributesInPersistentStorageTask, 5L, null);
     }
 
     @Test
@@ -250,7 +250,7 @@ public class AttributesManagerImplTest {
         attributeClient.removeAttribute("key");
 
         verify(attributeTaskFactory).createAttributeUpdateTask(persistentAttributesStorage, attributeMap);
-        verify(splitTaskExecutor).submit(updateAttributesInPersistentStorageTask, null);
+        verify(splitTaskExecutor).schedule(updateAttributesInPersistentStorageTask, 5L, null);
     }
 
     private Map<String, Object> getDefaultValues() {

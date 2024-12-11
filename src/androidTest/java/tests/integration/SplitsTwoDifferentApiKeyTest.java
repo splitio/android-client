@@ -2,7 +2,7 @@ package tests.integration;
 
 import static java.lang.Thread.sleep;
 
-import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
+import static helper.IntegrationHelper.getSinceFromUri;
 
 import android.content.Context;
 

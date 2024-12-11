@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -390,6 +391,38 @@ public class IntegrationHelper {
         return result;
     }
 
+    public static long getTimestampDaysAgo(int days) {
+        return System.currentTimeMillis() - TimeUnit.DAYS.toMillis(days);
+    }
+
+
+    public static String getSinceFromUri(URI uri) {
+        try {
+            return parse(uri.getQuery()).get("since");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    static Map<String, String> parse(String query) throws UnsupportedEncodingException {
+        Map<String, String> queryPairs = new HashMap<>();
+        String[] pairs = query.split("&");
+
+        for (String pair : pairs) {
+            int idx = pair.indexOf("=");
+            try {
+                String key = URLDecoder.decode(pair.substring(0, idx), "UTF-8");
+                String value = URLDecoder.decode(pair.substring(idx + 1), "UTF-8");
+
+                queryPairs.put(key, value);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        return queryPairs;
+    }
+
     /**
      * A simple interface to allow us to define the response for a given path
      */
@@ -397,33 +430,6 @@ public class IntegrationHelper {
         HttpResponseMock onResponse(URI uri,
                                     HttpMethod httpMethod,
                                     String body);
-
-        static String getSinceFromUri(URI uri) {
-            try {
-                return parse(uri.getQuery()).get("since");
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        static Map<String, String> parse(String query) throws UnsupportedEncodingException {
-            Map<String, String> queryPairs = new HashMap<>();
-            String[] pairs = query.split("&");
-
-            for (String pair : pairs) {
-                int idx = pair.indexOf("=");
-                try {
-                    String key = URLDecoder.decode(pair.substring(0, idx), "UTF-8");
-                    String value = URLDecoder.decode(pair.substring(idx + 1), "UTF-8");
-
-                    queryPairs.put(key, value);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-
-            return queryPairs;
-        }
     }
 
     /**
@@ -435,5 +441,6 @@ public class IntegrationHelper {
 
     public static class ServicePath {
         public static final String MEMBERSHIPS = "memberships";
+        public static final String SPLIT_CHANGES = "splitChanges";
     }
 }

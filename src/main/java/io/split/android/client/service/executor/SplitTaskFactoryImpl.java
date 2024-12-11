@@ -44,7 +44,10 @@ import io.split.android.client.service.telemetry.TelemetryConfigRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryStatsRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
 import io.split.android.client.service.telemetry.TelemetryTaskFactoryImpl;
+import io.split.android.client.storage.cipher.EncryptionMigrationTask;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 
@@ -125,8 +128,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
 
     @Override
     public SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration) {
-        return SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), checkCacheExpiration,
-                mSplitClientConfig.cacheExpirationInSeconds(), mSplitsFilterQueryStringFromConfig, mEventsManager, mSplitsStorageContainer.getTelemetryStorage());
+        return SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(),
+                mSplitsFilterQueryStringFromConfig, mEventsManager, mSplitsStorageContainer.getTelemetryStorage());
     }
 
     @Override
@@ -201,6 +204,11 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public SplitInPlaceUpdateTask createSplitsUpdateTask(Split featureFlag, long since) {
         return new SplitInPlaceUpdateTask(mSplitsStorageContainer.getSplitsStorage(), mSplitChangeProcessor, mEventsManager, mTelemetryRuntimeProducer, featureFlag, since);
+    }
+
+    @Override
+    public EncryptionMigrationTask createEncryptionMigrationTask(String sdkKey, SplitRoomDatabase splitRoomDatabase, boolean encryptionEnabled, SplitCipher splitCipher) {
+        return new EncryptionMigrationTask(sdkKey, splitRoomDatabase, encryptionEnabled, splitCipher);
     }
 
     @NonNull

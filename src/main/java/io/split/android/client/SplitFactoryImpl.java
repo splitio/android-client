@@ -18,7 +18,6 @@ import io.split.android.android_client.BuildConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
-import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
 import io.split.android.client.impressions.ImpressionListener;
@@ -29,8 +28,6 @@ import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -83,9 +80,6 @@ public class SplitFactoryImpl implements SplitFactory {
     private final SplitStorageContainer mStorageContainer;
     private final SplitClientContainer mClientContainer;
     private final UserConsentManager mUserConsentManager;
-
-    @SuppressWarnings("FieldCanBeLocal") // keeping the reference on purpose
-    private final SplitTaskExecutionListener mMigrationExecutionListener;
 
     public SplitFactoryImpl(@NonNull String apiToken, @NonNull Key key, @NonNull SplitClientConfig config, @NonNull Context context)
             throws URISyntaxException {
@@ -156,27 +150,17 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             splitDatabase = testDatabase;
             Logger.d("Using test database");
-            System.out.println("USING TEST DB: " + testDatabase);
         }
 
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
 
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
+        splitTaskExecutor.pause();
 
         EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
-        mMigrationExecutionListener = new SplitTaskExecutionListener() {
-            @Override
-            public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-                mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
-            }
-        };
-        SplitCipher splitCipher = factoryHelper.migrateEncryption(mApiKey,
-                splitDatabase,
-                splitTaskExecutor,
-                config.encryptionEnabled(),
-                mMigrationExecutionListener);
+        SplitCipher splitCipher = factoryHelper.getCipher(apiToken, config.encryptionEnabled());
 
         ScheduledThreadPoolExecutor impressionsObserverExecutor = new ScheduledThreadPoolExecutor(1,
                 new ThreadPoolExecutor.CallerRunsPolicy());
@@ -197,9 +181,9 @@ public class SplitFactoryImpl implements SplitFactory {
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig,
                 getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
 
-        cleanUpDabase(splitTaskExecutor, splitTaskFactory);
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
+        splitSingleThreadTaskExecutor.pause();
 
         ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
         final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
@@ -253,8 +237,6 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             mLifecycleManager = testLifecycleManager;
         }
-
-        mLifecycleManager.register(mSyncManager);
 
         ExecutorService impressionsLoggingTaskExecutor = factoryHelper.getImpressionsLoggingTaskExecutor();
         final ImpressionListener splitImpressionListener
@@ -328,6 +310,28 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
+        // Set up async initialization
+        final SplitFactoryHelper.Initializer initializer = new SplitFactoryHelper.Initializer(apiToken,
+                config,
+                splitTaskFactory,
+                splitDatabase,
+                splitCipher,
+                mEventsManagerCoordinator,
+                splitTaskExecutor,
+                splitSingleThreadTaskExecutor,
+                mStorageContainer,
+                mSyncManager,
+                mLifecycleManager);
+
+        if (config.shouldRecordTelemetry()) {
+            int activeFactoriesCount = mFactoryMonitor.count(mApiKey);
+            mStorageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
+            mStorageContainer.getTelemetryStorage().recordRedundantFactories(activeFactoriesCount - 1);
+        }
+
+        // Run initializer
+        new Thread(initializer).start();
+
         // Initialize default client
         client();
         SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer(), mStorageContainer.getMyLargeSegmentsStorageContainer());
@@ -335,14 +339,6 @@ public class SplitFactoryImpl implements SplitFactory {
                 mStorageContainer.getSplitsStorage(),
                 new SplitValidatorImpl(), mSplitParser);
 
-        mSyncManager.start();
-        if (config.shouldRecordTelemetry()) {
-            int activeFactoriesCount = mFactoryMonitor.count(mApiKey);
-            mStorageContainer.getTelemetryStorage().recordActiveFactories(activeFactoriesCount);
-            mStorageContainer.getTelemetryStorage().recordRedundantFactories(activeFactoriesCount - 1);
-        }
-
-        Logger.i("Android SDK initialized!");
     }
 
     private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {

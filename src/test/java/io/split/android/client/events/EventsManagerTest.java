@@ -51,6 +51,7 @@ public class EventsManagerTest {
         execute(shouldStop, intervalExecutionTime, maxExecutionTime, eventManager, SplitEvent.SDK_READY);
 
         assertTrue(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY));
+        assertTrue(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE));
         assertFalse(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
     }
 
