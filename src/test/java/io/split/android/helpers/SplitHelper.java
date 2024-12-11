@@ -122,7 +122,8 @@ public class SplitHelper {
                 seed,
                 algo,
                 configurations,
-                Collections.emptySet()
+                Collections.emptySet(),
+                true
         );
     }
 
