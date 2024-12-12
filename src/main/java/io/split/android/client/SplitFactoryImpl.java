@@ -413,11 +413,6 @@ public class SplitFactoryImpl implements SplitFactory {
         ValidationConfig.getInstance().setTrackEventNamePattern(splitClientConfig.trackEventNamePattern());
     }
 
-    private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,
-                               SplitTaskFactory splitTaskFactory) {
-        splitTaskExecutor.submit(splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000), null);
-    }
-
     private EventsTracker buildEventsTracker() {
         EventValidator eventsValidator = new EventValidatorImpl(new KeyValidatorImpl(), mStorageContainer.getSplitsStorage());
         return new EventsTrackerImpl(eventsValidator, new ValidationMessageLoggerImpl(), mStorageContainer.getTelemetryStorage(),
