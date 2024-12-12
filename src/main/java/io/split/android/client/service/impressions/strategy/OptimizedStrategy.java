@@ -3,7 +3,6 @@ package io.split.android.client.service.impressions.strategy;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
-import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -17,7 +16,6 @@ import io.split.android.client.service.impressions.ImpressionUtils;
 import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.impressions.observer.ImpressionsObserver;
-import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 import io.split.android.client.telemetry.model.ImpressionsDataType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -33,11 +31,11 @@ class OptimizedStrategy implements ProcessStrategy {
     private final SplitTaskExecutor mTaskExecutor;
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
-    private final AtomicBoolean mTrackingIsEnabled;
-    private final PeriodicTracker mOptimizedTracker;
     private final AtomicBoolean mIsSynchronizing = new AtomicBoolean(true);
     private final long mImpressionsDedupeTimeInterval;
-    /** @noinspection FieldCanBeLocal*/
+    /**
+     * @noinspection FieldCanBeLocal
+     */
     private final SplitTaskExecutionListener mTaskExecutionListener = new SplitTaskExecutionListener() {
         @Override
         public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
@@ -45,7 +43,6 @@ class OptimizedStrategy implements ProcessStrategy {
             if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
                 if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
                     mIsSynchronizing.compareAndSet(true, false);
-                    mOptimizedTracker.stopPeriodicRecording();
                 }
             }
         }
@@ -57,40 +54,6 @@ class OptimizedStrategy implements ProcessStrategy {
                       @NonNull SplitTaskExecutor taskExecutor,
                       @NonNull ImpressionsTaskFactory taskFactory,
                       @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
-                      @NonNull RetryBackoffCounterTimer impressionsRetryTimer,
-                      @NonNull RetryBackoffCounterTimer impressionsCountRetryTimer,
-                      int impressionsRefreshRate,
-                      int impressionsCounterRefreshRate,
-                      boolean isTrackingEnabled,
-                      long impressionsDedupeTimeInterval) {
-        this(impressionsObserver,
-                impressionsCounter,
-                impressionsSyncHelper,
-                taskExecutor,
-                taskFactory,
-                telemetryRuntimeProducer,
-                isTrackingEnabled,
-                new OptimizedTracker(impressionsCounter,
-                        impressionsSyncHelper,
-                        taskExecutor,
-                        taskFactory,
-                        impressionsRetryTimer,
-                        impressionsCountRetryTimer,
-                        impressionsRefreshRate,
-                        impressionsCounterRefreshRate,
-                        isTrackingEnabled),
-                impressionsDedupeTimeInterval);
-    }
-
-    @VisibleForTesting
-    OptimizedStrategy(@NonNull ImpressionsObserver impressionsObserver,
-                      @NonNull ImpressionsCounter impressionsCounter,
-                      @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
-                      @NonNull SplitTaskExecutor taskExecutor,
-                      @NonNull ImpressionsTaskFactory taskFactory,
-                      @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
-                      boolean isTrackingEnabled,
-                      @NonNull PeriodicTracker tracker,
                       long impressionsDedupeTimeInterval) {
         mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsCounter = checkNotNull(impressionsCounter);
@@ -100,8 +63,6 @@ class OptimizedStrategy implements ProcessStrategy {
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
-        mTrackingIsEnabled = new AtomicBoolean(isTrackingEnabled);
-        mOptimizedTracker = checkNotNull(tracker);
         mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
     }
 
@@ -135,29 +96,5 @@ class OptimizedStrategy implements ProcessStrategy {
 
     private static boolean previousTimeIsValid(Long previousTime) {
         return previousTime != null && previousTime != 0;
-    }
-
-    @Override
-    public void flush() {
-        mOptimizedTracker.flush();
-    }
-
-    @Override
-    public void startPeriodicRecording() {
-        if (mIsSynchronizing.get()) {
-            mOptimizedTracker.startPeriodicRecording();
-        }
-    }
-
-    @Override
-    public void stopPeriodicRecording() {
-        mOptimizedTracker.stopPeriodicRecording();
-        mImpressionsObserver.persist();
-    }
-
-    @Override
-    public void enableTracking(boolean enable) {
-        mTrackingIsEnabled.set(enable);
-        mOptimizedTracker.enableTracking(enable);
     }
 }

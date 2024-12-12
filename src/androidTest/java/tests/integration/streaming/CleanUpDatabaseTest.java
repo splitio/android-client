@@ -1,7 +1,5 @@
 package tests.integration.streaming;
 
-import static java.lang.Thread.sleep;
-
 import android.content.Context;
 
 import androidx.core.util.Pair;
@@ -140,7 +138,7 @@ public class CleanUpDatabaseTest {
                 .streamingEnabled(true)
                 .impressionsRefreshRate(999999999)
                 .eventFlushInterval(99999999)
-                .logLevel(SplitLogLevel.DEBUG)
+                .logLevel(SplitLogLevel.VERBOSE)
                 .trafficType("account")
                 .build();
 
@@ -155,11 +153,12 @@ public class CleanUpDatabaseTest {
         mClient.on(SplitEvent.SDK_READY, readyTask);
 
         latch.await(40, TimeUnit.SECONDS);
-
-        // wait to allow cleanup to run
-        sleep(5000);
+        Thread.sleep(1000);
 
         // Load all records again after cleanup
+        List<UniqueKeyEntity> remainingKeys = mUniqueKeysDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
+        remainingKeys.addAll(mUniqueKeysDao.getBy(0, StorageRecordStatus.DELETED, 10));
+
         List<EventEntity> remainingEvents = mEventDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
         remainingEvents.addAll(mEventDao.getBy(0, StorageRecordStatus.DELETED, 10));
 
@@ -169,8 +168,6 @@ public class CleanUpDatabaseTest {
         List<ImpressionsCountEntity> remainingCounts = mImpressionsCountDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
         remainingCounts.addAll(mImpressionsCountDao.getBy(0, StorageRecordStatus.DELETED, 10));
 
-        List<UniqueKeyEntity> remainingKeys = mUniqueKeysDao.getBy(0, StorageRecordStatus.ACTIVE, 10);
-        remainingKeys.addAll(mUniqueKeysDao.getBy(0, StorageRecordStatus.DELETED, 10));
 
         List<ImpressionsObserverCacheEntity> remainingImpressionsObserverCacheEntities = mImpressionsObserverCacheDao.getAll(3);
 
@@ -184,7 +181,6 @@ public class CleanUpDatabaseTest {
         Assert.assertEquals(1, remainingCounts.size());
         Assert.assertEquals(1, remainingKeys.size());
         Assert.assertEquals(1, remainingImpressionsObserverCacheEntities.size());
-
     }
 
     private EventEntity createEventEntity(long createdAt, int status, String name) {
@@ -258,7 +254,7 @@ public class CleanUpDatabaseTest {
                 } else if (uri.getPath().contains("/bulk")) {
                     return createResponse(500, "");
                 } else {
-                    return new HttpResponseMock(200);
+                    return new HttpResponseMock(404);
                 }
             }
 
