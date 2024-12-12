@@ -45,7 +45,7 @@ public class TreatmentManagerWithFlagSetsTest {
     @Mock
     private SplitValidator mSplitValidator;
     @Mock
-    private ImpressionListener mImpressionListener;
+    private ImpressionListener.FederatedImpressionListener mImpressionListener;
     @Mock
     private ListenableEventsManager mEventsManager;
     @Mock

@@ -1,10 +1,10 @@
 package io.split.android.client.service.impressions;
 
-import io.split.android.client.impressions.Impression;
+import io.split.android.client.impressions.DecoratedImpression;
 
 public interface ImpressionManager {
 
     void enableTracking(boolean enable);
 
-    void pushImpression(Impression impression);
+    void pushImpression(DecoratedImpression impression);
 }

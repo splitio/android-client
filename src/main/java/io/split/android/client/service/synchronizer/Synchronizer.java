@@ -1,7 +1,7 @@
 package io.split.android.client.service.synchronizer;
 
 import io.split.android.client.dtos.Event;
-import io.split.android.client.impressions.Impression;
+import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.lifecycle.SplitLifecycleAware;
 
 public interface Synchronizer extends SplitLifecycleAware {
@@ -28,7 +28,7 @@ public interface Synchronizer extends SplitLifecycleAware {
 
     void pushEvent(Event event);
 
-    void pushImpression(Impression impression);
+    void pushImpression(DecoratedImpression impression);
 
     void flush();
 

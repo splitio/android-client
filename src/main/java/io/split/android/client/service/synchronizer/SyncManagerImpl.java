@@ -9,6 +9,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.dtos.Event;
+import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -163,7 +164,7 @@ public class SyncManagerImpl implements SyncManager, BroadcastedEventListener, M
     }
 
     @Override
-    public void pushImpression(Impression impression) {
+    public void pushImpression(DecoratedImpression impression) {
         mSynchronizer.pushImpression(impression);
     }
 

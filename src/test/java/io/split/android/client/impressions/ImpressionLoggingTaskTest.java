@@ -24,7 +24,7 @@ public class ImpressionLoggingTaskTest {
 
     @Test
     public void executeLogsImpressionInListener() {
-        Impression impression = createImpression();
+        DecoratedImpression impression = createImpression();
         mImpressionsLoggingTask = new ImpressionLoggingTask(mSyncManager, impression);
 
         mImpressionsLoggingTask.run();
@@ -34,7 +34,7 @@ public class ImpressionLoggingTaskTest {
 
     @Test
     public void successfulExecutionReturnsSuccessInfo() {
-        Impression impression = createImpression();
+        DecoratedImpression impression = createImpression();
         mImpressionsLoggingTask = new ImpressionLoggingTask(mSyncManager, impression);
 
         mImpressionsLoggingTask.run();
@@ -42,14 +42,14 @@ public class ImpressionLoggingTaskTest {
 
     @Test
     public void unsuccessfulExecutionDoesNotCrash() {
-        doThrow(new RuntimeException("test")).when(mSyncManager).pushImpression(any(Impression.class));
-        Impression impression = createImpression();
+        doThrow(new RuntimeException("test")).when(mSyncManager).pushImpression(any(DecoratedImpression.class));
+        DecoratedImpression impression = createImpression();
         mImpressionsLoggingTask = new ImpressionLoggingTask(mSyncManager, impression);
 
         mImpressionsLoggingTask.run();
     }
 
-    private static Impression createImpression() {
-        return new Impression("key", "feature", "treatment", "on", 1402040204L, "label", 123123L, new HashMap<>());
+    private static DecoratedImpression createImpression() {
+        return new DecoratedImpression(new Impression("key", "feature", "treatment", "on", 1402040204L, "label", 123123L, new HashMap<>()), true);
     }
 }

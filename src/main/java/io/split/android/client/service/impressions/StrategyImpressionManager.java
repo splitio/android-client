@@ -9,7 +9,6 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.impressions.DecoratedImpression;
-import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.impressions.strategy.PeriodicTracker;
 import io.split.android.client.service.impressions.strategy.ProcessStrategy;
 import io.split.android.client.utils.logger.Logger;
@@ -34,16 +33,16 @@ public class StrategyImpressionManager implements ImpressionManager, PeriodicTra
     }
 
     @Override
-    public void pushImpression(Impression impression) {
+    public void pushImpression(DecoratedImpression impression) {
         if (!isTrackingEnabled.get()) {
             Logger.v("Impression not tracked because tracking is disabled");
             return;
         }
 
-        if (shouldTrack(impression)) {
-            mProcessStrategy.apply(impression);
+        if (impression.getTrackImpressions()) {
+            mProcessStrategy.apply(impression.getImpression());
         } else {
-            mNoneStrategy.apply(impression);
+            mNoneStrategy.apply(impression.getImpression());
         }
     }
 
@@ -70,15 +69,6 @@ public class StrategyImpressionManager implements ImpressionManager, PeriodicTra
     public void stopPeriodicRecording() {
         for (PeriodicTracker tracker : mPeriodicTrackers) {
             tracker.stopPeriodicRecording();
-        }
-    }
-
-    private static boolean shouldTrack(Impression impression) {
-        if (impression instanceof DecoratedImpression) {
-            return ((DecoratedImpression) impression).getTrackImpressions();
-        } else {
-            // default behaviour; will never get here.
-            return true;
         }
     }
 }

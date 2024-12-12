@@ -20,6 +20,7 @@ import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
+import io.split.android.client.impressions.DecoratedImpressionListener;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.SyncImpressionListener;
 import io.split.android.client.lifecycle.SplitLifecycleManager;
@@ -243,17 +244,16 @@ public class SplitFactoryImpl implements SplitFactory {
         }
 
         ExecutorService impressionsLoggingTaskExecutor = factoryHelper.getImpressionsLoggingTaskExecutor();
-        final ImpressionListener splitImpressionListener
+        final DecoratedImpressionListener splitImpressionListener
                 = new SyncImpressionListener(mSyncManager, impressionsLoggingTaskExecutor);
-        final ImpressionListener customerImpressionListener;
+        final ImpressionListener.FederatedImpressionListener customerImpressionListener;
 
+        List<ImpressionListener> impressionListeners = new ArrayList<>();
         if (config.impressionListener() != null) {
-            List<ImpressionListener> impressionListeners = new ArrayList<>();
-            impressionListeners.add(splitImpressionListener);
             impressionListeners.add(config.impressionListener());
-            customerImpressionListener = new ImpressionListener.FederatedImpressionListener(impressionListeners);
+            customerImpressionListener = new ImpressionListener.FederatedImpressionListener(splitImpressionListener, impressionListeners);
         } else {
-            customerImpressionListener = splitImpressionListener;
+            customerImpressionListener = new ImpressionListener.FederatedImpressionListener(splitImpressionListener, impressionListeners);
         }
         EventsTracker eventsTracker = buildEventsTracker();
         mUserConsentManager = new UserConsentManagerImpl(config,

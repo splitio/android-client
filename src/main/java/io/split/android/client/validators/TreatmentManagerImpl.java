@@ -22,6 +22,7 @@ import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.DecoratedImpression;
+import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
@@ -34,7 +35,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final Evaluator mEvaluator;
     private final KeyValidator mKeyValidator;
     private final SplitValidator mSplitValidator;
-    private final ImpressionListener mImpressionListener;
+    private final ImpressionListener.FederatedImpressionListener mImpressionListener;
     private final String mMatchingKey;
     private final String mBucketingKey;
     private final boolean mLabelsEnabled;
@@ -54,7 +55,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 Evaluator evaluator,
                                 KeyValidator keyValidator,
                                 SplitValidator splitValidator,
-                                ImpressionListener impressionListener,
+                                ImpressionListener.FederatedImpressionListener impressionListener,
                                 boolean labelsEnabled,
                                 ListenableEventsManager eventsManager,
                                 @NonNull AttributesManager attributesManager,
@@ -318,7 +319,10 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     private void logImpression(String matchingKey, String bucketingKey, String splitName, String result, String label, Long changeNumber, Map<String, Object> attributes, boolean trackImpression) {
         try {
-            mImpressionListener.log(new DecoratedImpression(matchingKey, bucketingKey, splitName, result, System.currentTimeMillis(), label, changeNumber, attributes, trackImpression));
+            Impression impression = new Impression(matchingKey, bucketingKey, splitName, result, System.currentTimeMillis(), label, changeNumber, attributes);
+            DecoratedImpression decoratedImpression = new DecoratedImpression(impression, trackImpression);
+            mImpressionListener.log(decoratedImpression);
+            mImpressionListener.log(impression);
         } catch (Throwable t) {
             Logger.e("An error occurred logging impression: " + t.getLocalizedMessage());
         }
