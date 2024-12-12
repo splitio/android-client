@@ -21,4 +21,5 @@ public class SplitView {
     @NonNull
     public List<String> sets = new ArrayList<>();
     public String defaultTreatment;
+    public boolean trackImpressions;
 }

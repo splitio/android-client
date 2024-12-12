@@ -107,7 +107,7 @@ public class ParsedSplit {
         return mSets;
     }
 
-    public boolean trackImpression() {
+    public boolean trackImpressions() {
         return mTrackImpressions;
     }
 
@@ -155,7 +155,7 @@ public class ParsedSplit {
                 ", default treatment:" + mDefaultTreatment +
                 ", parsedConditions:" + mParsedCondition +
                 ", trafficTypeName:" + mTrafficTypeName + ", changeNumber:" + mChangeNumber +
-                ", algo:" + mAlgo + ", config:" + mConfigurations + ", sets:" + mSets + ", trackImpression:" + mTrackImpressions;
+                ", algo:" + mAlgo + ", config:" + mConfigurations + ", sets:" + mSets + ", trackImpressions:" + mTrackImpressions;
 
     }
 }

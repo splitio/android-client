@@ -509,8 +509,8 @@ public class SplitParserTest {
         ParsedSplit actual = parser.parse(split);
         ParsedSplit actual2 = parser.parse(split2);
 
-        assertFalse(actual.trackImpression());
-        assertTrue(actual2.trackImpression());
+        assertFalse(actual.trackImpressions());
+        assertTrue(actual2.trackImpressions());
     }
 
     private void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
