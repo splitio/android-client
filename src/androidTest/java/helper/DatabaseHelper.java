@@ -17,9 +17,12 @@ public class DatabaseHelper {
     }
 
     public static SplitRoomDatabase getTestDatabase(Context context) {
-        return Room.inMemoryDatabaseBuilder(context, SplitRoomDatabase.class)
+        SplitRoomDatabase database = Room.inMemoryDatabaseBuilder(context, SplitRoomDatabase.class)
                 .fallbackToDestructiveMigration()
                 .allowMainThreadQueries()
                 .build();
+
+        database.clearAllTables();
+        return database;
     }
 }

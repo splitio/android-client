@@ -35,6 +35,7 @@ import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
@@ -52,6 +53,10 @@ public class ImpressionsToggleTest {
     private final AtomicReference<String> mImpressionsBody = new AtomicReference<>(null);
     private final AtomicReference<String> mUniqueKeysBody = new AtomicReference<>(null);
 
+    private CountDownLatch mCountLatch;
+    private CountDownLatch mImpressionsLatch;
+    private CountDownLatch mUniqueKeysLatch;
+
     @Before
     public void setUp() {
         setupServer();
@@ -59,6 +64,10 @@ public class ImpressionsToggleTest {
         mCountBody.set(null);
         mImpressionsBody.set(null);
         mUniqueKeysBody.set(null);
+
+        mCountLatch = new CountDownLatch(1);
+        mImpressionsLatch = new CountDownLatch(1);
+        mUniqueKeysLatch = new CountDownLatch(1);
     }
 
     @Test
@@ -74,19 +83,22 @@ public class ImpressionsToggleTest {
     }
 
     @Test
-    public void test() throws InterruptedException {
+    public void testNoneMode() throws InterruptedException {
         // 1. Initialize SDK in impressions NONE mode
         SplitFactory splitFactory = getReadyFactory(ImpressionsMode.NONE);
 
         // 2. Fetch splitChanges with both flags with trackImpressions true & false
         SplitClient client = splitFactory.client();
-        client.getTreatment("tracked");
-        client.getTreatment("not_tracked");
+        String trackedTreatment = client.getTreatment("tracked");
+        String notTrackedTreatment = client.getTreatment("not_tracked");
+        Thread.sleep(200);
 
         // 3. Verify all counts & mtks are tracked
         client.flush();
 
-        Thread.sleep(2000);
+        mUniqueKeysLatch.await(5, TimeUnit.SECONDS);
+        mCountLatch.await(5, TimeUnit.SECONDS);
+
         assertNotNull(mCountBody.get());
         assertNotNull(mUniqueKeysBody.get());
         assertNull(mImpressionsBody.get());
@@ -153,6 +165,7 @@ public class ImpressionsToggleTest {
             @Override
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 mRequestCountdownLatch.await();
+                Logger.e("Path is: " + request.getPath());
                 if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     return new MockResponse().setResponseCode(200).setBody(emptyAllSegments());
                 } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.SPLIT_CHANGES)) {
@@ -164,12 +177,15 @@ public class ImpressionsToggleTest {
                                 .setBody(IntegrationHelper.emptySplitChanges(1506703262916L, 1506703262916L));
                     }
                 } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.COUNT)) {
+                    mCountLatch.countDown();
                     mCountBody.set(request.getBody().readUtf8());
                     return new MockResponse().setResponseCode(200);
                 } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.IMPRESSIONS)) {
+                    mImpressionsLatch.countDown();
                     mImpressionsBody.set(request.getBody().readUtf8());
                     return new MockResponse().setResponseCode(200);
                 } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.UNIQUE_KEYS)) {
+                    mUniqueKeysLatch.countDown();
                     mUniqueKeysBody.set(request.getBody().readUtf8());
                     return new MockResponse().setResponseCode(200);
                 } else {
