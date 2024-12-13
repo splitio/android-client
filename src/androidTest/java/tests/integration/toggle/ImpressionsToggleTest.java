@@ -14,9 +14,13 @@ import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import com.google.common.reflect.TypeToken;
+
 import org.junit.Before;
 import org.junit.Test;
 
+import java.lang.reflect.Type;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -32,8 +36,11 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitManager;
 import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.service.impressions.ImpressionsCount;
 import io.split.android.client.service.impressions.ImpressionsMode;
+import io.split.android.client.service.impressions.unique.MTK;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
@@ -89,35 +96,109 @@ public class ImpressionsToggleTest {
 
         // 2. Fetch splitChanges with both flags with trackImpressions true & false
         SplitClient client = splitFactory.client();
-        String trackedTreatment = client.getTreatment("tracked");
-        String notTrackedTreatment = client.getTreatment("not_tracked");
+        client.getTreatment("tracked");
+        client.getTreatment("not_tracked");
         Thread.sleep(200);
 
-        // 3. Verify all counts & mtks are tracked
+        // 3. Flush
         client.flush();
 
+        // 4. Wait for requests to be sent
         mUniqueKeysLatch.await(5, TimeUnit.SECONDS);
         mCountLatch.await(5, TimeUnit.SECONDS);
+        boolean impressionsAwait = mImpressionsLatch.await(3, TimeUnit.SECONDS);
 
-        assertNotNull(mCountBody.get());
-        assertNotNull(mUniqueKeysBody.get());
-        assertNull(mImpressionsBody.get());
+        // 5. Verify request bodies
+        verifyOnlyNone(impressionsAwait);
     }
 
     @Test
-    public void test2() {
+    public void testDebugMode() throws InterruptedException {
         // 1. Initialize SDK in impressions DEBUG mode
+        SplitFactory splitFactory = getReadyFactory(ImpressionsMode.DEBUG);
+
         // 2. Fetch splitChanges with both flags with trackImpressions true & false
-        // 3. Verify counts & MTKs are tracked only for trackImpressions false
-        // 4. Verify impressions are tracked for trackImpressions true
+        SplitClient client = splitFactory.client();
+        client.getTreatment("tracked");
+        client.getTreatment("not_tracked");
+        Thread.sleep(500);
+
+        // 3. Flush
+        client.flush();
+
+        // 4. Wait for requests to be sent
+        mUniqueKeysLatch.await(5, TimeUnit.SECONDS);
+        mCountLatch.await(5, TimeUnit.SECONDS);
+        mImpressionsLatch.await(5, TimeUnit.SECONDS);
+
+        // 5. Verify request bodies
+        verify();
     }
 
     @Test
-    public void test3() {
+    public void testOptimizedMode() throws InterruptedException {
         // 1. Initialize SDK in impressions OPTIMIZED mode
+        SplitFactory splitFactory = getReadyFactory(ImpressionsMode.OPTIMIZED);
+
         // 2. Fetch splitChanges with both flags with trackImpressions true & false
-        // 3. Verify counts & MTKs are tracked only for trackImpressions false
-        // 4. Verify impressions are tracked for trackImpressions true
+        SplitClient client = splitFactory.client();
+        client.getTreatment("tracked");
+        client.getTreatment("not_tracked");
+        Thread.sleep(200);
+
+        // 3. Flush
+        client.flush();
+
+        // 4. Wait for requests to be sent
+        mUniqueKeysLatch.await(5, TimeUnit.SECONDS);
+        mCountLatch.await(5, TimeUnit.SECONDS);
+        mImpressionsLatch.await(5, TimeUnit.SECONDS);
+
+        // 5. Verify request bodies
+        verify();
+    }
+
+    private void verifyOnlyNone(boolean impressionsAwait) {
+        // a. Counts
+        String countBody = mCountBody.get();
+        ImpressionsCount impressionsCount = Json.fromJson(countBody, ImpressionsCount.class);
+        assertEquals(2, impressionsCount.perFeature.size());
+        assertTrue(impressionsCount.perFeature.stream().anyMatch(c -> c.feature.equals("tracked") && c.count == 1));
+        assertTrue(impressionsCount.perFeature.stream().anyMatch(c -> c.feature.equals("not_tracked") && c.count == 1));
+
+        // b. MTKs
+        String uniqueBody = mUniqueKeysBody.get();
+        MTK mtk = Json.fromJson(uniqueBody, MTK.class);
+        assertEquals(1, mtk.getKeys().size());
+        assertTrue(mtk.getKeys().get(0).getFeatures().containsAll(Arrays.asList("not_tracked", "tracked")));
+        assertEquals("CUSTOMER_ID", mtk.getKeys().get(0).getKey());
+
+        // c. Impressions (no impressions)
+        assertNull(mImpressionsBody.get());
+        assertFalse(impressionsAwait);
+    }
+
+    private void verify() {
+        // a. Counts
+        String countBody = mCountBody.get();
+        ImpressionsCount impressionsCount = Json.fromJson(countBody, ImpressionsCount.class);
+        assertEquals(1, impressionsCount.perFeature.size());
+        assertEquals("not_tracked", impressionsCount.perFeature.get(0).feature);
+
+        // b. MTKs
+        String uniqueBody = mUniqueKeysBody.get();
+        MTK mtk = Json.fromJson(uniqueBody, MTK.class);
+        assertEquals(1, mtk.getKeys().size());
+        assertTrue(mtk.getKeys().get(0).getFeatures().containsAll(Arrays.asList("not_tracked")));
+        assertEquals(1, mtk.getKeys().get(0).getFeatures().size());
+        assertNotNull(uniqueBody);
+
+        // c. Impressions
+        String impressionsBody = mImpressionsBody.get();
+        Type listTypeToken = new TypeToken<List<TestImpressions>>(){}.getType();
+        List<TestImpressions> impressions = Json.fromJson(impressionsBody, listTypeToken);
+        assertEquals(1, impressions.size());
+        assertEquals("tracked", impressions.get(0).testName);
     }
 
     private SplitFactory getReadyFactory(ImpressionsMode impressionsMode) throws InterruptedException {
@@ -177,16 +258,16 @@ public class ImpressionsToggleTest {
                                 .setBody(IntegrationHelper.emptySplitChanges(1506703262916L, 1506703262916L));
                     }
                 } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.COUNT)) {
-                    mCountLatch.countDown();
                     mCountBody.set(request.getBody().readUtf8());
+                    mCountLatch.countDown();
                     return new MockResponse().setResponseCode(200);
                 } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.IMPRESSIONS)) {
-                    mImpressionsLatch.countDown();
                     mImpressionsBody.set(request.getBody().readUtf8());
+                    mImpressionsLatch.countDown();
                     return new MockResponse().setResponseCode(200);
                 } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.UNIQUE_KEYS)) {
-                    mUniqueKeysLatch.countDown();
                     mUniqueKeysBody.set(request.getBody().readUtf8());
+                    mUniqueKeysLatch.countDown();
                     return new MockResponse().setResponseCode(200);
                 } else {
                     return new MockResponse().setResponseCode(404);
