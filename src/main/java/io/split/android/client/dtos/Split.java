@@ -49,4 +49,7 @@ public class Split {
     @Nullable
     @SerializedName("sets")
     public Set<String> sets;
+
+    @SerializedName("trackImpressions")
+    public boolean trackImpressions = true;
 }

@@ -1,5 +1,14 @@
 package io.split.android.client;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
@@ -12,15 +21,6 @@ import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitParser;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static io.split.android.client.utils.Utils.checkNotNull;
 
 public class SplitManagerImpl implements SplitManager {
 
@@ -144,6 +144,7 @@ public class SplitManagerImpl implements SplitManager {
         splitView.configs = parsedSplit.configurations();
         splitView.sets = new ArrayList<>(parsedSplit.sets() == null ? new HashSet<>() : parsedSplit.sets());
         splitView.defaultTreatment = parsedSplit.defaultTreatment();
+        splitView.trackImpressions = parsedSplit.trackImpressions();
 
         Set<String> treatments = new HashSet<>();
         for (ParsedCondition condition : parsedSplit.parsedConditions()) {
