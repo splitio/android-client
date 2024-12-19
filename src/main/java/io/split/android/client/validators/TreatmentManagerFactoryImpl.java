@@ -21,7 +21,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
 
     private final KeyValidator mKeyValidator;
     private final SplitValidator mSplitValidator;
-    private final ImpressionListener mCustomerImpressionListener;
+    private final ImpressionListener.FederatedImpressionListener mCustomerImpressionListener;
     private final boolean mLabelsEnabled;
     private final AttributesMerger mAttributesMerger;
     private final TelemetryStorageProducer mTelemetryStorageProducer;
@@ -33,7 +33,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
 
     public TreatmentManagerFactoryImpl(@NonNull KeyValidator keyValidator,
                                        @NonNull SplitValidator splitValidator,
-                                       @NonNull ImpressionListener customerImpressionListener,
+                                       @NonNull ImpressionListener.FederatedImpressionListener customerImpressionListener,
                                        boolean labelsEnabled,
                                        @NonNull AttributesMerger attributesMerger,
                                        @NonNull TelemetryStorageProducer telemetryStorageProducer,

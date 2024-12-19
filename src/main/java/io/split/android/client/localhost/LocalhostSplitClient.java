@@ -263,11 +263,11 @@ public final class LocalhostSplitClient implements SplitClient {
         return false;
     }
 
-    private ImpressionListener getImpressionsListener(SplitClientConfig config) {
+    private ImpressionListener.FederatedImpressionListener getImpressionsListener(SplitClientConfig config) {
         if (config.impressionListener() != null) {
-            return config.impressionListener();
+            return new ImpressionListener.FederatedImpressionListener(new ImpressionListener.NoopImpressionListener(), Collections.singletonList(config.impressionListener()));
         } else {
-            return new LocalhostImpressionsListener();
+            return new ImpressionListener.FederatedImpressionListener(new ImpressionListener.NoopImpressionListener(), Collections.emptyList());
         }
     }
 

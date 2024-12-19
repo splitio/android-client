@@ -45,7 +45,7 @@ public class TreatmentManagerExceptionsTest {
     @Mock
     SplitValidator splitValidator;
     @Mock
-    ImpressionListener impressionListener;
+    ImpressionListener.FederatedImpressionListener impressionListener;
     @Mock
     ListenableEventsManager eventsManager;
     @Mock

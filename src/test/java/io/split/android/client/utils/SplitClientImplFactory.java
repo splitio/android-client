@@ -14,6 +14,7 @@ import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMergerImpl;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.impressions.DecoratedImpressionListener;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
@@ -37,7 +38,7 @@ public class SplitClientImplFactory {
         SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class), mock(MySegmentsStorageContainer.class));
         TelemetryStorage telemetryStorage = mock(TelemetryStorage.class);
         TreatmentManagerFactory treatmentManagerFactory = new TreatmentManagerFactoryImpl(
-                new KeyValidatorImpl(), new SplitValidatorImpl(), new ImpressionListener.NoopImpressionListener(),
+                new KeyValidatorImpl(), new SplitValidatorImpl(), new ImpressionListener.FederatedImpressionListener(mock(DecoratedImpressionListener.class), Collections.emptyList()),
                 false, new AttributesMergerImpl(), telemetryStorage, splitParser,
                 new FlagSetsFilterImpl(Collections.emptySet()), splitsStorage);
 

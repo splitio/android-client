@@ -17,9 +17,9 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.shared.SplitClientContainer;
-import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
+import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryInitProducer;
@@ -43,7 +43,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     private final SplitParser mSplitParser;
     private final AttributesManagerFactory mAttributesManagerFactory;
     private final TreatmentManagerFactory mTreatmentManagerFactory;
-    private final ImpressionListener mCustomerImpressionListener;
+    private final ImpressionListener.FederatedImpressionListener mCustomerImpressionListener;
     private final SplitValidatorImpl mSplitValidator;
     private final EventsTracker mEventsTracker;
 
@@ -57,7 +57,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                                   @NonNull ValidationMessageLogger validationLogger,
                                   @NonNull KeyValidator keyValidator,
                                   @NonNull EventsTracker eventsTracker,
-                                  @NonNull ImpressionListener customerImpressionListener,
+                                  @NonNull ImpressionListener.FederatedImpressionListener customerImpressionListener,
                                   @Nullable FlagSetsFilter flagSetsFilter) {
         mSplitFactory = checkNotNull(splitFactory);
         mClientContainer = checkNotNull(clientContainer);

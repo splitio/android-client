@@ -2,6 +2,7 @@ package io.split.android.client;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -27,6 +28,7 @@ import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
@@ -43,7 +45,6 @@ import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.fake.ImpressionListenerMock;
 import io.split.android.fake.SplitEventsManagerStub;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
@@ -52,7 +53,7 @@ import io.split.android.helpers.FileHelper;
 public class TreatmentManagerTest {
 
     Evaluator evaluator;
-    ImpressionListener impressionListener;
+    ImpressionListener.FederatedImpressionListener impressionListener;
     ListenableEventsManager eventsManagerStub;
     AttributesManager attributesManager = mock(AttributesManager.class);
     TelemetryStorageProducer telemetryStorageProducer = mock(TelemetryStorageProducer.class);
@@ -89,7 +90,7 @@ public class TreatmentManagerTest {
 
             evaluator = new EvaluatorImpl(splitsStorage, splitParser);
         }
-        impressionListener = mock(ImpressionListener.class);
+        impressionListener = mock(ImpressionListener.FederatedImpressionListener.class);
         eventsManagerStub = new SplitEventsManagerStub();
     }
 
@@ -316,6 +317,18 @@ public class TreatmentManagerTest {
         verify(validationMessageLogger).w(eq("the SDK is not ready, results may be incorrect for feature flag test_split. Make sure to wait for SDK readiness before using this method"), any());
     }
 
+    @Test
+    public void trackValueFromEvaluationResultGetsPassedInToImpression() {
+        Evaluator evaluatorMock = mock(Evaluator.class);
+        when(evaluatorMock.getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_split"), anyMap()))
+                .thenReturn(new EvaluationResult("test", "test", true));
+        TreatmentManagerImpl tManager = initializeTreatmentManager(evaluatorMock);
+
+        tManager.getTreatment("test_split", null, false);
+
+        verify(impressionListener).log(argThat(DecoratedImpression::getTrackImpressions));
+    }
+
     private void assertControl(List<String> splitList, String treatment, Map<String, String> treatmentList, SplitResult splitResult, Map<String, SplitResult> splitResultList) {
         Assert.assertNotNull(treatment);
         Assert.assertEquals(Treatments.CONTROL, treatment);
@@ -350,7 +363,7 @@ public class TreatmentManagerTest {
         return new TreatmentManagerImpl(
                 matchingKey, bucketingKey, evaluator,
                 new KeyValidatorImpl(), splitValidator,
-                new ImpressionListenerMock(), config.labelsEnabled(), eventsManager,
+                mock(ImpressionListener.FederatedImpressionListener.class), config.labelsEnabled(), eventsManager,
                 mock(AttributesManager.class), mock(AttributesMerger.class),
                 mock(TelemetryStorageProducer.class), mFlagSetsFilter, mSplitsStorage, validationLogger, new FlagSetsValidatorImpl());
     }
@@ -374,7 +387,7 @@ public class TreatmentManagerTest {
                 evaluator,
                 mock(KeyValidator.class),
                 mock(SplitValidator.class),
-                mock(ImpressionListener.class),
+                impressionListener,
                 SplitClientConfig.builder().build().labelsEnabled(),
                 eventsManager,
                 attributesManager,

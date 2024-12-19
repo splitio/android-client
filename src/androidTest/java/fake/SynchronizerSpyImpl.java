@@ -5,7 +5,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
-import io.split.android.client.impressions.Impression;
+import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.service.synchronizer.SynchronizerSpy;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
@@ -88,7 +88,7 @@ public class SynchronizerSpyImpl implements SynchronizerSpy, MySegmentsSynchroni
     }
 
     @Override
-    public void pushImpression(Impression impression) {
+    public void pushImpression(DecoratedImpression impression) {
         mSynchronizer.pushImpression(impression);
     }
 
