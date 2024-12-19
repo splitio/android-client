@@ -1,0 +1,124 @@
+{
+  "splits": [
+    {
+      "trafficTypeName": "user",
+      "name": "tracked",
+      "trafficAllocation": 100,
+      "trafficAllocationSeed": -285565213,
+      "seed": -1992295819,
+      "status": "ACTIVE",
+      "killed": false,
+      "defaultTreatment": "off",
+      "changeNumber": 1506703262916,
+      "algo": 2,
+      "trackImpressions": true,
+      "conditions": [
+        {
+          "conditionType": "ROLLOUT",
+          "matcherGroup": {
+            "combiner": "AND",
+            "matchers": [
+              {
+                "keySelector": {
+                  "trafficType": "client",
+                  "attribute": null
+                },
+                "matcherType": "IN_SEGMENT",
+                "negate": false,
+                "userDefinedSegmentMatcherData": {
+                  "segmentName": "new_segment"
+                },
+                "whitelistMatcherData": null,
+                "unaryNumericMatcherData": null,
+                "betweenMatcherData": null,
+                "booleanMatcherData": null,
+                "dependencyMatcherData": null,
+                "stringMatcherData": null
+              }
+            ]
+          },
+          "partitions": [
+            {
+              "treatment": "on",
+              "size": 0
+            },
+            {
+              "treatment": "off",
+              "size": 0
+            },
+            {
+              "treatment": "free",
+              "size": 100
+            },
+            {
+              "treatment": "conta",
+              "size": 0
+            }
+          ],
+          "label": "in segment new_segment"
+        }
+      ]
+    },
+    {
+      "trafficTypeName": "user",
+      "name": "not_tracked",
+      "trafficAllocation": 100,
+      "trafficAllocationSeed": -285565213,
+      "seed": -1992295819,
+      "status": "ACTIVE",
+      "killed": false,
+      "defaultTreatment": "off",
+      "changeNumber": 1506703262916,
+      "algo": 2,
+      "trackImpressions": false,
+      "conditions": [
+        {
+          "conditionType": "ROLLOUT",
+          "matcherGroup": {
+            "combiner": "AND",
+            "matchers": [
+              {
+                "keySelector": {
+                  "trafficType": "client",
+                  "attribute": null
+                },
+                "matcherType": "IN_SEGMENT",
+                "negate": false,
+                "userDefinedSegmentMatcherData": {
+                  "segmentName": "new_segment"
+                },
+                "whitelistMatcherData": null,
+                "unaryNumericMatcherData": null,
+                "betweenMatcherData": null,
+                "booleanMatcherData": null,
+                "dependencyMatcherData": null,
+                "stringMatcherData": null
+              }
+            ]
+          },
+          "partitions": [
+            {
+              "treatment": "on",
+              "size": 0
+            },
+            {
+              "treatment": "off",
+              "size": 0
+            },
+            {
+              "treatment": "free",
+              "size": 100
+            },
+            {
+              "treatment": "conta",
+              "size": 0
+            }
+          ],
+          "label": "in segment new_segment"
+        }
+      ]
+    }
+  ],
+  "since": 1506703262916,
+  "till": 1506703262916
+}

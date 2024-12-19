@@ -442,5 +442,9 @@ public class IntegrationHelper {
     public static class ServicePath {
         public static final String MEMBERSHIPS = "memberships";
         public static final String SPLIT_CHANGES = "splitChanges";
+        public static final String EVENTS = "events";
+        public static final String UNIQUE_KEYS = "keys/cs";
+        public static final String COUNT = "testImpressions/count";
+        public static final String IMPRESSIONS = "testImpressions/bulk";
     }
 }
