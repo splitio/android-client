@@ -123,7 +123,7 @@ public class SplitHelper {
                 algo,
                 configurations,
                 Collections.emptySet(),
-                true
+                false
         );
     }
 

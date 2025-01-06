@@ -54,7 +54,7 @@ import io.split.android.grammar.Treatments;
 import io.split.android.helpers.SplitHelper;
 
 /**
- * Tests for ExperimentParser
+ * Tests for SplitParser
  *
  */
 public class SplitParserTest {
@@ -498,19 +498,19 @@ public class SplitParserTest {
     }
 
     @Test
-    public void trackImpressionsParsingTest(){
+    public void impressionsDisabledParsingTest(){
         SplitParser parser = createParser();
 
         Split split = makeSplit("splitName", Collections.emptyList());
-        split.trackImpressions = false;
+        split.impressionsDisabled = false;
         Split split2 = makeSplit("splitName", Collections.emptyList());
-        split2.trackImpressions = true;
+        split2.impressionsDisabled = true;
 
         ParsedSplit actual = parser.parse(split);
         ParsedSplit actual2 = parser.parse(split2);
 
-        assertFalse(actual.trackImpressions());
-        assertTrue(actual2.trackImpressions());
+        assertFalse(actual.impressionsDisabled());
+        assertTrue(actual2.impressionsDisabled());
     }
 
     private void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
@@ -554,7 +554,7 @@ public class SplitParserTest {
         split.algo = 1;
         split.configurations = configurations;
         split.sets = Collections.emptySet();
-        split.trackImpressions = true;
+        split.impressionsDisabled = false;
         return split;
     }
 

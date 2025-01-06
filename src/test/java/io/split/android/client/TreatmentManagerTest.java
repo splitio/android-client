@@ -320,13 +320,15 @@ public class TreatmentManagerTest {
     @Test
     public void trackValueFromEvaluationResultGetsPassedInToImpression() {
         Evaluator evaluatorMock = mock(Evaluator.class);
-        when(evaluatorMock.getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_split"), anyMap()))
+        when(evaluatorMock.getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_impressions_disabled"), eq(new HashMap<>())))
                 .thenReturn(new EvaluationResult("test", "test", true));
         TreatmentManagerImpl tManager = initializeTreatmentManager(evaluatorMock);
 
-        tManager.getTreatment("test_split", null, false);
+        tManager.getTreatment("test_impressions_disabled", null, false);
 
-        verify(impressionListener).log(argThat(DecoratedImpression::getTrackImpressions));
+        verify(impressionListener).log(argThat((DecoratedImpression decoratedImpression) -> {
+            return decoratedImpression.isImpressionsDisabled();
+        }));
     }
 
     private void assertControl(List<String> splitList, String treatment, Map<String, String> treatmentList, SplitResult splitResult, Map<String, SplitResult> splitResultList) {

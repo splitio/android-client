@@ -62,7 +62,7 @@ class StrategyImpressionManagerTest {
     @Test
     fun `pushImpression calls apply on strategy`() {
         val impression = mock(Impression::class.java)
-        val decoratedImpression = DecoratedImpression(impression, true)
+        val decoratedImpression = DecoratedImpression(impression, false)
         impressionManager.pushImpression(decoratedImpression)
 
         verify(strategy).apply(impression)
@@ -70,9 +70,9 @@ class StrategyImpressionManagerTest {
     }
 
     @Test
-    fun `pushImpression calls apply on noneStrategy when trackImpressions is false`() {
+    fun `pushImpression calls apply on noneStrategy when impressionsDisabled is true`() {
         val impression = mock(Impression::class.java)
-        val decoratedImpression = DecoratedImpression(impression, false)
+        val decoratedImpression = DecoratedImpression(impression, true)
         impressionManager.pushImpression(decoratedImpression)
 
         verify(noneStrategy).apply(impression)
@@ -80,7 +80,7 @@ class StrategyImpressionManagerTest {
     }
 
     @Test
-    fun `pushImpression when it is decorated uses value from trackImpression to track`() {
+    fun `pushImpression when it is decorated uses value from impressionsDisabled to track`() {
         val impression = mock(Impression::class.java)
         val impression2 = mock(Impression::class.java)
         val decoratedImpression = DecoratedImpression(impression, false)
@@ -88,15 +88,15 @@ class StrategyImpressionManagerTest {
         impressionManager.pushImpression(decoratedImpression)
         impressionManager.pushImpression(decoratedImpression2)
 
-        verify(strategy).apply(impression2)
-        verify(noneStrategy).apply(impression)
+        verify(strategy).apply(impression)
+        verify(noneStrategy).apply(impression2)
     }
 
     @Test
     fun `enableTracking set to true causes impressions to be sent to strategy`() {
         impressionManager.enableTracking(true)
         val impression = mock(Impression::class.java)
-        val decoratedImpression = DecoratedImpression(impression, true)
+        val decoratedImpression = DecoratedImpression(impression, false)
         impressionManager.pushImpression(decoratedImpression)
 
         verify(strategy).apply(impression)
@@ -107,7 +107,7 @@ class StrategyImpressionManagerTest {
     fun `enableTracking set to false causes impressions to not be tracked`() {
         impressionManager.enableTracking(false)
         val impression = mock(Impression::class.java)
-        val decoratedImpression = DecoratedImpression(impression, true)
+        val decoratedImpression = DecoratedImpression(impression, false)
         impressionManager.pushImpression(decoratedImpression)
 
         verifyNoInteractions(noneStrategy)

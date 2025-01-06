@@ -11,7 +11,7 @@
       "defaultTreatment": "off",
       "changeNumber": 1506703262916,
       "algo": 2,
-      "trackImpressions": true,
+      "impressionsDisabled": false,
       "conditions": [
         {
           "conditionType": "ROLLOUT",
@@ -70,7 +70,7 @@
       "defaultTreatment": "off",
       "changeNumber": 1506703262916,
       "algo": 2,
-      "trackImpressions": false,
+      "impressionsDisabled": true,
       "conditions": [
         {
           "conditionType": "ROLLOUT",

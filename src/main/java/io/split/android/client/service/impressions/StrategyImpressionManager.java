@@ -39,10 +39,10 @@ public class StrategyImpressionManager implements ImpressionManager, PeriodicTra
             return;
         }
 
-        if (impression.getTrackImpressions()) {
-            mProcessStrategy.apply(impression.getImpression());
-        } else {
+        if (impression.isImpressionsDisabled()) {
             mNoneStrategy.apply(impression.getImpression());
+        } else {
+            mProcessStrategy.apply(impression.getImpression());
         }
     }
 

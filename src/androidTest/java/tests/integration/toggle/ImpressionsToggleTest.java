@@ -84,8 +84,8 @@ public class ImpressionsToggleTest {
         SplitManager manager = splitFactory.manager();
         List<SplitView> splits = manager.splits();
 
-        assertTrue(manager.split("tracked").trackImpressions);
-        assertFalse(manager.split("not_tracked").trackImpressions);
+        assertFalse(manager.split("tracked").impressionsDisabled);
+        assertTrue(manager.split("not_tracked").impressionsDisabled);
         assertEquals(2, splits.size());
     }
 
@@ -94,7 +94,7 @@ public class ImpressionsToggleTest {
         // 1. Initialize SDK in impressions NONE mode
         SplitFactory splitFactory = getReadyFactory(ImpressionsMode.NONE);
 
-        // 2. Fetch splitChanges with both flags with trackImpressions true & false
+        // 2. Fetch splitChanges with both flags with impressionsDisabled true & false
         SplitClient client = splitFactory.client();
         client.getTreatment("tracked");
         client.getTreatment("not_tracked");
@@ -117,7 +117,7 @@ public class ImpressionsToggleTest {
         // 1. Initialize SDK in impressions DEBUG mode
         SplitFactory splitFactory = getReadyFactory(ImpressionsMode.DEBUG);
 
-        // 2. Fetch splitChanges with both flags with trackImpressions true & false
+        // 2. Fetch splitChanges with both flags with impressionsDisabled true & false
         SplitClient client = splitFactory.client();
         client.getTreatment("tracked");
         client.getTreatment("not_tracked");
@@ -140,7 +140,7 @@ public class ImpressionsToggleTest {
         // 1. Initialize SDK in impressions OPTIMIZED mode
         SplitFactory splitFactory = getReadyFactory(ImpressionsMode.OPTIMIZED);
 
-        // 2. Fetch splitChanges with both flags with trackImpressions true & false
+        // 2. Fetch splitChanges with both flags with impressionsDisabled true & false
         SplitClient client = splitFactory.client();
         client.getTreatment("tracked");
         client.getTreatment("not_tracked");
