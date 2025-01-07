@@ -296,7 +296,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     mLabelsEnabled ? evaluationResult.getLabel() : null,
                     evaluationResult.getChangeNumber(),
                     mergedAttributes,
-                    evaluationResult.getTrackImpression());
+                    evaluationResult.isImpressionsDisabled());
 
             return new TreatmentResult(splitResult, false);
         } catch (Exception ex) {
@@ -310,17 +310,17 @@ public class TreatmentManagerImpl implements TreatmentManager {
                         TreatmentLabels.EXCEPTION,
                         (evaluationResult != null) ? evaluationResult.getChangeNumber() : null,
                         mergedAttributes,
-                        evaluationResult == null || evaluationResult.getTrackImpression());
+                        evaluationResult != null && evaluationResult.isImpressionsDisabled());
             }
 
             return new TreatmentResult(new SplitResult(Treatments.CONTROL), true);
         }
     }
 
-    private void logImpression(String matchingKey, String bucketingKey, String splitName, String result, String label, Long changeNumber, Map<String, Object> attributes, boolean trackImpression) {
+    private void logImpression(String matchingKey, String bucketingKey, String splitName, String result, String label, Long changeNumber, Map<String, Object> attributes, boolean impressionsDisabled) {
         try {
             Impression impression = new Impression(matchingKey, bucketingKey, splitName, result, System.currentTimeMillis(), label, changeNumber, attributes);
-            DecoratedImpression decoratedImpression = new DecoratedImpression(impression, trackImpression);
+            DecoratedImpression decoratedImpression = new DecoratedImpression(impression, impressionsDisabled);
             mImpressionListener.log(decoratedImpression);
             mImpressionListener.log(impression);
         } catch (Throwable t) {
@@ -345,7 +345,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             mValidationLogger.w("the SDK is not ready, results may be incorrect for feature flag " + featureFlagName + ". Make sure to wait for SDK readiness before using this method", validationTag);
             mTelemetryStorageProducer.recordNonReadyUsage();
 
-            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null, true);
+            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null, false);
         }
         return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, featureFlagName, attributes);
     }

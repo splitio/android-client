@@ -11,10 +11,15 @@ import io.split.android.client.network.HttpResponse;
 import io.split.android.client.network.HttpStreamRequest;
 import io.split.android.client.network.HttpStreamResponse;
 
-import static java.lang.Thread.sleep;
-
+/**
+ * Prefer using {@link okhttp3.mockwebserver.MockWebServer} to mock / intercept responses.
+ * <p>
+ * That will ensure the SDK uses the default HTTP client.
+ */
+@Deprecated
 public class HttpClientMock implements HttpClient {
     HttpResponseMockDispatcher mResponseDispatcher;
+
     public HttpClientMock(HttpResponseMockDispatcher responseDispatcher) throws IOException {
         mResponseDispatcher = responseDispatcher;
     }

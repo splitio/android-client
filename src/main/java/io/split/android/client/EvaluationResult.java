@@ -7,27 +7,27 @@ public final class EvaluationResult {
     private final String mLabel;
     private final Long mChangeNumber;
     private final String mConfigurations;
-    private final boolean mTrackImpression;
+    private final boolean mImpressionsDisabled;
 
     @VisibleForTesting
     public EvaluationResult(String treatment, String label) {
-        this(treatment, label, null, null, true);
+        this(treatment, label, null, null, false);
     }
 
-    public EvaluationResult(String treatment, String label, boolean trackImpression) {
-        this(treatment, label, null, null, trackImpression);
+    public EvaluationResult(String treatment, String label, boolean impressionsDisabled) {
+        this(treatment, label, null, null, impressionsDisabled);
     }
 
-    EvaluationResult(String treatment, String label, Long changeNumber, boolean trackImpression) {
-        this(treatment, label, changeNumber, null, trackImpression);
+    EvaluationResult(String treatment, String label, Long changeNumber, boolean impressionsDisabled) {
+        this(treatment, label, changeNumber, null, impressionsDisabled);
     }
 
-    public EvaluationResult(String treatment, String label, Long changeNumber, String configurations, boolean trackImpression) {
+    public EvaluationResult(String treatment, String label, Long changeNumber, String configurations, boolean impressionsDisabled) {
         mTreatment = treatment;
         mLabel = label;
         mChangeNumber = changeNumber;
         mConfigurations = configurations;
-        mTrackImpression = trackImpression;
+        mImpressionsDisabled = impressionsDisabled;
     }
 
     public String getTreatment() {
@@ -46,7 +46,7 @@ public final class EvaluationResult {
         return mConfigurations;
     }
 
-    public boolean getTrackImpression() {
-        return mTrackImpression;
+    public boolean isImpressionsDisabled() {
+        return mImpressionsDisabled;
     }
 }

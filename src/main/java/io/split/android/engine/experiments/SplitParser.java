@@ -125,7 +125,7 @@ public class SplitParser {
                 split.algo,
                 split.configurations,
                 split.sets,
-                split.trackImpressions);
+                split.impressionsDisabled);
     }
 
     private CombiningMatcher toMatcher(MatcherGroup matcherGroup, String matchingKey) throws UnsupportedMatcherException {

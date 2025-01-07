@@ -188,16 +188,16 @@ public class SplitManagerImplTest {
     }
 
     @Test
-    public void trackImpressionsIsPresent() {
+    public void impressionsDisabledIsPresent() {
         Split split = SplitHelper.createSplit("FeatureName", 123, true,
                 "some_treatment", Arrays.asList(getTestCondition()),
                 "traffic", 456L, 1, null);
-        split.trackImpressions = false;
+        split.impressionsDisabled = false;
         when(mSplitsStorage.get("FeatureName")).thenReturn(split);
 
         SplitView featureFlag = mSplitManager.split("FeatureName");
 
-        assertFalse(featureFlag.trackImpressions);
+        assertFalse(featureFlag.impressionsDisabled);
     }
 
     private Condition getTestCondition() {

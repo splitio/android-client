@@ -10,19 +10,19 @@ import io.split.android.client.utils.Json;
 public class SplitDeserializationTest {
 
     @Test
-    public void trackImpressionsDefaultsToTrueWhenNotPresentInSplit() {
-        assertTrue(Json.fromJson(getTestSplit(null), Split.class).trackImpressions);
+    public void impressionsDisabledDefaultsToFalseWhenNotPresentInSplit() {
+        assertFalse(Json.fromJson(getTestSplit(null), Split.class).impressionsDisabled);
     }
 
     @Test
-    public void trackImpressionsValueIsParsedCorrectly() {
-        assertTrue(Json.fromJson(getTestSplit(true), Split.class).trackImpressions);
-        assertFalse(Json.fromJson(getTestSplit(false), Split.class).trackImpressions);
+    public void impressionsDisabledValueIsParsedCorrectly() {
+        assertTrue(Json.fromJson(getTestSplit(true), Split.class).impressionsDisabled);
+        assertFalse(Json.fromJson(getTestSplit(false), Split.class).impressionsDisabled);
     }
 
-    private String getTestSplit(Boolean trackImpressions) {
+    private String getTestSplit(Boolean impressionsDisabled) {
         return "{\n" +
-                ((trackImpressions != null) ? "\"trackImpressions\": " + trackImpressions + ",\n"  : "") +
+                ((impressionsDisabled != null) ? "\"impressionsDisabled\": " + impressionsDisabled + ",\n"  : "") +
                 "      \"trafficTypeName\": \"client\",\n" +
                 "      \"name\": \"workm\",\n" +
                 "      \"trafficAllocation\": 100,\n" +

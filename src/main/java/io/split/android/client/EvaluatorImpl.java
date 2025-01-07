@@ -52,7 +52,7 @@ public class EvaluatorImpl implements Evaluator {
     private EvaluationResult getTreatment(String matchingKey, String bucketingKey, ParsedSplit parsedSplit, Map<String, Object> attributes) throws ChangeNumberExceptionWrapper {
         try {
             if (parsedSplit.killed()) {
-                return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.KILLED, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()), parsedSplit.trackImpressions());
+                return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.KILLED, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()), parsedSplit.impressionsDisabled());
             }
 
             /*
@@ -75,7 +75,7 @@ public class EvaluatorImpl implements Evaluator {
 
                         if (bucket > parsedSplit.trafficAllocation()) {
                             // out of split
-                            return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.NOT_IN_SPLIT, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()), parsedSplit.trackImpressions());
+                            return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.NOT_IN_SPLIT, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()), parsedSplit.impressionsDisabled());
                         }
 
                     }
@@ -84,11 +84,11 @@ public class EvaluatorImpl implements Evaluator {
 
                 if (parsedCondition.matcher().match(matchingKey, bucketingKey, attributes, this)) {
                     String treatment = Splitter.getTreatment(bk, parsedSplit.seed(), parsedCondition.partitions(), parsedSplit.algo());
-                    return new EvaluationResult(treatment, parsedCondition.label(), parsedSplit.changeNumber(), configForTreatment(parsedSplit, treatment), parsedSplit.trackImpressions());
+                    return new EvaluationResult(treatment, parsedCondition.label(), parsedSplit.changeNumber(), configForTreatment(parsedSplit, treatment), parsedSplit.impressionsDisabled());
                 }
             }
 
-            return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.DEFAULT_RULE, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()), parsedSplit.trackImpressions());
+            return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.DEFAULT_RULE, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()), parsedSplit.impressionsDisabled());
         } catch (Exception e) {
             throw new ChangeNumberExceptionWrapper(e, parsedSplit.changeNumber());
         }

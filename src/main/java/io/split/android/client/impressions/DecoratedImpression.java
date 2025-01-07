@@ -3,18 +3,18 @@ package io.split.android.client.impressions;
 public class DecoratedImpression {
 
     private final Impression mImpression;
-    private final boolean mTrackImpressions;
+    private final boolean mDisabled;
     
-    public DecoratedImpression(Impression impression, boolean trackImpressions) {
+    public DecoratedImpression(Impression impression, boolean disabled) {
         mImpression = impression;
-        mTrackImpressions = trackImpressions;
+        mDisabled = disabled;
     }
 
     public Impression getImpression() {
         return mImpression;
     }
 
-    public boolean getTrackImpressions() {
-        return mTrackImpressions;
+    public boolean isImpressionsDisabled() {
+        return mDisabled;
     }
 }

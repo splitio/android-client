@@ -50,6 +50,6 @@ public class Split {
     @SerializedName("sets")
     public Set<String> sets;
 
-    @SerializedName("trackImpressions")
-    public boolean trackImpressions = true;
+    @SerializedName("impressionsDisabled")
+    public boolean impressionsDisabled = false;
 }
