@@ -20,6 +20,7 @@ import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
+import io.split.android.client.impressions.DecoratedImpressionListener;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.impressions.SyncImpressionListener;
 import io.split.android.client.lifecycle.SplitLifecycleManager;
@@ -32,8 +33,10 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
-import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.StrategyImpressionManager;
+import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
+import io.split.android.client.service.impressions.strategy.PeriodicTracker;
+import io.split.android.client.service.impressions.strategy.ProcessStrategy;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -185,7 +188,9 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
         splitSingleThreadTaskExecutor.pause();
 
-        ImpressionManager impressionManager = new StrategyImpressionManager(factoryHelper.getImpressionStrategy(splitTaskExecutor, splitTaskFactory, mStorageContainer, config));
+        ImpressionStrategyProvider impressionStrategyProvider = factoryHelper.getImpressionStrategyProvider(splitTaskExecutor, splitTaskFactory, mStorageContainer, config);
+        Pair<ProcessStrategy, PeriodicTracker> noneComponents = impressionStrategyProvider.getNoneComponents();
+        StrategyImpressionManager impressionManager = new StrategyImpressionManager(noneComponents, impressionStrategyProvider.getStrategy(config.impressionsMode()));
         final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
 
         StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(splitTaskExecutor,
@@ -239,17 +244,16 @@ public class SplitFactoryImpl implements SplitFactory {
         }
 
         ExecutorService impressionsLoggingTaskExecutor = factoryHelper.getImpressionsLoggingTaskExecutor();
-        final ImpressionListener splitImpressionListener
+        final DecoratedImpressionListener splitImpressionListener
                 = new SyncImpressionListener(mSyncManager, impressionsLoggingTaskExecutor);
-        final ImpressionListener customerImpressionListener;
+        final ImpressionListener.FederatedImpressionListener customerImpressionListener;
 
+        List<ImpressionListener> impressionListeners = new ArrayList<>();
         if (config.impressionListener() != null) {
-            List<ImpressionListener> impressionListeners = new ArrayList<>();
-            impressionListeners.add(splitImpressionListener);
             impressionListeners.add(config.impressionListener());
-            customerImpressionListener = new ImpressionListener.FederatedImpressionListener(impressionListeners);
+            customerImpressionListener = new ImpressionListener.FederatedImpressionListener(splitImpressionListener, impressionListeners);
         } else {
-            customerImpressionListener = splitImpressionListener;
+            customerImpressionListener = new ImpressionListener.FederatedImpressionListener(splitImpressionListener, impressionListeners);
         }
         EventsTracker eventsTracker = buildEventsTracker();
         mUserConsentManager = new UserConsentManagerImpl(config,
@@ -407,11 +411,6 @@ public class SplitFactoryImpl implements SplitFactory {
 
         ValidationConfig.getInstance().setMaximumKeyLength(splitClientConfig.maximumKeyLength());
         ValidationConfig.getInstance().setTrackEventNamePattern(splitClientConfig.trackEventNamePattern());
-    }
-
-    private void cleanUpDabase(SplitTaskExecutor splitTaskExecutor,
-                               SplitTaskFactory splitTaskFactory) {
-        splitTaskExecutor.submit(splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000), null);
     }
 
     private EventsTracker buildEventsTracker() {

@@ -52,13 +52,40 @@ public class RecorderSyncHelperImplTest {
                 mTaskExecutor);
 
         SplitTaskExecutionListener listener = mock(SplitTaskExecutionListener.class);
+        SplitTaskExecutionListener listener2 = mock(SplitTaskExecutionListener.class);
         SplitTaskExecutionInfo executionInfo = SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
 
         syncHelper.addListener(listener);
+        syncHelper.addListener(listener2);
         syncHelper.taskExecuted(executionInfo);
         syncHelper.removeListener(listener);
         syncHelper.taskExecuted(executionInfo);
 
         verify(listener, times(1)).taskExecuted(executionInfo);
+        verify(listener2, times(2)).taskExecuted(executionInfo);
+    }
+
+    @Test
+    public void multipleListenersCanBeAdded() {
+        mStoragePusher = mock(StoragePusher.class);
+        mTaskExecutor = mock(SplitTaskExecutor.class);
+
+        RecorderSyncHelperImpl<KeyImpression> syncHelper = new RecorderSyncHelperImpl<>(
+                SplitTaskType.IMPRESSIONS_RECORDER,
+                mStoragePusher,
+                1,
+                1,
+                mTaskExecutor);
+
+        SplitTaskExecutionListener listener1 = mock(SplitTaskExecutionListener.class);
+        SplitTaskExecutionListener listener2 = mock(SplitTaskExecutionListener.class);
+        SplitTaskExecutionInfo executionInfo = SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER);
+
+        syncHelper.addListener(listener1);
+        syncHelper.addListener(listener2);
+        syncHelper.taskExecuted(executionInfo);
+
+        verify(listener1).taskExecuted(executionInfo);
+        verify(listener2).taskExecuted(executionInfo);
     }
 }

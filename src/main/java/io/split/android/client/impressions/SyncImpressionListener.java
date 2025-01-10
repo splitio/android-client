@@ -9,7 +9,7 @@ import java.util.concurrent.ExecutorService;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.utils.logger.Logger;
 
-public class SyncImpressionListener implements ImpressionListener {
+public class SyncImpressionListener implements DecoratedImpressionListener {
 
     private final SyncManager mSyncManager;
     private final ExecutorService mExecutorService;
@@ -21,15 +21,11 @@ public class SyncImpressionListener implements ImpressionListener {
     }
 
     @Override
-    public void log(Impression impression) {
+    public void log(DecoratedImpression impression) {
         try {
             mExecutorService.submit(new ImpressionLoggingTask(mSyncManager, impression));
         } catch (Exception ex) {
             Logger.w("Error submitting impression logging task: " + ex.getLocalizedMessage());
         }
-    }
-
-    @Override
-    public void close() {
     }
 }

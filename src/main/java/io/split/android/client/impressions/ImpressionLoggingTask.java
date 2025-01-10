@@ -10,10 +10,10 @@ import io.split.android.client.utils.logger.Logger;
 class ImpressionLoggingTask implements Runnable {
 
     private final SyncManager mSyncManager;
-    private final Impression mImpression;
+    private final DecoratedImpression mImpression;
 
     ImpressionLoggingTask(@NonNull SyncManager syncManager,
-                          Impression impression) {
+                          DecoratedImpression impression) {
         mSyncManager = checkNotNull(syncManager);
         mImpression = impression;
     }

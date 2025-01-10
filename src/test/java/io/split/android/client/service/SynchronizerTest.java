@@ -44,6 +44,7 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.executor.SplitTask;
@@ -55,12 +56,12 @@ import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
-import io.split.android.client.service.impressions.ImpressionManager;
 import io.split.android.client.service.impressions.ImpressionManagerConfig;
 import io.split.android.client.service.impressions.ImpressionsCountRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.impressions.ImpressionsRecorderTask;
 import io.split.android.client.service.impressions.SaveImpressionsCountTask;
+import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.mysegments.LoadMySegmentsTask;
 import io.split.android.client.service.mysegments.MySegmentsSyncTask;
 import io.split.android.client.service.mysegments.MySegmentsTaskFactory;
@@ -141,7 +142,7 @@ public class SynchronizerTest {
     private AttributesSynchronizerRegistryImpl mAttributesSynchronizerRegistry;
     @Mock
     private FeatureFlagsSynchronizer mFeatureFlagsSynchronizer;
-    ImpressionManager mImpressionManager;
+    private StrategyImpressionManager mImpressionManager;
 
     private final String mUserKey = "user_key";
 
@@ -195,7 +196,7 @@ public class SynchronizerTest {
                 .thenReturn(mRetryTimerSplitsUpdate);
         when(mRetryBackoffFactory.createWithFixedInterval(any(), eq(1), eq(3)))
                 .thenReturn(mRetryTimerEventsRecorder);
-        mImpressionManager = Mockito.mock(ImpressionManager.class);
+        mImpressionManager = Mockito.mock(StrategyImpressionManager.class);
 
         mSynchronizer = new SynchronizerImpl(splitClientConfig, mTaskExecutor, mSingleThreadedTaskExecutor,
                 mTaskFactory, mWorkManagerWrapper, mRetryBackoffFactory, mTelemetryRuntimeProducer, mAttributesSynchronizerRegistry, mMySegmentsSynchronizerRegistry, mImpressionManager, mFeatureFlagsSynchronizer, mSplitStorageContainer.getEventsStorage());
@@ -433,8 +434,8 @@ public class SynchronizerTest {
                 .impressionsQueueSize(3)
                 .build();
         setup(config);
-        Impression impression = createImpression();
-        ArgumentCaptor<Impression> impressionCaptor = ArgumentCaptor.forClass(Impression.class);
+        DecoratedImpression impression = createImpression();
+        ArgumentCaptor<DecoratedImpression> impressionCaptor = ArgumentCaptor.forClass(DecoratedImpression.class);
         mSynchronizer.startPeriodicRecording();
         mSynchronizer.pushImpression(impression);
         Thread.sleep(200);
@@ -442,13 +443,14 @@ public class SynchronizerTest {
                 any(ImpressionsRecorderTask.class),
                 any(SplitTaskExecutionListener.class));
         verify(mImpressionManager).pushImpression(impressionCaptor.capture());
-        Assert.assertEquals("key", impressionCaptor.getValue().key());
-        Assert.assertEquals("bkey", impressionCaptor.getValue().bucketingKey());
-        Assert.assertEquals("split", impressionCaptor.getValue().split());
-        Assert.assertEquals("on", impressionCaptor.getValue().treatment());
-        Assert.assertEquals(100L, impressionCaptor.getValue().time());
-        Assert.assertEquals("default rule", impressionCaptor.getValue().appliedRule());
-        Assert.assertEquals(999, impressionCaptor.getValue().changeNumber().longValue());
+        Impression capturedImpression = impressionCaptor.getValue().getImpression();
+        Assert.assertEquals("key", capturedImpression.key());
+        Assert.assertEquals("bkey", capturedImpression.bucketingKey());
+        Assert.assertEquals("split", capturedImpression.split());
+        Assert.assertEquals("on", capturedImpression.treatment());
+        Assert.assertEquals(100L, capturedImpression.time());
+        Assert.assertEquals("default rule", capturedImpression.appliedRule());
+        Assert.assertEquals(999, capturedImpression.changeNumber().longValue());
     }
 
     @Test
@@ -465,7 +467,7 @@ public class SynchronizerTest {
             mSynchronizer.pushImpression(createImpression());
         }
         Thread.sleep(200);
-        verify(mImpressionManager, times(8)).pushImpression(any(Impression.class));
+        verify(mImpressionManager, times(8)).pushImpression(any(DecoratedImpression.class));
     }
 
     @Test
@@ -482,7 +484,7 @@ public class SynchronizerTest {
             mSynchronizer.pushImpression(createUniqueImpression());
         }
         Thread.sleep(200);
-        verify(mImpressionManager, times(8)).pushImpression(any(Impression.class));
+        verify(mImpressionManager, times(8)).pushImpression(any(DecoratedImpression.class));
     }
 
     @Test
@@ -500,7 +502,7 @@ public class SynchronizerTest {
             mSynchronizer.pushImpression(createImpression());
         }
         Thread.sleep(200);
-        verify(mImpressionManager, times(10)).pushImpression(any(Impression.class));
+        verify(mImpressionManager, times(10)).pushImpression(any(DecoratedImpression.class));
     }
 
     @Test
@@ -518,7 +520,7 @@ public class SynchronizerTest {
             mSynchronizer.pushImpression(createUniqueImpression());
         }
         Thread.sleep(200);
-        verify(mImpressionManager, times(10)).pushImpression(any(Impression.class));
+        verify(mImpressionManager, times(10)).pushImpression(any(DecoratedImpression.class));
     }
 
     @Test
@@ -587,7 +589,7 @@ public class SynchronizerTest {
                 .synchronizeInBackground(false)
                 .build();
         setup(config);
-        ImpressionManager impressionManager = mock(ImpressionManager.class);
+        StrategyImpressionManager impressionManager = mock(StrategyImpressionManager.class);
         when(mRetryBackoffFactory.create(any(), anyInt()))
                 .thenReturn(mRetryTimerSplitsSync)
                 .thenReturn(mRetryTimerSplitsUpdate);
@@ -794,14 +796,14 @@ public class SynchronizerTest {
     public void tearDown() {
     }
 
-    private Impression createImpression() {
-        return new Impression("key", "bkey", "split", "on",
-                100L, "default rule", 999L, null);
+    private DecoratedImpression createImpression() {
+        return new DecoratedImpression(new Impression("key", "bkey", "split", "on",
+                100L, "default rule", 999L, null), true);
     }
 
-    private Impression createUniqueImpression() {
-        return new Impression("key", "bkey", UUID.randomUUID().toString(), "on",
-                100L, "default rule", 999L, null);
+    private DecoratedImpression createUniqueImpression() {
+        return new DecoratedImpression(new Impression("key", "bkey", UUID.randomUUID().toString(), "on",
+                100L, "default rule", 999L, null), true);
     }
 
     private KeyImpression keyImpression(Impression impression) {

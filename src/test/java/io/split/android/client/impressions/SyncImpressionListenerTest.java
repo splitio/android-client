@@ -27,7 +27,7 @@ public class SyncImpressionListenerTest {
     @Test
     public void logSubmitsImpressionLoggingTaskInExecutor() {
         SyncImpressionListener syncImpressionListener = new SyncImpressionListener(mSyncManager, mExecutorService);
-        Impression impression = createImpression();
+        DecoratedImpression impression = createImpression();
 
         syncImpressionListener.log(impression);
 
@@ -37,13 +37,13 @@ public class SyncImpressionListenerTest {
     @Test
     public void errorWhileSubmittingTaskIsHandled() {
         SyncImpressionListener syncImpressionListener = new SyncImpressionListener(mSyncManager, mExecutorService);
-        Impression impression = createImpression();
+        DecoratedImpression impression = createImpression();
         doThrow(new RuntimeException("test")).when(mExecutorService).submit(any(ImpressionLoggingTask.class), any());
 
         syncImpressionListener.log(impression);
     }
 
-    private static Impression createImpression() {
-        return new Impression("key", "feature", "treatment", "on", 1402040204L, "label", 123123L, new HashMap<>());
+    private static DecoratedImpression createImpression() {
+        return new DecoratedImpression(new Impression("key", "feature", "treatment", "on", 1402040204L, "label", 123123L, new HashMap<>()), true);
     }
 }

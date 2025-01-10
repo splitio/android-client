@@ -7,7 +7,6 @@ import io.split.android.client.service.impressions.ImpressionsCounter
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
 import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker
-import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentMatchers.any
@@ -31,15 +30,6 @@ class NoneStrategyTest {
     @Mock
     private lateinit var uniqueKeysTracker: UniqueKeysTracker
 
-    @Mock
-    private lateinit var countRetryTimer: RetryBackoffCounterTimer
-
-    @Mock
-    private lateinit var uniqueKeysRetryTimer: RetryBackoffCounterTimer
-
-    @Mock
-    private lateinit var tracker: PeriodicTracker
-
     private lateinit var strategy: NoneStrategy
 
     @Before
@@ -50,8 +40,7 @@ class NoneStrategyTest {
             taskFactory,
             impressionsCounter,
             uniqueKeysTracker,
-            true,
-            tracker
+            true
         )
     }
 
@@ -89,34 +78,6 @@ class NoneStrategyTest {
             100,
             1
         )
-    }
-
-    @Test
-    fun `flush calls flush on tracker`() {
-        strategy.flush()
-
-        verify(tracker).flush()
-    }
-
-    @Test
-    fun `startPeriodicRecording calls startPeriodicRecording on tracker`() {
-        strategy.startPeriodicRecording()
-
-        verify(tracker).startPeriodicRecording()
-    }
-
-    @Test
-    fun `stopPeriodicRecording calls stopPeriodicRecording on tracker`() {
-        strategy.stopPeriodicRecording()
-
-        verify(tracker).stopPeriodicRecording()
-    }
-
-    @Test
-    fun `enableTracking calls enableTracking on tracker`() {
-        strategy.enableTracking(true)
-
-        verify(tracker).enableTracking(true)
     }
 }
 

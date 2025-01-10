@@ -13,6 +13,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -20,7 +21,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.impressions.ImpressionManager;
+import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;
@@ -44,7 +45,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     private final StoragePusher<Event> mEventsStorage;
     private final SplitClientConfig mSplitClientConfig;
     private final SplitTaskFactory mSplitTaskFactory;
-    private final ImpressionManager mImpressionManager;
+    private final StrategyImpressionManager mImpressionManager;
     private final FeatureFlagsSynchronizer mFeatureFlagsSynchronizer;
 
     private RecorderSyncHelper<Event> mEventsSyncHelper;
@@ -66,7 +67,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @NonNull AttributesSynchronizerRegistryImpl attributesSynchronizerRegistry,
                             @NonNull MySegmentsSynchronizerRegistryImpl mySegmentsSynchronizerRegistry,
-                            @NonNull ImpressionManager impressionManager,
+                            @NonNull StrategyImpressionManager impressionManager,
                             @NonNull StoragePusher<Event> eventsStorage,
                             @NonNull ISplitEventsManager eventsManagerCoordinator,
                             @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster) {
@@ -100,7 +101,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @NonNull AttributesSynchronizerRegistryImpl attributesSynchronizerRegistry,
                             @NonNull MySegmentsSynchronizerRegistryImpl mySegmentsSynchronizerRegistry,
-                            @NonNull ImpressionManager impressionManager,
+                            @NonNull StrategyImpressionManager impressionManager,
                             @NonNull FeatureFlagsSynchronizer featureFlagsSynchronizer,
                             @NonNull StoragePusher<Event> eventsStorage) {
 
@@ -255,7 +256,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
     }
 
     @Override
-    public void pushImpression(Impression impression) {
+    public void pushImpression(DecoratedImpression impression) {
         mImpressionManager.pushImpression(impression);
     }
 
