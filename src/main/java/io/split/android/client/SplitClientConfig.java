@@ -1118,7 +1118,7 @@ public class SplitClientConfig {
          * @param rolloutCacheConfiguration Configuration object
          * @return This builder
          */
-        public Builder rolloutCacheConfiguration(@NonNull RolloutCacheConfiguration rolloutCacheConfiguration) {
+        Builder rolloutCacheConfiguration(@NonNull RolloutCacheConfiguration rolloutCacheConfiguration) {
             if (rolloutCacheConfiguration == null) {
                 Logger.w("Rollout cache configuration is null. Setting to default value.");
                 mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();

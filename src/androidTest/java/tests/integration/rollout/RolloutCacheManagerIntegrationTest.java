@@ -25,6 +25,7 @@ import java.util.stream.Collectors;
 import helper.DatabaseHelper;
 import helper.FileHelper;
 import helper.IntegrationHelper;
+import helper.TestableSplitConfigBuilder;
 import io.split.android.client.RolloutCacheConfiguration;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClientConfig;
@@ -39,7 +40,6 @@ import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
-import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -215,13 +215,13 @@ public class RolloutCacheManagerIntegrationTest {
         final String url = mWebServer.url("/").url().toString();
         ServiceEndpoints endpoints = ServiceEndpoints.builder()
                 .apiEndpoint(url).eventsEndpoint(url).build();
-        SplitClientConfig.Builder builder = new SplitClientConfig.Builder()
+        TestableSplitConfigBuilder builder = new TestableSplitConfigBuilder()
                 .serviceEndpoints(endpoints)
                 .streamingEnabled(false)
                 .featuresRefreshRate(9999)
                 .segmentsRefreshRate(9999)
                 .impressionsRefreshRate(9999)
-                .logLevel(SplitLogLevel.VERBOSE)
+                .enableDebug()
                 .streamingEnabled(false);
 
         if (rolloutCacheConfiguration != null) {
