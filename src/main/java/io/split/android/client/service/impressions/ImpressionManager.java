@@ -1,9 +1,10 @@
 package io.split.android.client.service.impressions;
 
-import io.split.android.client.impressions.Impression;
-import io.split.android.client.service.impressions.strategy.PeriodicTracker;
+import io.split.android.client.impressions.DecoratedImpression;
 
-public interface ImpressionManager extends PeriodicTracker {
+public interface ImpressionManager {
 
-    void pushImpression(Impression impression);
+    void enableTracking(boolean enable);
+
+    void pushImpression(DecoratedImpression impression);
 }

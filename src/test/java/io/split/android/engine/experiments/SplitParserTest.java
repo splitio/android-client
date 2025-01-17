@@ -3,7 +3,9 @@ package io.split.android.engine.experiments;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -52,7 +54,7 @@ import io.split.android.grammar.Treatments;
 import io.split.android.helpers.SplitHelper;
 
 /**
- * Tests for ExperimentParser
+ * Tests for SplitParser
  *
  */
 public class SplitParserTest {
@@ -495,6 +497,22 @@ public class SplitParserTest {
         verify(mMySegmentsStorageContainer, never()).getStorageForKey("matching_key");
     }
 
+    @Test
+    public void impressionsDisabledParsingTest(){
+        SplitParser parser = createParser();
+
+        Split split = makeSplit("splitName", Collections.emptyList());
+        split.impressionsDisabled = false;
+        Split split2 = makeSplit("splitName", Collections.emptyList());
+        split2.impressionsDisabled = true;
+
+        ParsedSplit actual = parser.parse(split);
+        ParsedSplit actual2 = parser.parse(split2);
+
+        assertFalse(actual.impressionsDisabled());
+        assertTrue(actual2.impressionsDisabled());
+    }
+
     private void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
 
         SplitParser parser = createParser();
@@ -536,6 +554,7 @@ public class SplitParserTest {
         split.algo = 1;
         split.configurations = configurations;
         split.sets = Collections.emptySet();
+        split.impressionsDisabled = false;
         return split;
     }
 

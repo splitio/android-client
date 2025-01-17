@@ -186,7 +186,6 @@ class NoneTrackerTest {
         verify(taskExecutor, never()).submit(eq(countTask), any())
     }
 
-
     @Test
     fun `stop periodic recording does not save unique keys when tracking is disabled`() {
         val countTask = mock(SaveUniqueImpressionsTask::class.java)

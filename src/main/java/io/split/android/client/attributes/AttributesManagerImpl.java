@@ -118,13 +118,13 @@ public class AttributesManagerImpl implements AttributesManager {
 
     private void submitUpdateTask(PersistentAttributesStorage persistentStorage, Map<String, Object> mInMemoryAttributes) {
         if (persistentStorage != null && mSplitTaskExecutor != null && mAttributeTaskFactory != null) {
-            mSplitTaskExecutor.submit(mAttributeTaskFactory.createAttributeUpdateTask(persistentStorage, mInMemoryAttributes), null);
+            mSplitTaskExecutor.schedule(mAttributeTaskFactory.createAttributeUpdateTask(persistentStorage, mInMemoryAttributes), 5L, null);
         }
     }
 
     private void submitClearTask(PersistentAttributesStorage persistentStorage) {
         if (persistentStorage != null && mSplitTaskExecutor != null && mAttributeTaskFactory != null) {
-            mSplitTaskExecutor.submit(mAttributeTaskFactory.createAttributeClearTask(persistentStorage), null);
+            mSplitTaskExecutor.schedule(mAttributeTaskFactory.createAttributeClearTask(persistentStorage), 5L, null);
         }
     }
 }

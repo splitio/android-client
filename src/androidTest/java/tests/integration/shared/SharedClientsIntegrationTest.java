@@ -61,7 +61,6 @@ public class SharedClientsIntegrationTest {
         }
         insertSplitsIntoDb();
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 10));
-        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, 1));
 
         ServerMock mWebServer = new ServerMock(mJsonChanges);
 
@@ -160,8 +159,8 @@ public class SharedClientsIntegrationTest {
             }
         });
         insertSplitsIntoDb();
-        readyLatch.await(10, TimeUnit.SECONDS);
-        readyLatch2.await(10, TimeUnit.SECONDS);
+        readyLatch.await(15, TimeUnit.SECONDS);
+        readyLatch2.await(15, TimeUnit.SECONDS);
 
         assertEquals(1, readyCount.get());
         assertEquals(1, readyCount2.get());

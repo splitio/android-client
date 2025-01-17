@@ -23,7 +23,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.impressions.ImpressionManager;
+import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
@@ -55,7 +55,7 @@ public class SynchronizerImplTelemetryTest {
     @Mock
     MySegmentsSynchronizerRegistryImpl mMySegmentsSynchronizerRegistry;
     @Mock
-    ImpressionManager mImpressionManager;
+    StrategyImpressionManager mImpressionManager;
     @Mock
     PushManagerEventBroadcaster mPushManagerEventBroadcaster;
 

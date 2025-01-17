@@ -127,9 +127,9 @@ public class EncryptionTest {
             }
         });
 
-        assertTrue(latch.await(2, TimeUnit.SECONDS));
+        assertTrue(latch.await(5, TimeUnit.SECONDS));
         mLifecycleManager.simulateOnPause();
-        Thread.sleep(200);
+        Thread.sleep(500);
         mLifecycleManager.simulateOnResume();
         Thread.sleep(500);
 
@@ -327,11 +327,11 @@ public class EncryptionTest {
         SplitClientConfig config = new TestableSplitConfigBuilder().ready(30000)
                 .trafficType("client")
                 .impressionsMode(impressionsMode)
-                .impressionsRefreshRate(1000)
-                .impressionsCountersRefreshRate(1000)
+                .impressionsRefreshRate(99999)
+                .impressionsCountersRefreshRate(99999)
                 .streamingEnabled(false)
                 .enableDebug()
-                .eventFlushInterval(1000)
+                .eventFlushInterval(99999)
                 .encryptionEnabled(encryptionEnabled)
                 .build();
 

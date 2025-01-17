@@ -67,7 +67,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
                                     @NonNull SplitApiFacade splitApiFacade,
                                     @NonNull ValidationMessageLogger validationLogger,
                                     @NonNull KeyValidator keyValidator,
-                                    @NonNull ImpressionListener customerImpressionListener,
+                                    @NonNull ImpressionListener.FederatedImpressionListener customerImpressionListener,
                                     @Nullable PushNotificationManager pushNotificationManager,
                                     @NonNull ClientComponentsRegister clientComponentsRegister,
                                     @NonNull MySegmentsWorkManagerWrapper workManagerWrapper,

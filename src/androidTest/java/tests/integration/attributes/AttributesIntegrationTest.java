@@ -20,6 +20,7 @@ import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import helper.TestableSplitConfigBuilder;
+import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -32,15 +33,21 @@ import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
 import io.split.android.client.utils.Json;
+import okhttp3.mockwebserver.Dispatcher;
+import okhttp3.mockwebserver.MockResponse;
+import okhttp3.mockwebserver.MockWebServer;
+import okhttp3.mockwebserver.RecordedRequest;
 
 public class AttributesIntegrationTest {
 
     private Context mContext;
     private SplitRoomDatabase mRoomDb;
     private SplitFactory mSplitFactory;
+    private MockWebServer mWebServer;
 
     @Before
     public void setup() {
+        setupServer();
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
@@ -51,7 +58,7 @@ public class AttributesIntegrationTest {
         insertSplitsFromFileIntoDB();
         CountDownLatch readyLatch = new CountDownLatch(1);
         SplitClient client = getSplitClient(readyLatch, true, null);
-        readyLatch.await(5, TimeUnit.SECONDS);
+        readyLatch.await(10, TimeUnit.SECONDS);
 
         // 1. Evaluate without attrs
         Assert.assertEquals("on", client.getTreatment("workm"));
@@ -108,7 +115,7 @@ public class AttributesIntegrationTest {
         // 3. Perform clear and verify there are no attributes on DB
         client.clearAttributes();
 
-        countDownLatch.await(1, TimeUnit.SECONDS);
+        countDownLatch.await(7, TimeUnit.SECONDS);
 
         Assert.assertNull(mRoomDb.attributesDao().getByUserKey(userKey));
     }
@@ -153,7 +160,7 @@ public class AttributesIntegrationTest {
 
         // 2. Clear second client's attributes and check DB entry has been cleared
         client2.clearAttributes();
-        countDownLatch.await(1, TimeUnit.SECONDS); // waiting since DB operations are async
+        countDownLatch.await(7, TimeUnit.SECONDS); // waiting since DB operations are async
         Assert.assertNull(mRoomDb.attributesDao().getByUserKey("new_key"));
 
         // 3. Verify evaluation with first client uses attribute
@@ -162,7 +169,7 @@ public class AttributesIntegrationTest {
         // 4. Perform clear and verify there are no attributes on DB
         client.clearAttributes();
 
-        countDownLatch.await(1, TimeUnit.SECONDS);
+        countDownLatch.await(7, TimeUnit.SECONDS);
 
         Assert.assertNull(mRoomDb.attributesDao().getByUserKey(matchingKey));
     }
@@ -224,8 +231,12 @@ public class AttributesIntegrationTest {
 
     private SplitClient getSplitClient(CountDownLatch readyLatch, boolean persistenceEnabled, String matchingKey) {
         if (mSplitFactory == null) {
+            final String url = mWebServer.url("/").url().toString();
+            ServiceEndpoints endpoints = ServiceEndpoints.builder()
+                    .apiEndpoint(url).eventsEndpoint(url).build();
             SplitClientConfig config = new TestableSplitConfigBuilder()
                     .enableDebug()
+                    .serviceEndpoints(endpoints)
                     .featuresRefreshRate(9999)
                     .segmentsRefreshRate(9999)
                     .impressionsRefreshRate(9999)
@@ -259,7 +270,6 @@ public class AttributesIntegrationTest {
                     return result;
                 }).collect(Collectors.toList());
 
-        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 1));
 
         mRoomDb.splitDao().insert(entities);
@@ -272,5 +282,25 @@ public class AttributesIntegrationTest {
         SplitChange changes = Json.fromJson(s, SplitChange.class);
 
         return changes.splits;
+    }
+
+    private void setupServer() {
+        mWebServer = new MockWebServer();
+
+        final Dispatcher dispatcher = new Dispatcher() {
+
+            @Override
+            public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
+                if (request.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
+                } else if (request.getPath().contains("/splitChanges")) {
+                    return new MockResponse().setResponseCode(200)
+                            .setBody(IntegrationHelper.emptySplitChanges(-1, 10000));
+                } else {
+                    return new MockResponse().setResponseCode(404);
+                }
+            }
+        };
+        mWebServer.setDispatcher(dispatcher);
     }
 }

@@ -8,67 +8,78 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionListener;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskSerialWrapper;
-import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
+import io.split.android.client.service.impressions.observer.ImpressionsObserver;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.RecorderSyncHelper;
 
 class OptimizedTracker implements PeriodicTracker {
 
-    private final ImpressionsCounter mImpressionsCounter;
+    private final ImpressionsObserver mImpressionsObserver;
     private final RecorderSyncHelper<KeyImpression> mImpressionsSyncHelper;
     private final SplitTaskExecutor mTaskExecutor;
     private final ImpressionsTaskFactory mImpressionsTaskFactory;
 
     private final RetryBackoffCounterTimer mRetryTimer;
-    private final RetryBackoffCounterTimer mImpressionsCountRetryTimer;
     private final int mImpressionsRefreshRate;
-    private final int mImpressionsCounterRefreshRate;
     private String mImpressionsRecorderTaskId;
-    private String mImpressionsRecorderCountTaskId;
     private final AtomicBoolean mTrackingIsEnabled;
+    private final AtomicBoolean mIsSynchronizing = new AtomicBoolean(true);
+    /**
+     * @noinspection FieldCanBeLocal
+     */
+    private final SplitTaskExecutionListener mTaskExecutionListener = new SplitTaskExecutionListener() {
+        @Override
+        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+            // this listener intercepts impressions recording task
+            if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+                if (Boolean.TRUE.equals(taskInfo.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY))) {
+                    mIsSynchronizing.compareAndSet(true, false);
+                    stopPeriodicRecording();
+                }
+            }
+        }
+    };
 
-    OptimizedTracker(@NonNull ImpressionsCounter impressionsCounter,
+    OptimizedTracker(@NonNull ImpressionsObserver impressionsObserver,
                      @NonNull RecorderSyncHelper<KeyImpression> impressionsSyncHelper,
                      @NonNull SplitTaskExecutor taskExecutor,
                      @NonNull ImpressionsTaskFactory taskFactory,
 
                      @NonNull RetryBackoffCounterTimer impressionsRetryTimer,
-                     @NonNull RetryBackoffCounterTimer impressionsCountRetryTimer,
                      int impressionsRefreshRate,
-                     int impressionsCounterRefreshRate,
                      boolean isTrackingEnabled) {
-        mImpressionsCounter = checkNotNull(impressionsCounter);
+        mImpressionsObserver = checkNotNull(impressionsObserver);
         mImpressionsSyncHelper = checkNotNull(impressionsSyncHelper);
+        mImpressionsSyncHelper.addListener(mTaskExecutionListener);
         mTaskExecutor = checkNotNull(taskExecutor);
         mImpressionsTaskFactory = checkNotNull(taskFactory);
 
         mRetryTimer = checkNotNull(impressionsRetryTimer);
-        mImpressionsCountRetryTimer = checkNotNull(impressionsCountRetryTimer);
         mImpressionsRefreshRate = impressionsRefreshRate;
-        mImpressionsCounterRefreshRate = impressionsCounterRefreshRate;
         mTrackingIsEnabled = new AtomicBoolean(isTrackingEnabled);
     }
 
     @Override
     public void flush() {
         flushImpressions();
-        flushImpressionsCount();
     }
 
     @Override
     public void startPeriodicRecording() {
-        scheduleImpressionsRecorderTask();
-        scheduleImpressionsCountRecorderTask();
+        if (mIsSynchronizing.get()) {
+            scheduleImpressionsRecorderTask();
+        }
     }
 
     @Override
     public void stopPeriodicRecording() {
-        saveImpressionsCount();
         mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
-        mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
+        mImpressionsObserver.persist();
     }
 
     @Override
@@ -83,13 +94,6 @@ class OptimizedTracker implements PeriodicTracker {
         mRetryTimer.start();
     }
 
-    private void flushImpressionsCount() {
-        mImpressionsCountRetryTimer.setTask(new SplitTaskSerialWrapper(
-                mImpressionsTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()),
-                mImpressionsTaskFactory.createImpressionsCountRecorderTask()));
-        mImpressionsCountRetryTimer.start();
-    }
-
     private void scheduleImpressionsRecorderTask() {
         if (mImpressionsRecorderTaskId != null) {
             mTaskExecutor.stopTask(mImpressionsRecorderTaskId);
@@ -99,23 +103,5 @@ class OptimizedTracker implements PeriodicTracker {
                 ServiceConstants.NO_INITIAL_DELAY,
                 mImpressionsRefreshRate,
                 mImpressionsSyncHelper);
-    }
-
-    private void scheduleImpressionsCountRecorderTask() {
-        if (mImpressionsRecorderCountTaskId != null) {
-            mTaskExecutor.stopTask(mImpressionsRecorderCountTaskId);
-        }
-        mImpressionsRecorderCountTaskId = mTaskExecutor.schedule(
-                mImpressionsTaskFactory.createImpressionsCountRecorderTask(),
-                ServiceConstants.NO_INITIAL_DELAY,
-                mImpressionsCounterRefreshRate,
-                null);
-    }
-
-    private void saveImpressionsCount() {
-        if (mTrackingIsEnabled.get()) {
-            mTaskExecutor.submit(
-                    mImpressionsTaskFactory.createSaveImpressionsCountTask(mImpressionsCounter.popAll()), null);
-        }
     }
 }

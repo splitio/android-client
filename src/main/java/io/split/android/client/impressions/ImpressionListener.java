@@ -19,10 +19,15 @@ public interface ImpressionListener {
      */
     void close();
 
-    final class NoopImpressionListener implements ImpressionListener {
+    final class NoopImpressionListener implements ImpressionListener, DecoratedImpressionListener {
         @Override
         public void log(Impression impression) {
             // noop
+        }
+
+        @Override
+        public void log(DecoratedImpression impression) {
+
         }
 
         @Override
@@ -31,10 +36,12 @@ public interface ImpressionListener {
         }
     }
 
-    final class FederatedImpressionListener implements ImpressionListener {
-        private List<ImpressionListener> _delegates;
+    final class FederatedImpressionListener implements ImpressionListener, DecoratedImpressionListener {
+        private final DecoratedImpressionListener mDecoratedImpressionListener;
+        private final List<ImpressionListener> _delegates;
 
-        public FederatedImpressionListener(List<ImpressionListener> delegates) {
+        public FederatedImpressionListener(DecoratedImpressionListener decoratedImpressionListener, List<ImpressionListener> delegates) {
+            mDecoratedImpressionListener = decoratedImpressionListener;
             _delegates = delegates;
         }
 
@@ -43,6 +50,11 @@ public interface ImpressionListener {
             for (ImpressionListener listener : _delegates) {
                 listener.log(impression);
             }
+        }
+
+        @Override
+        public void log(DecoratedImpression impression) {
+            mDecoratedImpressionListener.log(impression);
         }
 
         @Override

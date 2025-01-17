@@ -209,11 +209,12 @@ class UserConsentModeOptimizedTest {
         mCountDao = splitRoomDatabase.impressionsCountDao()
         val dispatcher: HttpResponseMockDispatcher = buildDispatcher()
         val config = TestableSplitConfigBuilder().ready(30000)
-            .trafficType("client")
+            .trafficType("account")
             .impressionsMode(ImpressionsMode.OPTIMIZED)
             .impressionsRefreshRate(3)
             .impressionsCountersRefreshRate(3)
             .mtkRefreshRate(3)
+            .enableDebug()
             .eventFlushInterval(3)
             .userConsent(userConsent)
             .build()
@@ -236,7 +237,7 @@ class UserConsentModeOptimizedTest {
                 return HttpStreamResponseMock(200, null)
             }
 
-            override fun getResponse(uri: URI, method: HttpMethod, body: String): HttpResponseMock {
+            override fun getResponse(uri: URI, method: HttpMethod, body: String?): HttpResponseMock {
                 println(uri.path)
                 return if (uri.path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     HttpResponseMock(200, IntegrationHelper.emptyAllSegments())

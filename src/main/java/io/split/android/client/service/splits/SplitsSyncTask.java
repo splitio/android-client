@@ -21,8 +21,6 @@ public class SplitsSyncTask implements SplitTask {
     private final String mSplitsFilterQueryStringFromConfig;
 
     private final SplitsStorage mSplitsStorage;
-    private final boolean mCheckCacheExpiration;
-    private final long mCacheExpirationInSeconds;
     private final SplitsSyncHelper mSplitsSyncHelper;
     @Nullable
     private final ISplitEventsManager mEventsManager; // Should only be null on background sync
@@ -32,27 +30,21 @@ public class SplitsSyncTask implements SplitTask {
 
     public static SplitsSyncTask build(@NonNull SplitsSyncHelper splitsSyncHelper,
                                        @NonNull SplitsStorage splitsStorage,
-                                       boolean checkCacheExpiration,
-                                       long cacheExpirationInSeconds,
                                        String splitsFilterQueryString,
                                        @NonNull ISplitEventsManager eventsManager,
                                        @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
-        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, checkCacheExpiration, cacheExpirationInSeconds, splitsFilterQueryString, telemetryRuntimeProducer, eventsManager, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, splitsFilterQueryString, telemetryRuntimeProducer, eventsManager, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
     }
 
     public static SplitTask buildForBackground(@NonNull SplitsSyncHelper splitsSyncHelper,
                                                     @NonNull SplitsStorage splitsStorage,
-                                                    boolean checkCacheExpiration,
-                                                    long cacheExpirationInSeconds,
-                                                    String splitsFilterQueryString,
+                                               String splitsFilterQueryString,
                                                     @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
-        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, checkCacheExpiration, cacheExpirationInSeconds, splitsFilterQueryString, telemetryRuntimeProducer, null, 1);
+        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, splitsFilterQueryString, telemetryRuntimeProducer, null, 1);
     }
 
     private SplitsSyncTask(@NonNull SplitsSyncHelper splitsSyncHelper,
                            @NonNull SplitsStorage splitsStorage,
-                           boolean checkCacheExpiration,
-                           long cacheExpirationInSeconds,
                            String splitsFilterQueryString,
                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                            @Nullable ISplitEventsManager eventsManager,
@@ -60,8 +52,6 @@ public class SplitsSyncTask implements SplitTask {
 
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
-        mCacheExpirationInSeconds = cacheExpirationInSeconds;
-        mCheckCacheExpiration = checkCacheExpiration;
         mSplitsFilterQueryStringFromConfig = splitsFilterQueryString;
         mEventsManager = eventsManager;
         mChangeChecker = new SplitsChangeChecker();
@@ -73,10 +63,6 @@ public class SplitsSyncTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
         long storedChangeNumber = mSplitsStorage.getTill();
-        long updateTimestamp = mSplitsStorage.getUpdateTimestamp();
-
-        boolean shouldClearExpiredCache = mCheckCacheExpiration &&
-                mSplitsSyncHelper.cacheHasExpired(storedChangeNumber, updateTimestamp, mCacheExpirationInSeconds);
 
         boolean splitsFilterHasChanged = splitsFilterHasChanged(mSplitsStorage.getSplitsFilterQueryString());
 
@@ -87,8 +73,8 @@ public class SplitsSyncTask implements SplitTask {
 
         long startTime = System.currentTimeMillis();
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(storedChangeNumber,
-                splitsFilterHasChanged || shouldClearExpiredCache,
-                splitsFilterHasChanged || shouldClearExpiredCache, mOnDemandFetchBackoffMaxRetries);
+                splitsFilterHasChanged,
+                splitsFilterHasChanged, mOnDemandFetchBackoffMaxRetries);
         mTelemetryRuntimeProducer.recordSyncLatency(OperationType.SPLITS, System.currentTimeMillis() - startTime);
 
         if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {

@@ -1,7 +1,6 @@
 package io.split.android.client.service.impressions.strategy
 
 import io.split.android.client.dtos.KeyImpression
-import io.split.android.client.impressions.Impression
 import io.split.android.client.service.executor.SplitTaskExecutionInfo
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
@@ -17,7 +16,14 @@ import org.junit.Test
 import org.mockito.ArgumentCaptor
 import org.mockito.ArgumentMatchers.any
 import org.mockito.Mock
-import org.mockito.Mockito.*
+import org.mockito.Mockito.argThat
+import org.mockito.Mockito.eq
+import org.mockito.Mockito.mock
+import org.mockito.Mockito.never
+import org.mockito.Mockito.spy
+import org.mockito.Mockito.times
+import org.mockito.Mockito.verify
+import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 import org.mockito.invocation.InvocationOnMock
 
@@ -36,9 +42,6 @@ class DebugStrategyTest {
     private lateinit var telemetryRuntimeProducer: TelemetryRuntimeProducer
 
     @Mock
-    private lateinit var tracker: PeriodicTracker
-
-    @Mock
     private lateinit var impressionsObserver: ImpressionsObserver
 
     private lateinit var strategy: DebugStrategy
@@ -52,7 +55,6 @@ class DebugStrategyTest {
             taskExecutor,
             taskFactory,
             telemetryRuntimeProducer,
-            tracker
         )
     }
 
@@ -89,41 +91,6 @@ class DebugStrategyTest {
     }
 
     @Test
-    fun `flush calls flush on tracker`() {
-        strategy.flush()
-
-        verify(tracker).flush()
-    }
-
-    @Test
-    fun `startPeriodicRecording calls startPeriodicRecording on tracker`() {
-        strategy.startPeriodicRecording()
-
-        verify(tracker).startPeriodicRecording()
-    }
-
-    @Test
-    fun `stopPeriodicRecording calls stopPeriodicRecording on tracker`() {
-        strategy.stopPeriodicRecording()
-
-        verify(tracker).stopPeriodicRecording()
-    }
-
-    @Test
-    fun `stopPeriodicRecording calls persist on observer`() {
-        strategy.stopPeriodicRecording()
-
-        verify(impressionsObserver).persist()
-    }
-
-    @Test
-    fun `enableTracking calls enableTracking on tracker`() {
-        strategy.enableTracking(true)
-
-        verify(tracker).enableTracking(true)
-    }
-
-    @Test
     fun `apply calls testAndSet on observer`() {
         val impression = createUniqueImpression()
         strategy.apply(impression)
@@ -138,48 +105,6 @@ class DebugStrategyTest {
         strategy.apply(impression)
 
         spy(impression).withPreviousTime(20421)
-    }
-
-    @Test
-    fun `call stop periodic tracking when sync listener returns do not retry`() {
-        val listenerCaptor = ArgumentCaptor.forClass(SplitTaskExecutionListener::class.java)
-
-        `when`(impressionsSyncHelper.addListener(listenerCaptor.capture())).thenAnswer { it }
-        `when`(impressionsSyncHelper.taskExecuted(argThat {
-            it.taskType == SplitTaskType.IMPRESSIONS_RECORDER
-        })).thenAnswer {
-            listenerCaptor.value.taskExecuted(
-                SplitTaskExecutionInfo.error(
-                    SplitTaskType.IMPRESSIONS_RECORDER,
-                    mapOf(SplitTaskExecutionInfo.DO_NOT_RETRY to true)
-                )
-            )
-            it
-        }
-
-        strategy = DebugStrategy(
-            impressionsObserver,
-            impressionsSyncHelper,
-            taskExecutor,
-            taskFactory,
-            telemetryRuntimeProducer,
-            tracker
-        )
-
-        strategy.startPeriodicRecording()
-        // simulate sync helper trigger
-        impressionsSyncHelper.taskExecuted(
-            SplitTaskExecutionInfo.error(
-                SplitTaskType.IMPRESSIONS_RECORDER,
-                mapOf(SplitTaskExecutionInfo.DO_NOT_RETRY to true)
-            )
-        )
-
-        // start periodic recording again to verify it is not working anymore
-        strategy.startPeriodicRecording()
-
-        verify(tracker, times(1)).startPeriodicRecording()
-        verify(tracker).stopPeriodicRecording()
     }
 
     @Test
@@ -221,7 +146,6 @@ class DebugStrategyTest {
             taskExecutor,
             taskFactory,
             telemetryRuntimeProducer,
-            tracker
         )
 
         // call apply two times; first one will trigger the recording task and second one should not

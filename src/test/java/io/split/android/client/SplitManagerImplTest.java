@@ -6,6 +6,7 @@ import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -184,6 +185,19 @@ public class SplitManagerImplTest {
 
         assertEquals(1, splitNames.size());
         assertEquals("some_treatment", splitNames.get(0).defaultTreatment);
+    }
+
+    @Test
+    public void impressionsDisabledIsPresent() {
+        Split split = SplitHelper.createSplit("FeatureName", 123, true,
+                "some_treatment", Arrays.asList(getTestCondition()),
+                "traffic", 456L, 1, null);
+        split.impressionsDisabled = false;
+        when(mSplitsStorage.get("FeatureName")).thenReturn(split);
+
+        SplitView featureFlag = mSplitManager.split("FeatureName");
+
+        assertFalse(featureFlag.impressionsDisabled);
     }
 
     private Condition getTestCondition() {

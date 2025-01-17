@@ -3,7 +3,8 @@ package io.split.android.client.service.impressions.observer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static helper.IntegrationHelper.ResponseClosure.getSinceFromUri;
+
+import static helper.IntegrationHelper.getSinceFromUri;
 
 import android.content.Context;
 

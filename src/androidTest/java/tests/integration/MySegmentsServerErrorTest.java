@@ -142,7 +142,6 @@ public class MySegmentsServerErrorTest {
 
         SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
         splitRoomDatabase.clearAllTables();
-        splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.DATBASE_MIGRATION_STATUS, GeneralInfoEntity.DATBASE_MIGRATION_STATUS_DONE));
         splitRoomDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, -1));
 
         ImpressionListenerHelper impListener = new ImpressionListenerHelper();
@@ -196,7 +195,7 @@ public class MySegmentsServerErrorTest {
             Assert.fail("Impressions request timeout");
         }
 
-        Assert.assertFalse(readyFromCacheTask.isOnPostExecutionCalled);
+        Assert.assertTrue(readyFromCacheTask.isOnPostExecutionCalled);
         Assert.assertEquals("on_s1", treatments.get(0));
         Assert.assertEquals("on_s1", treatments.get(1));
         Assert.assertEquals("on_s1", treatments.get(2));

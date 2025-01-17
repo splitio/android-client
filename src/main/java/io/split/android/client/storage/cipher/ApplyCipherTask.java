@@ -49,6 +49,7 @@ public class ApplyCipherTask implements SplitTask {
             mSplitDatabase.runInTransaction(new Runnable() {
                 @Override
                 public void run() {
+                    updateAttributes(mSplitDatabase.attributesDao());
                     updateSplits(mSplitDatabase.splitDao());
                     updateSegments(mSplitDatabase.mySegmentDao());
                     updateLargeSegments(mSplitDatabase.myLargeSegmentDao());
@@ -56,7 +57,6 @@ public class ApplyCipherTask implements SplitTask {
                     updateEvents(mSplitDatabase.eventDao());
                     updateImpressionsCount(mSplitDatabase.impressionsCountDao());
                     updateUniqueKeys(mSplitDatabase.uniqueKeysDao());
-                    updateAttributes(mSplitDatabase.attributesDao());
                 }
             });
 
@@ -87,7 +87,6 @@ public class ApplyCipherTask implements SplitTask {
 
     private void updateUniqueKeys(UniqueKeysDao uniqueKeysDao) {
         List<UniqueKeyEntity> items = uniqueKeysDao.getAll();
-
         for (UniqueKeyEntity item : items) {
             String fromUserKey = mFromCipher.decrypt(item.getUserKey());
             String fromFeatureList = mFromCipher.decrypt(item.getFeatureList());

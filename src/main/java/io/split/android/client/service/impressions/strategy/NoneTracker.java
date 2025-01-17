@@ -7,13 +7,10 @@ import androidx.annotation.NonNull;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.service.ServiceConstants;
-import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
-import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskSerialWrapper;
-import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;

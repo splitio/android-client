@@ -23,7 +23,6 @@ public abstract class SplitWorker extends Worker {
     private final SplitRoomDatabase mDatabase;
     private final HttpClient mHttpClient;
     private final String mEndpoint;
-    private final long mCacheExpirationInSeconds;
 
     protected SplitTask mSplitTask;
 
@@ -36,8 +35,6 @@ public abstract class SplitWorker extends Worker {
         String apiKey = inputData.getString(ServiceConstants.WORKER_PARAM_API_KEY);
         mEndpoint = inputData.getString(ServiceConstants.WORKER_PARAM_ENDPOINT);
         mDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
-        mCacheExpirationInSeconds = inputData.getLong(ServiceConstants.WORKER_PARAM_SPLIT_CACHE_EXPIRATION,
-                ServiceConstants.DEFAULT_SPLITS_CACHE_EXPIRATION_IN_SECONDS);
         mHttpClient = buildHttpClient(apiKey, buildCertPinningConfig(inputData.getString(ServiceConstants.WORKER_PARAM_CERTIFICATE_PINS)));
     }
 
@@ -62,10 +59,6 @@ public abstract class SplitWorker extends Worker {
 
     public String getEndPoint() {
         return mEndpoint;
-    }
-
-    public long getCacheExpirationInSeconds() {
-        return mCacheExpirationInSeconds;
     }
 
     private static HttpClient buildHttpClient(String apiKey, @Nullable CertificatePinningConfiguration certificatePinningConfiguration) {
