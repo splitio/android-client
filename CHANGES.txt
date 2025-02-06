@@ -1,3 +1,6 @@
+5.1.0 (Jan 17, 2025)
+- Added support for the new impressions tracking toggle available on feature flags, both respecting the setting and including the new field being returned on SplitView type objects. Read more in our docs.
+
 5.0.1 (Nov 22, 2024)
 - Optimized persistence of impressions deduplication cache.
 
