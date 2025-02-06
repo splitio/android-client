@@ -56,6 +56,8 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
     private final SplitTaskExecutionListener mSchedulingBackgroundSyncExecutionListener;
     private final MySegmentsWorkManagerWrapper mWorkManagerWrapper;
     private final SplitTaskExecutor mSplitClientEventTaskExecutor;
+    private String mStreamingTaskId = null;
+    private String mBackgroundSyncTaskId = null;
 
     public SplitClientContainerImpl(@NonNull String defaultMatchingKey,
                                     @NonNull SplitFactoryImpl splitFactory,
@@ -159,6 +161,17 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
         }
     }
 
+    @Override
+    public void destroy() {
+        if (mStreamingTaskId != null) {
+            mSplitTaskExecutor.stopTask(mStreamingTaskId);
+        }
+
+        if (mBackgroundSyncTaskId != null) {
+            mSplitTaskExecutor.stopTask(mBackgroundSyncTaskId);
+        }
+    }
+
     @NonNull
     private MySegmentsTaskFactory getMySegmentsTaskFactory(Key key, SplitEventsManager eventsManager) {
         return mMySegmentsTaskFactoryProvider.getFactory(
@@ -174,7 +187,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
             return;
         }
         if (!mConnecting.getAndSet(true)) {
-            mSplitTaskExecutor.schedule(new PushNotificationManagerDeferredStartTask(mPushNotificationManager),
+            mStreamingTaskId = mSplitTaskExecutor.schedule(new PushNotificationManagerDeferredStartTask(mPushNotificationManager),
                     ServiceConstants.MIN_INITIAL_DELAY,
                     mStreamingConnectionExecutionListener);
         }
@@ -185,7 +198,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
             return;
         }
         if (!mSchedulingBackgroundSync.getAndSet(true)) {
-            mSplitTaskExecutor.schedule(new MySegmentsBackgroundSyncScheduleTask(mWorkManagerWrapper, getKeySet()),
+            mBackgroundSyncTaskId = mSplitTaskExecutor.schedule(new MySegmentsBackgroundSyncScheduleTask(mWorkManagerWrapper, getKeySet()),
                     ServiceConstants.MIN_INITIAL_DELAY,
                     mSchedulingBackgroundSyncExecutionListener);
         }
