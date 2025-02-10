@@ -77,6 +77,13 @@ public final class SplitClientImpl implements SplitClient {
             if (splitClientContainer.getAll().isEmpty()) {
                 SplitFactory splitFactory = mSplitFactory.get();
                 if (splitFactory != null) {
+                    if (splitFactory instanceof SplitFactoryImpl) {
+                        try {
+                            ((SplitFactoryImpl) splitFactory).checkClients();
+                        } catch (ClassCastException ignored) {
+
+                        }
+                    }
                     splitFactory.destroy();
                 }
             }

@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -285,6 +286,24 @@ public class SplitClientContainerImplTest {
         SplitClient client2 = mClientContainer.getClient(keyWithBucketing);
 
         assertNotEquals(client, client2);
+    }
+
+    @Test
+    public void destroyCancelsAllScheduledTasks() {
+        when(mSplitTaskExecutor.schedule(any(), anyLong(), any()))
+                .thenReturn("taskId_1")
+                .thenReturn("taskId_2");
+
+        Key key = new Key("matching_key");
+        SplitClient clientMock = mock(SplitClient.class);
+        when(mSplitClientFactory.getClient(eq(key), any(), any(), anyBoolean())).thenReturn(clientMock);
+        when(mConfig.synchronizeInBackground()).thenReturn(true);
+
+        mClientContainer.getClient(key);
+        mClientContainer.destroy();
+
+        verify(mSplitTaskExecutor).stopTask("taskId_1");
+        verify(mSplitTaskExecutor).stopTask("taskId_2");
     }
 
     @NonNull

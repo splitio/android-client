@@ -16,6 +16,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.split.android.android_client.BuildConfig;
@@ -78,6 +79,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private final SplitManager mManager;
     private final Runnable mDestroyer;
     private boolean mIsTerminated = false;
+    private final AtomicBoolean mCheckClients = new AtomicBoolean(false);
     private final String mApiKey;
 
     private final FactoryMonitor mFactoryMonitor = FactoryMonitorImpl.getSharedInstance();
@@ -280,40 +282,42 @@ public class SplitFactoryImpl implements SplitFactory {
             public void run() {
                 mInitLock.lock();
                 try {
-                    if (mClientContainer.getAll().isEmpty()) {
-                        Logger.w("Shutdown called for split");
-                        mStorageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
-                        telemetrySynchronizer.flush();
-                        telemetrySynchronizer.destroy();
-                        Logger.d("Successful shutdown of telemetry");
-                        impressionsLoggingTaskExecutor.shutdown();
-                        impressionsObserverExecutor.shutdown();
-                        Logger.d("Successful shutdown of impressions logging executor");
-                        mSyncManager.stop();
-                        Logger.d("Flushing impressions and events");
-                        mLifecycleManager.destroy();
-                        Logger.d("Successful shutdown of lifecycle manager");
-                        mFactoryMonitor.remove(mApiKey);
-                        Logger.d("Successful shutdown of segment fetchers");
-                        customerImpressionListener.close();
-                        Logger.d("Successful shutdown of ImpressionListener");
-                        defaultHttpClient.close();
-                        Logger.d("Successful shutdown of httpclient");
-                        mManager.destroy();
-                        Logger.d("Successful shutdown of manager");
-                        splitTaskExecutor.stop();
-                        splitSingleThreadTaskExecutor.stop();
-                        Logger.d("Successful shutdown of task executor");
-                        mStorageContainer.getAttributesStorageContainer().destroy();
-                        Logger.d("Successful shutdown of attributes storage");
-                        mIsTerminated = true;
-                        Logger.d("SplitFactory has been destroyed");
-                    } else {
-                        Logger.d("Avoiding shutdown of factory due to active clients");
+                    if (mCheckClients.get() && !mClientContainer.getAll().isEmpty()) {
+                        Logger.d("Avoiding shutdown due to active clients");
+                        return;
                     }
+                    Logger.w("Shutdown called for split");
+                    mStorageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
+                    telemetrySynchronizer.flush();
+                    telemetrySynchronizer.destroy();
+                    Logger.d("Successful shutdown of telemetry");
+                    impressionsLoggingTaskExecutor.shutdown();
+                    impressionsObserverExecutor.shutdown();
+                    Logger.d("Successful shutdown of impressions logging executor");
+                    mSyncManager.stop();
+                    Logger.d("Flushing impressions and events");
+                    mLifecycleManager.destroy();
+                    mClientContainer.destroy();
+                    Logger.d("Successful shutdown of lifecycle manager");
+                    mFactoryMonitor.remove(mApiKey);
+                    Logger.d("Successful shutdown of segment fetchers");
+                    customerImpressionListener.close();
+                    Logger.d("Successful shutdown of ImpressionListener");
+                    defaultHttpClient.close();
+                    Logger.d("Successful shutdown of httpclient");
+                    mManager.destroy();
+                    Logger.d("Successful shutdown of manager");
+                    splitTaskExecutor.stop();
+                    splitSingleThreadTaskExecutor.stop();
+                    Logger.d("Successful shutdown of task executor");
+                    mStorageContainer.getAttributesStorageContainer().destroy();
+                    Logger.d("Successful shutdown of attributes storage");
+                    mIsTerminated = true;
+                    Logger.d("SplitFactory has been destroyed");
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {
+                    mCheckClients.set(false);
                     mInitLock.unlock();
                 }
             }
@@ -433,6 +437,10 @@ public class SplitFactoryImpl implements SplitFactory {
     @Override
     public UserConsent getUserConsent() {
         return mUserConsentManager.getStatus();
+    }
+
+    void checkClients() {
+        mCheckClients.set(true);
     }
 
     private void setupValidations(SplitClientConfig splitClientConfig) {

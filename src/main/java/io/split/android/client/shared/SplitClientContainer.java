@@ -12,4 +12,6 @@ public interface SplitClientContainer {
     void remove(Key key);
 
     Set<SplitClient> getAll();
+
+    void destroy();
 }
