@@ -20,6 +20,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
@@ -485,6 +486,7 @@ class SplitFactoryHelper {
 
         private final RolloutCacheManager mRolloutCacheManager;
         private final SplitTaskExecutionListener mListener;
+        private final ReentrantLock mInitLock;
 
         Initializer(
                 String apiToken,
@@ -497,23 +499,28 @@ class SplitFactoryHelper {
                 SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor,
                 SplitStorageContainer storageContainer,
                 SyncManager syncManager,
-                SplitLifecycleManager lifecycleManager) {
+                SplitLifecycleManager lifecycleManager,
+                ReentrantLock initLock) {
 
             this(new RolloutCacheManagerImpl(config,
                             storageContainer,
                             splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000),
                             splitTaskFactory.createEncryptionMigrationTask(apiToken, splitDatabase, config.encryptionEnabled(), splitCipher)),
-                    new Listener(eventsManagerCoordinator, splitTaskExecutor, splitSingleThreadTaskExecutor, syncManager, lifecycleManager));
+                    new Listener(eventsManagerCoordinator, splitTaskExecutor, splitSingleThreadTaskExecutor, syncManager, lifecycleManager, initLock),
+                    initLock);
         }
 
         @VisibleForTesting
-        Initializer(RolloutCacheManager rolloutCacheManager, SplitTaskExecutionListener listener) {
+        Initializer(RolloutCacheManager rolloutCacheManager, SplitTaskExecutionListener listener, ReentrantLock initLock) {
             mRolloutCacheManager = rolloutCacheManager;
             mListener = listener;
+            mInitLock = initLock;
         }
 
         @Override
         public void run() {
+            Logger.v("Running SDK initializer");
+            mInitLock.lock();
             mRolloutCacheManager.validateCache(mListener);
         }
 
@@ -524,30 +531,38 @@ class SplitFactoryHelper {
             private final SplitSingleThreadTaskExecutor mSplitSingleThreadTaskExecutor;
             private final SyncManager mSyncManager;
             private final SplitLifecycleManager mLifecycleManager;
+            private final ReentrantLock mInitLock;
 
             Listener(EventsManagerCoordinator eventsManagerCoordinator,
                      SplitTaskExecutor splitTaskExecutor,
                      SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor,
                      SyncManager syncManager,
-                     SplitLifecycleManager lifecycleManager) {
+                     SplitLifecycleManager lifecycleManager,
+                     ReentrantLock initLock) {
                 mEventsManagerCoordinator = eventsManagerCoordinator;
                 mSplitTaskExecutor = splitTaskExecutor;
                 mSplitSingleThreadTaskExecutor = splitSingleThreadTaskExecutor;
                 mSyncManager = syncManager;
                 mLifecycleManager = lifecycleManager;
+                mInitLock = initLock;
             }
 
             @Override
             public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-                mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+                try {
+                    mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
 
-                mSplitTaskExecutor.resume();
-                mSplitSingleThreadTaskExecutor.resume();
+                    mSplitTaskExecutor.resume();
+                    mSplitSingleThreadTaskExecutor.resume();
 
-                mSyncManager.start();
-                mLifecycleManager.register(mSyncManager);
-
-                Logger.i("Android SDK initialized!");
+                    mSyncManager.start();
+                    mLifecycleManager.register(mSyncManager);
+                    Logger.i("Android SDK initialized!");
+                } catch (Exception e) {
+                    Logger.e("Error initializing Android SDK", e);
+                } finally {
+                    mInitLock.unlock();
+                }
             }
         }
     }

@@ -83,4 +83,9 @@ public class LocalhostSplitClientContainerImpl extends BaseSplitClientContainer 
 
         mEventsManagerCoordinator.registerEventsManager(key, eventsManager);
     }
+
+    @Override
+    public void destroy() {
+        // No-op
+    }
 }
