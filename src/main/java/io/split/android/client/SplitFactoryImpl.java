@@ -11,8 +11,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.api.Key;
@@ -74,6 +79,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private final SplitManager mManager;
     private final Runnable mDestroyer;
     private boolean mIsTerminated = false;
+    private final AtomicBoolean mCheckClients = new AtomicBoolean(false);
     private final String mApiKey;
 
     private final FactoryMonitor mFactoryMonitor = FactoryMonitorImpl.getSharedInstance();
@@ -83,6 +89,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private final SplitStorageContainer mStorageContainer;
     private final SplitClientContainer mClientContainer;
     private final UserConsentManager mUserConsentManager;
+    private final ReentrantLock mInitLock = new ReentrantLock();
 
     public SplitFactoryImpl(@NonNull String apiToken, @NonNull Key key, @NonNull SplitClientConfig config, @NonNull Context context)
             throws URISyntaxException {
@@ -273,8 +280,13 @@ public class SplitFactoryImpl implements SplitFactory {
                 eventsTracker, flagSetsFilter);
         mDestroyer = new Runnable() {
             public void run() {
-                Logger.w("Shutdown called for split");
+                mInitLock.lock();
                 try {
+                    if (mCheckClients.get() && !mClientContainer.getAll().isEmpty()) {
+                        Logger.d("Avoiding shutdown due to active clients");
+                        return;
+                    }
+                    Logger.w("Shutdown called for split");
                     mStorageContainer.getTelemetryStorage().recordSessionLength(System.currentTimeMillis() - initializationStartTime);
                     telemetrySynchronizer.flush();
                     telemetrySynchronizer.destroy();
@@ -285,6 +297,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     mSyncManager.stop();
                     Logger.d("Flushing impressions and events");
                     mLifecycleManager.destroy();
+                    mClientContainer.destroy();
                     Logger.d("Successful shutdown of lifecycle manager");
                     mFactoryMonitor.remove(mApiKey);
                     Logger.d("Successful shutdown of segment fetchers");
@@ -299,10 +312,13 @@ public class SplitFactoryImpl implements SplitFactory {
                     Logger.d("Successful shutdown of task executor");
                     mStorageContainer.getAttributesStorageContainer().destroy();
                     Logger.d("Successful shutdown of attributes storage");
+                    mIsTerminated = true;
+                    Logger.d("SplitFactory has been destroyed");
                 } catch (Exception e) {
                     Logger.e(e, "We could not shutdown split");
                 } finally {
-                    mIsTerminated = true;
+                    mCheckClients.set(false);
+                    mInitLock.unlock();
                 }
             }
         };
@@ -325,7 +341,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 splitSingleThreadTaskExecutor,
                 mStorageContainer,
                 mSyncManager,
-                mLifecycleManager);
+                mLifecycleManager,
+                mInitLock);
 
         if (config.shouldRecordTelemetry()) {
             int activeFactoriesCount = mFactoryMonitor.count(mApiKey);
@@ -382,7 +399,22 @@ public class SplitFactoryImpl implements SplitFactory {
     public void destroy() {
         synchronized (SplitFactoryImpl.class) {
             if (!mIsTerminated) {
-                new Thread(mDestroyer).start();
+                ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+                executor.schedule(mDestroyer, 100, TimeUnit.MILLISECONDS);
+                executor.schedule(new Runnable() {
+                    @Override
+                    public void run() {
+                        executor.shutdown();
+                        try {
+                            if (!executor.awaitTermination(5, TimeUnit.SECONDS)) {
+                                executor.shutdownNow();
+                            }
+                        } catch (InterruptedException e) {
+                            executor.shutdownNow();
+                            Thread.currentThread().interrupt();
+                        }
+                    }
+                }, 500, TimeUnit.MILLISECONDS);
             }
         }
     }
@@ -405,6 +437,10 @@ public class SplitFactoryImpl implements SplitFactory {
     @Override
     public UserConsent getUserConsent() {
         return mUserConsentManager.getStatus();
+    }
+
+    void checkClients() {
+        mCheckClients.set(true);
     }
 
     private void setupValidations(SplitClientConfig splitClientConfig) {

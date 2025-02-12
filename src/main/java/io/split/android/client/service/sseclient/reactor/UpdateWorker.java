@@ -38,17 +38,20 @@ public abstract class UpdateWorker {
     }
 
     private void waitForNotifications() {
-        mExecutorService.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    while (true) {
-                        onWaitForNotificationLoop();
+        if (!mExecutorService.isShutdown()) {
+            mExecutorService.execute(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        while (true) {
+                            onWaitForNotificationLoop();
+                        }
+                    } catch (InterruptedException e) {
+                        Thread.currentThread().interrupt();
                     }
-                } catch (InterruptedException e) {
                 }
-            }
-        });
+            });
+        }
     }
 
     protected abstract void onWaitForNotificationLoop() throws InterruptedException;

@@ -25,6 +25,7 @@ import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 import java.io.File
 import java.lang.IllegalArgumentException
+import java.util.concurrent.locks.ReentrantLock
 
 class SplitFactoryHelperTest {
 
@@ -141,15 +142,18 @@ class SplitFactoryHelperTest {
     fun `Initializer test`() {
         val rolloutCacheManager = mock(RolloutCacheManager::class.java)
         val splitTaskExecutionListener = mock(SplitTaskExecutionListener::class.java)
+        val initLock = mock(ReentrantLock::class.java)
 
         val initializer = SplitFactoryHelper.Initializer(
             rolloutCacheManager,
-            splitTaskExecutionListener
+            splitTaskExecutionListener,
+            initLock
         )
 
         initializer.run()
 
         verify(rolloutCacheManager).validateCache(splitTaskExecutionListener)
+        verify(initLock).lock()
     }
 
     @Test
@@ -159,13 +163,15 @@ class SplitFactoryHelperTest {
         val singleThreadTaskExecutor = mock(SplitSingleThreadTaskExecutor::class.java)
         val syncManager = mock(SyncManager::class.java)
         val lifecycleManager = mock(SplitLifecycleManager::class.java)
+        val initLock = mock(ReentrantLock::class.java)
 
         val listener = Listener(
             eventsManagerCoordinator,
             taskExecutor,
             singleThreadTaskExecutor,
             syncManager,
-            lifecycleManager
+            lifecycleManager,
+            initLock
         )
 
         listener.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK))
@@ -175,5 +181,6 @@ class SplitFactoryHelperTest {
         verify(singleThreadTaskExecutor).resume()
         verify(syncManager).start()
         verify(lifecycleManager).register(syncManager)
+        verify(initLock).unlock()
     }
 }

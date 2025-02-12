@@ -4,10 +4,12 @@ on:
   pull_request:
     branches:
       - 'development'
+      - 'master'
+      - '*_baseline'
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
 
     strategy:
       fail-fast: false

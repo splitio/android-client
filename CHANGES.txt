@@ -1,3 +1,6 @@
+5.1.1 (Feb 11, 2025)
+- Fixed issue when calling destroy() before the SDK has initialized.
+
 5.1.0 (Jan 17, 2025)
 - Added support for the new impressions tracking toggle available on feature flags, both respecting the setting and including the new field being returned on SplitView type objects. Read more in our docs.
 
