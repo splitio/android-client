@@ -6,7 +6,6 @@ import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.storage.RolloutDefinitionsCache;
 
 public interface MySegmentsStorage extends RolloutDefinitionsCache {
-    void loadLocal();
 
     Set<String> getAll();
 
