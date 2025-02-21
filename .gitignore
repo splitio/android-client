@@ -8,3 +8,4 @@ gradle.properties
 .DS_Store
 .settings/org.eclipse.buildship.core.prefs
 .gradle
+.vscode/
