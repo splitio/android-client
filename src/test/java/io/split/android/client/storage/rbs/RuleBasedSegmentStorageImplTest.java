@@ -8,6 +8,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -75,14 +76,14 @@ public class RuleBasedSegmentStorageImplTest {
     @Test
     public void contains() {
         RuleBasedSegment segment = createRuleBasedSegment("segment1");
-        storage.update(Set.of(segment), null, 1);
+        Set<RuleBasedSegment> segmentNames = Set.of(segment);
+        storage.update(segmentNames, null, 1);
 
-        Set<String> segmentNames = Collections.singleton("segment1");
         Set<String> segmentNames2 = new HashSet<>();
-        segmentNames.add("segment1");
-        segmentNames.add("segment2");
+        segmentNames2.add("segment1");
+        segmentNames2.add("segment2");
 
-        assertTrue(storage.contains(segmentNames));
+        assertTrue(storage.contains(Set.of("segment1")));
         assertFalse(storage.contains(segmentNames2));
     }
 
@@ -158,9 +159,31 @@ public class RuleBasedSegmentStorageImplTest {
 
     @Test
     public void loadLocalGetsSnapshotFromPersistentStorage() {
+        when(mPersistentStorage.getSnapshot()).thenReturn(new RuleBasedSegmentSnapshot(Set.of(), 1));
+
         storage.loadLocal();
 
         verify(mPersistentStorage).getSnapshot();
+    }
+
+    @Test
+    public void loadLocalPopulatesValues() {
+        RuleBasedSegmentSnapshot snapshot = new RuleBasedSegmentSnapshot(Set.of(createRuleBasedSegment("segment1")),
+                1);
+        when(mPersistentStorage.getSnapshot()).thenReturn(snapshot);
+
+        long initialCn = storage.getChangeNumber();
+        RuleBasedSegment initialSegment1 = storage.get("segment1");
+
+        storage.loadLocal();
+
+        long finalCn = storage.getChangeNumber();
+        RuleBasedSegment finalSegment1 = storage.get("segment1");
+
+        assertEquals(-1, initialCn);
+        assertEquals(1, finalCn);
+        assertNull(initialSegment1);
+        assertNotNull(finalSegment1);
     }
 
     @Test
