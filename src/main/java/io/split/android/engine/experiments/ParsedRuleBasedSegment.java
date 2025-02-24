@@ -5,15 +5,15 @@ import java.util.Set;
 
 public class ParsedRuleBasedSegment {
     private final String mName;
-    private final Set<String> mExcludedUsers;
+    private final Set<String> mExcludedKeys;
     private final Set<String> mExcludedSegments;
     private final List<ParsedCondition> mParsedConditions;
     private final String mTrafficTypeName;
     private final long mChangeNumber;
 
-    public ParsedRuleBasedSegment(String name, Set<String> excludedUsers, Set<String> excludedSegments, List<ParsedCondition> parsedConditions, String trafficTypeName, long changeNumber) {
+    public ParsedRuleBasedSegment(String name, Set<String> excludedKeys, Set<String> excludedSegments, List<ParsedCondition> parsedConditions, String trafficTypeName, long changeNumber) {
         mName = name;
-        mExcludedUsers = excludedUsers;
+        mExcludedKeys = excludedKeys;
         mExcludedSegments = excludedSegments;
         mParsedConditions = parsedConditions;
         mTrafficTypeName = trafficTypeName;
@@ -24,8 +24,8 @@ public class ParsedRuleBasedSegment {
         return mName;
     }
 
-    public Set<String> getExcludedUsers() {
-        return mExcludedUsers;
+    public Set<String> getExcludedKeys() {
+        return mExcludedKeys;
     }
 
     public Set<String> getExcludedSegments() {

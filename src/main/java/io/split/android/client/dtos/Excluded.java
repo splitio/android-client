@@ -6,8 +6,8 @@ import java.util.Set;
 
 public class Excluded {
 
-    @SerializedName("users")
-    private Set<String> mUsers;
+    @SerializedName("keys")
+    private Set<String> mKeys;
 
     @SerializedName("segments")
     private Set<String> mSegments;
@@ -16,7 +16,7 @@ public class Excluded {
         return mSegments;
     }
 
-    public Set<String> getUsers() {
-        return mUsers;
+    public Set<String> getKeys() {
+        return mKeys;
     }
 }
