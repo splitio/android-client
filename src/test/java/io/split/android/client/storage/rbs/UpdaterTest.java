@@ -1,6 +1,7 @@
 package io.split.android.client.storage.rbs;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -92,6 +93,29 @@ public class UpdaterTest {
         mUpdater.run();
 
         verify(mGeneralInfoStorage).setRbsChangeNumber(10);
+    }
+
+    @Test
+    public void runDoesNotUpdateSegmentIfEncryptedNameIsNull() {
+        Set<RuleBasedSegment> toAdd = Set.of(
+                createRuleBasedSegment("segment1"), createRuleBasedSegment("segment2"));
+        Set<RuleBasedSegment> toRemove = Set.of(
+                createRuleBasedSegment("segment3"), createRuleBasedSegment("segment4"));
+        when(mCipher.encrypt(anyString())).thenReturn(null);
+        when(mCipher.encrypt(argThat(argument -> argument.contains("segment1")))).thenReturn("encrypted_segment1");
+        when(mCipher.encrypt("segment3")).thenReturn("encrypted_segment3");
+        mUpdater = createUpdater(toAdd, toRemove, 10);
+
+        mUpdater.run();
+
+        verify(mCipher).encrypt("segment1");
+        verify(mCipher).encrypt("segment2");
+        verify(mCipher).encrypt("segment3");
+        verify(mCipher).encrypt("segment4");
+        verify(mDao).delete(argThat(argument -> argument.size() == 1 &&
+                argument.get(0).equals("encrypted_segment3")));
+        verify(mDao).insert(argThat((ArgumentMatcher<List<RuleBasedSegmentEntity>>) argument -> argument.size() == 1 &&
+                argument.get(0).getName().equals("encrypted_segment1")));
     }
 
     @NonNull

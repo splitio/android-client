@@ -49,14 +49,28 @@ final class Updater implements Runnable {
         try {
             List<String> toDelete = new ArrayList<>();
             for (RuleBasedSegment segment : mToRemove) {
-                toDelete.add(mCipher.encrypt(segment.getName()));
+                String encryptedName = mCipher.encrypt(segment.getName());
+                if (encryptedName != null) {
+                    toDelete.add(encryptedName);
+                }
             }
 
             List<RuleBasedSegmentEntity> toAdd = new ArrayList<>();
             for (RuleBasedSegment segment : mToAdd) {
-                String name = mCipher.encrypt(segment.getName());
-                String body = mCipher.encrypt(Json.toJson(segment));
-                toAdd.add(new RuleBasedSegmentEntity(name, body, System.currentTimeMillis()));
+                if (segment == null) {
+                    continue;
+                }
+
+                try {
+                    String name = mCipher.encrypt(segment.getName());
+                    String body = mCipher.encrypt(Json.toJson(segment));
+                    if (name == null || body == null) {
+                        continue;
+                    }
+                    toAdd.add(new RuleBasedSegmentEntity(name, body, System.currentTimeMillis()));
+                } catch (Exception e) {
+                    Logger.e("Error parsing RBS with name " + segment.getName() + ": " + e.getLocalizedMessage());
+                }
             }
 
             mDao.delete(toDelete);
