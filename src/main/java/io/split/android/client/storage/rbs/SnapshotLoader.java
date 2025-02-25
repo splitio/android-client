@@ -51,8 +51,12 @@ final class SnapshotLoader implements Callable<RuleBasedSegmentSnapshot> {
                     continue;
                 }
 
-                RuleBasedSegment ruleBasedSegment = Json.fromJson(body, RuleBasedSegment.class);
-                segments.put(name, ruleBasedSegment);
+                try {
+                    RuleBasedSegment ruleBasedSegment = Json.fromJson(body, RuleBasedSegment.class);
+                    segments.put(name, ruleBasedSegment);
+                } catch (Exception e) {
+                    Logger.e("Error parsing RBS with name " + name + ": " + e.getLocalizedMessage());
+                }
             }
         }
         return segments;
