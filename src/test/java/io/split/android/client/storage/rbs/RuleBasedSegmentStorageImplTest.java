@@ -160,7 +160,6 @@ public class RuleBasedSegmentStorageImplTest {
     @Test
     public void loadLocalGetsSnapshotFromPersistentStorage() {
         when(mPersistentStorage.getSnapshot()).thenReturn(new RuleBasedSegmentSnapshot(Set.of(), 1));
-
         storage.loadLocal();
 
         verify(mPersistentStorage).getSnapshot();

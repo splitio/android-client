@@ -8,7 +8,7 @@ public interface PersistentRuleBasedSegmentStorage {
 
     RuleBasedSegmentSnapshot getSnapshot();
 
-    boolean update(Set<RuleBasedSegment> toAdd, Set<RuleBasedSegment> toRemove, long changeNumber);
+    void update(Set<RuleBasedSegment> toAdd, Set<RuleBasedSegment> toRemove, long changeNumber);
 
     void clear();
 }
