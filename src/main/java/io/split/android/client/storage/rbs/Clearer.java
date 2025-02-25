@@ -1,5 +1,7 @@
 package io.split.android.client.storage.rbs;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
 import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.utils.logger.Logger;
@@ -10,8 +12,8 @@ class Clearer implements Runnable {
     private final GeneralInfoStorage mGeneralInfoStorage;
 
     public Clearer(RuleBasedSegmentDao dao, GeneralInfoStorage generalInfoStorage) {
-        mDao = dao;
-        mGeneralInfoStorage = generalInfoStorage;
+        mDao = checkNotNull(dao);
+        mGeneralInfoStorage = checkNotNull(generalInfoStorage);
     }
 
     @Override
