@@ -16,6 +16,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.dtos.Excluded;
@@ -159,7 +160,7 @@ public class RuleBasedSegmentStorageImplTest {
 
     @Test
     public void loadLocalGetsSnapshotFromPersistentStorage() {
-        when(mPersistentStorage.getSnapshot()).thenReturn(new RuleBasedSegmentSnapshot(Set.of(), 1));
+        when(mPersistentStorage.getSnapshot()).thenReturn(new RuleBasedSegmentSnapshot(Map.of(), 1));
         storage.loadLocal();
 
         verify(mPersistentStorage).getSnapshot();
@@ -167,7 +168,7 @@ public class RuleBasedSegmentStorageImplTest {
 
     @Test
     public void loadLocalPopulatesValues() {
-        RuleBasedSegmentSnapshot snapshot = new RuleBasedSegmentSnapshot(Set.of(createRuleBasedSegment("segment1")),
+        RuleBasedSegmentSnapshot snapshot = new RuleBasedSegmentSnapshot(Map.of("segment1", createRuleBasedSegment("segment1")),
                 1);
         when(mPersistentStorage.getSnapshot()).thenReturn(snapshot);
 
