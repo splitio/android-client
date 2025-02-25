@@ -40,16 +40,16 @@ public class GeneralInfoStorageImplTest {
     }
 
     @Test
-    public void setChangeNumberSetsValueOnDao() {
-        mGeneralInfoStorage.setChangeNumber(123L);
+    public void setFlagsChangeNumberSetsValueOnDao() {
+        mGeneralInfoStorage.setFlagsChangeNumber(123L);
 
         verify(mGeneralInfoDao).update(argThat(entity -> entity.getName().equals("splitChangesChangeNumber") && entity.getLongValue() == 123L));
     }
 
     @Test
-    public void getChangeNumberGetsValueFromDao() {
+    public void getFlagsChangeNumberGetsValueFromDao() {
         when(mGeneralInfoDao.getByName("splitChangesChangeNumber")).thenReturn(new GeneralInfoEntity("splitChangesChangeNumber", 123L));
-        long changeNumber = mGeneralInfoStorage.getChangeNumber();
+        long changeNumber = mGeneralInfoStorage.getFlagsChangeNumber();
 
         assertEquals(123L, changeNumber);
         verify(mGeneralInfoDao).getByName("splitChangesChangeNumber");
@@ -120,9 +120,9 @@ public class GeneralInfoStorageImplTest {
     }
 
     @Test
-    public void getChangeNumberReturnsMinusOneIfEntityIsNull() {
+    public void getFlagsChangeNumberReturnsMinusOneIfEntityIsNull() {
         when(mGeneralInfoDao.getByName("splitChangesChangeNumber")).thenReturn(null);
-        long changeNumber = mGeneralInfoStorage.getChangeNumber();
+        long changeNumber = mGeneralInfoStorage.getFlagsChangeNumber();
 
         assertEquals(-1L, changeNumber);
     }
@@ -165,5 +165,29 @@ public class GeneralInfoStorageImplTest {
         long timestamp = mGeneralInfoStorage.getRolloutCacheLastClearTimestamp();
 
         assertEquals(0L, timestamp);
+    }
+
+    @Test
+    public void getRbsChangeNumberReturnsMinusOneIfEntityIsNull() {
+        when(mGeneralInfoDao.getByName("rbsChangeNumber")).thenReturn(null);
+        long changeNumber = mGeneralInfoStorage.getRbsChangeNumber();
+
+        assertEquals(-1L, changeNumber);
+    }
+
+    @Test
+    public void getRbsChangeNumberReturnsValueFromDao() {
+        when(mGeneralInfoDao.getByName("rbsChangeNumber")).thenReturn(new GeneralInfoEntity("rbsChangeNumber", 123L));
+        long changeNumber = mGeneralInfoStorage.getRbsChangeNumber();
+
+        assertEquals(123L, changeNumber);
+        verify(mGeneralInfoDao).getByName("rbsChangeNumber");
+    }
+
+    @Test
+    public void setRbsChangeNumberSetsValueOnDao() {
+        mGeneralInfoStorage.setRbsChangeNumber(123L);
+
+        verify(mGeneralInfoDao).update(argThat(entity -> entity.getName().equals("rbsChangeNumber") && entity.getLongValue() == 123L));
     }
 }
