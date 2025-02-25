@@ -19,6 +19,11 @@ public class LocalhostMySegmentsStorageContainer implements MySegmentsStorageCon
     }
 
     @Override
+    public void loadLocal() {
+        // no-op
+    }
+
+    @Override
     public void clear() {
         // No-op
     }
