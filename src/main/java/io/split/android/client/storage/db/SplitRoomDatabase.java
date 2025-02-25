@@ -18,15 +18,17 @@ import io.split.android.client.storage.db.impressions.observer.ImpressionsObserv
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
+import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
+import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity;
 
 @Database(
         entities = {
                 MySegmentEntity.class, SplitEntity.class, EventEntity.class,
                 ImpressionEntity.class, GeneralInfoEntity.class, ImpressionsCountEntity.class,
                 AttributesEntity.class, UniqueKeyEntity.class, ImpressionsObserverCacheEntity.class,
-                MyLargeSegmentEntity.class
+                MyLargeSegmentEntity.class, RuleBasedSegmentEntity.class
         },
-        version = 6
+        version = 7
 )
 public abstract class SplitRoomDatabase extends RoomDatabase {
 
@@ -49,6 +51,8 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
     public abstract UniqueKeysDao uniqueKeysDao();
 
     public abstract ImpressionsObserverCacheDao impressionsObserverCacheDao();
+
+    public abstract RuleBasedSegmentDao ruleBasedSegmentDao();
 
     private volatile SplitQueryDao mSplitQueryDao;
 
