@@ -41,10 +41,10 @@ public class GeneralInfoStorageTest {
     }
 
     @Test
-    public void setChangeNumber() {
-        long initialValue = mGeneralInfoStorage.getChangeNumber();
-        mGeneralInfoStorage.setChangeNumber(100L);
-        long finalValue = mGeneralInfoStorage.getChangeNumber();
+    public void setFlagsChangeNumber() {
+        long initialValue = mGeneralInfoStorage.getFlagsChangeNumber();
+        mGeneralInfoStorage.setFlagsChangeNumber(100L);
+        long finalValue = mGeneralInfoStorage.getFlagsChangeNumber();
 
         assertEquals(-1L, initialValue);
         assertEquals(100L, finalValue);
@@ -87,6 +87,16 @@ public class GeneralInfoStorageTest {
         long finalValue = mGeneralInfoStorage.getRolloutCacheLastClearTimestamp();
 
         assertEquals(0L, initialValue);
+        assertEquals(100L, finalValue);
+    }
+
+    @Test
+    public void setRbsChangeNumber() {
+        long initialValue = mGeneralInfoStorage.getRbsChangeNumber();
+        mGeneralInfoStorage.setRbsChangeNumber(100L);
+        long finalValue = mGeneralInfoStorage.getRbsChangeNumber();
+
+        assertEquals(-1L, initialValue);
         assertEquals(100L, finalValue);
     }
 }
