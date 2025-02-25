@@ -193,7 +193,7 @@ public class RuleBasedSegmentStorageImplTest {
         verify(mPersistentStorage).clear();
     }
 
-    private static RuleBasedSegment createRuleBasedSegment(String name) {
+    static RuleBasedSegment createRuleBasedSegment(String name) {
         return new RuleBasedSegment(name,
                 "user",
                 1,

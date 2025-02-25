@@ -46,7 +46,7 @@ final class SnapshotLoader implements Callable<RuleBasedSegmentSnapshot> {
         if (entities != null) {
             for (RuleBasedSegmentEntity entity : entities) {
                 String name = mCipher.decrypt(entity.getName());
-                String body = mCipher.encrypt(entity.getBody());
+                String body = mCipher.decrypt(entity.getBody());
                 if (name == null || body == null) {
                     continue;
                 }
