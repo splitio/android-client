@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -77,13 +78,11 @@ public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
 
     @WorkerThread
     @Override
-    public void loadLocal() {
+    public synchronized void loadLocal() {
         RuleBasedSegmentSnapshot snapshot = mPersistentStorage.getSnapshot();
-        Set<RuleBasedSegment> segments = snapshot.getSegments();
+        Map<String, RuleBasedSegment> segments = snapshot.getSegments();
         mChangeNumber = snapshot.getChangeNumber();
-        for (RuleBasedSegment segment : segments) {
-            mInMemorySegments.put(segment.getName(), segment);
-        }
+        mInMemorySegments.putAll(segments);
     }
 
     @WorkerThread

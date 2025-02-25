@@ -1,21 +1,23 @@
 package io.split.android.client.storage.rbs;
 
-import java.util.Set;
+import static io.split.android.client.utils.Utils.checkNotNull;
+
+import java.util.Map;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 
 public class RuleBasedSegmentSnapshot {
 
-    private final Set<RuleBasedSegment> mSegments;
+    private final Map<String, RuleBasedSegment> mSegments;
 
     private final long mChangeNumber;
 
-    public RuleBasedSegmentSnapshot(Set<RuleBasedSegment> segments, long changeNumber) {
-        mSegments = segments;
+    public RuleBasedSegmentSnapshot(Map<String, RuleBasedSegment> segments, long changeNumber) {
+        mSegments = checkNotNull(segments);
         mChangeNumber = changeNumber;
     }
 
-    public Set<RuleBasedSegment> getSegments() {
+    public Map<String, RuleBasedSegment> getSegments() {
         return mSegments;
     }
 
