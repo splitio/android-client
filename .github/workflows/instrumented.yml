@@ -5,7 +5,6 @@ on:
     branches:
       - 'development'
       - 'master'
-      - '*_baseline'
 
 jobs:
   test:

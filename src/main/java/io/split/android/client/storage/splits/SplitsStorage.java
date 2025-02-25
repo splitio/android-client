@@ -12,7 +12,6 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.RolloutDefinitionsCache;
 
 public interface SplitsStorage extends RolloutDefinitionsCache {
-    void loadLocal();
 
     Split get(@NonNull String name);
 
