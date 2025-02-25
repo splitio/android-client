@@ -2,6 +2,8 @@ package io.split.android.client.storage.rbs;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
+import androidx.annotation.NonNull;
+
 import java.util.Map;
 
 import io.split.android.client.dtos.RuleBasedSegment;
@@ -12,7 +14,7 @@ public class RuleBasedSegmentSnapshot {
 
     private final long mChangeNumber;
 
-    public RuleBasedSegmentSnapshot(Map<String, RuleBasedSegment> segments, long changeNumber) {
+    public RuleBasedSegmentSnapshot(@NonNull Map<String, RuleBasedSegment> segments, long changeNumber) {
         mSegments = checkNotNull(segments);
         mChangeNumber = changeNumber;
     }

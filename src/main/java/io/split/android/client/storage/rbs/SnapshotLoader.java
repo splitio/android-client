@@ -2,6 +2,9 @@ package io.split.android.client.storage.rbs;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,7 +44,8 @@ final class SnapshotLoader implements Callable<RuleBasedSegmentSnapshot> {
         }
     }
 
-    private Map<String, RuleBasedSegment> convertToDTOs(List<RuleBasedSegmentEntity> entities) {
+    @NonNull
+    private Map<String, RuleBasedSegment> convertToDTOs(@Nullable List<RuleBasedSegmentEntity> entities) {
         Map<String, RuleBasedSegment> segments = new HashMap<>();
         if (entities != null) {
             for (RuleBasedSegmentEntity entity : entities) {
