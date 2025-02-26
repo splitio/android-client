@@ -11,4 +11,9 @@ public interface PersistentRuleBasedSegmentStorage {
     void update(Set<RuleBasedSegment> toAdd, Set<RuleBasedSegment> toRemove, long changeNumber);
 
     void clear();
+
+    interface Provider {
+
+        PersistentRuleBasedSegmentStorage get();
+    }
 }

@@ -1,5 +1,8 @@
 package helper;
 
+import static java.lang.Thread.sleep;
+
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.BlockingQueue;
@@ -11,8 +14,6 @@ import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.utils.logger.Logger;
-
-import static java.lang.Thread.sleep;
 
 public class TestingHelper {
 
@@ -119,5 +120,15 @@ public class TestingHelper {
         impression.treatment = "on";
         impression.time = 100;
         return impression;
+    }
+
+    public static Object getFieldValue(Object object, String fieldName) {
+        try {
+            Field field = object.getClass().getDeclaredField(fieldName);
+            field.setAccessible(true);
+            return field.get(object);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new RuntimeException("Error accessing field: " + fieldName, e);
+        }
     }
 }
