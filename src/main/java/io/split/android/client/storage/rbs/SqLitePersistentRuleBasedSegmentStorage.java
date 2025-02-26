@@ -10,7 +10,7 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
 import io.split.android.client.storage.general.GeneralInfoStorage;
 
-class SqLitePersistentRuleBasedSegmentStorage implements PersistentRuleBasedSegmentStorage {
+public class SqLitePersistentRuleBasedSegmentStorage implements PersistentRuleBasedSegmentStorage {
 
     private final RuleBasedSegmentDao mDao;
     private final SplitRoomDatabase mDatabase;

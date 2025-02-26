@@ -84,6 +84,7 @@ import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.storage.events.PersistentEventsStorage;
+import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
@@ -169,6 +170,7 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistentEventsStorage(splitRoomDatabase, splitCipher);
         PersistentImpressionsStorage persistentImpressionsStorage =
                 StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase, splitCipher);
+        GeneralInfoStorage generalInfoStorage = StorageFactory.getGeneralInfoStorage(splitRoomDatabase);
         return new SplitStorageContainer(
                 StorageFactory.getSplitsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, splitCipher),
@@ -184,7 +186,7 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistentAttributesStorage(splitRoomDatabase, splitCipher),
                 getTelemetryStorage(shouldRecordTelemetry, telemetryStorage),
                 StorageFactory.getImpressionsObserverCachePersistentStorage(splitRoomDatabase, observerCacheExpirationPeriod, impressionsObserverExecutor),
-                StorageFactory.getGeneralInfoStorage(splitRoomDatabase));
+                generalInfoStorage);
     }
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,

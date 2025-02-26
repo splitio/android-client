@@ -34,6 +34,7 @@ import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.AttributesValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
+import io.split.android.engine.experiments.ParserCommons;
 import io.split.android.engine.experiments.SplitParser;
 
 /**
@@ -66,7 +67,7 @@ public class LocalhostSplitFactory implements SplitFactory {
         EventsManagerCoordinator eventsManagerCoordinator = new EventsManagerCoordinator();
         FileStorage fileStorage = new FileStorage(context.getCacheDir(), ServiceConstants.LOCALHOST_FOLDER);
         SplitsStorage splitsStorage = new LocalhostSplitsStorage(mLocalhostFileName, context, fileStorage, eventsManagerCoordinator);
-        SplitParser splitParser = new SplitParser(new LocalhostMySegmentsStorageContainer(), new LocalhostMySegmentsStorageContainer());
+        SplitParser splitParser = new SplitParser(new ParserCommons(new LocalhostMySegmentsStorageContainer(), new LocalhostMySegmentsStorageContainer(), new LocalhostRuleBasedSegmentsStorage()));
         SplitTaskExecutorImpl taskExecutor = new SplitTaskExecutorImpl();
         AttributesManagerFactory attributesManagerFactory = new AttributesManagerFactoryImpl(new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
 

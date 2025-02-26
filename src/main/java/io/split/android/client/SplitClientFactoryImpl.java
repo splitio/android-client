@@ -36,7 +36,6 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     private final SplitFactory mSplitFactory;
     private final SplitClientContainer mClientContainer;
     private final SplitClientConfig mConfig;
-    private final SyncManager mSyncManager;
 
     private final TelemetrySynchronizer mTelemetrySynchronizer;
     private final SplitStorageContainer mStorageContainer;
@@ -58,11 +57,11 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                                   @NonNull KeyValidator keyValidator,
                                   @NonNull EventsTracker eventsTracker,
                                   @NonNull ImpressionListener.FederatedImpressionListener customerImpressionListener,
-                                  @Nullable FlagSetsFilter flagSetsFilter) {
+                                  @Nullable FlagSetsFilter flagSetsFilter,
+                                  @NonNull SplitParser splitParser) {
         mSplitFactory = checkNotNull(splitFactory);
         mClientContainer = checkNotNull(clientContainer);
         mConfig = checkNotNull(config);
-        mSyncManager = checkNotNull(syncManager);
 
         mStorageContainer = checkNotNull(storageContainer);
         mTelemetrySynchronizer = checkNotNull(telemetrySynchronizer);
@@ -73,7 +72,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 validationLogger,
                 splitTaskExecutor,
                 mStorageContainer.getPersistentAttributesStorage());
-        mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer(), mStorageContainer.getMyLargeSegmentsStorageContainer());
+        mSplitParser = splitParser;
         mSplitValidator = new SplitValidatorImpl();
         SplitsStorage splitsStorage = mStorageContainer.getSplitsStorage();
         mTreatmentManagerFactory = new TreatmentManagerFactoryImpl(

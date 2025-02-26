@@ -6,7 +6,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -37,6 +36,7 @@ import io.split.android.client.dtos.UserDefinedLargeSegmentMatcherData;
 import io.split.android.client.dtos.WhitelistMatcherData;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.engine.ConditionsTestUtil;
 import io.split.android.engine.matchers.AttributeMatcher;
 import io.split.android.engine.matchers.BetweenMatcher;
@@ -65,6 +65,8 @@ public class SplitParserTest {
     MySegmentsStorageContainer mMySegmentsStorageContainer;
     @Mock
     MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
+    @Mock
+    RuleBasedSegmentStorage mRuleBasedSegmentStorage;
 
     @Before
     public void setup() {
@@ -157,7 +159,7 @@ public class SplitParserTest {
 
     @NonNull
     private SplitParser createParser() {
-        return new SplitParser(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer);
+        return new SplitParser(new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer, mRuleBasedSegmentStorage));
     }
 
     @Test
@@ -494,7 +496,7 @@ public class SplitParserTest {
         assertEquals(ConditionType.ROLLOUT, parsedCondition.conditionType());
         assertEquals(2, parsedCondition.partitions().size());
         verify(mMyLargeSegmentsStorageContainer).getStorageForKey("matching_key");
-        verify(mMySegmentsStorageContainer, never()).getStorageForKey("matching_key");
+        verify(mMySegmentsStorageContainer).getStorageForKey("matching_key");
     }
 
     @Test
