@@ -22,22 +22,17 @@ import java.util.Set;
 import io.split.android.client.dtos.Excluded;
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.Status;
-import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.engine.experiments.ParsedRuleBasedSegment;
-import io.split.android.engine.experiments.ParserCommons;
-import io.split.android.engine.experiments.RuleBasedSegmentParser;
 
 public class RuleBasedSegmentStorageImplTest {
 
     private RuleBasedSegmentStorageImpl storage;
     private PersistentRuleBasedSegmentStorage mPersistentStorage;
-    private RuleBasedSegmentParser mParser;
 
     @Before
     public void setUp() {
         mPersistentStorage = mock(PersistentRuleBasedSegmentStorage.class);
-        mParser = new RuleBasedSegmentParser(new ParserCommons(mock(MySegmentsStorageContainer.class), mock(MySegmentsStorageContainer.class), mock(RuleBasedSegmentStorageProvider.class)));
-        storage = new RuleBasedSegmentStorageImpl(mPersistentStorage, mParser);
+        storage = new RuleBasedSegmentStorageImpl(mPersistentStorage, mock(RuleBasedSegmentStorageImpl.RuleBasedSegmentParser.class));
     }
 
     @Test

@@ -101,7 +101,7 @@ public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
     }
 
     // stub class
-    private static final class RuleBasedSegmentParser {
+    static final class RuleBasedSegmentParser {
         ParsedRuleBasedSegment parse(RuleBasedSegment segment, String matchingKey) {
             return null;
         }
