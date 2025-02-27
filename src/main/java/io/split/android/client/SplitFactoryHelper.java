@@ -86,6 +86,10 @@ import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.storage.rbs.LazyRuleBasedSegmentStorageProvider;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageImpl;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
@@ -94,6 +98,8 @@ import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
+import io.split.android.engine.experiments.ParserCommons;
+import io.split.android.engine.experiments.RuleBasedSegmentParser;
 
 class SplitFactoryHelper {
     private static final int DB_MAGIC_CHARS_COUNT = 4;
@@ -186,7 +192,9 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistentAttributesStorage(splitRoomDatabase, splitCipher),
                 getTelemetryStorage(shouldRecordTelemetry, telemetryStorage),
                 StorageFactory.getImpressionsObserverCachePersistentStorage(splitRoomDatabase, observerCacheExpirationPeriod, impressionsObserverExecutor),
-                generalInfoStorage);
+                generalInfoStorage,
+                StorageFactory.getRuleBasedSegmentStorageProvider(),
+                StorageFactory.getPersistentRuleBasedSegmentStorage(splitRoomDatabase, splitCipher, generalInfoStorage));
     }
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
@@ -462,6 +470,21 @@ class SplitFactoryHelper {
                 TimeUnit.MILLISECONDS,
                 new LinkedBlockingQueue<Runnable>(3000),
                 new ThreadPoolExecutor.CallerRunsPolicy());
+    }
+
+    @NonNull
+    static ParserCommons getParserCommons(SplitStorageContainer storageContainer) {
+        RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider = storageContainer.getRuleBasedSegmentStorageProvider();
+        ParserCommons parserCommons = new ParserCommons(
+                storageContainer.getMySegmentsStorageContainer(),
+                storageContainer.getMyLargeSegmentsStorageContainer(),
+                ruleBasedSegmentStorageProvider);
+        RuleBasedSegmentParser ruleBasedSegmentParser = new RuleBasedSegmentParser(parserCommons);
+
+        RuleBasedSegmentStorage ruleBasedSegmentStorage =
+                new RuleBasedSegmentStorageImpl(storageContainer.getPersistentRuleBasedSegmentStorage(), ruleBasedSegmentParser);
+        ((LazyRuleBasedSegmentStorageProvider) ruleBasedSegmentStorageProvider).set(ruleBasedSegmentStorage);
+        return parserCommons;
     }
 
     private TelemetryStorage getTelemetryStorage(boolean shouldRecordTelemetry, TelemetryStorage telemetryStorage) {

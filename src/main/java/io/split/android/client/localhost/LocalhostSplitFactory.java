@@ -67,7 +67,9 @@ public class LocalhostSplitFactory implements SplitFactory {
         EventsManagerCoordinator eventsManagerCoordinator = new EventsManagerCoordinator();
         FileStorage fileStorage = new FileStorage(context.getCacheDir(), ServiceConstants.LOCALHOST_FOLDER);
         SplitsStorage splitsStorage = new LocalhostSplitsStorage(mLocalhostFileName, context, fileStorage, eventsManagerCoordinator);
-        SplitParser splitParser = new SplitParser(new ParserCommons(new LocalhostMySegmentsStorageContainer(), new LocalhostMySegmentsStorageContainer(), new LocalhostRuleBasedSegmentsStorage()));
+
+        SplitParser splitParser = getSplitParser();
+
         SplitTaskExecutorImpl taskExecutor = new SplitTaskExecutorImpl();
         AttributesManagerFactory attributesManagerFactory = new AttributesManagerFactoryImpl(new AttributesValidatorImpl(), new ValidationMessageLoggerImpl());
 
@@ -101,6 +103,14 @@ public class LocalhostSplitFactory implements SplitFactory {
         mSynchronizer.start();
 
         Logger.i("Android SDK initialized!");
+    }
+
+    @NonNull
+    private static SplitParser getSplitParser() {
+        return new SplitParser(new ParserCommons(
+                new LocalhostMySegmentsStorageContainer(),
+                new LocalhostMySegmentsStorageContainer(),
+                new LocalhostRuleBasedSegmentsStorageProvider(new LocalhostRuleBasedSegmentsStorage())));
     }
 
     @VisibleForTesting

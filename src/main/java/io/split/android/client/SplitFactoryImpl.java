@@ -274,7 +274,10 @@ public class SplitFactoryImpl implements SplitFactory {
                 streamingComponents.getNotificationProcessor(), streamingComponents.getSseAuthenticator(),
                 mStorageContainer, mSyncManager, compressionProvider);
 
-        SplitParser splitParser = new SplitParser(new ParserCommons(mStorageContainer.getMySegmentsStorageContainer(), mStorageContainer.getMyLargeSegmentsStorageContainer(), null/*TODO*/));
+        ParserCommons parserCommons = SplitFactoryHelper.getParserCommons(mStorageContainer);
+
+        // Create SplitParser with ParserCommons
+        SplitParser splitParser = new SplitParser(parserCommons);
 
         mClientContainer = new SplitClientContainerImpl(
                 mDefaultClientKey.matchingKey(), this, config, mSyncManager,

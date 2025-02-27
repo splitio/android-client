@@ -18,6 +18,7 @@ import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.AttributeMatcher;
@@ -50,18 +51,23 @@ public class ParserCommons {
     public static final int CONDITIONS_UPPER_LIMIT = 50;
     private final MySegmentsStorageContainer mMySegmentsStorageContainer;
     private final MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
-    private final RuleBasedSegmentStorage mRuleBasedSegmentStorage;
+    private final RuleBasedSegmentStorageProvider mRuleBasedSegmentStorageProvider;
     private final DefaultConditionsProvider mDefaultConditionsProvider;
 
-    public ParserCommons(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer, @NonNull MySegmentsStorageContainer myLargeSegmentsStorageContainer, @NonNull RuleBasedSegmentStorage ruleBasedSegmentStorage) {
-        this(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, ruleBasedSegmentStorage, new DefaultConditionsProvider());
+    public ParserCommons(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer, 
+                         @NonNull MySegmentsStorageContainer myLargeSegmentsStorageContainer, 
+                         @NonNull RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider) {
+        this(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, ruleBasedSegmentStorageProvider, new DefaultConditionsProvider());
     }
 
     @VisibleForTesting
-    ParserCommons(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer, @NonNull MySegmentsStorageContainer myLargeSegmentsStorageContainer, @NonNull RuleBasedSegmentStorage ruleBasedSegmentStorage, DefaultConditionsProvider defaultConditionsProvider) {
+    ParserCommons(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer, 
+                  @NonNull MySegmentsStorageContainer myLargeSegmentsStorageContainer, 
+                  @NonNull RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider, 
+                  DefaultConditionsProvider defaultConditionsProvider) {
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
         mMyLargeSegmentsStorageContainer = checkNotNull(myLargeSegmentsStorageContainer);
-        mRuleBasedSegmentStorage = checkNotNull(ruleBasedSegmentStorage);
+        mRuleBasedSegmentStorageProvider = checkNotNull(ruleBasedSegmentStorageProvider);
         mDefaultConditionsProvider = checkNotNull(defaultConditionsProvider);
     }
 
@@ -205,7 +211,7 @@ public class ParserCommons {
                 delegate = new InListSemverMatcher(matcher.whitelistMatcherData.whitelist);
                 break;
             case IN_RULE_BASED_SEGMENT:
-                delegate = new InRuleBasedSegmentMatcher(mRuleBasedSegmentStorage,
+                delegate = new InRuleBasedSegmentMatcher(mRuleBasedSegmentStorageProvider.get(),
                         mMySegmentsStorageContainer.getStorageForKey(matchingKey),
                         matcher.userDefinedSegmentMatcherData.segmentName);
                 break;
