@@ -1,5 +1,7 @@
 package io.split.android.client;
 
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -13,6 +15,7 @@ import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
@@ -35,6 +38,8 @@ public abstract class SplitClientImplBaseTest {
     @Mock
     protected RuleBasedSegmentStorage ruleBasedSegmentStorage;
     @Mock
+    protected RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider;
+    @Mock
     protected MySegmentsStorage mySegmentsStorage;
     @Mock
     protected ImpressionListener impressionListener;
@@ -56,12 +61,13 @@ public abstract class SplitClientImplBaseTest {
         MockitoAnnotations.openMocks(this);
 
         SplitClientConfig splitClientConfig = SplitClientConfig.builder().build();
+        when(ruleBasedSegmentStorageProvider.get()).thenReturn(ruleBasedSegmentStorage);
 
         splitClient = new SplitClientImpl(
                 container,
                 clientContainer,
                 new Key("test_key"),
-                new SplitParser(new ParserCommons(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, ruleBasedSegmentStorage)),
+                new SplitParser(new ParserCommons(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, ruleBasedSegmentStorageProvider)),
                 impressionListener,
                 splitClientConfig,
                 new SplitEventsManager(splitClientConfig, new SplitTaskExecutorStub()),

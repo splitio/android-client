@@ -28,6 +28,7 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
@@ -52,6 +53,8 @@ public class SplitManagerImplTest {
     @Mock
     RuleBasedSegmentStorage mRuleBasedSegmentStorage;
     @Mock
+    RuleBasedSegmentStorageProvider mRuleBasedSegmentStorageProvider;
+    @Mock
     SplitManager mSplitManager;
 
     @Before
@@ -59,7 +62,8 @@ public class SplitManagerImplTest {
         MockitoAnnotations.openMocks(this);
         SplitValidator validator = new SplitValidatorImpl();
         when(mMySegmentsStorageContainer.getStorageForKey("")).thenReturn(mMySegmentsStorage);
-        SplitParser parser = new SplitParser(new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer, mRuleBasedSegmentStorage));
+        when(mRuleBasedSegmentStorageProvider.get()).thenReturn(mRuleBasedSegmentStorage);
+        SplitParser parser = new SplitParser(new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer, mRuleBasedSegmentStorageProvider));
         mSplitManager = new SplitManagerImpl(mSplitsStorage, validator, parser);
     }
 

@@ -15,9 +15,7 @@ import io.split.android.client.dtos.Matcher;
 import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
-import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.matchers.AllKeysMatcher;
@@ -53,6 +51,7 @@ public class ParserCommons {
     private final MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
     private final RuleBasedSegmentStorageProvider mRuleBasedSegmentStorageProvider;
     private final DefaultConditionsProvider mDefaultConditionsProvider;
+    private EmptyMySegmentsStorage mEmptyMySegmentsStorage;
 
     public ParserCommons(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer, 
                          @NonNull MySegmentsStorageContainer myLargeSegmentsStorageContainer, 
@@ -100,7 +99,7 @@ public class ParserCommons {
         List<AttributeMatcher> toCombine = new ArrayList<>();
 
         for (Matcher matcher : matchers) {
-            AttributeMatcher attributeMatcher = toMatcher(matcher, matchingKey, mMySegmentsStorageContainer.getStorageForKey(matchingKey), mMyLargeSegmentsStorageContainer.getStorageForKey(matchingKey));
+            AttributeMatcher attributeMatcher = toMatcher(matcher, matchingKey);
 
             toCombine.add(attributeMatcher);
         }
@@ -108,9 +107,8 @@ public class ParserCommons {
         return new CombiningMatcher(matcherGroup.combiner, toCombine);
     }
 
-    private AttributeMatcher toMatcher(Matcher matcher, String matchingKey, MySegmentsStorage mySegmentsStorage, MySegmentsStorage myLargeSegmentsStorage) throws UnsupportedMatcherException {
+    private AttributeMatcher toMatcher(Matcher matcher, String matchingKey) throws UnsupportedMatcherException {
         io.split.android.engine.matchers.Matcher delegate;
-
 
         // Values not present in {@link io.split.android.client.dtos.MatcherType} are deserialized as null
         if (matcher.matcherType == null) {
@@ -123,12 +121,12 @@ public class ParserCommons {
                 break;
             case IN_SEGMENT:
                 checkNotNull(matcher.userDefinedSegmentMatcherData);
-                delegate = new MySegmentsMatcher((matchingKey != null) ? mySegmentsStorage : new EmptyMySegmentsStorage(),
+                delegate = new MySegmentsMatcher(matchingKey != null ? mMySegmentsStorageContainer.getStorageForKey(matchingKey) : getEmptyMySegmentsStorage(),
                         matcher.userDefinedSegmentMatcherData.segmentName);
                 break;
             case IN_LARGE_SEGMENT:
                 checkNotNull(matcher.userDefinedLargeSegmentMatcherData);
-                delegate = new MySegmentsMatcher((matchingKey != null) ? myLargeSegmentsStorage : new EmptyMySegmentsStorage(),
+                delegate = new MySegmentsMatcher((matchingKey != null) ? mMyLargeSegmentsStorageContainer.getStorageForKey(matchingKey) : getEmptyMySegmentsStorage(),
                         matcher.userDefinedLargeSegmentMatcherData.largeSegmentName);
                 break;
             case WHITELIST:
@@ -212,7 +210,7 @@ public class ParserCommons {
                 break;
             case IN_RULE_BASED_SEGMENT:
                 delegate = new InRuleBasedSegmentMatcher(mRuleBasedSegmentStorageProvider.get(),
-                        mMySegmentsStorageContainer.getStorageForKey(matchingKey),
+                        (matchingKey != null) ? mMySegmentsStorageContainer.getStorageForKey(matchingKey) : getEmptyMySegmentsStorage(),
                         matcher.userDefinedSegmentMatcherData.segmentName);
                 break;
             default:
@@ -230,5 +228,14 @@ public class ParserCommons {
 
 
         return new AttributeMatcher(attribute, delegate, negate);
+    }
+
+    @NonNull
+    private EmptyMySegmentsStorage getEmptyMySegmentsStorage() {
+        if (mEmptyMySegmentsStorage == null) {
+            mEmptyMySegmentsStorage = new EmptyMySegmentsStorage();
+        }
+
+        return mEmptyMySegmentsStorage;
     }
 }

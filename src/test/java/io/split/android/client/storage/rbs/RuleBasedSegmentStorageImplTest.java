@@ -36,7 +36,7 @@ public class RuleBasedSegmentStorageImplTest {
     @Before
     public void setUp() {
         mPersistentStorage = mock(PersistentRuleBasedSegmentStorage.class);
-        mParser = new RuleBasedSegmentParser(new ParserCommons(mock(MySegmentsStorageContainer.class), mock(MySegmentsStorageContainer.class), mock(RuleBasedSegmentStorage.class)));
+        mParser = new RuleBasedSegmentParser(new ParserCommons(mock(MySegmentsStorageContainer.class), mock(MySegmentsStorageContainer.class), mock(RuleBasedSegmentStorageProvider.class)));
         storage = new RuleBasedSegmentStorageImpl(mPersistentStorage, mParser);
     }
 

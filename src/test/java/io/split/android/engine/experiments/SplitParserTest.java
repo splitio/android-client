@@ -37,6 +37,7 @@ import io.split.android.client.dtos.WhitelistMatcherData;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.engine.ConditionsTestUtil;
 import io.split.android.engine.matchers.AttributeMatcher;
 import io.split.android.engine.matchers.BetweenMatcher;
@@ -67,11 +68,14 @@ public class SplitParserTest {
     MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
     @Mock
     RuleBasedSegmentStorage mRuleBasedSegmentStorage;
+    @Mock
+    RuleBasedSegmentStorageProvider mRuleBasedSegmentStorageProvider;
 
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
         when(mMySegmentsStorageContainer.getStorageForKey("")).thenReturn(mMySegmentsStorage);
+        when(mRuleBasedSegmentStorageProvider.get()).thenReturn(mRuleBasedSegmentStorage);
     }
 
     @Test
@@ -155,11 +159,6 @@ public class SplitParserTest {
         ParsedSplit expected = SplitHelper.createParsedSplit("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
 
         assertThat(actual, is(equalTo(expected)));
-    }
-
-    @NonNull
-    private SplitParser createParser() {
-        return new SplitParser(new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer, mRuleBasedSegmentStorage));
     }
 
     @Test
@@ -513,6 +512,11 @@ public class SplitParserTest {
 
         assertFalse(actual.impressionsDisabled());
         assertTrue(actual2.impressionsDisabled());
+    }
+
+    @NonNull
+    private SplitParser createParser() {
+        return new SplitParser(new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer, mRuleBasedSegmentStorageProvider));
     }
 
     private void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
