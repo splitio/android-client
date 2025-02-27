@@ -31,6 +31,10 @@ public class InRuleBasedSegmentMatcher implements Matcher {
         final String matchingKey = (String) matchValue;
         final ParsedRuleBasedSegment parsedRuleBasedSegment = mRuleBasedSegmentStorage.get(mSegmentName, matchingKey);
 
+        if (parsedRuleBasedSegment == null) {
+            return false;
+        }
+
         if (parsedRuleBasedSegment.getExcludedKeys().contains(matchingKey)) {
             return false;
         }
