@@ -1,5 +1,7 @@
 package io.split.android.client;
 
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -12,10 +14,12 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
+import io.split.android.engine.experiments.ParserCommons;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.fake.SplitTaskExecutorStub;
 
@@ -31,6 +35,10 @@ public abstract class SplitClientImplBaseTest {
     protected MySegmentsStorageContainer mySegmentsStorageContainer;
     @Mock
     protected MySegmentsStorageContainer myLargeSegmentsStorageContainer;
+    @Mock
+    protected RuleBasedSegmentStorage ruleBasedSegmentStorage;
+    @Mock
+    protected RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider;
     @Mock
     protected MySegmentsStorage mySegmentsStorage;
     @Mock
@@ -53,12 +61,13 @@ public abstract class SplitClientImplBaseTest {
         MockitoAnnotations.openMocks(this);
 
         SplitClientConfig splitClientConfig = SplitClientConfig.builder().build();
+        when(ruleBasedSegmentStorageProvider.get()).thenReturn(ruleBasedSegmentStorage);
 
         splitClient = new SplitClientImpl(
                 container,
                 clientContainer,
                 new Key("test_key"),
-                new SplitParser(mySegmentsStorageContainer, myLargeSegmentsStorageContainer),
+                new SplitParser(new ParserCommons(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, ruleBasedSegmentStorageProvider)),
                 impressionListener,
                 splitClientConfig,
                 new SplitEventsManager(splitClientConfig, new SplitTaskExecutorStub()),

@@ -2,6 +2,8 @@ package io.split.android.client.utils;
 
 import static org.mockito.Mockito.mock;
 
+import androidx.annotation.NonNull;
+
 import java.util.Collections;
 
 import io.split.android.client.EventsTracker;
@@ -17,7 +19,6 @@ import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.impressions.DecoratedImpressionListener;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.shared.SplitClientContainer;
-import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.validators.KeyValidatorImpl;
@@ -26,6 +27,7 @@ import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerFactory;
 import io.split.android.client.validators.TreatmentManagerFactoryImpl;
+import io.split.android.engine.experiments.ParserCommons;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.fake.SplitTaskExecutorStub;
 
@@ -35,7 +37,7 @@ public class SplitClientImplFactory {
     public static SplitClientImpl get(Key key, SplitsStorage splitsStorage) {
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventsManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
-        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class), mock(MySegmentsStorageContainer.class));
+        SplitParser splitParser = getSplitParser();
         TelemetryStorage telemetryStorage = mock(TelemetryStorage.class);
         TreatmentManagerFactory treatmentManagerFactory = new TreatmentManagerFactoryImpl(
                 new KeyValidatorImpl(), new SplitValidatorImpl(), new ImpressionListener.FederatedImpressionListener(mock(DecoratedImpressionListener.class), Collections.emptyList()),
@@ -62,7 +64,7 @@ public class SplitClientImplFactory {
     }
 
     public static SplitClientImpl get(Key key, ImpressionListener impressionListener) {
-        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class), mock(MySegmentsStorageContainer.class));
+        SplitParser splitParser = getSplitParser();
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         return new SplitClientImpl(
                 mock(SplitFactory.class),
@@ -80,7 +82,7 @@ public class SplitClientImplFactory {
     }
 
     public static SplitClientImpl get(Key key, SplitEventsManager eventsManager) {
-        SplitParser splitParser = new SplitParser(mock(MySegmentsStorageContainer.class), mock(MySegmentsStorageContainer.class));
+        SplitParser splitParser = getSplitParser();
         return new SplitClientImpl(
                 mock(SplitFactory.class),
                 mock(SplitClientContainer.class),
@@ -94,5 +96,10 @@ public class SplitClientImplFactory {
                 mock(SplitValidator.class),
                 mock(TreatmentManager.class)
         );
+    }
+
+    @NonNull
+    private static SplitParser getSplitParser() {
+        return new SplitParser(mock(ParserCommons.class));
     }
 }

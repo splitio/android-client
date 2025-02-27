@@ -71,6 +71,7 @@ import io.split.android.client.validators.ValidationConfig;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
+import io.split.android.engine.experiments.ParserCommons;
 import io.split.android.engine.experiments.SplitParser;
 
 public class SplitFactoryImpl implements SplitFactory {
@@ -272,12 +273,18 @@ public class SplitFactoryImpl implements SplitFactory {
                 mEventsManagerCoordinator, mSynchronizer, streamingComponents.getNotificationParser(),
                 streamingComponents.getNotificationProcessor(), streamingComponents.getSseAuthenticator(),
                 mStorageContainer, mSyncManager, compressionProvider);
+
+        ParserCommons parserCommons = SplitFactoryHelper.getParserCommons(mStorageContainer);
+
+        // Create SplitParser with ParserCommons
+        SplitParser splitParser = new SplitParser(parserCommons);
+
         mClientContainer = new SplitClientContainerImpl(
                 mDefaultClientKey.matchingKey(), this, config, mSyncManager,
                 telemetrySynchronizer, mStorageContainer, splitTaskExecutor, splitApiFacade,
                 validationLogger, keyValidator, customerImpressionListener,
                 streamingComponents.getPushNotificationManager(), componentsRegister, workManagerWrapper,
-                eventsTracker, flagSetsFilter);
+                eventsTracker, flagSetsFilter, splitParser);
         mDestroyer = new Runnable() {
             public void run() {
                 mInitLock.lock();
@@ -355,10 +362,9 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Initialize default client
         client();
-        SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer(), mStorageContainer.getMyLargeSegmentsStorageContainer());
         mManager = new SplitManagerImpl(
                 mStorageContainer.getSplitsStorage(),
-                new SplitValidatorImpl(), mSplitParser);
+                new SplitValidatorImpl(), splitParser);
 
     }
 

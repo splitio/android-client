@@ -2,6 +2,7 @@ package io.split.android.client.dtos;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public class Excluded {
@@ -18,5 +19,12 @@ public class Excluded {
 
     public Set<String> getKeys() {
         return mKeys;
+    }
+
+    public static Excluded createEmpty() {
+        Excluded excluded = new Excluded();
+        excluded.mKeys = new HashSet<>();
+        excluded.mSegments = new HashSet<>();
+        return excluded;
     }
 }

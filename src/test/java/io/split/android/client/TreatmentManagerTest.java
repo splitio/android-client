@@ -32,6 +32,8 @@ import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.Utils;
@@ -44,6 +46,7 @@ import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
+import io.split.android.engine.experiments.ParserCommons;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.fake.SplitEventsManagerStub;
 import io.split.android.grammar.Treatments;
@@ -73,11 +76,14 @@ public class TreatmentManagerTest {
             MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
             MySegmentsStorageContainer myLargeSegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
             MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
+            RuleBasedSegmentStorage ruleBasedSegmentStorage = mock(RuleBasedSegmentStorage.class);
+            RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider = mock(RuleBasedSegmentStorageProvider.class);
+            when(ruleBasedSegmentStorageProvider.get()).thenReturn(ruleBasedSegmentStorage);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
             Set<String> mySegments = new HashSet(Arrays.asList("s1", "s2", "test_copy"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-            SplitParser splitParser = new SplitParser(mySegmentsStorageContainer, myLargeSegmentsStorageContainer);
+            SplitParser splitParser = new SplitParser(new ParserCommons(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, ruleBasedSegmentStorageProvider));
 
             Map<String, Split> splitsMap = splitsMap(splits);
             when(splitsStorage.getAll()).thenReturn(splitsMap);

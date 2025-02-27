@@ -4,6 +4,7 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.never;
@@ -34,9 +35,12 @@ import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.dtos.UserDefinedLargeSegmentMatcherData;
+import io.split.android.client.dtos.UserDefinedSegmentMatcherData;
 import io.split.android.client.dtos.WhitelistMatcherData;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.engine.ConditionsTestUtil;
 import io.split.android.engine.matchers.AttributeMatcher;
 import io.split.android.engine.matchers.BetweenMatcher;
@@ -65,11 +69,16 @@ public class SplitParserTest {
     MySegmentsStorageContainer mMySegmentsStorageContainer;
     @Mock
     MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
+    @Mock
+    RuleBasedSegmentStorage mRuleBasedSegmentStorage;
+    @Mock
+    RuleBasedSegmentStorageProvider mRuleBasedSegmentStorageProvider;
 
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
         when(mMySegmentsStorageContainer.getStorageForKey("")).thenReturn(mMySegmentsStorage);
+        when(mRuleBasedSegmentStorageProvider.get()).thenReturn(mRuleBasedSegmentStorage);
     }
 
     @Test
@@ -153,11 +162,6 @@ public class SplitParserTest {
         ParsedSplit expected = SplitHelper.createParsedSplit("first.name", 123, false, Treatments.OFF, listOfMatcherAndSplits, "user", 1, 1, null);
 
         assertThat(actual, is(equalTo(expected)));
-    }
-
-    @NonNull
-    private SplitParser createParser() {
-        return new SplitParser(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer);
     }
 
     @Test
@@ -498,6 +502,33 @@ public class SplitParserTest {
     }
 
     @Test
+    public void inRuleBasedSegmentMatcherParsingTest() {
+        Condition condition = new Condition();
+        condition.conditionType = ConditionType.ROLLOUT;
+        condition.label = null;
+        condition.partitions = null;
+        Matcher matcher = new Matcher();
+        matcher.matcherType = MatcherType.IN_RULE_BASED_SEGMENT;
+        UserDefinedSegmentMatcherData userDefinedSegmentMatcherData = new UserDefinedSegmentMatcherData();
+        userDefinedSegmentMatcherData.segmentName = "segment1";
+        matcher.userDefinedSegmentMatcherData = userDefinedSegmentMatcherData;
+        condition.matcherGroup = new MatcherGroup();
+        condition.matcherGroup.matchers = Collections.singletonList(matcher);
+        Split split = makeSplit("test1", Collections.singletonList(condition));
+
+        SplitParser parser = createParser();
+
+        ParsedSplit parsedSplit = parser.parse(split);
+        assertEquals("test1", parsedSplit.feature());
+        assertEquals("off", parsedSplit.defaultTreatment());
+        assertEquals(1, parsedSplit.parsedConditions().size());
+        ParsedCondition parsedCondition = parsedSplit.parsedConditions().get(0);
+        assertNull(parsedCondition.label());
+        assertEquals(ConditionType.ROLLOUT, parsedCondition.conditionType());
+        assertNull(parsedCondition.partitions());
+    }
+
+    @Test
     public void impressionsDisabledParsingTest(){
         SplitParser parser = createParser();
 
@@ -511,6 +542,11 @@ public class SplitParserTest {
 
         assertFalse(actual.impressionsDisabled());
         assertTrue(actual2.impressionsDisabled());
+    }
+
+    @NonNull
+    private SplitParser createParser() {
+        return new SplitParser(new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer, mRuleBasedSegmentStorageProvider));
     }
 
     private void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {

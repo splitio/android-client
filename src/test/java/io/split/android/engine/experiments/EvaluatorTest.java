@@ -22,9 +22,10 @@ import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.TreatmentLabels;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;
@@ -41,12 +42,15 @@ public class EvaluatorTest {
             MySegmentsStorage myLargeSegmentsStorage = mock(MySegmentsStorage.class);
             MySegmentsStorageContainer mySegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
             MySegmentsStorageContainer myLargeSegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
+            RuleBasedSegmentStorage ruleBasedSegmentStorage = mock(RuleBasedSegmentStorage.class);
+            RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider = mock(RuleBasedSegmentStorageProvider.class);
+            when(ruleBasedSegmentStorageProvider.get()).thenReturn(ruleBasedSegmentStorage);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
             Set<String> mySegments = new HashSet<>(Arrays.asList("s1", "s2", "test_copy"));
             Set<String> myLargeSegments = new HashSet<>(Arrays.asList("segment1"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-            SplitParser splitParser = new SplitParser(mySegmentsStorageContainer, myLargeSegmentsStorageContainer);
+            SplitParser splitParser = new SplitParser(new ParserCommons(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, ruleBasedSegmentStorageProvider));
 
             Map<String, Split> splitsMap = splitsMap(splits);
             when(splitsStorage.getAll()).thenReturn(splitsMap);
