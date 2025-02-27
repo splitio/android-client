@@ -30,6 +30,10 @@ import io.split.android.client.storage.impressions.SqlitePersistentUniqueStorage
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainerImpl;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
+import io.split.android.client.storage.rbs.LazyRuleBasedSegmentStorageProvider;
+import io.split.android.client.storage.rbs.PersistentRuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
+import io.split.android.client.storage.rbs.SqLitePersistentRuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
@@ -153,5 +157,13 @@ public class StorageFactory {
 
     public static GeneralInfoStorage getGeneralInfoStorage(SplitRoomDatabase splitRoomDatabase) {
         return new GeneralInfoStorageImpl(splitRoomDatabase.generalInfoDao());
+    }
+
+    public static PersistentRuleBasedSegmentStorage getPersistentRuleBasedSegmentStorage(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher, GeneralInfoStorage generalInfoStorage) {
+        return new SqLitePersistentRuleBasedSegmentStorageProvider(splitCipher, splitRoomDatabase, generalInfoStorage).get();
+    }
+
+    public static RuleBasedSegmentStorageProvider getRuleBasedSegmentStorageProvider() {
+        return new LazyRuleBasedSegmentStorageProvider();
     }
 }
