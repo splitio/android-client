@@ -107,10 +107,11 @@ public class LocalhostSplitFactory implements SplitFactory {
 
     @NonNull
     private static SplitParser getSplitParser() {
-        return new SplitParser(new ParserCommons(
+        ParserCommons parserCommons = new ParserCommons(
                 new LocalhostMySegmentsStorageContainer(),
-                new LocalhostMySegmentsStorageContainer(),
-                new LocalhostRuleBasedSegmentsStorageProvider(new LocalhostRuleBasedSegmentsStorage())));
+                new LocalhostMySegmentsStorageContainer());
+        parserCommons.setRuleBasedSegmentStorage(new LocalhostRuleBasedSegmentsStorage());
+        return new SplitParser(parserCommons);
     }
 
     @VisibleForTesting

@@ -86,10 +86,8 @@ import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.storage.events.PersistentEventsStorage;
 import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
-import io.split.android.client.storage.rbs.LazyRuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageImpl;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
@@ -193,7 +191,6 @@ class SplitFactoryHelper {
                 getTelemetryStorage(shouldRecordTelemetry, telemetryStorage),
                 StorageFactory.getImpressionsObserverCachePersistentStorage(splitRoomDatabase, observerCacheExpirationPeriod, impressionsObserverExecutor),
                 generalInfoStorage,
-                StorageFactory.getRuleBasedSegmentStorageProvider(),
                 StorageFactory.getPersistentRuleBasedSegmentStorage(splitRoomDatabase, splitCipher, generalInfoStorage));
     }
 
@@ -474,16 +471,17 @@ class SplitFactoryHelper {
 
     @NonNull
     static ParserCommons getParserCommons(SplitStorageContainer storageContainer) {
-        RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider = storageContainer.getRuleBasedSegmentStorageProvider();
         ParserCommons parserCommons = new ParserCommons(
                 storageContainer.getMySegmentsStorageContainer(),
-                storageContainer.getMyLargeSegmentsStorageContainer(),
-                ruleBasedSegmentStorageProvider);
+                storageContainer.getMyLargeSegmentsStorageContainer());
+
         RuleBasedSegmentParser ruleBasedSegmentParser = new RuleBasedSegmentParser(parserCommons);
 
         RuleBasedSegmentStorage ruleBasedSegmentStorage =
                 new RuleBasedSegmentStorageImpl(storageContainer.getPersistentRuleBasedSegmentStorage(), ruleBasedSegmentParser);
-        ((LazyRuleBasedSegmentStorageProvider) ruleBasedSegmentStorageProvider).set(ruleBasedSegmentStorage);
+
+        parserCommons.setRuleBasedSegmentStorage(ruleBasedSegmentStorage);
+
         return parserCommons;
     }
 

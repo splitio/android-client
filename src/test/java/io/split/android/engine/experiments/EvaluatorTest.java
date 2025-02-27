@@ -25,7 +25,6 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.grammar.Treatments;
 import io.split.android.helpers.FileHelper;

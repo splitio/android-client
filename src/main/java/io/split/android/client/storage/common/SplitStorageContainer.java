@@ -18,7 +18,6 @@ import io.split.android.client.storage.impressions.PersistentImpressionsUniqueSt
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.rbs.PersistentRuleBasedSegmentStorage;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
@@ -40,7 +39,6 @@ public class SplitStorageContainer {
     private final PersistentImpressionsUniqueStorage mPersistentImpressionsUniqueStorage;
     private final PersistentImpressionsObserverCacheStorage mPersistentImpressionsObserverCacheStorage;
     private final GeneralInfoStorage mGeneralInfoStorage;
-    private final RuleBasedSegmentStorageProvider mRuleBasedSegmentStorageProvider;
     private final PersistentRuleBasedSegmentStorage mPersistentRuleBasedSegmentStorage;
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
@@ -58,7 +56,6 @@ public class SplitStorageContainer {
                                  @NonNull TelemetryStorage telemetryStorage,
                                  @NonNull PersistentImpressionsObserverCacheStorage persistentImpressionsObserverCacheStorage,
                                  @NonNull GeneralInfoStorage generalInfoStorage,
-                                 @NonNull RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider,
                                  @NonNull PersistentRuleBasedSegmentStorage persistentRuleBasedSegmentStorage) {
 
         mSplitStorage = checkNotNull(splitStorage);
@@ -76,7 +73,6 @@ public class SplitStorageContainer {
         mPersistentImpressionsUniqueStorage = checkNotNull(persistentImpressionsUniqueStorage);
         mPersistentImpressionsObserverCacheStorage = checkNotNull(persistentImpressionsObserverCacheStorage);
         mGeneralInfoStorage = checkNotNull(generalInfoStorage);
-        mRuleBasedSegmentStorageProvider = checkNotNull(ruleBasedSegmentStorageProvider);
         mPersistentRuleBasedSegmentStorage = checkNotNull(persistentRuleBasedSegmentStorage);
     }
 
@@ -150,10 +146,6 @@ public class SplitStorageContainer {
 
     public GeneralInfoStorage getGeneralInfoStorage() {
         return mGeneralInfoStorage;
-    }
-
-    public RuleBasedSegmentStorageProvider getRuleBasedSegmentStorageProvider() {
-        return mRuleBasedSegmentStorageProvider;
     }
 
     public PersistentRuleBasedSegmentStorage getPersistentRuleBasedSegmentStorage() {

@@ -16,7 +16,7 @@ import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.AttributeMatcher;
@@ -49,25 +49,26 @@ public class ParserCommons {
     public static final int CONDITIONS_UPPER_LIMIT = 50;
     private final MySegmentsStorageContainer mMySegmentsStorageContainer;
     private final MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
-    private final RuleBasedSegmentStorageProvider mRuleBasedSegmentStorageProvider;
+    private RuleBasedSegmentStorage mRuleBasedSegmentStorage;
     private final DefaultConditionsProvider mDefaultConditionsProvider;
     private EmptyMySegmentsStorage mEmptyMySegmentsStorage;
 
     public ParserCommons(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
-                         @NonNull MySegmentsStorageContainer myLargeSegmentsStorageContainer,
-                         @NonNull RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider) {
-        this(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, ruleBasedSegmentStorageProvider, new DefaultConditionsProvider());
+                         @NonNull MySegmentsStorageContainer myLargeSegmentsStorageContainer) {
+        this(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, new DefaultConditionsProvider());
     }
 
     @VisibleForTesting
     ParserCommons(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
                   @NonNull MySegmentsStorageContainer myLargeSegmentsStorageContainer,
-                  @NonNull RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider,
                   DefaultConditionsProvider defaultConditionsProvider) {
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
         mMyLargeSegmentsStorageContainer = checkNotNull(myLargeSegmentsStorageContainer);
-        mRuleBasedSegmentStorageProvider = checkNotNull(ruleBasedSegmentStorageProvider);
         mDefaultConditionsProvider = checkNotNull(defaultConditionsProvider);
+    }
+
+    public void setRuleBasedSegmentStorage(@NonNull RuleBasedSegmentStorage ruleBasedSegmentStorage) {
+        mRuleBasedSegmentStorage = checkNotNull(ruleBasedSegmentStorage);
     }
 
     @Nullable
@@ -108,7 +109,7 @@ public class ParserCommons {
     }
 
     private AttributeMatcher toMatcher(Matcher matcher, String matchingKey) throws UnsupportedMatcherException {
-        io.split.android.engine.matchers.Matcher delegate;
+        io.split.android.engine.matchers.Matcher delegate = null;
 
         // Values not present in {@link io.split.android.client.dtos.MatcherType} are deserialized as null
         if (matcher.matcherType == null) {
@@ -209,14 +210,23 @@ public class ParserCommons {
                 delegate = new InListSemverMatcher(matcher.whitelistMatcherData.whitelist);
                 break;
             case IN_RULE_BASED_SEGMENT:
-                delegate = new InRuleBasedSegmentMatcher(mRuleBasedSegmentStorageProvider.get(),
-                        (matchingKey != null) ? mMySegmentsStorageContainer.getStorageForKey(matchingKey) : getEmptyMySegmentsStorage(),
-                        matcher.userDefinedSegmentMatcherData.segmentName);
+                if (mRuleBasedSegmentStorage != null) {
+                    delegate = new InRuleBasedSegmentMatcher(mRuleBasedSegmentStorage,
+                    (matchingKey != null) ? mMySegmentsStorageContainer.getStorageForKey(matchingKey) : getEmptyMySegmentsStorage(),
+                    matcher.userDefinedSegmentMatcherData.segmentName);
+                } else {
+                    // shouldn't happen
+                    Logger.w("RuleBasedSegmentStorage not set in ParserCommons");
+                }
                 break;
             default:
                 // since values not present in {@link io.split.android.client.dtos.MatcherType}
                 // are deserialized as null, this would most likely not be reached. Adding it for completeness
                 throw new UnsupportedMatcherException("Unable to create matcher for matcher type: " + matcher.matcherType);
+        }
+
+        if (delegate == null) {
+            throw new UnsupportedMatcherException("Unable to create matcher for matcher type: " + matcher.matcherType);
         }
 
         String attribute = null;
@@ -225,7 +235,6 @@ public class ParserCommons {
         }
 
         boolean negate = matcher.negate;
-
 
         return new AttributeMatcher(attribute, delegate, negate);
     }

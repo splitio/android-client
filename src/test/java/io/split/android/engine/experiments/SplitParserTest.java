@@ -40,7 +40,6 @@ import io.split.android.client.dtos.WhitelistMatcherData;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProvider;
 import io.split.android.engine.ConditionsTestUtil;
 import io.split.android.engine.matchers.AttributeMatcher;
 import io.split.android.engine.matchers.BetweenMatcher;
@@ -546,7 +545,9 @@ public class SplitParserTest {
 
     @NonNull
     private SplitParser createParser() {
-        return new SplitParser(new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer, mRuleBasedSegmentStorageProvider));
+        ParserCommons parserCommons = new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer);
+        parserCommons.setRuleBasedSegmentStorage(mRuleBasedSegmentStorage);
+        return new SplitParser(parserCommons);
     }
 
     private void set_matcher_test(Condition c, io.split.android.engine.matchers.Matcher m) {
