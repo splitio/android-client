@@ -12,8 +12,7 @@ class LocalhostRuleBasedSegmentsStorageProvider implements RuleBasedSegmentStora
     LocalhostRuleBasedSegmentsStorageProvider(@NonNull RuleBasedSegmentStorage ruleBasedSegmentStorage) {
         mRuleBasedSegmentStorage = ruleBasedSegmentStorage;
     }
-    
-    @NonNull
+
     @Override
     public RuleBasedSegmentStorage get() {
         return mRuleBasedSegmentStorage;

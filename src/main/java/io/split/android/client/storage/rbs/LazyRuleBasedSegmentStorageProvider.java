@@ -1,6 +1,7 @@
 package io.split.android.client.storage.rbs;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -16,13 +17,9 @@ public class LazyRuleBasedSegmentStorageProvider implements RuleBasedSegmentStor
         }
     }
     
-    @NonNull
+    @Nullable
     @Override
     public RuleBasedSegmentStorage get() {
-        RuleBasedSegmentStorage storage = mRuleBasedSegmentStorageRef.get();
-        if (storage == null) {
-            throw new IllegalStateException("RuleBasedSegmentStorage not set in LazyRuleBasedSegmentStorageProvider");
-        }
-        return storage;
+        return mRuleBasedSegmentStorageRef.get();
     }
 }

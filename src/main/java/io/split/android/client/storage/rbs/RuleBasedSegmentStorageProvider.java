@@ -1,9 +1,9 @@
 package io.split.android.client.storage.rbs;
 
-import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 public interface RuleBasedSegmentStorageProvider {
 
-    @NonNull
+    @Nullable
     RuleBasedSegmentStorage get();
 }
