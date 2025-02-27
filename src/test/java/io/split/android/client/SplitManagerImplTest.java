@@ -52,8 +52,6 @@ public class SplitManagerImplTest {
     @Mock
     RuleBasedSegmentStorage mRuleBasedSegmentStorage;
     @Mock
-    RuleBasedSegmentStorageProvider mRuleBasedSegmentStorageProvider;
-    @Mock
     SplitManager mSplitManager;
 
     @Before
@@ -61,8 +59,7 @@ public class SplitManagerImplTest {
         MockitoAnnotations.openMocks(this);
         SplitValidator validator = new SplitValidatorImpl();
         when(mMySegmentsStorageContainer.getStorageForKey("")).thenReturn(mMySegmentsStorage);
-        when(mRuleBasedSegmentStorageProvider.get()).thenReturn(mRuleBasedSegmentStorage);
-        SplitParser parser = new SplitParser(new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer, mRuleBasedSegmentStorageProvider));
+        SplitParser parser = new SplitParser(new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer));
         mSplitManager = new SplitManagerImpl(mSplitsStorage, validator, parser);
     }
 

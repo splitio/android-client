@@ -29,8 +29,6 @@ public class UnsupportedMatcherSplitParserTest {
     @Mock
     private DefaultConditionsProvider mDefaultConditionsProvider;
     @Mock
-    private RuleBasedSegmentStorageProvider mRuleBasedSegmentStorageProvider;
-    @Mock
     private RuleBasedSegmentStorage mRuleBasedSegmentStorage;
     private final Split mTestFlag = Json.fromJson("{\"changeNumber\":1709843458770,\"trafficTypeName\":\"user\",\"name\":\"feature_flag_for_test\",\"trafficAllocation\":100,\"trafficAllocationSeed\":-1364119282,\"seed\":-605938843,\"status\":\"ACTIVE\",\"killed\":false,\"defaultTreatment\":\"off\",\"algo\":2,\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\",\"attribute\":null},\"matcherType\":\"WRONG_MATCHER_TYPE\",\"negate\":false,\"userDefinedSegmentMatcherData\":null,\"whitelistMatcherData\":null,\"unaryNumericMatcherData\":null,\"betweenMatcherData\":null,\"dependencyMatcherData\":null,\"booleanMatcherData\":null,\"stringMatcherData\":\"123123\"}]},\"partitions\":[{\"treatment\":\"on\",\"size\":0},{\"treatment\":\"off\",\"size\":100}],\"label\":\"wrong matcher type\"},{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\",\"attribute\":\"sem\"},\"matcherType\":\"MATCHES_STRING\",\"negate\":false,\"userDefinedSegmentMatcherData\":null,\"whitelistMatcherData\":null,\"unaryNumericMatcherData\":null,\"betweenMatcherData\":null,\"dependencyMatcherData\":null,\"booleanMatcherData\":null,\"stringMatcherData\":\"1.2.3\"}]},\"partitions\":[{\"treatment\":\"on\",\"size\":100},{\"treatment\":\"off\",\"size\":0}],\"label\":\"sem matches 1.2.3\"}],\"configurations\":{},\"sets\":[]}", Split.class);
     private AutoCloseable mAutoCloseable;
@@ -42,9 +40,8 @@ public class UnsupportedMatcherSplitParserTest {
         when(mMySegmentsStorageContainer.getStorageForKey("")).thenReturn(mMySegmentsStorage);
         when(mMySegmentsStorage.getAll()).thenReturn(Collections.emptySet());
         when(mDefaultConditionsProvider.getDefaultConditions()).thenReturn(Collections.emptyList());
-        when(mRuleBasedSegmentStorageProvider.get()).thenReturn(mRuleBasedSegmentStorage);
         mSplitParser = new SplitParser(
-                new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer, mRuleBasedSegmentStorageProvider, mDefaultConditionsProvider));
+                new ParserCommons(mMySegmentsStorageContainer, mMyLargeSegmentsStorageContainer, mDefaultConditionsProvider));
     }
 
     @After

@@ -76,13 +76,11 @@ public class TreatmentManagerTest {
             MySegmentsStorageContainer myLargeSegmentsStorageContainer = mock(MySegmentsStorageContainer.class);
             MySegmentsStorage mySegmentsStorage = mock(MySegmentsStorage.class);
             RuleBasedSegmentStorage ruleBasedSegmentStorage = mock(RuleBasedSegmentStorage.class);
-            RuleBasedSegmentStorageProvider ruleBasedSegmentStorageProvider = mock(RuleBasedSegmentStorageProvider.class);
-            when(ruleBasedSegmentStorageProvider.get()).thenReturn(ruleBasedSegmentStorage);
             SplitsStorage splitsStorage = mock(SplitsStorage.class);
 
             Set<String> mySegments = new HashSet(Arrays.asList("s1", "s2", "test_copy"));
             List<Split> splits = fileHelper.loadAndParseSplitChangeFile("split_changes_1.json");
-            SplitParser splitParser = new SplitParser(new ParserCommons(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, ruleBasedSegmentStorageProvider));
+            SplitParser splitParser = new SplitParser(new ParserCommons(mySegmentsStorageContainer, myLargeSegmentsStorageContainer));
 
             Map<String, Split> splitsMap = splitsMap(splits);
             when(splitsStorage.getAll()).thenReturn(splitsMap);

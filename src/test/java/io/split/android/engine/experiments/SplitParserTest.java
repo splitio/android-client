@@ -70,14 +70,11 @@ public class SplitParserTest {
     MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
     @Mock
     RuleBasedSegmentStorage mRuleBasedSegmentStorage;
-    @Mock
-    RuleBasedSegmentStorageProvider mRuleBasedSegmentStorageProvider;
 
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
         when(mMySegmentsStorageContainer.getStorageForKey("")).thenReturn(mMySegmentsStorage);
-        when(mRuleBasedSegmentStorageProvider.get()).thenReturn(mRuleBasedSegmentStorage);
     }
 
     @Test
