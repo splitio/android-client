@@ -7,11 +7,12 @@ import java.util.Set;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.storage.RolloutDefinitionsCache;
+import io.split.android.engine.experiments.ParsedRuleBasedSegment;
 
 public interface RuleBasedSegmentStorage extends RolloutDefinitionsCache {
 
     @Nullable
-    RuleBasedSegment get(String segmentName);
+    ParsedRuleBasedSegment get(String segmentName, String matchingKey);
 
     boolean update(@NonNull Set<RuleBasedSegment> toAdd, @NonNull Set<RuleBasedSegment> toRemove, long changeNumber);
 
