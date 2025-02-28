@@ -7,12 +7,13 @@ import java.util.Set;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.engine.experiments.ParsedRuleBasedSegment;
 
 public class LocalhostRuleBasedSegmentsStorage implements RuleBasedSegmentStorage {
 
     @Nullable
     @Override
-    public RuleBasedSegment get(String segmentName) {
+    public ParsedRuleBasedSegment get(String segmentName, String matchingKey) {
         return null;
     }
 
