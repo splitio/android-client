@@ -11,23 +11,30 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.RuleBasedSegment;
+import io.split.android.engine.experiments.ParsedRuleBasedSegment;
 
 public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
 
     private final ConcurrentHashMap<String, RuleBasedSegment> mInMemorySegments;
+    private final RuleBasedSegmentParser mParser;
     private final PersistentRuleBasedSegmentStorage mPersistentStorage;
     private volatile long mChangeNumber;
 
-    public RuleBasedSegmentStorageImpl(@NonNull PersistentRuleBasedSegmentStorage persistentStorage) {
+    public RuleBasedSegmentStorageImpl(@NonNull PersistentRuleBasedSegmentStorage persistentStorage, @NonNull RuleBasedSegmentParser parser) {
         mInMemorySegments = new ConcurrentHashMap<>();
+        mParser = checkNotNull(parser);
         mPersistentStorage = checkNotNull(persistentStorage);
         mChangeNumber = -1;
     }
 
-    @Nullable
     @Override
-    public RuleBasedSegment get(String segmentName) {
-        return mInMemorySegments.get(segmentName);
+    public @Nullable ParsedRuleBasedSegment get(String segmentName, String matchingKey) {
+        RuleBasedSegment ruleBasedSegment = mInMemorySegments.get(segmentName);
+        if (ruleBasedSegment == null) {
+            return null;
+        }
+
+        return mParser.parse(ruleBasedSegment, matchingKey);
     }
 
     @Override
@@ -91,5 +98,12 @@ public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
         mInMemorySegments.clear();
         mChangeNumber = -1;
         mPersistentStorage.clear();
+    }
+
+    // stub class
+    static final class RuleBasedSegmentParser {
+        ParsedRuleBasedSegment parse(RuleBasedSegment segment, String matchingKey) {
+            return null;
+        }
     }
 }
