@@ -119,7 +119,7 @@ public class TelemetryIntegrationTest {
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\":" + (changeNumber + 1000) + ", \"till\":" + (changeNumber + 1000) + "}");
+                            .setBody(IntegrationHelper.emptySplitChanges(changeNumber + 1000));
                 } else if (path.contains("/events/bulk")) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("metrics/usage")) {
@@ -219,7 +219,7 @@ public class TelemetryIntegrationTest {
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\":" + (changeNumber + 1000) + ", \"till\":" + (changeNumber + 1000) + "}");
+                            .setBody(IntegrationHelper.emptySplitChanges(changeNumber + 1000));
                 } else if (path.contains("/events/bulk")) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("metrics/usage")) {
@@ -272,7 +272,7 @@ public class TelemetryIntegrationTest {
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\":" + (changeNumber + 1000) + ", \"till\":" + (changeNumber + 1000) + "}");
+                            .setBody(IntegrationHelper.emptySplitChanges(changeNumber + 1000));
                 } else if (path.contains("/events/bulk")) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("metrics/usage")) {
@@ -393,7 +393,7 @@ public class TelemetryIntegrationTest {
                 } else if (path.contains("/splitChanges")) {
                     long changeNumber = -1;
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\":" + (changeNumber + 1000) + ", \"till\":" + (changeNumber + 1000) + "}");
+                            .setBody(IntegrationHelper.emptySplitChanges(changeNumber + 1000));
                 } else if (path.contains("/events/bulk")) {
                     return new MockResponse().setResponseCode(200);
                 } else if (path.contains("/metrics")) {

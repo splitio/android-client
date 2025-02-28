@@ -13,7 +13,7 @@ import org.mockito.MockedStatic;
 
 import java.net.URISyntaxException;
 
-import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -29,7 +29,7 @@ public class SplitsSyncWorkerTaskBuilderTest {
     private SplitChangeProcessor mSplitChangeProcessor;
     private SyncHelperProvider mSplitsSyncHelperProvider;
     private SplitsStorage mSplitsStorage;
-    private HttpFetcher<SplitChange> mSplitsFetcher;
+    private HttpFetcher<TargetingRulesChange> mSplitsFetcher;
     private TelemetryStorage mTelemetryStorage;
 
     @Before

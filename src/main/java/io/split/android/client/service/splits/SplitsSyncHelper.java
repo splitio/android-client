@@ -13,6 +13,7 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -33,14 +34,14 @@ public class SplitsSyncHelper {
     private static final String TILL_PARAM = "till";
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_WAIT;
 
-    private final HttpFetcher<SplitChange> mSplitFetcher;
+    private final HttpFetcher<TargetingRulesChange> mSplitFetcher;
     private final SplitsStorage mSplitsStorage;
     private final SplitChangeProcessor mSplitChangeProcessor;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final BackoffCounter mBackoffCounter;
     private final String mFlagsSpec;
 
-    public SplitsSyncHelper(@NonNull HttpFetcher<SplitChange> splitFetcher,
+    public SplitsSyncHelper(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
                             @NonNull SplitsStorage splitsStorage,
                             @NonNull SplitChangeProcessor splitChangeProcessor,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
@@ -54,7 +55,7 @@ public class SplitsSyncHelper {
     }
 
     @VisibleForTesting
-    public SplitsSyncHelper(@NonNull HttpFetcher<SplitChange> splitFetcher,
+    public SplitsSyncHelper(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
                             @NonNull SplitsStorage splitsStorage,
                             @NonNull SplitChangeProcessor splitChangeProcessor,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
@@ -153,7 +154,7 @@ public class SplitsSyncHelper {
                 return changeNumber;
             }
 
-            SplitChange splitChange = fetchSplits(changeNumber, avoidCache, withCdnByPass);
+            SplitChange splitChange = fetchSplits(changeNumber, avoidCache, withCdnByPass).getFeatureFlagsChange(); // TODO
             updateStorage(shouldClearBeforeUpdate, splitChange);
             shouldClearBeforeUpdate = false;
 
@@ -164,7 +165,7 @@ public class SplitsSyncHelper {
         }
     }
 
-    private SplitChange fetchSplits(long till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {
+    private TargetingRulesChange fetchSplits(long till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {
         Map<String, Object> params = new LinkedHashMap<>();
         if (mFlagsSpec != null && !mFlagsSpec.trim().isEmpty()) {
             params.put(FLAGS_SPEC_PARAM, mFlagsSpec);

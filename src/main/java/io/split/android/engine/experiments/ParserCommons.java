@@ -46,7 +46,8 @@ import io.split.android.engine.matchers.strings.WhitelistMatcher;
 
 public class ParserCommons {
 
-    public static final int CONDITIONS_UPPER_LIMIT = 50;
+    private static final int CONDITIONS_UPPER_LIMIT = 50;
+
     private final MySegmentsStorageContainer mMySegmentsStorageContainer;
     private final MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
     private RuleBasedSegmentStorage mRuleBasedSegmentStorage;

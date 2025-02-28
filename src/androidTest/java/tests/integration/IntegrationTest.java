@@ -410,7 +410,7 @@ public class IntegrationTest {
         if (reqId < req) {
             req = reqId;
         }
-        return mJsonChanges.get(req);
+        return "{\"ff\":" + mJsonChanges.get(req) + "\"}";
     }
 
     private void loadSplitChanges() {

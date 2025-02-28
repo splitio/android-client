@@ -99,7 +99,7 @@ public class SplitChangesTest {
                         mLatchs.get(currReq - 1).countDown();
                     }
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\": 1567456938865, \"till\": 1567456938865 }");
+                            .setBody(IntegrationHelper.emptySplitChanges(1567456938865L));
 
 
                 } else if (request.getPath().contains("/testImpressions/bulk")) {
