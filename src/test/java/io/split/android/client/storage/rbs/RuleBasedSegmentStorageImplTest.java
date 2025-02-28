@@ -6,15 +6,12 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.invocation.InvocationOnMock;
-import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,27 +22,21 @@ import java.util.Set;
 import io.split.android.client.dtos.Excluded;
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.Status;
+import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.engine.experiments.ParsedRuleBasedSegment;
+import io.split.android.engine.experiments.ParserCommons;
+import io.split.android.engine.experiments.RuleBasedSegmentParser;
 
 public class RuleBasedSegmentStorageImplTest {
 
     private RuleBasedSegmentStorageImpl storage;
     private PersistentRuleBasedSegmentStorage mPersistentStorage;
-    private RuleBasedSegmentStorageImpl.RuleBasedSegmentParser mParser;
+    private RuleBasedSegmentParser mParser;
 
     @Before
     public void setUp() {
         mPersistentStorage = mock(PersistentRuleBasedSegmentStorage.class);
-        mParser = mock(RuleBasedSegmentStorageImpl.RuleBasedSegmentParser.class);
-        when(mParser.parse(any(), any())).thenAnswer(new Answer<ParsedRuleBasedSegment>() {
-            @Override
-            public ParsedRuleBasedSegment answer(InvocationOnMock invocation) throws Throwable {
-                ParsedRuleBasedSegment mockResult = mock(ParsedRuleBasedSegment.class);
-                when(mockResult.getName()).thenReturn(((RuleBasedSegment) invocation.getArguments()[0]).getName());
-
-                return mockResult;
-            }
-        });
+        mParser = new RuleBasedSegmentParser(new ParserCommons(mock(MySegmentsStorageContainer.class), mock(MySegmentsStorageContainer.class)));
         storage = new RuleBasedSegmentStorageImpl(mPersistentStorage, mParser);
     }
 
