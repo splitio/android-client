@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.engine.experiments.ParsedRuleBasedSegment;
+import io.split.android.engine.experiments.RuleBasedSegmentParser;
 
 public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
 
@@ -98,12 +99,5 @@ public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
         mInMemorySegments.clear();
         mChangeNumber = -1;
         mPersistentStorage.clear();
-    }
-
-    // stub class
-    static final class RuleBasedSegmentParser {
-        ParsedRuleBasedSegment parse(RuleBasedSegment segment, String matchingKey) {
-            return null;
-        }
     }
 }

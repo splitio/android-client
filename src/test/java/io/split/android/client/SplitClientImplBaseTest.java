@@ -12,9 +12,11 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
+import io.split.android.engine.experiments.ParserCommons;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.fake.SplitTaskExecutorStub;
 
@@ -30,6 +32,8 @@ public abstract class SplitClientImplBaseTest {
     protected MySegmentsStorageContainer mySegmentsStorageContainer;
     @Mock
     protected MySegmentsStorageContainer myLargeSegmentsStorageContainer;
+    @Mock
+    protected RuleBasedSegmentStorage ruleBasedSegmentStorage;
     @Mock
     protected MySegmentsStorage mySegmentsStorage;
     @Mock
@@ -57,7 +61,7 @@ public abstract class SplitClientImplBaseTest {
                 container,
                 clientContainer,
                 new Key("test_key"),
-                new SplitParser(mySegmentsStorageContainer, myLargeSegmentsStorageContainer),
+                new SplitParser(new ParserCommons(mySegmentsStorageContainer, myLargeSegmentsStorageContainer)),
                 impressionListener,
                 splitClientConfig,
                 new SplitEventsManager(splitClientConfig, new SplitTaskExecutorStub()),
