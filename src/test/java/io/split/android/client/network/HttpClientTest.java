@@ -36,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.utils.Json;
 import io.split.android.helpers.FileHelper;
@@ -149,7 +150,7 @@ public class HttpClientTest {
         Assert.assertTrue(mySegments.contains("groupb"));
 
         // Assert split changes
-        SplitChange splitChange = Json.fromJson(splitChangeResp.getData(), SplitChange.class);
+        SplitChange splitChange = Json.fromJson(splitChangeResp.getData(), TargetingRulesChange.class).getFeatureFlagsChange();
         Assert.assertEquals(200, splitChangeResp.getHttpStatus());
         assertTrue(splitChangeResp.isSuccess());
         Assert.assertEquals(-1, splitChange.since);
