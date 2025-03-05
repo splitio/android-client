@@ -115,10 +115,10 @@ public class MySegmentUpdatedTest {
                         isFirstChangesReq = false;
                         String change = mJsonChanges.get(0);
                         return new MockResponse().setResponseCode(200)
-                                .setBody(change);
+                                .setBody(IntegrationHelper.splitChangesJsonToTargetingRulesChangeJson(change));
                     }
                     return new MockResponse().setResponseCode(200)
-                            .setBody(emptyChanges());
+                            .setBody(IntegrationHelper.splitChangesJsonToTargetingRulesChangeJson(emptyChanges()));
 
 
                 } else if (request.getPath().contains("/testImpressions/bulk")) {
@@ -215,7 +215,7 @@ public class MySegmentUpdatedTest {
         mJsonChanges = new ArrayList<>();
         String jsonChange = fileHelper.loadFileContent(mContext, "splitchanges_int_test.json");
 
-        SplitChange change = Json.fromJson(jsonChange, SplitChange.class);
+        SplitChange change = IntegrationHelper.getChangeFromJsonString(jsonChange);
 
         Split split = change.splits.get(0);
         split.changeNumber = change.since + 1;

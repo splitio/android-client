@@ -136,7 +136,7 @@ public class SplitChangesCdnBypassTest {
                     } else if (uri.getQuery().contains("since=3")) {
                         return getSplitsMockResponse("3", "3");
                     }
-                    return new HttpResponseMock(200, "{\"splits\":[], \"since\": 4, \"till\": 4 }");
+                    return new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(4, 4));
                 } else if (uri.getPath().contains("/testImpressions/bulk")) {
                     return new HttpResponseMock(200);
                 } else if (uri.getPath().contains("/auth")) {
@@ -151,7 +151,7 @@ public class SplitChangesCdnBypassTest {
 
     @NonNull
     private HttpResponseMock getSplitsMockResponse(final String since, final String till) {
-        return new HttpResponseMock(200, "{\"splits\":[], \"since\": " + since + ", \"till\": " + till + " }");
+        return new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(Long.parseLong(since), Long.parseLong(till)));
     }
 
     private HttpStreamResponseMock createStreamResponse(int status, BlockingQueue<String> streamingResponseData) throws IOException {

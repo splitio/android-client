@@ -318,7 +318,7 @@ public class IntegrationHelper {
     public static String loadSplitChanges(Context context, String fileName) {
         FileHelper fileHelper = new FileHelper();
         String change = fileHelper.loadFileContent(context, fileName);
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
+        SplitChange parsedChange = Json.fromJson(change, TargetingRulesChange.class).getFeatureFlagsChange();
         parsedChange.since = parsedChange.till;
         return Json.toJson(TargetingRulesChange.create(parsedChange));
     }
@@ -422,6 +422,14 @@ public class IntegrationHelper {
         }
 
         return queryPairs;
+    }
+
+    public static SplitChange getChangeFromJsonString(String json) {
+        return Json.fromJson(json, TargetingRulesChange.class).getFeatureFlagsChange();
+    }
+
+    public static String splitChangesJsonToTargetingRulesChangeJson(String change) {
+        return Json.toJson(TargetingRulesChange.create(Json.fromJson(change, SplitChange.class)));
     }
 
     /**

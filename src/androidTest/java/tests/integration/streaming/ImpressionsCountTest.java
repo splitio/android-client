@@ -228,14 +228,14 @@ public class ImpressionsCountTest {
     }
 
     private void loadSplitChanges() {
-        mSplitChange = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        mSplitChange = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
 
-        SplitChange c1 = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        SplitChange c1 = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
 
-        SplitChange c2 = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        SplitChange c2 = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
 
         mSplitChange.splits.get(0).name = "SPLIT_1";
         Split split = c1.splits.get(0);

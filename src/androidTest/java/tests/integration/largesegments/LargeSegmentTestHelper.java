@@ -152,7 +152,7 @@ public class LargeSegmentTestHelper {
 
     private String splitChangesLargeSegments(long since, long till) {
         String change = mFileHelper.loadFileContent(mContext, "split_changes_large_segments-0.json");
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
+        SplitChange parsedChange = IntegrationHelper.getChangeFromJsonString(change);
         parsedChange.since = since;
         parsedChange.till = till;
 

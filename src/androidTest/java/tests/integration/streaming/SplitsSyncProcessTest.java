@@ -214,8 +214,8 @@ public class SplitsSyncProcessTest {
     }
 
     private void loadSplitChanges() {
-        mSplitChange = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        mSplitChange = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
     }
 
     private String getSplitChanges(int hit) {

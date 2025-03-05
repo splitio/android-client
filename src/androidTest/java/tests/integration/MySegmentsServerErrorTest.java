@@ -34,6 +34,7 @@ import io.split.android.client.dtos.MatcherType;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.dtos.UserDefinedSegmentMatcherData;
 import io.split.android.client.events.SplitEvent;
@@ -118,7 +119,7 @@ public class MySegmentsServerErrorTest {
                                 .setBody(change);
                     }
                     return new MockResponse().setResponseCode(200)
-                            .setBody(emptyChanges());
+                            .setBody(IntegrationHelper.emptySplitChanges(9567456937869L));
 
 
                 } else if (request.getPath().contains("/testImpressions/bulk")) {
@@ -208,7 +209,7 @@ public class MySegmentsServerErrorTest {
         mJsonChanges = new ArrayList<>();
         String jsonChange = fileHelper.loadFileContent(mContext, "splitchanges_int_test.json");
 
-        SplitChange change = Json.fromJson(jsonChange, SplitChange.class);
+        SplitChange change = IntegrationHelper.getChangeFromJsonString(jsonChange);
 
         Split split = change.splits.get(0);
         split.changeNumber = change.since + 1;
@@ -232,7 +233,7 @@ public class MySegmentsServerErrorTest {
         split.conditions.add(0, inSegmentOneCondition);
         split.conditions.add(0, inSegmentTwoCondition);
 
-        mJsonChanges.add(Json.toJson(change));
+        mJsonChanges.add(Json.toJson(TargetingRulesChange.create(change)));
     }
 
     private Condition inSegmentCondition(String name) {

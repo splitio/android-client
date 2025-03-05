@@ -194,7 +194,8 @@ public class FlagsSpecInRequestTest {
     }
 
     private String loadSplitChanges() {
-        return IntegrationHelper.loadSplitChanges(mContext, "split_changes_1.json");
+        String changes = IntegrationHelper.loadSplitChanges(mContext, "split_changes_1.json");
+        return changes;
     }
 
     private static SplitEntity newSplitEntity(String name, String trafficType, Set<String> sets) {

@@ -94,7 +94,7 @@ public class SplitChangesTest {
                             mLatchs.get(currReq - 1).countDown();
                         }
                         String changes = mJsonChanges.get(currReq);
-                        return new MockResponse().setResponseCode(200).setBody(changes);
+                        return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.splitChangesJsonToTargetingRulesChangeJson(changes));
                     } else if (currReq == mLatchs.size()) {
                         mLatchs.get(currReq - 1).countDown();
                     }
@@ -208,7 +208,7 @@ public class SplitChangesTest {
         String jsonChange = fileHelper.loadFileContent(mContext, "splitchanges_int_test.json");
         long prevChangeNumber = 0;
         for (int i = 0; i < 4; i++) {
-            SplitChange change = Json.fromJson(jsonChange, SplitChange.class);
+            SplitChange change = IntegrationHelper.getChangeFromJsonString(jsonChange);
             if (prevChangeNumber != 0) {
                 change.since = prevChangeNumber;
                 change.till = prevChangeNumber + CHANGE_INTERVAL;

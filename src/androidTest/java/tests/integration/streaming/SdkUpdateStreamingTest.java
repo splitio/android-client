@@ -407,8 +407,8 @@ public class SdkUpdateStreamingTest {
     }
 
     private String getChanges(String treatment, long since, long till) {
-        SplitChange change = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        SplitChange change = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
         change.since = since;
         change.till = till;
         Split split = change.splits.get(0);

@@ -360,7 +360,7 @@ public class EncryptionTest {
     private String loadSplitChanges() {
         FileHelper fileHelper = new FileHelper();
         String change = fileHelper.loadFileContent(mContext, "split_changes_1.json");
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
+        SplitChange parsedChange = IntegrationHelper.getChangeFromJsonString(change);
         parsedChange.splits = parsedChange.splits.stream().filter(s -> s.name.equals("FACUNDO_TEST") || s.name.equals("testing")).collect(Collectors.toList());
         parsedChange.since = parsedChange.till;
 

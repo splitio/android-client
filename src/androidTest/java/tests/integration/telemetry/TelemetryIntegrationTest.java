@@ -375,7 +375,7 @@ public class TelemetryIntegrationTest {
         FileHelper fileHelper = new FileHelper();
         String s = fileHelper.loadFileContent(mContext, "splitchanges_int_test.json");
 
-        SplitChange changes = Json.fromJson(s, SplitChange.class);
+        SplitChange changes = IntegrationHelper.getChangeFromJsonString(s);
 
         return changes.splits;
     }

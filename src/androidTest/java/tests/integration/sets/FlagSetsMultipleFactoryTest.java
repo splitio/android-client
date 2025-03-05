@@ -126,7 +126,7 @@ public class FlagSetsMultipleFactoryTest {
 
     private String loadSplitChangeWithSet(int setsCount) {
         String change = mFileHelper.loadFileContent(mContext, "split_changes_flag_set-" + setsCount + ".json");
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
+        SplitChange parsedChange = IntegrationHelper.getChangeFromJsonString(change);
         parsedChange.since = parsedChange.till;
 
         return Json.toJson(TargetingRulesChange.create(parsedChange));

@@ -221,13 +221,12 @@ public class SplitsKillProcessTest {
     }
 
     private void loadSplitChanges() {
-        SplitChange change = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        SplitChange change = IntegrationHelper.getChangeFromJsonString("splitchanges_int_test.json");
 
         Split split = change.splits.get(0);
         split.name = "test_feature_1";
-        mSplitChange = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        mSplitChange = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
         mSplitChange.splits.add(split);
     }
 

@@ -154,7 +154,8 @@ public class SplitsSyncHelper {
                 return changeNumber;
             }
 
-            SplitChange splitChange = fetchSplits(changeNumber, avoidCache, withCdnByPass).getFeatureFlagsChange(); // TODO
+            TargetingRulesChange targetingRulesChange = fetchSplits(changeNumber, avoidCache, withCdnByPass);
+            SplitChange splitChange = targetingRulesChange.getFeatureFlagsChange(); // TODO
             updateStorage(shouldClearBeforeUpdate, splitChange);
             shouldClearBeforeUpdate = false;
 
