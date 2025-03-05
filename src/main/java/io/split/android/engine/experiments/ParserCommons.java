@@ -16,7 +16,7 @@ import io.split.android.client.dtos.MatcherGroup;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageConsumer;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.matchers.AllKeysMatcher;
 import io.split.android.engine.matchers.AttributeMatcher;
@@ -50,7 +50,7 @@ public class ParserCommons {
 
     private final MySegmentsStorageContainer mMySegmentsStorageContainer;
     private final MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
-    private RuleBasedSegmentStorage mRuleBasedSegmentStorage;
+    private RuleBasedSegmentStorageConsumer mRuleBasedSegmentStorage;
     private final DefaultConditionsProvider mDefaultConditionsProvider;
     private EmptyMySegmentsStorage mEmptyMySegmentsStorage;
 
@@ -68,7 +68,7 @@ public class ParserCommons {
         mDefaultConditionsProvider = checkNotNull(defaultConditionsProvider);
     }
 
-    public void setRuleBasedSegmentStorage(@NonNull RuleBasedSegmentStorage ruleBasedSegmentStorage) {
+    public void setRuleBasedSegmentStorage(@NonNull RuleBasedSegmentStorageConsumer ruleBasedSegmentStorage) {
         mRuleBasedSegmentStorage = checkNotNull(ruleBasedSegmentStorage);
     }
 

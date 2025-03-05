@@ -6,9 +6,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.engine.experiments.ParsedRuleBasedSegment;
@@ -17,15 +17,16 @@ import io.split.android.engine.experiments.RuleBasedSegmentParser;
 public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
 
     private final ConcurrentHashMap<String, RuleBasedSegment> mInMemorySegments;
+    @Nullable
     private final RuleBasedSegmentParser mParser;
-    private final PersistentRuleBasedSegmentStorage mPersistentStorage;
-    private volatile long mChangeNumber;
+    private final RuleBasedSegmentStorageProducer mProducer;
+    private final AtomicLong mChangeNumberRef;
 
-    public RuleBasedSegmentStorageImpl(@NonNull PersistentRuleBasedSegmentStorage persistentStorage, @NonNull RuleBasedSegmentParser parser) {
+    public RuleBasedSegmentStorageImpl(@NonNull PersistentRuleBasedSegmentStorage persistentStorage, @Nullable RuleBasedSegmentParser parser) {
         mInMemorySegments = new ConcurrentHashMap<>();
         mParser = checkNotNull(parser);
-        mPersistentStorage = checkNotNull(persistentStorage);
-        mChangeNumber = -1;
+        mChangeNumberRef = new AtomicLong(-1);
+        mProducer = new RuleBasedSegmentStorageProducerImpl(persistentStorage, mInMemorySegments, mChangeNumberRef);
     }
 
     @Override
@@ -40,34 +41,12 @@ public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
 
     @Override
     public synchronized boolean update(@NonNull Set<RuleBasedSegment> toAdd, @NonNull Set<RuleBasedSegment> toRemove, long changeNumber) {
-        boolean appliedUpdates = false;
-
-        if (toAdd != null) {
-            if (!toAdd.isEmpty()) {
-                for (RuleBasedSegment segment : toAdd) {
-                    mInMemorySegments.put(segment.getName(), segment);
-                }
-
-                appliedUpdates = true;
-            }
-        }
-
-        if (toRemove != null) {
-            if (!toRemove.isEmpty()) {
-                for (RuleBasedSegment segment : toRemove) {
-                    mInMemorySegments.remove(segment.getName());
-                }
-            }
-        }
-
-        mChangeNumber = changeNumber;
-
-        return appliedUpdates;
+        return mProducer.update(toAdd, toRemove, changeNumber);
     }
 
     @Override
     public long getChangeNumber() {
-        return mChangeNumber;
+        return mChangeNumberRef.get();
     }
 
     @Override
@@ -87,17 +66,12 @@ public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
     @WorkerThread
     @Override
     public synchronized void loadLocal() {
-        RuleBasedSegmentSnapshot snapshot = mPersistentStorage.getSnapshot();
-        Map<String, RuleBasedSegment> segments = snapshot.getSegments();
-        mChangeNumber = snapshot.getChangeNumber();
-        mInMemorySegments.putAll(segments);
+        mProducer.loadLocal();
     }
 
     @WorkerThread
     @Override
     public void clear() {
-        mInMemorySegments.clear();
-        mChangeNumber = -1;
-        mPersistentStorage.clear();
+        mProducer.clear();
     }
 }

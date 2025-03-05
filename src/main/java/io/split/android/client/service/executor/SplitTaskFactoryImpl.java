@@ -48,6 +48,7 @@ import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 
@@ -64,6 +65,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final SplitChangeProcessor mSplitChangeProcessor;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final List<SplitFilter> mFilters;
+    private final RuleBasedSegmentStorageProducer mRuleBasedSegmentStorageProducer;
 
     @SuppressLint("VisibleForTests")
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
@@ -90,6 +92,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
+                    mRuleBasedSegmentStorageProducer,
                     mTelemetryRuntimeProducer,
                     new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()),
                     flagsSpecFromConfig);
