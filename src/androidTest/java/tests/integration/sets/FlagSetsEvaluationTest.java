@@ -31,6 +31,7 @@ import io.split.android.client.SplitFilter;
 import io.split.android.client.SplitResult;
 import io.split.android.client.SyncConfig;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
@@ -166,6 +167,6 @@ public class FlagSetsEvaluationTest {
         SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
         parsedChange.since = parsedChange.till;
 
-        return Json.toJson(parsedChange);
+        return Json.toJson(TargetingRulesChange.create(parsedChange));
     }
 }

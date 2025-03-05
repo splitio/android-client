@@ -23,6 +23,7 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
@@ -155,6 +156,6 @@ public class LargeSegmentTestHelper {
         parsedChange.since = since;
         parsedChange.till = till;
 
-        return Json.toJson(parsedChange);
+        return Json.toJson(TargetingRulesChange.create(parsedChange));
     }
 }
