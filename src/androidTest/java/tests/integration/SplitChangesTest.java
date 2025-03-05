@@ -31,6 +31,7 @@ import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
@@ -94,7 +95,7 @@ public class SplitChangesTest {
                             mLatchs.get(currReq - 1).countDown();
                         }
                         String changes = mJsonChanges.get(currReq);
-                        return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.splitChangesJsonToTargetingRulesChangeJson(changes));
+                        return new MockResponse().setResponseCode(200).setBody(changes);
                     } else if (currReq == mLatchs.size()) {
                         mLatchs.get(currReq - 1).countDown();
                     }
@@ -223,7 +224,7 @@ public class SplitChangesTest {
             p1.size = (even ? 100 : 0);
             p2.treatment = "off_" + i;
             p2.size = (even ? 0 : 100);
-            mJsonChanges.add(Json.toJson(change));
+            mJsonChanges.add(Json.toJson(TargetingRulesChange.create(change)));
         }
     }
 

@@ -1,7 +1,10 @@
 package io.split.android.client.dtos;
 
+import androidx.annotation.VisibleForTesting;
+
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RuleBasedSegmentChange {
@@ -25,5 +28,14 @@ public class RuleBasedSegmentChange {
 
     public List<RuleBasedSegment> getSegments() {
         return segments;
+    }
+
+    @VisibleForTesting
+    public static RuleBasedSegmentChange createEmpty() {
+        RuleBasedSegmentChange ruleBasedSegmentChange = new RuleBasedSegmentChange();
+        ruleBasedSegmentChange.segments = new ArrayList<>();
+        ruleBasedSegmentChange.since = -1;
+        ruleBasedSegmentChange.till = -1;
+        return ruleBasedSegmentChange;
     }
 }

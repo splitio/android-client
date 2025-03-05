@@ -274,7 +274,7 @@ public class ControlTest {
 
     private String loadSplitChanges() {
         String jsonChange = new FileHelper().loadFileContent(mContext, "simple_split.json");
-        SplitChange change = Json.fromJson(jsonChange, SplitChange.class);
+        SplitChange change = Json.fromJson(jsonChange, TargetingRulesChange.class).getFeatureFlagsChange();
         change.since = 500;
         change.till = 500;
         return Json.toJson(TargetingRulesChange.create(change));

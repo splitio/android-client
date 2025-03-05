@@ -428,10 +428,6 @@ public class IntegrationHelper {
         return Json.fromJson(json, TargetingRulesChange.class).getFeatureFlagsChange();
     }
 
-    public static String splitChangesJsonToTargetingRulesChangeJson(String change) {
-        return Json.toJson(TargetingRulesChange.create(Json.fromJson(change, SplitChange.class)));
-    }
-
     /**
      * A simple interface to allow us to define the response for a given path
      */

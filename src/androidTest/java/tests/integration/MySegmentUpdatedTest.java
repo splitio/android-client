@@ -37,6 +37,7 @@ import io.split.android.client.dtos.MatcherType;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.dtos.UserDefinedSegmentMatcherData;
 import io.split.android.client.events.SplitEvent;
@@ -115,10 +116,10 @@ public class MySegmentUpdatedTest {
                         isFirstChangesReq = false;
                         String change = mJsonChanges.get(0);
                         return new MockResponse().setResponseCode(200)
-                                .setBody(IntegrationHelper.splitChangesJsonToTargetingRulesChangeJson(change));
+                                .setBody(change);
                     }
                     return new MockResponse().setResponseCode(200)
-                            .setBody(IntegrationHelper.splitChangesJsonToTargetingRulesChangeJson(emptyChanges()));
+                            .setBody(emptyChanges());
 
 
                 } else if (request.getPath().contains("/testImpressions/bulk")) {
@@ -239,7 +240,7 @@ public class MySegmentUpdatedTest {
         split.conditions.add(0, inSegmentOneCondition);
         split.conditions.add(0, inSegmentTwoCondition);
 
-        mJsonChanges.add(Json.toJson(change));
+        mJsonChanges.add(Json.toJson(TargetingRulesChange.create(change)));
     }
 
     private Condition inSegmentCondition(String name) {

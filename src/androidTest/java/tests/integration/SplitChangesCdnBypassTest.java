@@ -91,7 +91,7 @@ public class SplitChangesCdnBypassTest {
         TestingHelper.delay(500);
 
         pushSplitsUpdateMessage();
-        boolean await = mBypassLatch.await(200, TimeUnit.SECONDS);
+        boolean await = mBypassLatch.await(20, TimeUnit.SECONDS);
         assertTrue(await);
 
         client.destroy();
@@ -121,12 +121,12 @@ public class SplitChangesCdnBypassTest {
 
                 } else if (uri.getPath().contains("/splitChanges")) {
                     System.out.println("URL HIT: " + uri.getPath());
-                    if (uri.getQuery().contains("till=3") && uri.getQuery().contains("since=3")) {
-                        return getSplitsMockResponse("3", "4");
-                    }
-
                     if (uri.getQuery().contains("till")) {
                         mBypassLatch.countDown();
+                    }
+
+                    if (uri.getQuery().contains("till=3") && uri.getQuery().contains("since=3")) {
+                        return getSplitsMockResponse("3", "4");
                     }
 
                     if (uri.getQuery().contains("since=-1")) {

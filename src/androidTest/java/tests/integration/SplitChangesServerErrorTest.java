@@ -191,7 +191,7 @@ public class SplitChangesServerErrorTest {
             p1.size = (i < 2 ? 100 : 0);
             p2.treatment = "off";
             p2.size = (i < 2 ? 0 : 100);
-            mJsonChanges.add(Json.toJson(change));
+            mJsonChanges.add(Json.toJson(TargetingRulesChange.create(change)));
         }
     }
 

@@ -35,6 +35,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.GeneralInfoEntity;
@@ -243,7 +244,7 @@ public class SplitsKillProcessTest {
         split.defaultTreatment = "off";
         mSplitChange.since = CHANGE_NUMBER;
         mSplitChange.till = CHANGE_NUMBER;
-        return Json.toJson(mSplitChange);
+        return Json.toJson(TargetingRulesChange.create(mSplitChange));
     }
 
     private Split parseEntity(SplitEntity entity) {
