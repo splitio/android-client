@@ -4,6 +4,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import java.util.Set;
@@ -22,11 +23,22 @@ public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
     private final RuleBasedSegmentStorageProducer mProducer;
     private final AtomicLong mChangeNumberRef;
 
-    public RuleBasedSegmentStorageImpl(@NonNull PersistentRuleBasedSegmentStorage persistentStorage, @Nullable RuleBasedSegmentParser parser) {
+    public RuleBasedSegmentStorageImpl(@NonNull PersistentRuleBasedSegmentStorage persistentStorage, @NonNull RuleBasedSegmentParser parser) {
         mInMemorySegments = new ConcurrentHashMap<>();
         mParser = checkNotNull(parser);
         mChangeNumberRef = new AtomicLong(-1);
         mProducer = new RuleBasedSegmentStorageProducerImpl(persistentStorage, mInMemorySegments, mChangeNumberRef);
+    }
+
+    @VisibleForTesting
+    RuleBasedSegmentStorageImpl(RuleBasedSegmentStorageProducer producer,
+                                @NonNull RuleBasedSegmentParser parser,
+                                @NonNull ConcurrentHashMap<String, RuleBasedSegment> inMemorySegmentsMap,
+                                @NonNull AtomicLong changeNumberRef) {
+        mInMemorySegments = checkNotNull(inMemorySegmentsMap);
+        mParser = checkNotNull(parser);
+        mChangeNumberRef = checkNotNull(changeNumberRef);
+        mProducer = checkNotNull(producer);
     }
 
     @Override

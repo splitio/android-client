@@ -4,6 +4,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,6 +38,8 @@ public class RuleBasedSegmentStorageProducerImpl implements RuleBasedSegmentStor
 
                 appliedUpdates = true;
             }
+        } else {
+            toAdd = new HashSet<>();
         }
 
         if (toRemove != null) {
@@ -45,9 +48,12 @@ public class RuleBasedSegmentStorageProducerImpl implements RuleBasedSegmentStor
                     mInMemorySegments.remove(segment.getName());
                 }
             }
+        } else {
+            toRemove = new HashSet<>();
         }
 
         mChangeNumberRef.set(changeNumber);
+        mPersistentStorage.update(toAdd, toRemove, changeNumber);
 
         return appliedUpdates;
     }
