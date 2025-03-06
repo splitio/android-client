@@ -28,7 +28,6 @@ import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.service.sseclient.BackoffCounter;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.OperationType;
