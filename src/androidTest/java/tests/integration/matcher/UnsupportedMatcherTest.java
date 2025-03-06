@@ -162,10 +162,6 @@ public class UnsupportedMatcherTest {
     }
 
     private String loadSplitChanges() {
-        FileHelper fileHelper = new FileHelper();
-        String change = fileHelper.loadFileContent(mContext, "splitchanges_unsupported_matcher.json");
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
-        parsedChange.since = parsedChange.till;
-        return Json.toJson(parsedChange);
+        return IntegrationHelper.loadSplitChanges(mContext, "splitchanges_unsupported_matcher.json");
     }
 }

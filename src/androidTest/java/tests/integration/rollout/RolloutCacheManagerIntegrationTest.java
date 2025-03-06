@@ -300,7 +300,7 @@ public class RolloutCacheManagerIntegrationTest {
         FileHelper fileHelper = new FileHelper();
         String s = fileHelper.loadFileContent(mContext, "attributes_test_split_change.json");
 
-        SplitChange changes = Json.fromJson(s, SplitChange.class);
+        SplitChange changes = IntegrationHelper.getChangeFromJsonString(s);
 
         return changes.splits;
     }

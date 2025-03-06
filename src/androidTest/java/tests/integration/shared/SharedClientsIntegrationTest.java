@@ -261,7 +261,7 @@ public class SharedClientsIntegrationTest {
     }
 
     private void insertSplitsIntoDb() {
-        SplitChange change = Json.fromJson(mJsonChanges.get(0), SplitChange.class);
+        SplitChange change = IntegrationHelper.getChangeFromJsonString(mJsonChanges.get(0));
         List<SplitEntity> entities = new ArrayList<>();
         for (Split split : change.splits) {
             String splitName = split.name;

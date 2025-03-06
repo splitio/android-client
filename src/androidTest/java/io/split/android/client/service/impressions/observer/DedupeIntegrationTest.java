@@ -3,7 +3,6 @@ package io.split.android.client.service.impressions.observer;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-
 import static helper.IntegrationHelper.getSinceFromUri;
 
 import android.content.Context;
@@ -29,13 +28,11 @@ import fake.HttpResponseMockDispatcher;
 import fake.LifecycleManagerStub;
 import fake.SynchronizerSpyImpl;
 import helper.DatabaseHelper;
-import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
@@ -341,10 +338,6 @@ public class DedupeIntegrationTest {
     }
 
     private String loadSplitChanges() {
-        FileHelper fileHelper = new FileHelper();
-        String change = fileHelper.loadFileContent(mContext, "split_changes_1.json");
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
-        parsedChange.since = parsedChange.till;
-        return Json.toJson(parsedChange);
+        return IntegrationHelper.loadSplitChanges(mContext, "split_changes_1.json");
     }
 }
