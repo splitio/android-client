@@ -1,49 +1,56 @@
 {
-  "splits": [
-    {
-      "trafficTypeName": "user",
-      "name": "ls_split",
-      "trafficAllocation": 100,
-      "trafficAllocationSeed": -285565213,
-      "seed": -1992295819,
-      "status": "ACTIVE",
-      "killed": false,
-      "defaultTreatment": "off",
-      "changeNumber": 1506703262916,
-      "algo": 2,
-      "conditions": [
-        {
-          "conditionType": "WHITELIST",
-          "matcherGroup": {
-            "combiner": "AND",
-            "matchers": [
+  "ff": {
+    "splits": [
+      {
+        "trafficTypeName": "user",
+        "name": "ls_split",
+        "trafficAllocation": 100,
+        "trafficAllocationSeed": -285565213,
+        "seed": -1992295819,
+        "status": "ACTIVE",
+        "killed": false,
+        "defaultTreatment": "off",
+        "changeNumber": 1506703262916,
+        "algo": 2,
+        "conditions": [
+          {
+            "conditionType": "WHITELIST",
+            "matcherGroup": {
+              "combiner": "AND",
+              "matchers": [
+                {
+                  "keySelector": null,
+                  "matcherType": "IN_LARGE_SEGMENT",
+                  "negate": false,
+                  "userDefinedLargeSegmentMatcherData": {
+                    "largeSegmentName": "large-segment1"
+                  },
+                  "whitelistMatcherData": null,
+                  "unaryNumericMatcherData": null,
+                  "betweenMatcherData": null,
+                  "booleanMatcherData": null,
+                  "dependencyMatcherData": null,
+                  "stringMatcherData": null
+                }
+              ]
+            },
+            "partitions": [
               {
-                "keySelector": null,
-                "matcherType": "IN_LARGE_SEGMENT",
-                "negate": false,
-                "userDefinedLargeSegmentMatcherData": {
-                  "largeSegmentName": "large-segment1"
-                },
-                "whitelistMatcherData": null,
-                "unaryNumericMatcherData": null,
-                "betweenMatcherData": null,
-                "booleanMatcherData": null,
-                "dependencyMatcherData": null,
-                "stringMatcherData": null
+                "treatment": "on",
+                "size": 100
               }
-            ]
-          },
-          "partitions": [
-            {
-              "treatment": "on",
-              "size": 100
-            }
-          ],
-          "label": "whitelisted segment"
-        }
-      ]
-    }
-  ],
-  "since": 1506703262916,
-  "till": 1506703262916
+            ],
+            "label": "whitelisted segment"
+          }
+        ]
+      }
+    ],
+    "since": 1506703262916,
+    "till": 1506703262916
+  },
+  "rbs": {
+    "d": [],
+    "s": 1506703262911,
+    "t": 1506703262911
+  }
 }

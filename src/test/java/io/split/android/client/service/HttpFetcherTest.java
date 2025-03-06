@@ -27,6 +27,7 @@ import java.util.Set;
 import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpMethod;
@@ -40,7 +41,7 @@ import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpFetcherImpl;
 import io.split.android.client.service.http.HttpResponseParser;
 import io.split.android.client.service.mysegments.AllSegmentsResponseParser;
-import io.split.android.client.service.splits.SplitChangeResponseParser;
+import io.split.android.client.service.rules.TargetingRulesResponseParser;
 
 public class HttpFetcherTest {
 
@@ -52,7 +53,7 @@ public class HttpFetcherTest {
     private URI mUrl;
     private URI mSplitChangesUrl;
     private URI mMySegmentsUrl;
-    private final HttpResponseParser<SplitChange> mSplitChangeResponseParser = new SplitChangeResponseParser();
+    private final HttpResponseParser<TargetingRulesChange> mSplitChangeResponseParser = new TargetingRulesResponseParser();
     private final HttpResponseParser<AllSegmentsChange> mMySegmentsResponseParser = new AllSegmentsResponseParser();
 
     @Before
@@ -67,7 +68,7 @@ public class HttpFetcherTest {
     public void testNoReachableUrl() throws URISyntaxException {
 
 
-        HttpFetcher<SplitChange> fetcher = new HttpFetcherImpl<>(mClientMock, mUrl, mSplitChangeResponseParser);
+        HttpFetcher<TargetingRulesChange> fetcher = new HttpFetcherImpl<>(mClientMock, mUrl, mSplitChangeResponseParser);
         boolean isReachable = true;
         try {
             Map<String, Object> params = new HashMap<>();
@@ -90,12 +91,12 @@ public class HttpFetcherTest {
         when(request.execute()).thenReturn(response);
         when(mClientMock.request(uri, HttpMethod.GET, null, null)).thenReturn(request);
 
-        HttpFetcher<SplitChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mSplitChangeResponseParser);
+        HttpFetcher<TargetingRulesChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mSplitChangeResponseParser);
         SplitChange change = null;
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("since", -1);
-            change = fetcher.execute(params, null);
+            change = fetcher.execute(params, null).getFeatureFlagsChange(); // TODO
         } catch (HttpFetcherException e) {
             exceptionWasThrown = true;
         }
@@ -116,22 +117,24 @@ public class HttpFetcherTest {
 
         URI uri = new URIBuilder(mSplitChangesUrl).addParameter("since", "" + -1).build();
         HttpRequest request = mock(HttpRequest.class);
-
         HttpResponse response = new HttpResponseImpl(200, dummySplitChangeResponse());
+
         when(request.execute()).thenReturn(response);
         when(mClientMock.request(uri, HttpMethod.GET, null, headers)).thenReturn(request);
 
-        HttpFetcher<SplitChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mSplitChangeResponseParser);
+        HttpFetcher<TargetingRulesChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mSplitChangeResponseParser);
 
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("since", -1);
-            SplitChange change = fetcher.execute(params, headers);
+            SplitChange change = fetcher.execute(params, headers).getFeatureFlagsChange(); // TODO
         } catch (HttpFetcherException e) {
+            e.printStackTrace();
             exceptionWasThrown = true;
         }
 
         ArgumentCaptor<Map<String, String>> headersCaptor = ArgumentCaptor.forClass(Map.class);
+        Assert.assertFalse(exceptionWasThrown);
         verify(mClientMock).request(eq(uri), eq(HttpMethod.GET), eq(null), headersCaptor.capture());
         Assert.assertEquals("value1", headersCaptor.getValue().get("header1"));
     }
@@ -145,13 +148,13 @@ public class HttpFetcherTest {
         when(request.execute()).thenReturn(response);
         when(mClientMock.request(uri, HttpMethod.GET, null, null)).thenReturn(request);
 
-        HttpFetcher<SplitChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mSplitChangeResponseParser);
+        HttpFetcher<TargetingRulesChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mSplitChangeResponseParser);
         SplitChange change = null;
         boolean failed = false;
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("since", -1);
-            change = fetcher.execute(params, null);
+            change = fetcher.execute(params, null).getFeatureFlagsChange(); // TODO
         } catch (HttpFetcherException e) {
             failed = true;
         }
@@ -169,13 +172,13 @@ public class HttpFetcherTest {
         when(request.execute()).thenReturn(response);
         when(mClientMock.request(uri, HttpMethod.GET, null, null)).thenReturn(request);
 
-        HttpFetcher<SplitChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mSplitChangeResponseParser);
+        HttpFetcher<TargetingRulesChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mSplitChangeResponseParser);
         SplitChange change = null;
         boolean failed = false;
         try {
             Map<String, Object> params = new HashMap<>();
             params.put("since", -1);
-            change = fetcher.execute(params, null);
+            change = fetcher.execute(params, null).getFeatureFlagsChange(); // TODO
         } catch (HttpFetcherException e) {
             failed = true;
         }
@@ -261,7 +264,7 @@ public class HttpFetcherTest {
 
     @Test
     public void paramOrderIsCorrect() throws HttpFetcherException, HttpException {
-        HttpFetcher<SplitChange> fetcher = getSplitChangeHttpFetcher();
+        HttpFetcher<TargetingRulesChange> fetcher = getSplitChangeHttpFetcher();
 
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("s", "1.1");
@@ -276,7 +279,7 @@ public class HttpFetcherTest {
 
     @Test
     public void paramOrderWithoutTillIsCorrect() throws HttpException, HttpFetcherException {
-        HttpFetcher<SplitChange> fetcher = getSplitChangeHttpFetcher();
+        HttpFetcher<TargetingRulesChange> fetcher = getSplitChangeHttpFetcher();
 
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("s", "1.1");
@@ -290,7 +293,7 @@ public class HttpFetcherTest {
 
     @Test
     public void paramOrderWithoutSpecIsCorrect() throws HttpException, HttpFetcherException {
-        HttpFetcher<SplitChange> fetcher = getSplitChangeHttpFetcher();
+        HttpFetcher<TargetingRulesChange> fetcher = getSplitChangeHttpFetcher();
 
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("since", "-1");
@@ -304,7 +307,7 @@ public class HttpFetcherTest {
 
     @Test
     public void paramOrderWithoutSetsIsCorrect() throws HttpException {
-        HttpFetcher<SplitChange> fetcher = getSplitChangeHttpFetcher();
+        HttpFetcher<TargetingRulesChange> fetcher = getSplitChangeHttpFetcher();
 
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("till", "100");
@@ -322,7 +325,7 @@ public class HttpFetcherTest {
 
     @Test
     public void httpExceptionWithStatusCodeAddsStatusCodeToHttpFetcherException() throws HttpException {
-        HttpFetcher<SplitChange> fetcher = getSplitChangeHttpFetcher();
+        HttpFetcher<TargetingRulesChange> fetcher = getSplitChangeHttpFetcher();
 
         HttpRequest request = mock(HttpRequest.class);
         when(request.execute()).thenThrow(new HttpException("Not found", 404));
@@ -341,12 +344,12 @@ public class HttpFetcherTest {
     }
 
     @NonNull
-    private HttpFetcher<SplitChange> getSplitChangeHttpFetcher() throws HttpException {
+    private HttpFetcher<TargetingRulesChange> getSplitChangeHttpFetcher() throws HttpException {
         HttpRequest mockRequest = mock(HttpRequest.class);
         when(mockRequest.execute()).thenReturn(new HttpResponseImpl(200, dummySplitChangeResponse()));
         when(mClientMock.request(any(), any(), any(), any())).thenReturn(mockRequest);
 
-        HttpFetcher<SplitChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mSplitChangeResponseParser);
+        HttpFetcher<TargetingRulesChange> fetcher = new HttpFetcherImpl<>(mClientMock, mSplitChangesUrl, mSplitChangeResponseParser);
         return fetcher;
     }
 
@@ -361,9 +364,26 @@ public class HttpFetcherTest {
     }
 
     private String dummySplitChangeResponse() {
-        return "{\"splits\":[{\"name\":\"sample_feature\", \"status\":\"ACTIVE\"}],\n" +
-                "  \"since\":-1,\n" +
-                "  \"till\":100}";
+//        return "{\"splits\":[{\"name\":\"sample_feature\", \"status\":\"ACTIVE\"}],\n" +
+//                "  \"since\":-1,\n" +
+//                "  \"till\":100}";
+        return "{\n" +
+                "  \"ff\": {\n" +
+                "    \"splits\": [\n" +
+                "      {\n" +
+                "        \"name\": \"sample_feature\",\n" +
+                "        \"status\": \"ACTIVE\"\n" +
+                "      }\n" +
+                "    ],\n" +
+                "    \"since\": -1,\n" +
+                "    \"till\": 100\n" +
+                "  },\n" +
+                "  \"rbs\": {\n" +
+                "    \"d\": [],\n" +
+                "    \"s\": -1,\n" +
+                "    \"t\": 50\n" +
+                "  }\n" +
+                "}";
     }
 
     private String dummyMySegmentsResponse() {

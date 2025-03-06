@@ -40,6 +40,7 @@ import io.split.android.client.TestingConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.network.HttpClient;
@@ -99,7 +100,7 @@ public class IntegrationHelper {
     }
 
     public static String emptySplitChanges(long till) {
-        return String.format("{\"splits\":[], \"since\": %d, \"till\": %d }", till, till);
+        return String.format("{\"ff\":{\"splits\":[], \"since\": %d, \"till\": %d},\"rbs\":{\"d\":[],\"s\":%d,\"t\":%d}}", till, till, till, till);
     }
 
     public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,
@@ -317,9 +318,9 @@ public class IntegrationHelper {
     public static String loadSplitChanges(Context context, String fileName) {
         FileHelper fileHelper = new FileHelper();
         String change = fileHelper.loadFileContent(context, fileName);
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
+        SplitChange parsedChange = Json.fromJson(change, TargetingRulesChange.class).getFeatureFlagsChange();
         parsedChange.since = parsedChange.till;
-        return Json.toJson(parsedChange);
+        return Json.toJson(TargetingRulesChange.create(parsedChange));
     }
 
     /**
@@ -421,6 +422,10 @@ public class IntegrationHelper {
         }
 
         return queryPairs;
+    }
+
+    public static SplitChange getChangeFromJsonString(String json) {
+        return Json.fromJson(json, TargetingRulesChange.class).getFeatureFlagsChange();
     }
 
     /**

@@ -9,7 +9,7 @@ import java.util.List;
 import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.mysegments.MySegmentsFetcherFactory;
@@ -20,7 +20,7 @@ import io.split.android.client.telemetry.model.Config;
 import io.split.android.client.telemetry.model.Stats;
 
 public class SplitApiFacade {
-    private final HttpFetcher<SplitChange> mSplitFetcher;
+    private final HttpFetcher<TargetingRulesChange> mSplitFetcher;
     private final MySegmentsFetcherFactory mMySegmentsFetcherFactory;
     private final HttpFetcher<SseAuthenticationResponse> mSseAuthenticationFetcher;
     private final HttpRecorder<List<Event>> mEventsRecorder;
@@ -30,7 +30,7 @@ public class SplitApiFacade {
     private final HttpRecorder<Config> mTelemetryConfigRecorder;
     private final HttpRecorder<Stats> mTelemetryStatsRecorder;
 
-    public SplitApiFacade(@NonNull HttpFetcher<SplitChange> splitFetcher,
+    public SplitApiFacade(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
                           @NonNull MySegmentsFetcherFactory mySegmentsFetcherFactory,
                           @NonNull HttpFetcher<SseAuthenticationResponse> sseAuthenticationFetcher,
                           @NonNull HttpRecorder<List<Event>> eventsRecorder,
@@ -50,7 +50,7 @@ public class SplitApiFacade {
         mTelemetryStatsRecorder = checkNotNull(telemetryStatsRecorder);
     }
 
-    public HttpFetcher<SplitChange> getSplitFetcher() {
+    public HttpFetcher<TargetingRulesChange> getSplitFetcher() {
         return mSplitFetcher;
     }
 

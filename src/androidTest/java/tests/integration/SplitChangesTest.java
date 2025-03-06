@@ -31,6 +31,7 @@ import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.impressions.Impression;
@@ -99,7 +100,7 @@ public class SplitChangesTest {
                         mLatchs.get(currReq - 1).countDown();
                     }
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\": 1567456938865, \"till\": 1567456938865 }");
+                            .setBody(IntegrationHelper.emptySplitChanges(1567456938865L));
 
 
                 } else if (request.getPath().contains("/testImpressions/bulk")) {
@@ -208,7 +209,7 @@ public class SplitChangesTest {
         String jsonChange = fileHelper.loadFileContent(mContext, "splitchanges_int_test.json");
         long prevChangeNumber = 0;
         for (int i = 0; i < 4; i++) {
-            SplitChange change = Json.fromJson(jsonChange, SplitChange.class);
+            SplitChange change = IntegrationHelper.getChangeFromJsonString(jsonChange);
             if (prevChangeNumber != 0) {
                 change.since = prevChangeNumber;
                 change.till = prevChangeNumber + CHANGE_INTERVAL;
@@ -223,7 +224,7 @@ public class SplitChangesTest {
             p1.size = (even ? 100 : 0);
             p2.treatment = "off_" + i;
             p2.size = (even ? 0 : 100);
-            mJsonChanges.add(Json.toJson(change));
+            mJsonChanges.add(Json.toJson(TargetingRulesChange.create(change)));
         }
     }
 

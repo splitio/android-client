@@ -278,10 +278,6 @@ public class ImpressionsToggleTest {
     }
 
     private String loadSplitChanges() {
-        FileHelper fileHelper = new FileHelper();
-        String change = fileHelper.loadFileContent(mContext, "split_changes_imp_toggle.json");
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
-        parsedChange.since = parsedChange.till;
-        return Json.toJson(parsedChange);
+        return IntegrationHelper.loadSplitChanges(mContext, "split_changes_imp_toggle.json");
     }
 }
