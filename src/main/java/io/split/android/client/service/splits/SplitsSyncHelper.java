@@ -38,6 +38,7 @@ public class SplitsSyncHelper {
 
     private static final String SINCE_PARAM = "since";
     private static final String TILL_PARAM = "till";
+    private static final String RBS_SINCE_PARAM = "rbSince";
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_WAIT;
 
     private final HttpFetcher<TargetingRulesChange> mSplitFetcher;
@@ -80,8 +81,8 @@ public class SplitsSyncHelper {
         mFlagsSpec = flagsSpec;
     }
 
-    public SplitTaskExecutionInfo sync(long till, int onDemandFetchBackoffMaxRetries) {
-        return sync(till, false, true, false, onDemandFetchBackoffMaxRetries);
+    public SplitTaskExecutionInfo sync(SinceChangeNumbers till, int onDemandFetchBackoffMaxRetries) {
+        return sync(till.getFlagsSince() /* TODO */, false, true, false, onDemandFetchBackoffMaxRetries);
     }
 
     public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
@@ -224,5 +225,23 @@ public class SplitsSyncHelper {
             return SplitHttpHeadersBuilder.noCacheHeaders();
         }
         return null;
+    }
+
+    public static class SinceChangeNumbers {
+        private final long mFlagsSince;
+        private final long mRbsSince;
+
+        public SinceChangeNumbers(long flagsSince, long rbsSince) {
+            mFlagsSince = flagsSince;
+            mRbsSince = rbsSince;
+        }
+
+        public long getFlagsSince() {
+            return mFlagsSince;
+        }
+
+        public long getRbsSince() {
+            return mRbsSince;
+        }
     }
 }

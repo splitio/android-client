@@ -13,24 +13,31 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.synchronizer.SplitsChangeChecker;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.logger.Logger;
 
 public class SplitsUpdateTask implements SplitTask {
 
     private final SplitsStorage mSplitsStorage;
-    private final Long mChangeNumber;
+    private Long mChangeNumber;
+    private Long mRbsChangeNumber;
     private final SplitsSyncHelper mSplitsSyncHelper;
     private final ISplitEventsManager mEventsManager;
     private SplitsChangeChecker mChangeChecker;
+    private final RuleBasedSegmentStorage mRuleBasedSegmentStorage;
 
     public SplitsUpdateTask(SplitsSyncHelper splitsSyncHelper,
                             SplitsStorage splitsStorage,
+                            RuleBasedSegmentStorage ruleBasedSegmentStorage,
                             long since,
+                            long rbsSince,
                             ISplitEventsManager eventsManager) {
         mSplitsStorage = checkNotNull(splitsStorage);
+        mRuleBasedSegmentStorage = checkNotNull(ruleBasedSegmentStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
         mChangeNumber = since;
+        mRbsChangeNumber = rbsSince;
         mEventsManager = checkNotNull(eventsManager);
         mChangeChecker = new SplitsChangeChecker();
     }
@@ -40,21 +47,26 @@ public class SplitsUpdateTask implements SplitTask {
     public SplitTaskExecutionInfo execute() {
 
         if (mChangeNumber == null || mChangeNumber == 0) {
-            Logger.e("Could not update split. Invalid change number " + mChangeNumber);
-            return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
+            mChangeNumber = mSplitsStorage.getTill();
+        }
+
+        if (mRbsChangeNumber == null || mRbsChangeNumber == 0) {
+            mRbsChangeNumber = mRuleBasedSegmentStorage.getChangeNumber();
         }
 
         long storedChangeNumber = mSplitsStorage.getTill();
-        if (mChangeNumber <= storedChangeNumber) {
-            Logger.d("Received change number is previous than stored one. " +
+        long storedRbsChangeNumber = mRuleBasedSegmentStorage.getChangeNumber();
+        if (mChangeNumber <= storedChangeNumber && mRbsChangeNumber <= storedRbsChangeNumber) {
+            Logger.d("Received change numbers are previous than stored ones. " +
                     "Avoiding update.");
             return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
         }
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(mChangeNumber, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(mChangeNumber, mRbsChangeNumber), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
         if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
             SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
-            if (mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {
+            if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill()) ||
+                mChangeChecker.changeNumberIsNewer(storedRbsChangeNumber, mRuleBasedSegmentStorage.getChangeNumber())) {
                 event = SplitInternalEvent.SPLITS_UPDATED;
             }
             mEventsManager.notifyInternalEvent(event);

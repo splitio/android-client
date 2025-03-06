@@ -25,7 +25,7 @@ public interface SplitTaskFactory extends TelemetryTaskFactory, ImpressionsTaskF
 
     SplitKillTask createSplitKillTask(Split split);
 
-    SplitsUpdateTask createSplitsUpdateTask(long since);
+    SplitsUpdateTask createSplitsUpdateTask(Long since, Long rbsSince);
 
     SplitInPlaceUpdateTask createSplitsUpdateTask(Split featureFlag, long since);
 

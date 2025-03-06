@@ -6,7 +6,7 @@ public interface FeatureFlagsSynchronizer {
 
     void loadAndSynchronize();
 
-    void synchronize(long since);
+    void synchronize(Long since, Long rbsSince);
 
     void synchronize();
 

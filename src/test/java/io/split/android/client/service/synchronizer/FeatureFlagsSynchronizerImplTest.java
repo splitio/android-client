@@ -77,9 +77,9 @@ public class FeatureFlagsSynchronizerImplTest {
     @Test
     public void synchronizeSplitsWithSince() {
         SplitsUpdateTask task = mock(SplitsUpdateTask.class);
-        when(mTaskFactory.createSplitsUpdateTask(1000)).thenReturn(task);
+        when(mTaskFactory.createSplitsUpdateTask(1000L, -1L)).thenReturn(task);
 
-        mFeatureFlagsSynchronizer.synchronize(1000);
+        mFeatureFlagsSynchronizer.synchronize(1000L, -1L);
 
         verify(mRetryTimerSplitsUpdate).setTask(eq(task), argThat(Objects::nonNull));
         verify(mRetryTimerSplitsUpdate).start();

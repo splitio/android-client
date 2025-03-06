@@ -147,8 +147,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
-    public SplitsUpdateTask createSplitsUpdateTask(long since) {
-        return new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), since, mEventsManager);
+    public SplitsUpdateTask createSplitsUpdateTask(Long since, Long rbsSince) {
+        return new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), mSplitsStorageContainer.getRuleBasedSegmentStorage(), since, rbsSince, mEventsManager);
     }
 
     @Override

@@ -88,7 +88,7 @@ public class SplitsSyncTask implements SplitTask {
     private void notifyInternalEvent(long storedChangeNumber) {
         if (mEventsManager != null) {
             SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
-            if (mChangeChecker.splitsHaveChanged(storedChangeNumber, mSplitsStorage.getTill())) {
+            if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill())) {
                 event = SplitInternalEvent.SPLITS_UPDATED;
             }
 

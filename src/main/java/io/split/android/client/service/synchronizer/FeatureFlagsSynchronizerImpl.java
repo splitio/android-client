@@ -96,9 +96,9 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     }
 
     @Override
-    public void synchronize(long since) {
+    public void synchronize(Long since, Long rbsSince) {
         if (mIsSynchronizing.get()) {
-            mSplitsUpdateRetryTimer.setTask(mSplitTaskFactory.createSplitsUpdateTask(since), mSplitsSyncListener);
+            mSplitsUpdateRetryTimer.setTask(mSplitTaskFactory.createSplitsUpdateTask(since, rbsSince), mSplitsSyncListener);
             mSplitsUpdateRetryTimer.start();
         }
     }
