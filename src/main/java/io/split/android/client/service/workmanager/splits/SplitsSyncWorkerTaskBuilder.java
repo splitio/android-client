@@ -51,6 +51,7 @@ class SplitsSyncWorkerTaskBuilder {
 
             return SplitsSyncTask.buildForBackground(splitsSyncHelper,
                     splitsStorage,
+                    ruleBasedSegmentStorageProducer,
                     splitsFilterQueryString,
                     telemetryStorage);
         } catch (URISyntaxException e) {
