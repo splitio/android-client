@@ -21,9 +21,14 @@ public class TargetingRulesChange {
 
     @VisibleForTesting
     public static TargetingRulesChange create(SplitChange splitChange) {
+        return create(splitChange, RuleBasedSegmentChange.createEmpty());
+    }
+
+    @VisibleForTesting
+    public static TargetingRulesChange create(SplitChange splitChange, RuleBasedSegmentChange ruleBasedSegmentChange) {
         TargetingRulesChange targetingRulesChange = new TargetingRulesChange();
         targetingRulesChange.ff = splitChange;
-        targetingRulesChange.rbs = RuleBasedSegmentChange.createEmpty();
+        targetingRulesChange.rbs = ruleBasedSegmentChange;
         return targetingRulesChange;
     }
 }

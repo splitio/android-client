@@ -231,7 +231,7 @@ public class RuleBasedSegmentStorageImplTest {
         verify(producer).loadLocal();
     }
 
-    static RuleBasedSegment createRuleBasedSegment(String name) {
+    public static RuleBasedSegment createRuleBasedSegment(String name) {
         return new RuleBasedSegment(name,
                 "user",
                 1,
