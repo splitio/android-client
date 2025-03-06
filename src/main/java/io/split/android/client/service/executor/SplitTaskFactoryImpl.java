@@ -65,7 +65,6 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final SplitChangeProcessor mSplitChangeProcessor;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final List<SplitFilter> mFilters;
-    private final RuleBasedSegmentStorageProducer mRuleBasedSegmentStorageProducer;
 
     @SuppressLint("VisibleForTests")
     public SplitTaskFactoryImpl(@NonNull SplitClientConfig splitClientConfig,
@@ -85,6 +84,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mFlagsSpecFromConfig = flagsSpecFromConfig;
         mEventsManager = eventsManager;
         mSplitChangeProcessor = new SplitChangeProcessor(filters, flagSetsFilter);
+        RuleBasedSegmentStorageProducer ruleBasedSegmentStorageProducer = mSplitsStorageContainer.getRuleBasedSegmentStorage();
 
         TelemetryStorage telemetryStorage = mSplitsStorageContainer.getTelemetryStorage();
         mTelemetryRuntimeProducer = telemetryStorage;
@@ -92,7 +92,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
-                    mRuleBasedSegmentStorageProducer,
+                    ruleBasedSegmentStorageProducer,
                     mTelemetryRuntimeProducer,
                     new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()),
                     flagsSpecFromConfig);
@@ -100,6 +100,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
+                    ruleBasedSegmentStorageProducer,
                     mTelemetryRuntimeProducer,
                     flagsSpecFromConfig);
         }

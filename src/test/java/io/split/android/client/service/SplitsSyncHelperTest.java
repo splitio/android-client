@@ -37,6 +37,7 @@ import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.sseclient.BackoffCounter;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.OperationType;
@@ -56,6 +57,8 @@ public class SplitsSyncHelperTest {
     private TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     @Mock
     private BackoffCounter mBackoffCounter;
+    @Mock
+    private RuleBasedSegmentStorageProducer mRuleBasedSegmentStorageProducer;
 
     private SplitsSyncHelper mSplitsSyncHelper;
 
@@ -71,7 +74,7 @@ public class SplitsSyncHelperTest {
         mDefaultParams.put("since", -1L);
         mSecondFetchParams.clear();
         mSecondFetchParams.put("since", 1506703262916L);
-        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mTelemetryRuntimeProducer, mBackoffCounter, "1.1");
+        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mRuleBasedSegmentStorageProducer, mTelemetryRuntimeProducer, mBackoffCounter, "1.1");
         loadSplitChanges();
     }
 

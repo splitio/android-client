@@ -23,7 +23,7 @@ public class TargetingRulesChange {
     public static TargetingRulesChange create(SplitChange splitChange) {
         TargetingRulesChange targetingRulesChange = new TargetingRulesChange();
         targetingRulesChange.ff = splitChange;
-        targetingRulesChange.rbs = new RuleBasedSegmentChange();
+        targetingRulesChange.rbs = RuleBasedSegmentChange.createEmpty();
         return targetingRulesChange;
     }
 }

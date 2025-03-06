@@ -4,7 +4,9 @@ import static androidx.annotation.RestrictTo.Scope.LIBRARY;
 
 import androidx.annotation.RestrictTo;
 
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.observer.PersistentImpressionsObserverCacheStorage;
@@ -31,8 +33,8 @@ import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainerImpl;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
 import io.split.android.client.storage.rbs.PersistentRuleBasedSegmentStorage;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorageImpl;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducerImpl;
 import io.split.android.client.storage.rbs.SqLitePersistentRuleBasedSegmentStorageProvider;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -49,10 +51,6 @@ public class StorageFactory {
         PersistentSplitsStorage persistentSplitsStorage
                 = getPersistentSplitsStorage(splitRoomDatabase, splitCipher);
         return new SplitsStorageImpl(persistentSplitsStorage);
-    }
-
-    public static SplitsStorage getSplitsStorageForWorker(SplitRoomDatabase splitRoomDatabase, String apiKey, boolean encryptionEnabled) {
-        return getSplitsStorage(splitRoomDatabase, SplitCipherFactory.create(apiKey, encryptionEnabled));
     }
 
     public static MySegmentsStorageContainer getMySegmentsStorage(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
@@ -164,9 +162,8 @@ public class StorageFactory {
     }
 
     public static RuleBasedSegmentStorageProducer getRuleBasedSegmentStorageForWorker(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
-        GeneralInfoStorage generalInfoStorage = new GeneralInfoStorageImpl(splitRoomDatabase.generalInfoDao());
         PersistentRuleBasedSegmentStorage persistentRuleBasedSegmentStorage =
-                new SqLitePersistentRuleBasedSegmentStorageProvider(splitCipher, splitRoomDatabase, generalInfoStorage).get();
-        return new RuleBasedSegmentStorageImpl(persistentRuleBasedSegmentStorage, null);
+                new SqLitePersistentRuleBasedSegmentStorageProvider(splitCipher, splitRoomDatabase, getGeneralInfoStorage(splitRoomDatabase)).get();
+        return new RuleBasedSegmentStorageProducerImpl(persistentRuleBasedSegmentStorage, new ConcurrentHashMap<>(), new AtomicLong(-1));
     }
 }

@@ -32,6 +32,9 @@ class StorageProvider {
     }
 
     RuleBasedSegmentStorageProducer provideRuleBasedSegmentStorage() {
-        return StorageFactory.getRuleBasedSegmentStorageForWorker(mDatabase, mCipher);
+        RuleBasedSegmentStorageProducer ruleBasedSegmentStorageForWorker = StorageFactory.getRuleBasedSegmentStorageForWorker(mDatabase, mCipher);
+        ruleBasedSegmentStorageForWorker.loadLocal(); // call loadLocal to populate storage with DB data
+
+        return ruleBasedSegmentStorageForWorker;
     }
 }

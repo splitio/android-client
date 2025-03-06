@@ -15,7 +15,7 @@ public class RuleBasedSegmentStorageProducerImpl implements RuleBasedSegmentStor
 
     private final ConcurrentHashMap<String, RuleBasedSegment> mInMemorySegments;
     private final PersistentRuleBasedSegmentStorage mPersistentStorage;
-    private AtomicLong mChangeNumberRef;
+    private final AtomicLong mChangeNumberRef;
 
     public RuleBasedSegmentStorageProducerImpl(@NonNull PersistentRuleBasedSegmentStorage persistentStorage,
                                                @NonNull ConcurrentHashMap<String, RuleBasedSegment> segments,
