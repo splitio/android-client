@@ -1,182 +1,187 @@
 {
-   "splits":[
+  "ff": {
+    "splits": [
       {
-         "trafficTypeName":"client",
-         "name":"workm",
-         "trafficAllocation":100,
-         "trafficAllocationSeed":147392224,
-         "seed":524417105,
-         "status":"ACTIVE",
-         "killed":false,
-         "defaultTreatment":"on",
-         "changeNumber":1602796638344,
-         "algo":2,
-         "configurations":{
-            
-         },
-         "conditions":[
-            {
-               "conditionType":"ROLLOUT",
-               "matcherGroup":{
-                  "combiner":"AND",
-                  "matchers":[
-                     {
-                        "keySelector":{
-                           "trafficType":"client",
-                           "attribute":"num_value"
-                        },
-                        "matcherType":"EQUAL_TO",
-                        "negate":false,
-                        "userDefinedSegmentMatcherData":null,
-                        "whitelistMatcherData":null,
-                        "unaryNumericMatcherData":{
-                           "dataType":"NUMBER",
-                           "value":10
-                        },
-                        "betweenMatcherData":null,
-                        "booleanMatcherData":null,
-                        "dependencyMatcherData":null,
-                        "stringMatcherData":null
-                     }
-                  ]
-               },
-               "partitions":[
-                  {
-                     "treatment":"on_num_10",
-                     "size":100
+        "trafficTypeName": "client",
+        "name": "workm",
+        "trafficAllocation": 100,
+        "trafficAllocationSeed": 147392224,
+        "seed": 524417105,
+        "status": "ACTIVE",
+        "killed": false,
+        "defaultTreatment": "on",
+        "changeNumber": 1602796638344,
+        "algo": 2,
+        "configurations": {
+        },
+        "conditions": [
+          {
+            "conditionType": "ROLLOUT",
+            "matcherGroup": {
+              "combiner": "AND",
+              "matchers": [
+                {
+                  "keySelector": {
+                    "trafficType": "client",
+                    "attribute": "num_value"
                   },
-                  {
-                     "treatment":"off",
-                     "size":0
-                  }
-               ],
-               "label":"rule 1"
-            }
-         ]
-      },
-      {
-         "conditionType":"ROLLOUT",
-         "matcherGroup":{
-            "combiner":"AND",
-            "matchers":[
-               {
-                  "keySelector":{
-                     "trafficType":"client",
-                     "attribute":"str_value"
+                  "matcherType": "EQUAL_TO",
+                  "negate": false,
+                  "userDefinedSegmentMatcherData": null,
+                  "whitelistMatcherData": null,
+                  "unaryNumericMatcherData": {
+                    "dataType": "NUMBER",
+                    "value": 10
                   },
-                  "matcherType":"MATCHES_STRING",
-                  "negate":false,
-                  "userDefinedSegmentMatcherData":null,
-                  "whitelistMatcherData":null,
-                  "unaryNumericMatcherData":null,
-                  "betweenMatcherData":null,
-                  "booleanMatcherData":null,
-                  "dependencyMatcherData":null,
-                  "stringMatcherData":"yes"
-               }
-            ]
-         },
-         "partitions":[
-            {
-               "treatment":"on_str_yes",
-               "size":100
+                  "betweenMatcherData": null,
+                  "booleanMatcherData": null,
+                  "dependencyMatcherData": null,
+                  "stringMatcherData": null
+                }
+              ]
             },
-            {
-               "treatment":"off",
-               "size":0
-            }
-         ],
-         "label":"rule 2"
+            "partitions": [
+              {
+                "treatment": "on_num_10",
+                "size": 100
+              },
+              {
+                "treatment": "off",
+                "size": 0
+              }
+            ],
+            "label": "rule 1"
+          }
+        ]
       },
       {
-         "trafficTypeName":"client",
-         "name":"workm1",
-         "trafficAllocation":100,
-         "trafficAllocationSeed":147392224,
-         "seed":524417105,
-         "status":"ACTIVE",
-         "killed":false,
-         "defaultTreatment":"on",
-         "changeNumber":1602796638344,
-         "algo":2,
-         "configurations":{
-            
-         },
-         "conditions":[
+        "conditionType": "ROLLOUT",
+        "matcherGroup": {
+          "combiner": "AND",
+          "matchers": [
             {
-               "conditionType":"ROLLOUT",
-               "matcherGroup":{
-                  "combiner":"AND",
-                  "matchers":[
-                     {
-                        "keySelector":{
-                           "trafficType":"client",
-                           "attribute":"num_value_a"
-                        },
-                        "matcherType":"EQUAL_TO",
-                        "negate":false,
-                        "userDefinedSegmentMatcherData":null,
-                        "whitelistMatcherData":null,
-                        "unaryNumericMatcherData":{
-                           "dataType":"NUMBER",
-                           "value":20
-                        },
-                        "betweenMatcherData":null,
-                        "booleanMatcherData":null,
-                        "dependencyMatcherData":null,
-                        "stringMatcherData":null
-                     }
-                  ]
-               },
-               "partitions":[
-                  {
-                     "treatment":"on_num_20",
-                     "size":100
-                  },
-                  {
-                     "treatment":"off",
-                     "size":0
-                  }
-               ],
-               "label":"rule 3"
+              "keySelector": {
+                "trafficType": "client",
+                "attribute": "str_value"
+              },
+              "matcherType": "MATCHES_STRING",
+              "negate": false,
+              "userDefinedSegmentMatcherData": null,
+              "whitelistMatcherData": null,
+              "unaryNumericMatcherData": null,
+              "betweenMatcherData": null,
+              "booleanMatcherData": null,
+              "dependencyMatcherData": null,
+              "stringMatcherData": "yes"
             }
-         ]
+          ]
+        },
+        "partitions": [
+          {
+            "treatment": "on_str_yes",
+            "size": 100
+          },
+          {
+            "treatment": "off",
+            "size": 0
+          }
+        ],
+        "label": "rule 2"
       },
       {
-         "conditionType":"ROLLOUT",
-         "matcherGroup":{
-            "combiner":"AND",
-            "matchers":[
-               {
-                  "keySelector":{
-                     "trafficType":"client",
-                     "attribute":"str_value_a"
+        "trafficTypeName": "client",
+        "name": "workm1",
+        "trafficAllocation": 100,
+        "trafficAllocationSeed": 147392224,
+        "seed": 524417105,
+        "status": "ACTIVE",
+        "killed": false,
+        "defaultTreatment": "on",
+        "changeNumber": 1602796638344,
+        "algo": 2,
+        "configurations": {
+        },
+        "conditions": [
+          {
+            "conditionType": "ROLLOUT",
+            "matcherGroup": {
+              "combiner": "AND",
+              "matchers": [
+                {
+                  "keySelector": {
+                    "trafficType": "client",
+                    "attribute": "num_value_a"
                   },
-                  "matcherType":"MATCHES_STRING",
-                  "negate":false,
-                  "userDefinedSegmentMatcherData":null,
-                  "whitelistMatcherData":null,
-                  "unaryNumericMatcherData":null,
-                  "betweenMatcherData":null,
-                  "booleanMatcherData":null,
-                  "dependencyMatcherData":null,
-                  "stringMatcherData":"no"
-               }
-            ]
-         },
-         "partitions":[
-            {
-               "treatment":"on_str_no",
-               "size":100
+                  "matcherType": "EQUAL_TO",
+                  "negate": false,
+                  "userDefinedSegmentMatcherData": null,
+                  "whitelistMatcherData": null,
+                  "unaryNumericMatcherData": {
+                    "dataType": "NUMBER",
+                    "value": 20
+                  },
+                  "betweenMatcherData": null,
+                  "booleanMatcherData": null,
+                  "dependencyMatcherData": null,
+                  "stringMatcherData": null
+                }
+              ]
             },
+            "partitions": [
+              {
+                "treatment": "on_num_20",
+                "size": 100
+              },
+              {
+                "treatment": "off",
+                "size": 0
+              }
+            ],
+            "label": "rule 3"
+          }
+        ]
+      },
+      {
+        "conditionType": "ROLLOUT",
+        "matcherGroup": {
+          "combiner": "AND",
+          "matchers": [
             {
-               "treatment":"off",
-               "size":0
+              "keySelector": {
+                "trafficType": "client",
+                "attribute": "str_value_a"
+              },
+              "matcherType": "MATCHES_STRING",
+              "negate": false,
+              "userDefinedSegmentMatcherData": null,
+              "whitelistMatcherData": null,
+              "unaryNumericMatcherData": null,
+              "betweenMatcherData": null,
+              "booleanMatcherData": null,
+              "dependencyMatcherData": null,
+              "stringMatcherData": "no"
             }
-         ],
-         "label":"rule 3"
+          ]
+        },
+        "partitions": [
+          {
+            "treatment": "on_str_no",
+            "size": 100
+          },
+          {
+            "treatment": "off",
+            "size": 0
+          }
+        ],
+        "label": "rule 3"
       }
-   ],
-   "since":1602796638344,
-   "till":1602796638344
+    ],
+    "since": 1602796638344,
+    "till": 1602796638344
+  },
+  "rbs": {
+    "d": [],
+    "s": 1602796638341,
+    "t": 1602796638341
+  }
 }

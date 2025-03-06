@@ -74,7 +74,7 @@ public class InitialChangeNumberTest {
                         mIsFirstChangeNumber = false;
                     }
                     return new MockResponse().setResponseCode(200)
-                            .setBody("{\"splits\":[], \"since\":" + changeNumber + ", \"till\":" + (changeNumber) + "}");
+                            .setBody(IntegrationHelper.emptySplitChanges(changeNumber));
                 } else if (request.getPath().contains("/events/bulk")) {
                     String trackRequestBody = request.getBody().readUtf8();
 

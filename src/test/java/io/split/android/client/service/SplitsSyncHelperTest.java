@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -45,10 +46,10 @@ import io.split.android.helpers.FileHelper;
 public class SplitsSyncHelperTest {
 
     @Mock
-    HttpFetcher<SplitChange> mSplitsFetcher;
+    HttpFetcher<TargetingRulesChange> mSplitsFetcher;
     @Mock
     SplitsStorage mSplitsStorage;
-    SplitChange mSplitChange = null;
+    TargetingRulesChange mTargetingRulesChange = null;
     @Spy
     SplitChangeProcessor mSplitChangeProcessor;
     @Mock
@@ -87,17 +88,17 @@ public class SplitsSyncHelperTest {
     public void correctSyncExecution() throws HttpFetcherException {
         // On correct execution without having clear param
         // should execute fetcher, update storage and avoid clearing splits cache
-        when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mSplitChange);
-        SplitChange secondSplitChange = mSplitChange;
-        secondSplitChange.since = mSplitChange.till;
-        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(secondSplitChange);
+        when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mTargetingRulesChange);
+        SplitChange secondSplitChange = mTargetingRulesChange.getFeatureFlagsChange(); // TODO
+        secondSplitChange.since = mTargetingRulesChange.getFeatureFlagsChange().till;
+        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(TargetingRulesChange.create(secondSplitChange));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
-        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
+        verify(mSplitChangeProcessor, times(1)).process(mTargetingRulesChange.getFeatureFlagsChange()); // TODO
         verify(mSplitsStorage, never()).clear();
         assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
@@ -109,17 +110,17 @@ public class SplitsSyncHelperTest {
 
         Map<String, String> headers = new HashMap<>();
         headers.put(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER, SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE);
-        when(mSplitsFetcher.execute(mDefaultParams, headers)).thenReturn(mSplitChange);
-        SplitChange secondSplitChange = mSplitChange;
-        secondSplitChange.since = mSplitChange.till;
-        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(secondSplitChange);
+        when(mSplitsFetcher.execute(mDefaultParams, headers)).thenReturn(mTargetingRulesChange);
+        SplitChange secondSplitChange = mTargetingRulesChange.getFeatureFlagsChange(); // TODO
+        secondSplitChange.since = mTargetingRulesChange.getFeatureFlagsChange().till;
+        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(TargetingRulesChange.create(secondSplitChange));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, headers);
         verify(mSplitsStorage, times(1)).update(any());
-        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
+        verify(mSplitChangeProcessor, times(1)).process(mTargetingRulesChange.getFeatureFlagsChange()); // TODO
         verify(mSplitsStorage, never()).clear();
         assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
@@ -135,13 +136,13 @@ public class SplitsSyncHelperTest {
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, never()).update(any());
         verify(mSplitsStorage, never()).clear();
-        verify(mSplitChangeProcessor, never()).process(mSplitChange);
+        verify(mSplitChangeProcessor, never()).process(mTargetingRulesChange.getFeatureFlagsChange()); // TODO
         assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 
     @Test
     public void storageException() throws HttpFetcherException {
-        when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mSplitChange);
+        when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mTargetingRulesChange);
         doThrow(NullPointerException.class).when(mSplitsStorage).update(any(ProcessedSplitChange.class));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
@@ -150,17 +151,17 @@ public class SplitsSyncHelperTest {
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
         verify(mSplitsStorage, times(1)).clear();
-        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
+        verify(mSplitChangeProcessor, times(1)).process(mTargetingRulesChange.getFeatureFlagsChange()); // TODO
 
         assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 
     @Test
     public void shouldClearStorageAfterFetch() throws HttpFetcherException {
-        when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mSplitChange);
-        SplitChange secondSplitChange = mSplitChange;
-        secondSplitChange.since = mSplitChange.till;
-        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(secondSplitChange);
+        when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mTargetingRulesChange);
+        SplitChange secondSplitChange = mTargetingRulesChange.getFeatureFlagsChange(); // TODO
+        secondSplitChange.since = mTargetingRulesChange.getFeatureFlagsChange().till;
+        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(TargetingRulesChange.create(secondSplitChange));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(-1, true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
@@ -168,7 +169,7 @@ public class SplitsSyncHelperTest {
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
         verify(mSplitsStorage, times(1)).clear();
-        verify(mSplitChangeProcessor, times(1)).process(mSplitChange);
+        verify(mSplitChangeProcessor, times(1)).process(mTargetingRulesChange.getFeatureFlagsChange()); // TODO
 
         assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
@@ -186,9 +187,9 @@ public class SplitsSyncHelperTest {
 
     @Test
     public void performSplitsFetchUntilSinceEqualsTill() throws HttpFetcherException {
-        SplitChange firstSplitChange = getSplitChange(-1, 2);
-        SplitChange secondSplitChange = getSplitChange(2, 3);
-        SplitChange thirdSplitChange = getSplitChange(3, 3);
+        TargetingRulesChange firstSplitChange = getSplitChange(-1, 2);
+        TargetingRulesChange secondSplitChange = getSplitChange(2, 3);
+        TargetingRulesChange thirdSplitChange = getSplitChange(3, 3);
         Map<String, Object> firstParams = getSinceParams(-1L);
         Map<String, Object> secondParams = getSinceParams(2L);
         Map<String, Object> thirdParams = getSinceParams(3L);
@@ -209,15 +210,15 @@ public class SplitsSyncHelperTest {
 
     @Test
     public void performSplitFetchUntilStoredChangeNumberIsGreaterThanRequested() throws HttpFetcherException {
-        SplitChange firstSplitChange = getSplitChange(-1, 2);
-        SplitChange secondSplitChange = getSplitChange(2, 4);
+        SplitChange firstSplitChange = getSplitChange(-1, 2).getFeatureFlagsChange();
+        SplitChange secondSplitChange = getSplitChange(2, 4).getFeatureFlagsChange();
         Map<String, Object> firstParams = getSinceParams(-1L);
         Map<String, Object> secondParams = getSinceParams(2L);
 
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
 
-        when(mSplitsFetcher.execute(eq(firstParams), any())).thenReturn(firstSplitChange);
-        when(mSplitsFetcher.execute(eq(secondParams), any())).thenReturn(secondSplitChange);
+        when(mSplitsFetcher.execute(eq(firstParams), any())).thenReturn(TargetingRulesChange.create(firstSplitChange));
+        when(mSplitsFetcher.execute(eq(secondParams), any())).thenReturn(TargetingRulesChange.create(secondSplitChange));
 
         mSplitsSyncHelper.sync(3, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
@@ -227,7 +228,8 @@ public class SplitsSyncHelperTest {
     }
 
     @Test
-    public void syncWithClearBeforeUpdateOnlyClearsStorageOnce() {
+    public void syncWithClearBeforeUpdateOnlyClearsStorageOnce() throws HttpFetcherException {
+        when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mTargetingRulesChange);
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
 
         mSplitsSyncHelper.sync(3, true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
@@ -367,9 +369,9 @@ public class SplitsSyncHelperTest {
     }
 
     private void loadSplitChanges() {
-        if (mSplitChange == null) {
+        if (mTargetingRulesChange == null) {
             FileHelper fileHelper = new FileHelper();
-            mSplitChange = fileHelper.loadSplitChangeFromFile("split_changes_1.json");
+            mTargetingRulesChange = TargetingRulesChange.create(fileHelper.loadSplitChangeFromFile("split_changes_1.json"));
         }
     }
 
@@ -381,12 +383,12 @@ public class SplitsSyncHelperTest {
         return params;
     }
 
-    private SplitChange getSplitChange(int since, int till) {
+    private TargetingRulesChange getSplitChange(int since, int till) {
         SplitChange splitChange = new SplitChange();
         splitChange.since = since;
         splitChange.till = till;
         splitChange.splits = new ArrayList<>();
 
-        return splitChange;
+        return TargetingRulesChange.create(splitChange);
     }
 }

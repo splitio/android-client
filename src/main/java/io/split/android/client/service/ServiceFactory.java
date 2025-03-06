@@ -8,7 +8,7 @@ import java.util.List;
 import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SdkTargetPath;
 import io.split.android.client.service.events.EventsRequestBodySerializer;
@@ -23,7 +23,7 @@ import io.split.android.client.service.impressions.ImpressionsRequestBodySeriali
 import io.split.android.client.service.impressions.unique.MTK;
 import io.split.android.client.service.impressions.unique.MTKRequestBodySerializer;
 import io.split.android.client.service.mysegments.AllSegmentsResponseParser;
-import io.split.android.client.service.splits.SplitChangeResponseParser;
+import io.split.android.client.service.rules.TargetingRulesResponseParser;
 import io.split.android.client.service.sseauthentication.SseAuthenticationResponseParser;
 import io.split.android.client.telemetry.TelemetryConfigBodySerializer;
 import io.split.android.client.telemetry.TelemetryStatsBodySerializer;
@@ -33,14 +33,14 @@ import io.split.android.client.telemetry.model.Stats;
 @RestrictTo(RestrictTo.Scope.LIBRARY)
 public class ServiceFactory {
 
-    public static HttpFetcher<SplitChange> getSplitsFetcher(
+    public static HttpFetcher<TargetingRulesChange> getSplitsFetcher(
             HttpClient httpClient,
             String endPoint,
             String splitFilterQueryString) throws URISyntaxException {
 
         return new HttpFetcherImpl<>(httpClient,
                 SdkTargetPath.splitChanges(endPoint, splitFilterQueryString),
-                new SplitChangeResponseParser());
+                new TargetingRulesResponseParser());
     }
 
     public static HttpFetcher<AllSegmentsChange> getMySegmentsFetcher(
