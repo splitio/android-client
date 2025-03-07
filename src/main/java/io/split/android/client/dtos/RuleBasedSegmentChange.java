@@ -32,10 +32,15 @@ public class RuleBasedSegmentChange {
 
     @VisibleForTesting
     public static RuleBasedSegmentChange createEmpty() {
+        return create(-1, -1, new ArrayList<>());
+    }
+
+    @VisibleForTesting
+    public static RuleBasedSegmentChange create(long since, long till, List<RuleBasedSegment> segments) {
         RuleBasedSegmentChange ruleBasedSegmentChange = new RuleBasedSegmentChange();
-        ruleBasedSegmentChange.segments = new ArrayList<>();
-        ruleBasedSegmentChange.since = -1;
-        ruleBasedSegmentChange.till = -1;
+        ruleBasedSegmentChange.segments = segments;
+        ruleBasedSegmentChange.since = since;
+        ruleBasedSegmentChange.till = till;
         return ruleBasedSegmentChange;
     }
 }

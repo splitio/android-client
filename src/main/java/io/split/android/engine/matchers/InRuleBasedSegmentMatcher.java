@@ -6,17 +6,17 @@ import java.util.Map;
 
 import io.split.android.client.Evaluator;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageConsumer;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedRuleBasedSegment;
 
 public class InRuleBasedSegmentMatcher implements Matcher {
 
-    private final RuleBasedSegmentStorage mRuleBasedSegmentStorage;
+    private final RuleBasedSegmentStorageConsumer mRuleBasedSegmentStorage;
     private final MySegmentsStorage mMySegmentsStorage;
     private final String mSegmentName;
 
-    public InRuleBasedSegmentMatcher(RuleBasedSegmentStorage ruleBasedSegmentStorage, MySegmentsStorage mySegmentsStorage, String segmentName) {
+    public InRuleBasedSegmentMatcher(RuleBasedSegmentStorageConsumer ruleBasedSegmentStorage, MySegmentsStorage mySegmentsStorage, String segmentName) {
         mRuleBasedSegmentStorage = checkNotNull(ruleBasedSegmentStorage);
         mMySegmentsStorage = checkNotNull(mySegmentsStorage);
         mSegmentName = checkNotNull(segmentName);
