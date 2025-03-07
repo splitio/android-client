@@ -142,6 +142,7 @@ public class SplitsSyncWorkerTaskBuilderTest {
             SplitsSyncHelper splitsSyncHelper = mock(SplitsSyncHelper.class);
             when(mSplitsSyncHelperProvider.provideSplitsSyncHelper(any(), any(), any(), any(), any(), any())).thenReturn(splitsSyncHelper);
             when(mStorageProvider.provideRuleBasedSegmentStorage()).thenReturn(mRuleBasedSegmentStorageProducer);
+
             SplitsSyncWorkerTaskBuilder builder = new SplitsSyncWorkerTaskBuilder(
                     mStorageProvider,
                     mFetcherProvider,
