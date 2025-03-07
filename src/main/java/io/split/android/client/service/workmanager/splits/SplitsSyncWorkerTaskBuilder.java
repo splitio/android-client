@@ -6,6 +6,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.logger.Logger;
@@ -37,12 +38,14 @@ class SplitsSyncWorkerTaskBuilder {
         try {
             SplitsStorage splitsStorage = mStorageProvider.provideSplitsStorage();
             TelemetryStorage telemetryStorage = mStorageProvider.provideTelemetryStorage();
+            RuleBasedSegmentStorageProducer ruleBasedSegmentStorageProducer = mStorageProvider.provideRuleBasedSegmentStorage();
             String splitsFilterQueryString = splitsStorage.getSplitsFilterQueryString();
 
             SplitsSyncHelper splitsSyncHelper = mSplitsSyncHelperProvider.provideSplitsSyncHelper(
                     mFetcherProvider.provideFetcher(splitsFilterQueryString),
                     splitsStorage,
                     mSplitChangeProcessor,
+                    ruleBasedSegmentStorageProducer,
                     telemetryStorage,
                     mFlagsSpec);
 

@@ -18,9 +18,13 @@ import io.split.android.client.storage.impressions.PersistentImpressionsUniqueSt
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.rbs.PersistentRuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageImpl;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
+import io.split.android.engine.experiments.ParserCommons;
+import io.split.android.engine.experiments.RuleBasedSegmentParser;
 
 public class SplitStorageContainer {
 
@@ -39,7 +43,8 @@ public class SplitStorageContainer {
     private final PersistentImpressionsUniqueStorage mPersistentImpressionsUniqueStorage;
     private final PersistentImpressionsObserverCacheStorage mPersistentImpressionsObserverCacheStorage;
     private final GeneralInfoStorage mGeneralInfoStorage;
-    private final PersistentRuleBasedSegmentStorage mPersistentRuleBasedSegmentStorage;
+    private final ParserCommons mParserCommons;
+    private final RuleBasedSegmentStorage mRuleBasedSegmentStorage;
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
                                  @NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
@@ -73,7 +78,10 @@ public class SplitStorageContainer {
         mPersistentImpressionsUniqueStorage = checkNotNull(persistentImpressionsUniqueStorage);
         mPersistentImpressionsObserverCacheStorage = checkNotNull(persistentImpressionsObserverCacheStorage);
         mGeneralInfoStorage = checkNotNull(generalInfoStorage);
-        mPersistentRuleBasedSegmentStorage = checkNotNull(persistentRuleBasedSegmentStorage);
+        mParserCommons = new ParserCommons(
+                mySegmentsStorageContainer,
+                myLargeSegmentsStorageContainer);
+        mRuleBasedSegmentStorage = new RuleBasedSegmentStorageImpl(persistentRuleBasedSegmentStorage, new RuleBasedSegmentParser(mParserCommons));
     }
 
     public SplitsStorage getSplitsStorage() {
@@ -148,7 +156,11 @@ public class SplitStorageContainer {
         return mGeneralInfoStorage;
     }
 
-    public PersistentRuleBasedSegmentStorage getPersistentRuleBasedSegmentStorage() {
-        return mPersistentRuleBasedSegmentStorage;
+    public ParserCommons getParserCommons() {
+        return mParserCommons;
+    }
+
+    public RuleBasedSegmentStorage getRuleBasedSegmentStorage() {
+        return mRuleBasedSegmentStorage;
     }
 }

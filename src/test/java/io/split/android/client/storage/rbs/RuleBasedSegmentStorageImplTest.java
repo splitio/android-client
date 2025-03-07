@@ -18,6 +18,8 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.dtos.Excluded;
 import io.split.android.client.dtos.RuleBasedSegment;
@@ -199,7 +201,37 @@ public class RuleBasedSegmentStorageImplTest {
         verify(mPersistentStorage).clear();
     }
 
-    static RuleBasedSegment createRuleBasedSegment(String name) {
+    @Test
+    public void callDelegatesToProducer() {
+        RuleBasedSegmentStorageProducer producer = mock(RuleBasedSegmentStorageProducer.class);
+        storage = new RuleBasedSegmentStorageImpl(producer, mParser, new ConcurrentHashMap<>(), new AtomicLong(-1));
+
+        storage.update(null, null, 1);
+
+        verify(producer).update(null, null, 1);
+    }
+
+    @Test
+    public void clearDelegatesToProducer() {
+        RuleBasedSegmentStorageProducer producer = mock(RuleBasedSegmentStorageProducer.class);
+        storage = new RuleBasedSegmentStorageImpl(producer, mParser, new ConcurrentHashMap<>(), new AtomicLong(-1));
+
+        storage.clear();
+
+        verify(producer).clear();
+    }
+
+    @Test
+    public void loadLocalDelegatesToProducer() {
+        RuleBasedSegmentStorageProducer producer = mock(RuleBasedSegmentStorageProducer.class);
+        storage = new RuleBasedSegmentStorageImpl(producer, mParser, new ConcurrentHashMap<>(), new AtomicLong(-1));
+
+        storage.loadLocal();
+
+        verify(producer).loadLocal();
+    }
+
+    public static RuleBasedSegment createRuleBasedSegment(String name) {
         return new RuleBasedSegment(name,
                 "user",
                 1,

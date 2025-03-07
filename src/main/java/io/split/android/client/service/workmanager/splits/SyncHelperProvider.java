@@ -4,17 +4,21 @@ import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 
 class SyncHelperProvider {
 
-    SplitsSyncHelper provideSplitsSyncHelper(HttpFetcher<TargetingRulesChange> splitsFetcher, SplitsStorage splitsStorage,
-                                             SplitChangeProcessor mSplitChangeProcessor,
+    SplitsSyncHelper provideSplitsSyncHelper(HttpFetcher<TargetingRulesChange> splitsFetcher,
+                                             SplitsStorage splitsStorage,
+                                             SplitChangeProcessor splitChangeProcessor,
+                                             RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
                                              TelemetryStorage telemetryStorage,
                                              String mFlagsSpec) {
         return new SplitsSyncHelper(splitsFetcher, splitsStorage,
-                mSplitChangeProcessor,
+                splitChangeProcessor,
+                ruleBasedSegmentStorage,
                 telemetryStorage,
                 mFlagsSpec);
     }

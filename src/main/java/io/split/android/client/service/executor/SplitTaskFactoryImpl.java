@@ -48,6 +48,7 @@ import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 
@@ -83,6 +84,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mFlagsSpecFromConfig = flagsSpecFromConfig;
         mEventsManager = eventsManager;
         mSplitChangeProcessor = new SplitChangeProcessor(filters, flagSetsFilter);
+        RuleBasedSegmentStorageProducer ruleBasedSegmentStorageProducer = mSplitsStorageContainer.getRuleBasedSegmentStorage();
 
         TelemetryStorage telemetryStorage = mSplitsStorageContainer.getTelemetryStorage();
         mTelemetryRuntimeProducer = telemetryStorage;
@@ -90,6 +92,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
+                    ruleBasedSegmentStorageProducer,
                     mTelemetryRuntimeProducer,
                     new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()),
                     flagsSpecFromConfig);
@@ -97,6 +100,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
+                    ruleBasedSegmentStorageProducer,
                     mTelemetryRuntimeProducer,
                     flagsSpecFromConfig);
         }
