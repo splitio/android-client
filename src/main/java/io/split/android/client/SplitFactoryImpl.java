@@ -71,7 +71,6 @@ import io.split.android.client.validators.ValidationConfig;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;
-import io.split.android.engine.experiments.ParserCommons;
 import io.split.android.engine.experiments.SplitParser;
 
 public class SplitFactoryImpl implements SplitFactory {
@@ -274,10 +273,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 streamingComponents.getNotificationProcessor(), streamingComponents.getSseAuthenticator(),
                 mStorageContainer, mSyncManager, compressionProvider);
 
-        ParserCommons parserCommons = SplitFactoryHelper.getParserCommons(mStorageContainer);
-
-        // Create SplitParser with ParserCommons
-        SplitParser splitParser = new SplitParser(parserCommons);
+        SplitParser splitParser = new SplitParser(mStorageContainer.getParserCommons());
 
         mClientContainer = new SplitClientContainerImpl(
                 mDefaultClientKey.matchingKey(), this, config, mSyncManager,

@@ -8,11 +8,16 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.dtos.RuleBasedSegment;
+import io.split.android.client.dtos.RuleBasedSegmentChange;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.Status;
 import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceConstants;
@@ -23,6 +28,7 @@ import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.service.sseclient.BackoffCounter;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -37,6 +43,7 @@ public class SplitsSyncHelper {
     private final HttpFetcher<TargetingRulesChange> mSplitFetcher;
     private final SplitsStorage mSplitsStorage;
     private final SplitChangeProcessor mSplitChangeProcessor;
+    private final RuleBasedSegmentStorageProducer mRuleBasedSegmentStorage;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final BackoffCounter mBackoffCounter;
     private final String mFlagsSpec;
@@ -44,11 +51,13 @@ public class SplitsSyncHelper {
     public SplitsSyncHelper(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
                             @NonNull SplitsStorage splitsStorage,
                             @NonNull SplitChangeProcessor splitChangeProcessor,
+                            @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @Nullable String flagsSpec) {
         this(splitFetcher,
                 splitsStorage,
                 splitChangeProcessor,
+                ruleBasedSegmentStorage,
                 telemetryRuntimeProducer,
                 new ReconnectBackoffCounter(1, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT),
                 flagsSpec);
@@ -58,12 +67,14 @@ public class SplitsSyncHelper {
     public SplitsSyncHelper(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
                             @NonNull SplitsStorage splitsStorage,
                             @NonNull SplitChangeProcessor splitChangeProcessor,
+                            @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @NonNull BackoffCounter backoffCounter,
                             @Nullable String flagsSpec) {
         mSplitFetcher = checkNotNull(splitFetcher);
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
+        mRuleBasedSegmentStorage = checkNotNull(ruleBasedSegmentStorage);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mBackoffCounter = checkNotNull(backoffCounter);
         mFlagsSpec = flagsSpec;
@@ -155,8 +166,9 @@ public class SplitsSyncHelper {
             }
 
             TargetingRulesChange targetingRulesChange = fetchSplits(changeNumber, avoidCache, withCdnByPass);
-            SplitChange splitChange = targetingRulesChange.getFeatureFlagsChange(); // TODO
-            updateStorage(shouldClearBeforeUpdate, splitChange);
+            SplitChange splitChange = targetingRulesChange.getFeatureFlagsChange();
+            RuleBasedSegmentChange ruleBasedSegmentChange = targetingRulesChange.getRuleBasedSegmentsChange();
+            updateStorage(shouldClearBeforeUpdate, splitChange, ruleBasedSegmentChange);
             shouldClearBeforeUpdate = false;
 
             newTill = splitChange.till;
@@ -180,11 +192,27 @@ public class SplitsSyncHelper {
         return mSplitFetcher.execute(params, getHeaders(avoidCache));
     }
 
-    private void updateStorage(boolean clearBeforeUpdate, SplitChange splitChange) {
+    private void updateStorage(boolean clearBeforeUpdate, SplitChange splitChange, RuleBasedSegmentChange ruleBasedSegmentChange) {
         if (clearBeforeUpdate) {
             mSplitsStorage.clear();
+            mRuleBasedSegmentStorage.clear();
         }
         mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
+        updateRbsStorage(ruleBasedSegmentChange);
+    }
+
+    private void updateRbsStorage(RuleBasedSegmentChange ruleBasedSegmentChange) {
+        long changeNumber = ruleBasedSegmentChange.getTill();
+        Set<RuleBasedSegment> toAdd = new HashSet<>();
+        Set<RuleBasedSegment> toRemove = new HashSet<>();
+        for (RuleBasedSegment segment : ruleBasedSegmentChange.getSegments()) {
+            if (segment.getStatus() == Status.ACTIVE) {
+                toAdd.add(segment);
+            } else {
+                toRemove.add(segment);
+            }
+        }
+        mRuleBasedSegmentStorage.update(toAdd, toRemove, changeNumber);
     }
 
     private void logError(String message) {
