@@ -95,12 +95,18 @@ public class IntegrationHelper {
         Logger.i(tag, Utils.repeat("-", 200));
     }
 
+    @Deprecated
     public static String emptySplitChanges(long since, long till) {
         return emptySplitChanges(till);
     }
 
+    @Deprecated
     public static String emptySplitChanges(long till) {
-        return String.format("{\"ff\":{\"splits\":[], \"since\": %d, \"till\": %d},\"rbs\":{\"d\":[],\"s\":%d,\"t\":%d}}", till, till, till, till);
+        return emptyTargetingRulesChanges(till, till);
+    }
+
+    public static String emptyTargetingRulesChanges(long flagsTill, long rbsTill) {
+        return String.format("{\"ff\":{\"splits\":[], \"since\": %d, \"till\": %d},\"rbs\":{\"d\":[],\"s\":%d,\"t\":%d}}", flagsTill, flagsTill, rbsTill, rbsTill);
     }
 
     public static SplitFactory buildFactory(String apiToken, Key key, SplitClientConfig config,

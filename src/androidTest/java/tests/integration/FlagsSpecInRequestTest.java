@@ -62,7 +62,7 @@ public class FlagsSpecInRequestTest {
         testingConfig.setFlagsSpec("1.1");
         initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
-        assertEquals("s=1.1&since=-1", mQueryString.get());
+        assertEquals("s=1.1&since=-1&rbSince=-1", mQueryString.get());
     }
 
     @Test
@@ -71,7 +71,7 @@ public class FlagsSpecInRequestTest {
         testingConfig.setFlagsSpec(null);
         initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
-        assertEquals("since=-1", mQueryString.get());
+        assertEquals("since=-1&rbSince=-1", mQueryString.get());
     }
 
     @Test
@@ -92,7 +92,7 @@ public class FlagsSpecInRequestTest {
         testingConfig.setFlagsSpec("1.2");
         initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
-        assertEquals("s=1.2&since=-1", mQueryString.get());
+        assertEquals("s=1.2&since=-1&rbSince=-1", mQueryString.get());
     }
 
     @Test

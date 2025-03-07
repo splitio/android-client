@@ -31,6 +31,7 @@ import io.split.android.client.service.impressions.SaveImpressionsCountTask;
 import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTaskConfig;
+import io.split.android.client.service.rules.LoadRuleBasedSegmentsTask;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -140,6 +141,11 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public LoadSplitsTask createLoadSplitsTask() {
         return new LoadSplitsTask(mSplitsStorageContainer.getSplitsStorage(), mSplitsFilterQueryStringFromConfig, mFlagsSpecFromConfig);
+    }
+
+    @Override
+    public LoadRuleBasedSegmentsTask createLoadRuleBasedSegmentsTask() {
+        return new LoadRuleBasedSegmentsTask(mSplitsStorageContainer.getRuleBasedSegmentStorage());
     }
 
     @Override

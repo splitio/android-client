@@ -21,23 +21,19 @@ public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
     @Nullable
     private final RuleBasedSegmentParser mParser;
     private final RuleBasedSegmentStorageProducer mProducer;
-    private final AtomicLong mChangeNumberRef;
 
     public RuleBasedSegmentStorageImpl(@NonNull PersistentRuleBasedSegmentStorage persistentStorage, @NonNull RuleBasedSegmentParser parser) {
         mInMemorySegments = new ConcurrentHashMap<>();
         mParser = checkNotNull(parser);
-        mChangeNumberRef = new AtomicLong(-1);
-        mProducer = new RuleBasedSegmentStorageProducerImpl(persistentStorage, mInMemorySegments, mChangeNumberRef);
+        mProducer = new RuleBasedSegmentStorageProducerImpl(persistentStorage, mInMemorySegments, new AtomicLong(-1));
     }
 
     @VisibleForTesting
     RuleBasedSegmentStorageImpl(RuleBasedSegmentStorageProducer producer,
                                 @NonNull RuleBasedSegmentParser parser,
-                                @NonNull ConcurrentHashMap<String, RuleBasedSegment> inMemorySegmentsMap,
-                                @NonNull AtomicLong changeNumberRef) {
+                                @NonNull ConcurrentHashMap<String, RuleBasedSegment> inMemorySegmentsMap) {
         mInMemorySegments = checkNotNull(inMemorySegmentsMap);
         mParser = checkNotNull(parser);
-        mChangeNumberRef = checkNotNull(changeNumberRef);
         mProducer = checkNotNull(producer);
     }
 
@@ -58,7 +54,7 @@ public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
 
     @Override
     public long getChangeNumber() {
-        return mChangeNumberRef.get();
+        return mProducer.getChangeNumber();
     }
 
     @Override

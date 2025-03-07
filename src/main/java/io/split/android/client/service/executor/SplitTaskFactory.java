@@ -4,6 +4,7 @@ import io.split.android.client.dtos.Split;
 import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.impressions.ImpressionsTaskFactory;
+import io.split.android.client.service.rules.LoadRuleBasedSegmentsTask;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
@@ -22,6 +23,8 @@ public interface SplitTaskFactory extends TelemetryTaskFactory, ImpressionsTaskF
     SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration);
 
     LoadSplitsTask createLoadSplitsTask();
+
+    LoadRuleBasedSegmentsTask createLoadRuleBasedSegmentsTask();
 
     SplitKillTask createSplitKillTask(Split split);
 

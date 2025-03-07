@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -87,6 +88,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
     public void loadAndSynchronize() {
         List<SplitTaskBatchItem> enqueued = new ArrayList<>();
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createFilterSplitsInCacheTask(), null));
+        enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createLoadRuleBasedSegmentsTask(), null));
         enqueued.add(new SplitTaskBatchItem(mSplitTaskFactory.createLoadSplitsTask(), mLoadLocalSplitsListener));
         enqueued.add(new SplitTaskBatchItem(() -> {
             synchronize();
@@ -130,8 +132,10 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
 
     @Override
     public void submitLoadingTask(SplitTaskExecutionListener listener) {
-        mTaskExecutor.submit(mSplitTaskFactory.createLoadSplitsTask(),
-                listener);
+        mTaskExecutor.executeSerially(Arrays.asList(
+                new SplitTaskBatchItem(mSplitTaskFactory.createLoadRuleBasedSegmentsTask(), null),
+                new SplitTaskBatchItem(mSplitTaskFactory.createLoadSplitsTask(),
+                        listener)));
     }
 
     private void scheduleSplitsFetcherTask() {

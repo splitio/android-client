@@ -3,6 +3,7 @@ package io.split.android.client.service.splits;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.events.ISplitEventsManager;
@@ -20,7 +21,9 @@ import io.split.android.client.utils.logger.Logger;
 public class SplitsUpdateTask implements SplitTask {
 
     private final SplitsStorage mSplitsStorage;
+    @Nullable
     private Long mChangeNumber;
+    @Nullable
     private Long mRbsChangeNumber;
     private final SplitsSyncHelper mSplitsSyncHelper;
     private final ISplitEventsManager mEventsManager;
@@ -30,9 +33,9 @@ public class SplitsUpdateTask implements SplitTask {
     public SplitsUpdateTask(SplitsSyncHelper splitsSyncHelper,
                             SplitsStorage splitsStorage,
                             RuleBasedSegmentStorage ruleBasedSegmentStorage,
-                            long since,
-                            long rbsSince,
-                            ISplitEventsManager eventsManager) {
+                            @Nullable Long since,
+                            @Nullable Long rbsSince,
+                            @NonNull ISplitEventsManager eventsManager) {
         mSplitsStorage = checkNotNull(splitsStorage);
         mRuleBasedSegmentStorage = checkNotNull(ruleBasedSegmentStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
