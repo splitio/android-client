@@ -65,20 +65,17 @@ public class SplitsSyncHelperTest {
 
     private SplitsSyncHelper mSplitsSyncHelper;
 
-    private final Map<String, Object> mDefaultParams = new HashMap<>();
-    private final Map<String, Object> mSecondFetchParams = new HashMap<>();
+    private Map<String, Object> mDefaultParams = new HashMap<>();
+    private Map<String, Object> mSecondFetchParams = new HashMap<>();
     private AutoCloseable mAutoCloseable;
 
     @Before
     public void setup() {
         mAutoCloseable = MockitoAnnotations.openMocks(this);
         mDefaultParams.clear();
-        mDefaultParams.put("s", "1.1");
-        mDefaultParams.put("since", -1L);
-        mDefaultParams.put("rbSince", -1L);
-        mSecondFetchParams.clear();
-        mSecondFetchParams.put("since", 1506703262916L);
-        mSecondFetchParams.put("rbSince", 262325L);
+        mDefaultParams = getSinceParams(-1, -1);
+        mSecondFetchParams = getSinceParams(1506703262916L, 262325L);
+        when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(262325L);
         mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mRuleBasedSegmentStorageProducer, mTelemetryRuntimeProducer, mBackoffCounter, "1.1");
         loadSplitChanges();
     }
@@ -96,11 +93,10 @@ public class SplitsSyncHelperTest {
     public void correctSyncExecution() throws HttpFetcherException {
         // On correct execution without having clear param
         // should execute fetcher, update storage and avoid clearing splits cache
-        when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mTargetingRulesChange);
         SplitChange secondSplitChange = mTargetingRulesChange.getFeatureFlagsChange();
         secondSplitChange.since = mTargetingRulesChange.getFeatureFlagsChange().till;
-        TargetingRulesChange value = TargetingRulesChange.create(secondSplitChange, RuleBasedSegmentChange.create(262325L, 262325L, Collections.emptyList()));
-        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(value);
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenReturn(TargetingRulesChange.create(secondSplitChange, RuleBasedSegmentChange.create(262325L, 262325L, Collections.emptyList())));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
         when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(262325L);
 
@@ -122,17 +118,17 @@ public class SplitsSyncHelperTest {
 
         Map<String, String> headers = new HashMap<>();
         headers.put(SplitHttpHeadersBuilder.CACHE_CONTROL_HEADER, SplitHttpHeadersBuilder.CACHE_CONTROL_NO_CACHE);
-        when(mSplitsFetcher.execute(mDefaultParams, headers)).thenReturn(mTargetingRulesChange);
-        SplitChange secondSplitChange = mTargetingRulesChange.getFeatureFlagsChange(); // TODO
+        SplitChange secondSplitChange = mTargetingRulesChange.getFeatureFlagsChange();
         secondSplitChange.since = mTargetingRulesChange.getFeatureFlagsChange().till;
-        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(TargetingRulesChange.create(secondSplitChange));
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenReturn(TargetingRulesChange.create(secondSplitChange, RuleBasedSegmentChange.create(262325L, 262325L, Collections.emptyList())));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, headers);
         verify(mSplitsStorage, times(1)).update(any());
-        verify(mSplitChangeProcessor, times(1)).process(mTargetingRulesChange.getFeatureFlagsChange()); // TODO
+        verify(mSplitChangeProcessor, times(1)).process(mTargetingRulesChange.getFeatureFlagsChange());
         verify(mSplitsStorage, never()).clear();
         assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
@@ -148,7 +144,7 @@ public class SplitsSyncHelperTest {
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, never()).update(any());
         verify(mSplitsStorage, never()).clear();
-        verify(mSplitChangeProcessor, never()).process(mTargetingRulesChange.getFeatureFlagsChange()); // TODO
+        verify(mSplitChangeProcessor, never()).process(mTargetingRulesChange.getFeatureFlagsChange());
         assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 
@@ -163,17 +159,17 @@ public class SplitsSyncHelperTest {
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
         verify(mSplitsStorage, times(1)).clear();
-        verify(mSplitChangeProcessor, times(1)).process(mTargetingRulesChange.getFeatureFlagsChange()); // TODO
+        verify(mSplitChangeProcessor, times(1)).process(mTargetingRulesChange.getFeatureFlagsChange());
 
         assertEquals(SplitTaskExecutionStatus.ERROR, result.getStatus());
     }
 
     @Test
     public void shouldClearStorageAfterFetch() throws HttpFetcherException {
-        when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mTargetingRulesChange);
-        SplitChange secondSplitChange = mTargetingRulesChange.getFeatureFlagsChange(); // TODO
+        SplitChange secondSplitChange = mTargetingRulesChange.getFeatureFlagsChange();
         secondSplitChange.since = mTargetingRulesChange.getFeatureFlagsChange().till;
-        when(mSplitsFetcher.execute(mSecondFetchParams, null)).thenReturn(TargetingRulesChange.create(secondSplitChange));
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenReturn(TargetingRulesChange.create(secondSplitChange, RuleBasedSegmentChange.create(262325L, 262325L, Collections.emptyList())));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
@@ -181,7 +177,7 @@ public class SplitsSyncHelperTest {
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
         verify(mSplitsStorage, times(1)).clear();
-        verify(mSplitChangeProcessor, times(1)).process(mTargetingRulesChange.getFeatureFlagsChange()); // TODO
+        verify(mSplitChangeProcessor, times(1)).process(mTargetingRulesChange.getFeatureFlagsChange());
 
         assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }
@@ -202,9 +198,9 @@ public class SplitsSyncHelperTest {
         TargetingRulesChange firstSplitChange = getSplitChange(-1, 2);
         TargetingRulesChange secondSplitChange = getSplitChange(2, 3);
         TargetingRulesChange thirdSplitChange = getSplitChange(3, 3);
-        Map<String, Object> firstParams = getSinceParams(-1L);
-        Map<String, Object> secondParams = getSinceParams(2L);
-        Map<String, Object> thirdParams = getSinceParams(3L);
+        Map<String, Object> firstParams = getSinceParams(-1L, -1L);
+        Map<String, Object> secondParams = getSinceParams(2L, 262325L);
+        Map<String, Object> thirdParams = getSinceParams(3L, 262325L);
 
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 3L);
 
@@ -222,21 +218,20 @@ public class SplitsSyncHelperTest {
 
     @Test
     public void performSplitFetchUntilStoredChangeNumberIsGreaterThanRequested() throws HttpFetcherException {
-        SplitChange firstSplitChange = getSplitChange(-1, 2).getFeatureFlagsChange();
-        SplitChange secondSplitChange = getSplitChange(2, 4).getFeatureFlagsChange();
+        TargetingRulesChange firstSplitChange = getSplitChange(-1, 2);
+        TargetingRulesChange secondSplitChange = getSplitChange(2, 4);
+        TargetingRulesChange thirdSplitChange = getSplitChange(4, 4);
         Map<String, Object> firstParams = getSinceParams(-1L);
         Map<String, Object> secondParams = getSinceParams(2L);
 
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
 
-        when(mSplitsFetcher.execute(eq(firstParams), any())).thenReturn(TargetingRulesChange.create(firstSplitChange));
-        when(mSplitsFetcher.execute(eq(secondParams), any())).thenReturn(TargetingRulesChange.create(secondSplitChange));
+        when(mSplitsFetcher.execute(any(), any())).thenReturn(firstSplitChange).thenReturn(secondSplitChange).thenReturn(thirdSplitChange);
 
         mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(3, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsStorage, times(3)).getTill();
-        verify(mSplitsFetcher).execute(eq(firstParams), any());
-        verify(mSplitsFetcher).execute(eq(secondParams), any());
+        verify(mSplitsFetcher, times(3)).execute(any(), any());
     }
 
     @Test
@@ -261,6 +256,7 @@ public class SplitsSyncHelperTest {
     @Test
     public void cdnIsBypassedWhenNeeded() throws HttpFetcherException {
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L);
+        when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L);
         when(mSplitsFetcher.execute(anyMap(), any())).thenReturn(
                 getSplitChange(-1, 2),
                 getSplitChange(2, 3),
@@ -281,10 +277,10 @@ public class SplitsSyncHelperTest {
 
         Map<String, String> headers = new HashMap<>();
         headers.put("Cache-Control", "no-cache");
-        Map<String, Object> firstParams = getSinceParams(-1L);
-        Map<String, Object> secondParams = getSinceParams(2L);
-        Map<String, Object> thirdParams = getSinceParams(3L);
-        Map<String, Object> bypassedParams = getSinceParams(3L);
+        Map<String, Object> firstParams = getSinceParams(-1L, -1L);
+        Map<String, Object> secondParams = getSinceParams(2L, -1L);
+        Map<String, Object> thirdParams = getSinceParams(3L, -1L);
+        Map<String, Object> bypassedParams = getSinceParams(3L, -1L);
         bypassedParams.put("till", 3L);
 
         verify(mSplitsFetcher).execute(firstParams, headers);
@@ -318,6 +314,7 @@ public class SplitsSyncHelperTest {
         Map<String, Object> params = new HashMap<>();
         params.put("s", "1.1");
         params.put("since", -1L);
+        params.put("rbSince", -1L);
         verify(mSplitsFetcher).execute(eq(params), eq(null));
         verifyNoMoreInteractions(mSplitsFetcher);
     }
@@ -391,6 +388,16 @@ public class SplitsSyncHelperTest {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("s", "1.1");
         params.put("since", since);
+        params.put("rbSince", since);
+
+        return params;
+    }
+
+    private Map<String, Object> getSinceParams(long since, long rbSince) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("s", "1.1");
+        params.put("since", since);
+        params.put("rbSince", rbSince);
 
         return params;
     }

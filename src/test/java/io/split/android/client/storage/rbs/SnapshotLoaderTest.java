@@ -38,7 +38,7 @@ public class SnapshotLoaderTest {
     @Test
     public void callReturnsCorrectSnapshotWithDecryptedSegments() throws Exception {
         long expectedChangeNumber = 123L;
-        when(mGeneralInfoStorage.getFlagsChangeNumber()).thenReturn(expectedChangeNumber);
+        when(mGeneralInfoStorage.getRbsChangeNumber()).thenReturn(expectedChangeNumber);
 
         RuleBasedSegmentEntity entity1 = new RuleBasedSegmentEntity("segment1", "encryptedBody1", System.currentTimeMillis());
         RuleBasedSegmentEntity entity2 = new RuleBasedSegmentEntity("segment2", "encryptedBody2", System.currentTimeMillis());
@@ -74,7 +74,7 @@ public class SnapshotLoaderTest {
     public void callGetsChangeNumberFromGeneralInfoStorage() {
         mSnapshotLoader.call();
 
-        verify(mGeneralInfoStorage).getFlagsChangeNumber();
+        verify(mGeneralInfoStorage).getRbsChangeNumber();
     }
 
     @Test
