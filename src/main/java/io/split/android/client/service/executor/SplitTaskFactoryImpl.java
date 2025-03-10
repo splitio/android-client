@@ -36,7 +36,7 @@ import io.split.android.client.service.rules.LoadRuleBasedSegmentsTask;
 import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
-import io.split.android.client.service.splits.RuleBasedSegmentInPlaceUpdateTask;
+import io.split.android.client.service.rules.RuleBasedSegmentInPlaceUpdateTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
 import io.split.android.client.service.splits.SplitKillTask;

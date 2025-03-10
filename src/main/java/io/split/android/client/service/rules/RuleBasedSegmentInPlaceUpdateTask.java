@@ -1,4 +1,4 @@
-package io.split.android.client.service.splits;
+package io.split.android.client.service.rules;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
@@ -10,8 +10,6 @@ import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.rules.ProcessedRuleBasedSegmentChange;
-import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.utils.logger.Logger;
 
