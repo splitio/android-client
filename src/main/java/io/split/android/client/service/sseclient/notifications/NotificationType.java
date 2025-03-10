@@ -19,6 +19,6 @@ public enum NotificationType {
     @SerializedName("MEMBERSHIPS_MS_UPDATE")
     MEMBERSHIPS_MS_UPDATE,
 
-    @SerializedName("RULE_BASED_SEGMENT_UPDATE")
+    @SerializedName("RB_SEGMENT_UPDATE")
     RULE_BASED_SEGMENT_UPDATE,
 }

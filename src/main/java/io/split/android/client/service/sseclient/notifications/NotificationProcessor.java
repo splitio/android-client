@@ -45,6 +45,9 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
                 case SPLIT_UPDATE:
                     processSplitUpdate(mNotificationParser.parseSplitUpdate(notificationJson));
                     break;
+                case RULE_BASED_SEGMENT_UPDATE:
+                    processRuleBasedSegmentUpdate(mNotificationParser.parseRuleBasedSegmentUpdate(notificationJson));
+                    break;
                 case SPLIT_KILL:
                     processSplitKill(mNotificationParser.parseSplitKill(notificationJson));
                     break;
@@ -75,7 +78,12 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
     }
 
     private void processSplitUpdate(SplitsChangeNotification notification) {
-        Logger.d("Received split change notification");
+        Logger.d("Received feature flag change notification");
+        mSplitsUpdateNotificationsQueue.offer(notification);
+    }
+
+    private void processRuleBasedSegmentUpdate(RuleBasedSegmentChangeNotification notification) {
+        Logger.d("Received rule based segment change notification");
         mSplitsUpdateNotificationsQueue.offer(notification);
     }
 
