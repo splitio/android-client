@@ -9,7 +9,9 @@ import androidx.annotation.VisibleForTesting;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -128,16 +130,19 @@ public class SplitUpdatesWorker extends UpdateWorker {
     }
 
     private void inPlaceUpdate(InstantUpdateChangeNotification notification, String decompressed) {
-        mSplitTaskExecutor.submit(
-                mSplitTaskFactory.createSplitsUpdateTask(Json.fromJson(decompressed, Split.class), notification.getChangeNumber()),
-                new SplitTaskExecutionListener() {
-                    @Override
-                    public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-                        if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
-                            handleLegacyNotification(notification);
-                        }
-                    }
-                });
+        SplitTask updateTask = (notification.getType() == NotificationType.RULE_BASED_SEGMENT_UPDATE) ?
+                mSplitTaskFactory.createRuleBasedSegmentUpdateTask(Json.fromJson(decompressed, RuleBasedSegment.class), notification.getChangeNumber()) :
+                mSplitTaskFactory.createSplitsUpdateTask(Json.fromJson(decompressed, Split.class), notification.getChangeNumber());
+        SplitTaskExecutionListener executionListener = new SplitTaskExecutionListener() {
+            @Override
+            public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+                    handleLegacyNotification(notification);
+                }
+            }
+        };
+
+        mSplitTaskExecutor.submit(updateTask, executionListener);
     }
 
     private void handleLegacyNotification(InstantUpdateChangeNotification notification) {

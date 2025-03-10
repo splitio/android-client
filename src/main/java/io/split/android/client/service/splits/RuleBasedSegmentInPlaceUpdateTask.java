@@ -43,7 +43,7 @@ public class RuleBasedSegmentInPlaceUpdateTask implements SplitTask {
             boolean triggerSdkUpdate = mRuleBasedSegmentStorage.update(processedChange.getActive(), processedChange.getArchived(), mChangeNumber);
 
             if (triggerSdkUpdate) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
             }
 
             Logger.v("Updated rule based segment");

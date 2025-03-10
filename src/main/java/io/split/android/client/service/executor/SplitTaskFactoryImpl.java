@@ -16,6 +16,7 @@ import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.TestingConfig;
+import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.service.CleanUpDatabaseTask;
@@ -35,6 +36,7 @@ import io.split.android.client.service.rules.LoadRuleBasedSegmentsTask;
 import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
+import io.split.android.client.service.splits.RuleBasedSegmentInPlaceUpdateTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
 import io.split.android.client.service.splits.SplitKillTask;
@@ -225,6 +227,11 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public EncryptionMigrationTask createEncryptionMigrationTask(String sdkKey, SplitRoomDatabase splitRoomDatabase, boolean encryptionEnabled, SplitCipher splitCipher) {
         return new EncryptionMigrationTask(sdkKey, splitRoomDatabase, encryptionEnabled, splitCipher);
+    }
+
+    @Override
+    public RuleBasedSegmentInPlaceUpdateTask createRuleBasedSegmentUpdateTask(RuleBasedSegment ruleBasedSegment, long changeNumber) {
+        return new RuleBasedSegmentInPlaceUpdateTask(mSplitsStorageContainer.getRuleBasedSegmentStorage(), mRuleBasedSegmentChangeProcessor, mEventsManager, ruleBasedSegment, changeNumber);
     }
 
     @NonNull
