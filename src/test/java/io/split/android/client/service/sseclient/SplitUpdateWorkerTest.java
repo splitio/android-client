@@ -29,16 +29,18 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
+import io.split.android.client.service.sseclient.notifications.InstantUpdateChangeNotification;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.CompressionUtil;
 import io.split.android.fake.SplitTaskExecutorStub;
 
 public class SplitUpdateWorkerTest {
 
-    BlockingQueue<SplitsChangeNotification> mNotificationsQueue;
+    BlockingQueue<InstantUpdateChangeNotification> mNotificationsQueue;
 
     SplitUpdatesWorker mWorker;
 
@@ -54,6 +56,8 @@ public class SplitUpdateWorkerTest {
     private SplitTaskFactory mSplitTaskFactory;
     @Mock
     private SplitUpdatesWorker.Base64Decoder mBase64Decoder;
+    @Mock
+    private RuleBasedSegmentStorage mRuleBasedSegmentStorage;
 
     private static final String TEST_SPLIT = "{\"trafficTypeName\":\"account\",\"name\":\"android_test_2\",\"trafficAllocation\":100,\"trafficAllocationSeed\":-1955610140,\"seed\":-633015570,\"status\":\"ACTIVE\",\"killed\":false,\"defaultTreatment\":\"off\",\"changeNumber\":1648733409158,\"algo\":2,\"configurations\":{},\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"account\",\"attribute\":null},\"matcherType\":\"IN_SPLIT_TREATMENT\",\"negate\":false,\"userDefinedSegmentMatcherData\":null,\"whitelistMatcherData\":null,\"unaryNumericMatcherData\":null,\"betweenMatcherData\":null,\"booleanMatcherData\":null,\"dependencyMatcherData\":{\"split\":\"android_test_3\",\"treatments\":[\"on\"]},\"stringMatcherData\":null}]},\"partitions\":[{\"treatment\":\"on\",\"size\":100},{\"treatment\":\"off\",\"size\":0}],\"label\":\"in split android_test_3 treatment [on]\"},{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"account\",\"attribute\":null},\"matcherType\":\"ALL_KEYS\",\"negate\":false,\"userDefinedSegmentMatcherData\":null,\"whitelistMatcherData\":null,\"unaryNumericMatcherData\":null,\"betweenMatcherData\":null,\"booleanMatcherData\":null,\"dependencyMatcherData\":null,\"stringMatcherData\":null}]},\"partitions\":[{\"treatment\":\"on\",\"size\":0},{\"treatment\":\"off\",\"size\":100}],\"label\":\"default rule\"}]}";
 
@@ -64,6 +68,7 @@ public class SplitUpdateWorkerTest {
         mWorker = new SplitUpdatesWorker(mSynchronizer,
                 mNotificationsQueue,
                 mSplitsStorage,
+                mRuleBasedSegmentStorage,
                 mCompressionUtilProvider,
                 mSplitTaskExecutor,
                 mSplitTaskFactory,
@@ -316,6 +321,7 @@ public class SplitUpdateWorkerTest {
         mWorker = new SplitUpdatesWorker(mSynchronizer,
                 mNotificationsQueue,
                 mSplitsStorage,
+                mRuleBasedSegmentStorage,
                 mCompressionUtilProvider,
                 new SplitTaskExecutorStub(),
                 mSplitTaskFactory,
