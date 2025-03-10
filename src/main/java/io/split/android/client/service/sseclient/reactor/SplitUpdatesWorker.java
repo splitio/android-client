@@ -15,8 +15,10 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
+import io.split.android.client.service.sseclient.notifications.InstantUpdateChangeNotification;
+import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.synchronizer.Synchronizer;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.CompressionUtil;
@@ -28,24 +30,26 @@ public class SplitUpdatesWorker extends UpdateWorker {
     /***
      * This class will be in charge of update splits when a new notification arrived.
      */
-
-    private final BlockingQueue<SplitsChangeNotification> mNotificationsQueue;
+    private final BlockingQueue<InstantUpdateChangeNotification> mNotificationsQueue;
     private final Synchronizer mSynchronizer;
     private final SplitsStorage mSplitsStorage;
+    private final RuleBasedSegmentStorage mRuleBasedSegmentStorage;
     private final CompressionUtilProvider mCompressionUtilProvider;
     private final SplitTaskExecutor mSplitTaskExecutor;
     private final SplitTaskFactory mSplitTaskFactory;
     private final Base64Decoder mBase64Decoder;
 
     public SplitUpdatesWorker(@NonNull Synchronizer synchronizer,
-                              @NonNull BlockingQueue<SplitsChangeNotification> notificationsQueue,
+                              @NonNull BlockingQueue<InstantUpdateChangeNotification> notificationsQueue,
                               @NonNull SplitsStorage splitsStorage,
+                              @NonNull RuleBasedSegmentStorage ruleBasedSegmentStorage,
                               @NonNull CompressionUtilProvider compressionUtilProvider,
                               @NonNull SplitTaskExecutor splitTaskExecutor,
                               @NonNull SplitTaskFactory splitTaskFactory) {
         this(synchronizer,
                 notificationsQueue,
                 splitsStorage,
+                ruleBasedSegmentStorage,
                 compressionUtilProvider,
                 splitTaskExecutor,
                 splitTaskFactory,
@@ -54,8 +58,9 @@ public class SplitUpdatesWorker extends UpdateWorker {
 
     @VisibleForTesting
     public SplitUpdatesWorker(@NonNull Synchronizer synchronizer,
-                              @NonNull BlockingQueue<SplitsChangeNotification> notificationsQueue,
+                              @NonNull BlockingQueue<InstantUpdateChangeNotification> notificationsQueue,
                               @NonNull SplitsStorage splitsStorage,
+                              @NonNull RuleBasedSegmentStorage ruleBasedSegmentStorage,
                               @NonNull CompressionUtilProvider compressionUtilProvider,
                               @NonNull SplitTaskExecutor splitTaskExecutor,
                               @NonNull SplitTaskFactory splitTaskFactory,
@@ -64,6 +69,7 @@ public class SplitUpdatesWorker extends UpdateWorker {
         mSynchronizer = checkNotNull(synchronizer);
         mNotificationsQueue = checkNotNull(notificationsQueue);
         mSplitsStorage = checkNotNull(splitsStorage);
+        mRuleBasedSegmentStorage = checkNotNull(ruleBasedSegmentStorage);
         mCompressionUtilProvider = checkNotNull(compressionUtilProvider);
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
@@ -73,7 +79,7 @@ public class SplitUpdatesWorker extends UpdateWorker {
     @Override
     protected void onWaitForNotificationLoop() throws InterruptedException {
         try {
-            SplitsChangeNotification notification = mNotificationsQueue.take();
+            InstantUpdateChangeNotification notification = mNotificationsQueue.take();
             Logger.d("A new notification to update feature flags has been received");
 
             long storageChangeNumber = mSplitsStorage.getTill();
@@ -83,7 +89,7 @@ public class SplitUpdatesWorker extends UpdateWorker {
             }
 
             if (isLegacyNotification(notification) || isInvalidChangeNumber(notification, storageChangeNumber)) {
-                handleLegacyNotification(notification.getChangeNumber());
+                handleLegacyNotification(notification);
             } else {
                 handleNotification(notification);
             }
@@ -93,48 +99,54 @@ public class SplitUpdatesWorker extends UpdateWorker {
         }
     }
 
-    private static boolean isInvalidChangeNumber(SplitsChangeNotification notification, long storageChangeNumber) {
+    private static boolean isInvalidChangeNumber(InstantUpdateChangeNotification notification, long storageChangeNumber) {
         return notification.getPreviousChangeNumber() == null ||
                 notification.getPreviousChangeNumber() == 0 ||
                 storageChangeNumber != notification.getPreviousChangeNumber();
     }
 
-    private static boolean isLegacyNotification(SplitsChangeNotification notification) {
+    private static boolean isLegacyNotification(InstantUpdateChangeNotification notification) {
         return notification.getData() == null ||
                 notification.getCompressionType() == null;
     }
 
-    private void handleLegacyNotification(long changeNumber) {
-        mSynchronizer.synchronizeSplits(changeNumber);
-        Logger.d("Enqueuing polling task");
-    }
-
-    private void handleNotification(SplitsChangeNotification notification) {
+    private void handleNotification(InstantUpdateChangeNotification notification) {
         String decompressed = decompressData(notification.getData(),
                 mCompressionUtilProvider.get(notification.getCompressionType()));
 
         if (decompressed == null) {
-            handleLegacyNotification(notification.getChangeNumber());
+            handleLegacyNotification(notification);
             return;
         }
 
         try {
-            Split split = Json.fromJson(decompressed, Split.class);
-
-            mSplitTaskExecutor.submit(
-                    mSplitTaskFactory.createSplitsUpdateTask(split, notification.getChangeNumber()),
-                    new SplitTaskExecutionListener() {
-                        @Override
-                        public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-                            if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
-                                handleLegacyNotification(notification.getChangeNumber());
-                            }
-                        }
-                    });
+            inPlaceUpdate(notification, decompressed);
         } catch (Exception e) {
             Logger.e("Could not parse feature flag");
-            handleLegacyNotification(notification.getChangeNumber());
+            handleLegacyNotification(notification);
         }
+    }
+
+    private void inPlaceUpdate(InstantUpdateChangeNotification notification, String decompressed) {
+        mSplitTaskExecutor.submit(
+                mSplitTaskFactory.createSplitsUpdateTask(Json.fromJson(decompressed, Split.class), notification.getChangeNumber()),
+                new SplitTaskExecutionListener() {
+                    @Override
+                    public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
+                        if (taskInfo.getStatus() == SplitTaskExecutionStatus.ERROR) {
+                            handleLegacyNotification(notification);
+                        }
+                    }
+                });
+    }
+
+    private void handleLegacyNotification(InstantUpdateChangeNotification notification) {
+        if (notification.getType() == NotificationType.RULE_BASED_SEGMENT_UPDATE) {
+            mSynchronizer.synchronizeRuleBasedSegments(notification.getChangeNumber());
+        } else {
+            mSynchronizer.synchronizeSplits(notification.getChangeNumber());
+        }
+        Logger.d("Enqueuing polling task");
     }
 
     @Nullable

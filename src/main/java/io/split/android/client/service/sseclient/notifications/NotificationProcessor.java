@@ -23,14 +23,14 @@ public class NotificationProcessor implements MySegmentsNotificationProcessorReg
     private final NotificationParser mNotificationParser;
     private final SplitTaskExecutor mSplitTaskExecutor;
     private final SplitTaskFactory mSplitTaskFactory;
-    private final BlockingQueue<SplitsChangeNotification> mSplitsUpdateNotificationsQueue;
+    private final BlockingQueue<InstantUpdateChangeNotification> mSplitsUpdateNotificationsQueue;
     private final ConcurrentMap<String, MembershipsNotificationProcessor> mMembershipsNotificationProcessors;
 
     public NotificationProcessor(
             @NonNull SplitTaskExecutor splitTaskExecutor,
             @NonNull SplitTaskFactory splitTaskFactory,
             @NonNull NotificationParser notificationParser,
-            @NonNull BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationsQueue) {
+            @NonNull BlockingQueue<InstantUpdateChangeNotification> splitsUpdateNotificationsQueue) {
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
         mSplitTaskFactory = checkNotNull(splitTaskFactory);
         mNotificationParser = checkNotNull(notificationParser);
