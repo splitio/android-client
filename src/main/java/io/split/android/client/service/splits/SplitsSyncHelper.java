@@ -38,6 +38,7 @@ public class SplitsSyncHelper {
 
     private static final String SINCE_PARAM = "since";
     private static final String TILL_PARAM = "till";
+    private static final String RBS_SINCE_PARAM = "rbSince";
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_WAIT;
 
     private final HttpFetcher<TargetingRulesChange> mSplitFetcher;
@@ -80,15 +81,15 @@ public class SplitsSyncHelper {
         mFlagsSpec = flagsSpec;
     }
 
-    public SplitTaskExecutionInfo sync(long till, int onDemandFetchBackoffMaxRetries) {
+    public SplitTaskExecutionInfo sync(SinceChangeNumbers till, int onDemandFetchBackoffMaxRetries) {
         return sync(till, false, true, false, onDemandFetchBackoffMaxRetries);
     }
 
-    public SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
+    public SplitTaskExecutionInfo sync(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
         return sync(till, clearBeforeUpdate, false, resetChangeNumber, onDemandFetchBackoffMaxRetries);
     }
 
-    private SplitTaskExecutionInfo sync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
+    private SplitTaskExecutionInfo sync(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
         try {
             boolean successfulSync = attemptSplitSync(till, clearBeforeUpdate, avoidCache, false, resetChangeNumber, onDemandFetchBackoffMaxRetries);
 
@@ -127,16 +128,16 @@ public class SplitsSyncHelper {
      * @param onDemandFetchBackoffMaxRetries max backoff retries for CDN bypass
      * @return whether sync finished successfully
      */
-    private boolean attemptSplitSync(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnBypass, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) throws Exception {
+    private boolean attemptSplitSync(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnBypass, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) throws Exception {
         int remainingAttempts = onDemandFetchBackoffMaxRetries;
         mBackoffCounter.resetCounter();
         while (true) {
             remainingAttempts--;
 
-            long changeNumber = fetchUntil(till, clearBeforeUpdate, avoidCache, withCdnBypass, resetChangeNumber);
+            SinceChangeNumbers changeNumber = fetchUntil(till, clearBeforeUpdate, avoidCache, withCdnBypass, resetChangeNumber);
             resetChangeNumber = false;
 
-            if (till <= changeNumber) {
+            if (till.getFlagsSince() <= changeNumber.getFlagsSince() && till.getRbsSince() <= changeNumber.getRbsSince()) {
                 return true;
             }
 
@@ -154,39 +155,41 @@ public class SplitsSyncHelper {
         }
     }
 
-    private long fetchUntil(long till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnByPass, boolean resetChangeNumber) throws Exception {
+    private SinceChangeNumbers fetchUntil(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnByPass, boolean resetChangeNumber) throws Exception {
         boolean shouldClearBeforeUpdate = clearBeforeUpdate;
 
-        long newTill = till;
+        SinceChangeNumbers newTill = till;
         while (true) {
             long changeNumber = (resetChangeNumber) ? -1 : mSplitsStorage.getTill();
+            long rbsChangeNumber = (resetChangeNumber) ? -1 : mRuleBasedSegmentStorage.getChangeNumber();
             resetChangeNumber = false;
-            if (newTill < changeNumber) {
-                return changeNumber;
+            if (newTill.getFlagsSince() < changeNumber && newTill.getRbsSince() < rbsChangeNumber) {
+                return new SinceChangeNumbers(changeNumber, rbsChangeNumber);
             }
 
-            TargetingRulesChange targetingRulesChange = fetchSplits(changeNumber, avoidCache, withCdnByPass);
+            TargetingRulesChange targetingRulesChange = fetchSplits(new SinceChangeNumbers(changeNumber, rbsChangeNumber), avoidCache, withCdnByPass);
             SplitChange splitChange = targetingRulesChange.getFeatureFlagsChange();
             RuleBasedSegmentChange ruleBasedSegmentChange = targetingRulesChange.getRuleBasedSegmentsChange();
             updateStorage(shouldClearBeforeUpdate, splitChange, ruleBasedSegmentChange);
             shouldClearBeforeUpdate = false;
 
-            newTill = splitChange.till;
-            if (splitChange.till == splitChange.since) {
-                return splitChange.till;
+            newTill = new SinceChangeNumbers(splitChange.till, ruleBasedSegmentChange.getTill());
+            if (splitChange.till == splitChange.since && ruleBasedSegmentChange.getTill() == ruleBasedSegmentChange.getSince()) {
+                return new SinceChangeNumbers(splitChange.till, ruleBasedSegmentChange.getTill());
             }
         }
     }
 
-    private TargetingRulesChange fetchSplits(long till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {
+    private TargetingRulesChange fetchSplits(SinceChangeNumbers till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {
         Map<String, Object> params = new LinkedHashMap<>();
         if (mFlagsSpec != null && !mFlagsSpec.trim().isEmpty()) {
             params.put(FLAGS_SPEC_PARAM, mFlagsSpec);
         }
-        params.put(SINCE_PARAM, till);
+        params.put(SINCE_PARAM, till.getFlagsSince());
+        params.put(RBS_SINCE_PARAM, till.getRbsSince());
 
         if (withCdnByPass) {
-            params.put(TILL_PARAM, till);
+            params.put(TILL_PARAM, till.getFlagsSince());
         }
 
         return mSplitFetcher.execute(params, getHeaders(avoidCache));
@@ -224,5 +227,30 @@ public class SplitsSyncHelper {
             return SplitHttpHeadersBuilder.noCacheHeaders();
         }
         return null;
+    }
+
+    public static class SinceChangeNumbers {
+        private final long mFlagsSince;
+        private final long mRbsSince;
+
+        public SinceChangeNumbers(long flagsSince, long rbsSince) {
+            mFlagsSince = flagsSince;
+            mRbsSince = rbsSince;
+        }
+
+        public long getFlagsSince() {
+            return mFlagsSince;
+        }
+
+        public long getRbsSince() {
+            return mRbsSince;
+        }
+
+        @Override
+        public boolean equals(@Nullable Object obj) {
+            return obj instanceof SinceChangeNumbers &&
+                    mFlagsSince == ((SinceChangeNumbers) obj).mFlagsSince &&
+                    mRbsSince == ((SinceChangeNumbers) obj).mRbsSince;
+        }
     }
 }

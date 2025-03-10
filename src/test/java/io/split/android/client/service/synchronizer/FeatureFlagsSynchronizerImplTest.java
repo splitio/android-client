@@ -33,6 +33,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.rules.LoadRuleBasedSegmentsTask;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitsSyncTask;
@@ -77,9 +78,9 @@ public class FeatureFlagsSynchronizerImplTest {
     @Test
     public void synchronizeSplitsWithSince() {
         SplitsUpdateTask task = mock(SplitsUpdateTask.class);
-        when(mTaskFactory.createSplitsUpdateTask(1000)).thenReturn(task);
+        when(mTaskFactory.createSplitsUpdateTask(1000L, -1L)).thenReturn(task);
 
-        mFeatureFlagsSynchronizer.synchronize(1000);
+        mFeatureFlagsSynchronizer.synchronize(1000L, -1L);
 
         verify(mRetryTimerSplitsUpdate).setTask(eq(task), argThat(Objects::nonNull));
         verify(mRetryTimerSplitsUpdate).start();
@@ -90,6 +91,10 @@ public class FeatureFlagsSynchronizerImplTest {
         LoadSplitsTask mockLoadTask = mock(LoadSplitsTask.class);
         when(mockLoadTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
         when(mTaskFactory.createLoadSplitsTask()).thenReturn(mockLoadTask);
+
+        LoadRuleBasedSegmentsTask mockLoadRuleBasedSegmentsTask = mock(LoadRuleBasedSegmentsTask.class);
+        when(mockLoadRuleBasedSegmentsTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_RULE_BASED_SEGMENTS));
+        when(mTaskFactory.createLoadRuleBasedSegmentsTask()).thenReturn(mockLoadRuleBasedSegmentsTask);
 
         FilterSplitsInCacheTask mockFilterTask = mock(FilterSplitsInCacheTask.class);
         when(mockFilterTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.FILTER_SPLITS_CACHE));
@@ -110,7 +115,7 @@ public class FeatureFlagsSynchronizerImplTest {
 
         ArgumentCaptor<List<SplitTaskBatchItem>> argument = ArgumentCaptor.forClass(List.class);
         verify(mTaskExecutor).executeSerially(argument.capture());
-        assertEquals(3, argument.getValue().size());
+        assertEquals(4, argument.getValue().size());
     }
 
     @Test

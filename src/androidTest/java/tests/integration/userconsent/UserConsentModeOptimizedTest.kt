@@ -247,7 +247,7 @@ class UserConsentModeOptimizedTest {
                         mChangeHit+=1
                         return getSplitsMockResponse("")
                     }
-                    return HttpResponseMock(200, IntegrationHelper.emptySplitChanges(99999999, 99999999))
+                    return HttpResponseMock(200, IntegrationHelper.emptySplitChanges(99999999))
                 } else if (uri.path.contains("/testImpressions/bulk")) {
                     if (!mImpPosted) {
                         mImpPosted = true

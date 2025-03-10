@@ -33,7 +33,7 @@ final class SnapshotLoader implements Callable<RuleBasedSegmentSnapshot> {
     @Override
     public RuleBasedSegmentSnapshot call() {
         try {
-            long changeNumber = mGeneralInfoStorage.getFlagsChangeNumber();
+            long changeNumber = mGeneralInfoStorage.getRbsChangeNumber();
             List<RuleBasedSegmentEntity> entities = mDao.getAll();
             Map<String, RuleBasedSegment> segments = convertToDTOs(entities);
 
