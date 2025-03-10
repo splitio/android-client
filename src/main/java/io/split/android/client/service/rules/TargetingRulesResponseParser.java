@@ -13,7 +13,6 @@ public class TargetingRulesResponseParser implements HttpResponseParser<Targetin
     public TargetingRulesChange parse(String responseData) throws HttpResponseParserException {
         try {
             return Json.fromJson(responseData, TargetingRulesChange.class);
-//            return TargetingRulesChange.create(Json.fromJson(responseData, SplitChange.class));
         } catch (JsonSyntaxException e) {
             throw new HttpResponseParserException("Syntax error parsing my segments http response: " + e.getLocalizedMessage());
         } catch (Exception e) {
