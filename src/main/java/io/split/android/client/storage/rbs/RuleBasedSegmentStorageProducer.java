@@ -10,4 +10,6 @@ import io.split.android.client.storage.RolloutDefinitionsCache;
 public interface RuleBasedSegmentStorageProducer extends RolloutDefinitionsCache {
 
     boolean update(@NonNull Set<RuleBasedSegment> toAdd, @NonNull Set<RuleBasedSegment> toRemove, long changeNumber);
+
+    long getChangeNumber();
 }

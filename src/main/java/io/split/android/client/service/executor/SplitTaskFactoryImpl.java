@@ -31,6 +31,7 @@ import io.split.android.client.service.impressions.SaveImpressionsCountTask;
 import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTaskConfig;
+import io.split.android.client.service.rules.LoadRuleBasedSegmentsTask;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -133,6 +134,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration) {
         return SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(),
+                mSplitsStorageContainer.getRuleBasedSegmentStorage(),
                 mSplitsFilterQueryStringFromConfig, mEventsManager, mSplitsStorageContainer.getTelemetryStorage());
     }
 
@@ -142,13 +144,18 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
+    public LoadRuleBasedSegmentsTask createLoadRuleBasedSegmentsTask() {
+        return new LoadRuleBasedSegmentsTask(mSplitsStorageContainer.getRuleBasedSegmentStorage());
+    }
+
+    @Override
     public SplitKillTask createSplitKillTask(Split split) {
         return new SplitKillTask(mSplitsStorageContainer.getSplitsStorage(), split, mEventsManager);
     }
 
     @Override
-    public SplitsUpdateTask createSplitsUpdateTask(long since) {
-        return new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), since, mEventsManager);
+    public SplitsUpdateTask createSplitsUpdateTask(Long since, Long rbsSince) {
+        return new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), mSplitsStorageContainer.getRuleBasedSegmentStorage(), since, rbsSince, mEventsManager);
     }
 
     @Override
