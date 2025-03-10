@@ -14,7 +14,6 @@ import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.impressions.DecoratedImpression;
-import io.split.android.client.impressions.Impression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -156,7 +155,7 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeSplits(long since) {
-        mFeatureFlagsSynchronizer.synchronize(since);
+        mFeatureFlagsSynchronizer.synchronize(since, null); // TODO
     }
 
     @Override

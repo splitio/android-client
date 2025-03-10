@@ -72,4 +72,9 @@ public class RuleBasedSegmentStorageProducerImpl implements RuleBasedSegmentStor
         mChangeNumberRef.set(-1);
         mPersistentStorage.clear();
     }
+
+    @Override
+    public long getChangeNumber() {
+        return mChangeNumberRef.get();
+    }
 }

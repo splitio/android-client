@@ -241,7 +241,7 @@ class UserConsentModeNoneTest {
                     }
                     return HttpResponseMock(
                         200,
-                        IntegrationHelper.emptySplitChanges(99999999, 99999999)
+                        IntegrationHelper.emptySplitChanges(99999999)
                     )
                 } else if (uri.path.contains("/testImpressions/bulk")) {
                     HttpResponseMock(200)

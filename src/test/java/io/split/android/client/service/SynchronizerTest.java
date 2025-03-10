@@ -704,11 +704,11 @@ public class SynchronizerTest {
     public void synchronizeSplitsWithSince() {
         setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
         SplitsUpdateTask task = mock(SplitsUpdateTask.class);
-        when(mTaskFactory.createSplitsUpdateTask(1000)).thenReturn(task);
+        when(mTaskFactory.createSplitsUpdateTask(1000L, -1L)).thenReturn(task);
 
         mSynchronizer.synchronizeSplits(1000);
 
-        verify(mFeatureFlagsSynchronizer).synchronize(1000);
+        verify(mFeatureFlagsSynchronizer).synchronize(1000L, null);
     }
 
     @Test
