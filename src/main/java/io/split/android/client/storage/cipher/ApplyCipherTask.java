@@ -26,6 +26,8 @@ import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
+import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
+import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity;
 import io.split.android.client.utils.logger.Logger;
 
 public class ApplyCipherTask implements SplitTask {
@@ -57,12 +59,33 @@ public class ApplyCipherTask implements SplitTask {
                     updateEvents(mSplitDatabase.eventDao());
                     updateImpressionsCount(mSplitDatabase.impressionsCountDao());
                     updateUniqueKeys(mSplitDatabase.uniqueKeysDao());
+                    updateRuleBasedSegment(mSplitDatabase.ruleBasedSegmentDao());
                 }
             });
 
             return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
         } catch (Exception e) {
             return SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK);
+        }
+    }
+
+    private void updateRuleBasedSegment(RuleBasedSegmentDao ruleBasedSegmentDao) {
+        List<RuleBasedSegmentEntity> items = ruleBasedSegmentDao.getAll();
+
+        if (items == null) {
+            return;
+        }
+
+        for (RuleBasedSegmentEntity item : items) {
+            String fromName = mFromCipher.decrypt(item.getName());
+            String fromBody = mFromCipher.decrypt(item.getBody());
+
+            String toName = mToCipher.encrypt(fromName);
+            String toBody = mToCipher.encrypt(fromBody);
+
+            if (toName != null && toBody != null) {
+                ruleBasedSegmentDao.update(fromName, toName, toBody);
+            }
         }
     }
 
