@@ -712,6 +712,17 @@ public class SynchronizerTest {
     }
 
     @Test
+    public void synchronizeRuleBasedSegmentsWithSince() {
+        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
+        SplitsUpdateTask task = mock(SplitsUpdateTask.class);
+        when(mTaskFactory.createSplitsUpdateTask(-1L, 1000L)).thenReturn(task);
+
+        mSynchronizer.synchronizeRuleBasedSegments(1000);
+
+        verify(mFeatureFlagsSynchronizer).synchronize(null, 1000L);
+    }
+
+    @Test
     public void eventsSyncIsNotRescheduledWhenReceivedDoNotRetry() {
         SplitClientConfig config = SplitClientConfig.builder()
                 .eventsQueueSize(10)

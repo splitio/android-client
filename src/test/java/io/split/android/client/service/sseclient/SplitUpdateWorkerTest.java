@@ -68,7 +68,7 @@ public class SplitUpdateWorkerTest {
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        mNotificationsQueue = new ArrayBlockingQueue<>(50);
+        mNotificationsQueue = new ArrayBlockingQueue<>(10);
         mWorker = new SplitUpdatesWorker(mSynchronizer,
                 mNotificationsQueue,
                 mSplitsStorage,
@@ -197,7 +197,7 @@ public class SplitUpdateWorkerTest {
     }
 
     @Test
-    public void newRuleBasedSegmentNotificationSubmitsTaskOnExecutor() {
+    public void newRuleBasedSegmentNotificationSubmitsTaskOnExecutor() throws InterruptedException {
         byte[] bytes = TEST_RULE_BASED_SEGMENT.getBytes();
         CompressionUtil mockCompressor = mock(CompressionUtil.class);
 
@@ -213,6 +213,7 @@ public class SplitUpdateWorkerTest {
         when(mBase64Decoder.decode(anyString())).thenReturn(bytes);
 
         mNotificationsQueue.offer(notification);
+        Thread.sleep(100);
 
         verify(mSplitTaskExecutor).submit(eq(updateTask), argThat(Objects::nonNull));
         verify(mSynchronizer, never()).synchronizeSplits(anyLong());
@@ -240,6 +241,29 @@ public class SplitUpdateWorkerTest {
         Thread.sleep(500);
 
         verify(mSynchronizer).synchronizeSplits(changeNumber + 1);
+    }
+
+    @Test
+    public void synchronizeRuleBasedSegmentsIsCalledOnSynchronizerWhenTaskFails() throws InterruptedException {
+        initWorkerWithStubExecutor();
+
+        long changeNumber = 1000L;
+        RuleBasedSegmentInPlaceUpdateTask updateTask = mock(RuleBasedSegmentInPlaceUpdateTask.class);
+        RuleBasedSegmentChangeNotification notification = getRuleBasedSegmentNotification();
+        CompressionUtil mockCompressor = mock(CompressionUtil.class);
+
+        when(updateTask.execute()).thenAnswer(invocation -> SplitTaskExecutionInfo.error(SplitTaskType.RULE_BASED_SEGMENT_SYNC));
+        when(mSplitTaskFactory.createRuleBasedSegmentUpdateTask(any(), anyLong())).thenReturn(updateTask);
+        when(mRuleBasedSegmentStorage.getChangeNumber()).thenReturn(changeNumber);
+        when(notification.getChangeNumber()).thenReturn(changeNumber + 1);
+        when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
+        when(mockCompressor.decompress(any())).thenReturn(TEST_RULE_BASED_SEGMENT.getBytes());
+        when(mCompressionUtilProvider.get(any())).thenReturn(mockCompressor);
+
+        mNotificationsQueue.offer(notification);
+        Thread.sleep(500);
+
+        verify(mSynchronizer).synchronizeRuleBasedSegments(changeNumber + 1);
     }
 
     @Test
