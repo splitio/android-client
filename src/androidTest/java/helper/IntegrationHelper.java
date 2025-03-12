@@ -325,6 +325,14 @@ public class IntegrationHelper {
         return rbsChange(changeNumber, previousChangeNumber, "0", compressedPayload);
     }
 
+    public static String rbsChangeGZip(String changeNumber, String previousChangeNumber, String compressedPayload) {
+        return rbsChange(changeNumber, previousChangeNumber, "1", compressedPayload);
+    }
+
+    public static String rbsChangeZlib(String changeNumber, String previousChangeNumber, String compressedPayload) {
+        return rbsChange(changeNumber, previousChangeNumber, "2", compressedPayload);
+    }
+
     public static String rbsChange(String changeNumber, String previousChangeNumber, String compressionType, String compressedPayload) {
         return "id: 123123\n" +
                 "event: message\n" +

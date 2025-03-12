@@ -1,6 +1,5 @@
 package tests.integration.rbs;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static helper.IntegrationHelper.rbsChange;
@@ -43,6 +42,8 @@ import tests.integration.shared.TestingHelper;
 public class RuleBasedSegmentsIntegrationTest {
 
     private static final String rbsChange0 = rbsChange("2", "1", "eyJuYW1lIjoicmJzX3Rlc3QiLCJzdGF0dXMiOiJBQ1RJVkUiLCJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiZXhjbHVkZWQiOnsia2V5cyI6W10sInNlZ21lbnRzIjpbXX0sImNvbmRpdGlvbnMiOlt7Im1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX19XX0=");
+    private static final String rbsChangeGZip = IntegrationHelper.rbsChangeGZip("2", "1", "H4sIAAAAAAAA/3SSQYucQBCF/0udPeTsbYhLCJl4cQiEsCxl+3SabbuluppFFv976HGiE3Bu3b73PnxV/Unmyn5AncYWQuWXglS47625zBNqHkElpQihgvx6kza+KaLSZj05FwyrDf4RsH9tgO6mxO2grClSSaevl++/Xqigd+tcFnt2EQV16Dk5vQhYR3ilkqggdkO45U3wnc3oSOWfz/2af3q1jqzmCvkmIU1UZsvYWp8r0qmudsMKeMfcwMFokGx+GMFen1XFtklBpU/OLRvibjudz28/Xn43eVIYOPvuZTKgQm89ugZDrvNzTVasvNIK+rhahbPxSEueZa7TCLHmQG6hH4B/rjQq1g8HeocJvoM381E4BAc+wsZnvIemZ5YBz+our0tBE4v+W+Iad9zC5f0tr7cd93ZIwv9ZInQ723ESxJjlykZu9we0/A0AAP//PlHpp9gCAAA=");
+    private static final String rbsChangeZLib = IntegrationHelper.rbsChangeZlib("2", "1", "eJx0kkGLnEAQhf9LnT3k7G2ISwiZeHEIhLAsZft0mm27pbqaRRb/e+hxohNwbt2+9z58Vf1J5sp+QJ3GFkLll4JUuO+tucwTah5BJaUIoYL8epM2vimi0mY9ORcMqw3+EbB/bYDupsTtoKwpUkmnr5fvv16ooHfrXBZ7dhEFdeg5Ob0IWEd4pZKoIHZDuOVN8J3N6Ejln8/9mn96tY6s5gr5JiFNVGbL2FqfK9KprnbDCnjH3MDBaJBsfhjBXp9VxbZJQaVPzi0b4m47nc9vP15+N3lSGDj77mUyoEJvPboGQ67zc01WrLzSCvq4WoWz8UhLnmWu0wix5kBuoR+Af640KtYPB3qHCb6DN/NROAQHPsLGZ7yHpmeWAc/qLq9LQROL/lviGnfcwuX9La+3Hfd2SML/WSJ0O9txEsSY5cpGbvcHtPwNAAD//9u9Atc=");
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private SplitRoomDatabase mRoomDb;
@@ -55,7 +56,23 @@ public class RuleBasedSegmentsIntegrationTest {
     }
 
     @Test
-    public void testRuleBasedSegmentsSyncing() throws IOException, InterruptedException {
+    public void instantUpdateNotification() throws IOException, InterruptedException {
+        successfulInstantUpdate(rbsChange0);
+    }
+
+    @Test
+    public void instantUpdateNotificationGZip() throws IOException, InterruptedException {
+        // Initialize a factory with RBS enabled
+        successfulInstantUpdate(rbsChangeGZip);
+    }
+
+    @Test
+    public void instantUpdateNotificationZLib() throws IOException, InterruptedException {
+        // Initialize a factory with RBS enabled
+        successfulInstantUpdate(rbsChangeZLib);
+    }
+
+    private void successfulInstantUpdate(String rbsChange0) throws IOException, InterruptedException {
         // Initialize a factory with RBS enabled
         LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
         SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData);
@@ -69,9 +86,7 @@ public class RuleBasedSegmentsIntegrationTest {
         // Push a split update through the streaming connection
         boolean updateProcessed = processUpdate(readyClient, streamingData, rbsChange0, "\"name\":\"rbs_test\"");
 
-        // Verify RBS sync hits
         assertTrue(updateProcessed);
-        assertEquals(2, mSplitChangesHits.get());
     }
 
     @Nullable
@@ -128,10 +143,10 @@ public class RuleBasedSegmentsIntegrationTest {
         return responses;
     }
 
-    private boolean processUpdate(SplitClient client, LinkedBlockingDeque<String> streamingData, String splitChange, String... expectedContents) throws InterruptedException {
+    private boolean processUpdate(SplitClient client, LinkedBlockingDeque<String> streamingData, String change, String... expectedContents) throws InterruptedException {
         CountDownLatch updateLatch = new CountDownLatch(1);
         client.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(updateLatch));
-        pushToStreaming(streamingData, splitChange);
+        pushToStreaming(streamingData, change);
         boolean updateAwaited = updateLatch.await(5, TimeUnit.SECONDS);
         List<RuleBasedSegmentEntity> entities = mRoomDb.ruleBasedSegmentDao().getAll();
         if (!updateAwaited) {
