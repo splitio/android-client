@@ -185,6 +185,7 @@ public class SplitUpdateWorkerTest {
         when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
         when(mockCompressor.decompress(any())).thenReturn(bytes);
 
+        when(mRuleBasedSegmentStorage.contains(any())).thenReturn(true);
         when(mCompressionUtilProvider.get(any())).thenReturn(mockCompressor);
         when(mBase64Decoder.decode(anyString())).thenReturn(bytes);
 
@@ -204,6 +205,7 @@ public class SplitUpdateWorkerTest {
         RuleBasedSegmentInPlaceUpdateTask updateTask = mock(RuleBasedSegmentInPlaceUpdateTask.class);
         RuleBasedSegmentChangeNotification notification = getRuleBasedSegmentNotification();
 
+        when(mRuleBasedSegmentStorage.contains(any())).thenReturn(true);
         when(mSplitTaskFactory.createRuleBasedSegmentUpdateTask(any(), anyLong())).thenReturn(updateTask);
         when(mRuleBasedSegmentStorage.getChangeNumber()).thenReturn(1000L);
         when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
