@@ -82,7 +82,9 @@ public class SplitUpdatesWorker extends UpdateWorker {
     protected void onWaitForNotificationLoop() throws InterruptedException {
         try {
             InstantUpdateChangeNotification notification = mNotificationsQueue.take();
-            Logger.d("A new notification to update feature flags has been received");
+            String type = notification.getType() == NotificationType.SPLIT_UPDATE ? "feature flags" :
+                    "rule based segments";
+            Logger.d("A new notification to update " + type + " has been received");
 
             long storageChangeNumber = getStorageChangeNumber(notification.getType());
             if (notification.getChangeNumber() <= storageChangeNumber) {
