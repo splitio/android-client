@@ -1,10 +1,9 @@
 package tests.integration.rbs;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static helper.IntegrationHelper.splitChangeV2;
+import static helper.IntegrationHelper.rbsChange;
 
 import android.content.Context;
 
@@ -36,12 +35,14 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
-import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity;
 import io.split.android.client.utils.logger.Logger;
 import tests.integration.shared.TestingHelper;
 
 public class RuleBasedSegmentsIntegrationTest {
+
+    private static final String rbsChange0 = rbsChange("2", "1", "eyJuYW1lIjoicmJzX3Rlc3QiLCJzdGF0dXMiOiJBQ1RJVkUiLCJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiZXhjbHVkZWQiOnsia2V5cyI6W10sInNlZ21lbnRzIjpbXX0sImNvbmRpdGlvbnMiOlt7Im1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX19XX0=");
 
     private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
     private SplitRoomDatabase mRoomDb;
@@ -66,13 +67,11 @@ public class RuleBasedSegmentsIntegrationTest {
         Thread.sleep(200);
 
         // Push a split update through the streaming connection
-        String splitUpdateMessage = splitChangeV2("2", "1", "0", "eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiJkNDMxY2RkMC1iMGJlLTExZWEtOGE4MC0xNjYwYWRhOWNlMzkiLCJuYW1lIjoibWF1cm9famF2YSIsInRyYWZmaWNBbGxvY2F0aW9uIjoxMDAsInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6LTkyMzkxNDkxLCJzZWVkIjotMTc2OTM3NzYwNCwic3RhdHVzIjoiQUNUSVZFIiwia2lsbGVkIjpmYWxzZSwiZGVmYXVsdFRyZWF0bWVudCI6Im9mZiIsImNoYW5nZU51bWJlciI6MTYwMjc5OTYzODM0NCwiYWxnbyI6MiwiY29uZmlndXJhdGlvbnMiOnt9LCJzZXRzIjpbXSwiY29uZGl0aW9ucyI6W3siY29uZGl0aW9uVHlwZSI6IldISVRFTElTVCIsIm1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJtYXRjaGVyVHlwZSI6IldISVRFTElTVCIsIm5lZ2F0ZSI6ZmFsc2UsIndoaXRlbGlzdE1hdGNoZXJEYXRhIjp7IndoaXRlbGlzdCI6WyJhZG1pbiIsIm1hdXJvIiwibmljbyJdfX1dfSwicGFydGl0aW9ucyI6W3sidHJlYXRtZW50Ijoib2ZmIiwic2l6ZSI6MTAwfV0sImxhYmVsIjoid2hpdGVsaXN0ZWQifSx7ImNvbmRpdGlvblR5cGUiOiJST0xMT1VUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7ImtleVNlbGVjdG9yIjp7InRyYWZmaWNUeXBlIjoidXNlciJ9LCJtYXRjaGVyVHlwZSI6IklOX1NFR01FTlQiLCJuZWdhdGUiOmZhbHNlLCJ1c2VyRGVmaW5lZFNlZ21lbnRNYXRjaGVyRGF0YSI6eyJzZWdtZW50TmFtZSI6Im1hdXItMiJ9fV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvbiIsInNpemUiOjB9LHsidHJlYXRtZW50Ijoib2ZmIiwic2l6ZSI6MTAwfSx7InRyZWF0bWVudCI6IlY0Iiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJ2NSIsInNpemUiOjB9XSwibGFiZWwiOiJpbiBzZWdtZW50IG1hdXItMiJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiQUxMX0tFWVMiLCJuZWdhdGUiOmZhbHNlfV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvbiIsInNpemUiOjB9LHsidHJlYXRtZW50Ijoib2ZmIiwic2l6ZSI6MTAwfSx7InRyZWF0bWVudCI6IlY0Iiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJ2NSIsInNpemUiOjB9XSwibGFiZWwiOiJkZWZhdWx0IHJ1bGUifV19");
-        boolean updateProcessed = processUpdate(readyClient, streamingData, splitUpdateMessage);
+        boolean updateProcessed = processUpdate(readyClient, streamingData, rbsChange0, "\"name\":\"rbs_test\"");
 
         // Verify RBS sync hits
-        assertNotNull(readyClient);
         assertTrue(updateProcessed);
-        assertEquals(1, mSplitChangesHits.get());
+        assertEquals(2, mSplitChangesHits.get());
     }
 
     @Nullable
@@ -83,6 +82,7 @@ public class RuleBasedSegmentsIntegrationTest {
         SplitClientConfig config = new TestableSplitConfigBuilder()
                 .trafficType("client")
                 .streamingEnabled(true)
+                .enableDebug()
                 .build();
         CountDownLatch authLatch = new CountDownLatch(1);
         Map<String, IntegrationHelper.ResponseClosure> responses = getStringResponseClosureMap(authLatch);
@@ -132,9 +132,8 @@ public class RuleBasedSegmentsIntegrationTest {
         CountDownLatch updateLatch = new CountDownLatch(1);
         client.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(updateLatch));
         pushToStreaming(streamingData, splitChange);
-        boolean updateAwaited = updateLatch.await(2, TimeUnit.SECONDS);
-        List<SplitEntity> entities = mRoomDb.splitDao().getAll();
-
+        boolean updateAwaited = updateLatch.await(5, TimeUnit.SECONDS);
+        List<RuleBasedSegmentEntity> entities = mRoomDb.ruleBasedSegmentDao().getAll();
         if (!updateAwaited) {
             fail("SDK_UPDATE not received");
         }

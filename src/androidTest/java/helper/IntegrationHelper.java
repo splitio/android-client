@@ -321,6 +321,16 @@ public class IntegrationHelper {
                 "data:{\"id\":\"-OT-rGuSwz:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:NDIxNjU0NTUyNw==\",\"timestamp\":" + System.currentTimeMillis() + ",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_KILL\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"defaultTreatment\\\":\\\"off\\\",\\\"splitName\\\":\\\"" + splitName + "\\\"}\"}\n";
     }
 
+    public static String rbsChange(String changeNumber, String previousChangeNumber, String compressedPayload) {
+        return rbsChange(changeNumber, previousChangeNumber, "0", compressedPayload);
+    }
+
+    public static String rbsChange(String changeNumber, String previousChangeNumber, String compressionType, String compressedPayload) {
+        return "id: 123123\n" +
+                "event: message\n" +
+                "data: {\"id\":\"1111\",\"clientId\":\"pri:ODc1NjQyNzY1\",\"timestamp\":" + System.currentTimeMillis() + ",\"encoding\":\"json\",\"channel\":\"xxxx_xxxx_flags\",\"data\":\"{\\\"type\\\":\\\"RB_SEGMENT_UPDATE\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"pcn\\\":" + previousChangeNumber + ",\\\"c\\\":" + compressionType + ",\\\"d\\\":\\\""+ compressedPayload +"\\\"}\"}\n\n";
+    }
+
     public static String loadSplitChanges(Context context, String fileName) {
         FileHelper fileHelper = new FileHelper();
         String change = fileHelper.loadFileContent(context, fileName);

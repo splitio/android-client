@@ -75,7 +75,6 @@ public class SseHandler {
             if (incomingNotification == null) {
                 return;
             }
-
             switch (incomingNotification.getType()) {
                 case CONTROL:
                     handleControlNotification(incomingNotification);
@@ -85,6 +84,7 @@ public class SseHandler {
                     break;
                 case SPLIT_KILL:
                 case SPLIT_UPDATE:
+                case RULE_BASED_SEGMENT_UPDATE:
                 case MEMBERSHIPS_MS_UPDATE:
                 case MEMBERSHIPS_LS_UPDATE:
                     if (mNotificationManagerKeeper.isStreamingActive()) {
