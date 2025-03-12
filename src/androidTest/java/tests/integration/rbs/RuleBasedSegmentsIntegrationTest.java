@@ -1,5 +1,6 @@
 package tests.integration.rbs;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static helper.IntegrationHelper.rbsChange;
@@ -22,6 +23,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -57,22 +59,52 @@ public class RuleBasedSegmentsIntegrationTest {
 
     @Test
     public void instantUpdateNotification() throws IOException, InterruptedException {
-        successfulInstantUpdate(rbsChange0);
+        successfulInstantUpdateTest(rbsChange0, "\"name\":\"rbs_test\"");
     }
 
     @Test
     public void instantUpdateNotificationGZip() throws IOException, InterruptedException {
-        // Initialize a factory with RBS enabled
-        successfulInstantUpdate(rbsChangeGZip);
+        successfulInstantUpdateTest(rbsChangeGZip, "\"name\":\"rbs_test\"");
     }
 
     @Test
     public void instantUpdateNotificationZLib() throws IOException, InterruptedException {
-        // Initialize a factory with RBS enabled
-        successfulInstantUpdate(rbsChangeZLib);
+        successfulInstantUpdateTest(rbsChangeZLib, "\"name\":\"rbs_test\"");
     }
 
-    private void successfulInstantUpdate(String rbsChange0) throws IOException, InterruptedException {
+    @Test
+    public void referencedRuleBasedSegmentNotPresentTriggersFetch() throws IOException, InterruptedException {
+        // {"name":"rbs_test","status":"ACTIVE","trafficTypeName":"user","excluded":{"keys":[],"segments":[]},"conditions":[{"conditionType":"ROLLOUT","matcherGroup":{"combiner":"AND","matchers":[{"keySelector":{"trafficType":"user"},"matcherType":"IN_RULE_BASED_SEGMENT","negate":false,"userDefinedSegmentMatcherData":{"segmentName":"new_rbs_test"}}]}}]}
+        String data = "eyJuYW1lIjoicmJzX3Rlc3QiLCJzdGF0dXMiOiJBQ1RJVkUiLCJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiZXhjbHVkZWQiOnsia2V5cyI6W10sInNlZ21lbnRzIjpbXX0sImNvbmRpdGlvbnMiOlt7ImNvbmRpdGlvblR5cGUiOiJST0xMT1VUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7ImtleVNlbGVjdG9yIjp7InRyYWZmaWNUeXBlIjoidXNlciJ9LCJtYXRjaGVyVHlwZSI6IklOX1JVTEVfQkFTRURfU0VHTUVOVCIsIm5lZ2F0ZSI6ZmFsc2UsInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjp7InNlZ21lbnROYW1lIjoibmV3X3Jic190ZXN0In19XX19XX0=";
+        String change = rbsChange("3", "1", data);
+
+        // Initialize a factory with RBS enabled
+        LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData);
+        if (readyClient == null) {
+            fail("Client not ready");
+        }
+
+        // Wait for the first change to be processed
+        Thread.sleep(200);
+
+        CountDownLatch updateLatch = new CountDownLatch(1);
+        readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(updateLatch));
+        pushToStreaming(streamingData, change);
+        boolean updateAwaited = updateLatch.await(10, TimeUnit.SECONDS);
+        if (!updateAwaited) {
+            fail("SDK_UPDATE not received");
+        }
+
+        Thread.sleep(500);
+        List<RuleBasedSegmentEntity> entities = mRoomDb.ruleBasedSegmentDao().getAll();
+        List<String> names = entities.stream().map(RuleBasedSegmentEntity::getName).collect(Collectors.toList());
+        assertEquals(2, names.size());
+        assertTrue(names.contains("rbs_test") && names.contains("new_rbs_test"));
+        assertEquals(3, mSplitChangesHits.get());
+    }
+
+    private void successfulInstantUpdateTest(String rbsChange0, String expectedContents) throws IOException, InterruptedException {
         // Initialize a factory with RBS enabled
         LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
         SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData);
@@ -84,7 +116,7 @@ public class RuleBasedSegmentsIntegrationTest {
         Thread.sleep(200);
 
         // Push a split update through the streaming connection
-        boolean updateProcessed = processUpdate(readyClient, streamingData, rbsChange0, "\"name\":\"rbs_test\"");
+        boolean updateProcessed = processUpdate(readyClient, streamingData, rbsChange0, expectedContents);
 
         assertTrue(updateProcessed);
     }
@@ -132,8 +164,12 @@ public class RuleBasedSegmentsIntegrationTest {
     private Map<String, IntegrationHelper.ResponseClosure> getStringResponseClosureMap(CountDownLatch authLatch) {
         Map<String, IntegrationHelper.ResponseClosure> responses = new HashMap<>();
         responses.put(IntegrationHelper.ServicePath.SPLIT_CHANGES, (uri, httpMethod, body) -> {
-            mSplitChangesHits.incrementAndGet();
-            return new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(-1, 1));
+            int currentHit = mSplitChangesHits.incrementAndGet();
+            if (IntegrationHelper.getRbSinceFromUri(uri).equals("2")) {
+                return new HttpResponseMock(200, "{\"ff\":{\"s\":1,\"t\":1,\"d\":[]},\"rbs\":{\"s\":3,\"t\":3,\"d\":[{\"name\":\"new_rbs_test\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\",\"excluded\":{\"keys\":[],\"segments\":[]},\"conditions\":[{\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"WHITELIST\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"mdp\",\"tandil\",\"bsas\"]}},{\"keySelector\":{\"trafficType\":\"user\",\"attribute\":\"email\"},\"matcherType\":\"ENDS_WITH\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"@split.io\"]}}]}}]},{\"name\":\"rbs_test\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\",\"excluded\":{\"keys\":[],\"segments\":[]},\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"IN_RULE_BASED_SEGMENT\",\"negate\":false,\"userDefinedSegmentMatcherData\":{\"segmentName\":\"new_rbs_test\"}}]}}]}]}}");
+            } else {
+                return new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(currentHit, currentHit));
+            }
         });
         responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyAllSegments()));
         responses.put("v2/auth", (uri, httpMethod, body) -> {
@@ -147,7 +183,7 @@ public class RuleBasedSegmentsIntegrationTest {
         CountDownLatch updateLatch = new CountDownLatch(1);
         client.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(updateLatch));
         pushToStreaming(streamingData, change);
-        boolean updateAwaited = updateLatch.await(5, TimeUnit.SECONDS);
+        boolean updateAwaited = updateLatch.await(10, TimeUnit.SECONDS);
         List<RuleBasedSegmentEntity> entities = mRoomDb.ruleBasedSegmentDao().getAll();
         if (!updateAwaited) {
             fail("SDK_UPDATE not received");

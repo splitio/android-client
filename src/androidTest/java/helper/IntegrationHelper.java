@@ -429,6 +429,14 @@ public class IntegrationHelper {
         }
     }
 
+    public static String getRbSinceFromUri(URI uri) {
+        try {
+            return parse(uri.getQuery()).get("rbSince");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     static Map<String, String> parse(String query) throws UnsupportedEncodingException {
         Map<String, String> queryPairs = new HashMap<>();
         String[] pairs = query.split("&");
