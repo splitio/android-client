@@ -3,6 +3,7 @@ package io.split.android.client.service.workmanager.splits;
 import java.net.URISyntaxException;
 
 import io.split.android.client.service.executor.SplitTask;
+import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
@@ -19,18 +20,21 @@ class SplitsSyncWorkerTaskBuilder {
     private final StorageProvider mStorageProvider;
     private final FetcherProvider mFetcherProvider;
     private final SplitChangeProcessor mSplitChangeProcessor;
+    private final RuleBasedSegmentChangeProcessor mRuleBasedSegmentChangeProcessor;
     private final SyncHelperProvider mSplitsSyncHelperProvider;
     private final String mFlagsSpec;
 
     SplitsSyncWorkerTaskBuilder(StorageProvider storageProvider,
                                 FetcherProvider fetcherProvider,
                                 SplitChangeProcessor splitChangeProcessor,
+                                RuleBasedSegmentChangeProcessor ruleBasedSegmentChangeProcessor,
                                 SyncHelperProvider splitsSyncHelperProvider,
                                 String flagsSpec) {
         mStorageProvider = storageProvider;
         mFetcherProvider = fetcherProvider;
         mSplitsSyncHelperProvider = splitsSyncHelperProvider;
         mSplitChangeProcessor = splitChangeProcessor;
+        mRuleBasedSegmentChangeProcessor = ruleBasedSegmentChangeProcessor;
         mFlagsSpec = flagsSpec;
     }
 
@@ -45,6 +49,7 @@ class SplitsSyncWorkerTaskBuilder {
                     mFetcherProvider.provideFetcher(splitsFilterQueryString),
                     splitsStorage,
                     mSplitChangeProcessor,
+                    mRuleBasedSegmentChangeProcessor,
                     ruleBasedSegmentStorageProducer,
                     telemetryStorage,
                     mFlagsSpec);

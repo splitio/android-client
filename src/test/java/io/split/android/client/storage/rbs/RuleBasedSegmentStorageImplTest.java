@@ -19,7 +19,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.dtos.Excluded;
 import io.split.android.client.dtos.RuleBasedSegment;
@@ -231,12 +230,16 @@ public class RuleBasedSegmentStorageImplTest {
         verify(producer).loadLocal();
     }
 
-    public static RuleBasedSegment createRuleBasedSegment(String name) {
+    public static RuleBasedSegment createRuleBasedSegment(String name, Status status) {
         return new RuleBasedSegment(name,
                 "user",
                 1,
-                Status.ACTIVE,
+                status,
                 new ArrayList<>(),
                 new Excluded());
+    }
+
+    public static RuleBasedSegment createRuleBasedSegment(String name) {
+        return createRuleBasedSegment(name, Status.ACTIVE);
     }
 }
