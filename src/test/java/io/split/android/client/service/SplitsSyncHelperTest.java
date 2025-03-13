@@ -294,6 +294,42 @@ public class SplitsSyncHelperTest {
     }
 
     @Test
+    public void cdnIsBypassedWhenNeededWithRuleBasedSegments() throws HttpFetcherException {
+        when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L, 2L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L, 3L);
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+        when(mSplitsFetcher.execute(anyMap(), any())).thenReturn(
+                getRuleBasedSegmentChange(-1, 2),
+                getRuleBasedSegmentChange(2, 3),
+                getRuleBasedSegmentChange(3, 3),
+                getRuleBasedSegmentChange(3, 3),
+                getRuleBasedSegmentChange(3, 3),
+                getRuleBasedSegmentChange(3, 3),
+                getRuleBasedSegmentChange(3, 3),
+                getRuleBasedSegmentChange(3, 3),
+                getRuleBasedSegmentChange(3, 3),
+                getRuleBasedSegmentChange(3, 3),
+                getRuleBasedSegmentChange(3, 3),
+                getRuleBasedSegmentChange(3, 3),
+                getRuleBasedSegmentChange(4, 4)
+        );
+
+        mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, 4), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+
+        Map<String, String> headers = new HashMap<>();
+        headers.put("Cache-Control", "no-cache");
+        Map<String, Object> firstParams = getSinceParams(-1L, -1L);
+        Map<String, Object> secondParams = getSinceParams(-1L, 2L);
+        Map<String, Object> thirdParams = getSinceParams(-1L, 3L);
+        Map<String, Object> bypassedParams = getSinceParams(-1L, 3L);
+        bypassedParams.put("till", 3L);
+
+        verify(mSplitsFetcher).execute(firstParams, headers);
+        verify(mSplitsFetcher).execute(secondParams, headers);
+        verify(mSplitsFetcher, times(10)).execute(thirdParams, headers);
+        verify(mSplitsFetcher).execute(bypassedParams, headers);
+    }
+
+    @Test
     public void backoffIsAppliedWhenRetryingSplits() throws HttpFetcherException {
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 3L, 3L, 4L);
         when(mSplitsFetcher.execute(anyMap(), any())).thenReturn(
@@ -388,15 +424,6 @@ public class SplitsSyncHelperTest {
         }
     }
 
-    private Map<String, Object> getSinceParams(long since) {
-        Map<String, Object> params = new LinkedHashMap<>();
-        params.put("s", "1.1");
-        params.put("since", since);
-        params.put("rbSince", since);
-
-        return params;
-    }
-
     private Map<String, Object> getSinceParams(long since, long rbSince) {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("s", "1.1");
@@ -413,5 +440,11 @@ public class SplitsSyncHelperTest {
         splitChange.splits = new ArrayList<>();
 
         return TargetingRulesChange.create(splitChange);
+    }
+
+    private TargetingRulesChange getRuleBasedSegmentChange(int since, int till) {
+        RuleBasedSegmentChange ruleBasedSegmentChange = RuleBasedSegmentChange.create(since, till, new ArrayList<>());
+
+        return TargetingRulesChange.create(SplitChange.create(10, 10, new ArrayList<>()), ruleBasedSegmentChange);
     }
 }
