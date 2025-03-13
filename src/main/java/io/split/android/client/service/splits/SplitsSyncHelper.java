@@ -94,10 +94,10 @@ public class SplitsSyncHelper {
 
     private SplitTaskExecutionInfo sync(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
         try {
-            boolean successfulSync = attemptSplitSync(till, clearBeforeUpdate, avoidCache, false, resetChangeNumber, onDemandFetchBackoffMaxRetries);
+            CdnByPassType cdnByPassType = attemptSplitSync(till, clearBeforeUpdate, avoidCache, CdnByPassType.NONE, resetChangeNumber, onDemandFetchBackoffMaxRetries);
 
-            if (!successfulSync) {
-                attemptSplitSync(till, clearBeforeUpdate, avoidCache, true, resetChangeNumber, onDemandFetchBackoffMaxRetries);
+            if (cdnByPassType != CdnByPassType.NONE) {
+                attemptSplitSync(till, clearBeforeUpdate, avoidCache, cdnByPassType, resetChangeNumber, onDemandFetchBackoffMaxRetries);
             }
         } catch (HttpFetcherException e) {
             logError("Network error while fetching feature flags" + e.getLocalizedMessage());
@@ -131,7 +131,7 @@ public class SplitsSyncHelper {
      * @param onDemandFetchBackoffMaxRetries max backoff retries for CDN bypass
      * @return whether sync finished successfully
      */
-    private boolean attemptSplitSync(SinceChangeNumbers targetChangeNumber, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnBypass, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) throws Exception {
+    private CdnByPassType attemptSplitSync(SinceChangeNumbers targetChangeNumber, boolean clearBeforeUpdate, boolean avoidCache, CdnByPassType withCdnBypass, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) throws Exception {
         int remainingAttempts = onDemandFetchBackoffMaxRetries;
         mBackoffCounter.resetCounter();
         while (true) {
@@ -141,11 +141,15 @@ public class SplitsSyncHelper {
             resetChangeNumber = false;
 
             if (targetChangeNumber.getFlagsSince() <= retrievedChangeNumber.getFlagsSince() && targetChangeNumber.getRbsSince() <= retrievedChangeNumber.getRbsSince()) {
-                return true;
+                return CdnByPassType.NONE;
             }
 
             if (remainingAttempts <= 0) {
-                return false;
+                if (targetChangeNumber.getFlagsSince() <= retrievedChangeNumber.getFlagsSince()) {
+                    return CdnByPassType.RBS;
+                } else {
+                    return CdnByPassType.FLAGS;
+                }
             }
 
             try {
@@ -158,7 +162,7 @@ public class SplitsSyncHelper {
         }
     }
 
-    private SinceChangeNumbers fetchUntil(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnByPass, boolean resetChangeNumber) throws Exception {
+    private SinceChangeNumbers fetchUntil(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, CdnByPassType withCdnByPass, boolean resetChangeNumber) throws Exception {
         boolean shouldClearBeforeUpdate = clearBeforeUpdate;
 
         SinceChangeNumbers newTill = till;
@@ -183,7 +187,7 @@ public class SplitsSyncHelper {
         }
     }
 
-    private TargetingRulesChange fetchSplits(SinceChangeNumbers till, boolean avoidCache, boolean withCdnByPass) throws HttpFetcherException {
+    private TargetingRulesChange fetchSplits(SinceChangeNumbers till, boolean avoidCache, CdnByPassType cdnByPassType) throws HttpFetcherException {
         Map<String, Object> params = new LinkedHashMap<>();
         if (mFlagsSpec != null && !mFlagsSpec.trim().isEmpty()) {
             params.put(FLAGS_SPEC_PARAM, mFlagsSpec);
@@ -191,7 +195,9 @@ public class SplitsSyncHelper {
         params.put(SINCE_PARAM, till.getFlagsSince());
         params.put(RBS_SINCE_PARAM, till.getRbsSince());
 
-        if (withCdnByPass) {
+        if (cdnByPassType == CdnByPassType.RBS) {
+            params.put(TILL_PARAM, till.getRbsSince());
+        } else if (cdnByPassType == CdnByPassType.FLAGS) {
             params.put(TILL_PARAM, till.getFlagsSince());
         }
 
@@ -246,5 +252,20 @@ public class SplitsSyncHelper {
                     mFlagsSince == ((SinceChangeNumbers) obj).mFlagsSince &&
                     mRbsSince == ((SinceChangeNumbers) obj).mRbsSince;
         }
+
+        @NonNull
+        @Override
+        public String toString() {
+            return "{" +
+                    "ff=" + mFlagsSince +
+                    ", rbs=" + mRbsSince +
+                    '}';
+        }
+    }
+
+    private enum CdnByPassType {
+        NONE,
+        FLAGS,
+        RBS,
     }
 }
