@@ -124,23 +124,23 @@ public class SplitsSyncHelper {
     }
 
     /**
-     * @param till              target changeNumber
+     * @param targetChangeNumber              target changeNumber
      * @param clearBeforeUpdate whether to clear splits storage before updating it
      * @param avoidCache        whether to send no-cache header to api
      * @param withCdnBypass     whether to add additional query param to bypass CDN
      * @param onDemandFetchBackoffMaxRetries max backoff retries for CDN bypass
      * @return whether sync finished successfully
      */
-    private boolean attemptSplitSync(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnBypass, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) throws Exception {
+    private boolean attemptSplitSync(SinceChangeNumbers targetChangeNumber, boolean clearBeforeUpdate, boolean avoidCache, boolean withCdnBypass, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) throws Exception {
         int remainingAttempts = onDemandFetchBackoffMaxRetries;
         mBackoffCounter.resetCounter();
         while (true) {
             remainingAttempts--;
 
-            SinceChangeNumbers changeNumber = fetchUntil(till, clearBeforeUpdate, avoidCache, withCdnBypass, resetChangeNumber);
+            SinceChangeNumbers retrievedChangeNumber = fetchUntil(targetChangeNumber, clearBeforeUpdate, avoidCache, withCdnBypass, resetChangeNumber);
             resetChangeNumber = false;
 
-            if (till.getFlagsSince() <= changeNumber.getFlagsSince() && till.getRbsSince() <= changeNumber.getRbsSince()) {
+            if (targetChangeNumber.getFlagsSince() <= retrievedChangeNumber.getFlagsSince() && targetChangeNumber.getRbsSince() <= retrievedChangeNumber.getRbsSince()) {
                 return true;
             }
 

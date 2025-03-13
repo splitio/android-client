@@ -84,7 +84,7 @@ public class SplitUpdatesWorker extends UpdateWorker {
             InstantUpdateChangeNotification notification = mNotificationsQueue.take();
             Logger.d("A new notification to update feature flags has been received");
 
-            long storageChangeNumber = mSplitsStorage.getTill();
+            long storageChangeNumber = getStorageChangeNumber(notification.getType());
             if (notification.getChangeNumber() <= storageChangeNumber) {
                 Logger.d("Notification change number is lower than the current one. Ignoring notification");
                 return;
@@ -110,6 +110,12 @@ public class SplitUpdatesWorker extends UpdateWorker {
     private static boolean isLegacyNotification(InstantUpdateChangeNotification notification) {
         return notification.getData() == null ||
                 notification.getCompressionType() == null;
+    }
+
+    private long getStorageChangeNumber(NotificationType type) {
+        return (type == NotificationType.RULE_BASED_SEGMENT_UPDATE) ?
+                mRuleBasedSegmentStorage.getChangeNumber() :
+                mSplitsStorage.getTill();
     }
 
     private void handleNotification(InstantUpdateChangeNotification notification) {
