@@ -87,6 +87,18 @@ public class FeatureFlagsSynchronizerImplTest {
     }
 
     @Test
+    public void synchronizeRuleBasedSegmentsWithSince() {
+        SplitsUpdateTask task = mock(SplitsUpdateTask.class);
+        when(mTaskFactory.createSplitsUpdateTask((Long) null, 1000L)).thenReturn(task);
+
+        mFeatureFlagsSynchronizer.synchronize(null, 1000L);
+
+        verify(mRetryTimerSplitsUpdate).setTask(eq(task), argThat(Objects::nonNull));
+        verify(mTaskFactory).createSplitsUpdateTask((Long) null, 1000L);
+        verify(mRetryTimerSplitsUpdate).start();
+    }
+
+    @Test
     public void loadAndSynchronizeSplits() {
         LoadSplitsTask mockLoadTask = mock(LoadSplitsTask.class);
         when(mockLoadTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
