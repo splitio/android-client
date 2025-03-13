@@ -28,8 +28,11 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.rules.RuleBasedSegmentInPlaceUpdateTask;
 import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
 import io.split.android.client.service.sseclient.notifications.InstantUpdateChangeNotification;
+import io.split.android.client.service.sseclient.notifications.NotificationType;
+import io.split.android.client.service.sseclient.notifications.RuleBasedSegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -60,11 +63,12 @@ public class SplitUpdateWorkerTest {
     private RuleBasedSegmentStorage mRuleBasedSegmentStorage;
 
     private static final String TEST_SPLIT = "{\"trafficTypeName\":\"account\",\"name\":\"android_test_2\",\"trafficAllocation\":100,\"trafficAllocationSeed\":-1955610140,\"seed\":-633015570,\"status\":\"ACTIVE\",\"killed\":false,\"defaultTreatment\":\"off\",\"changeNumber\":1648733409158,\"algo\":2,\"configurations\":{},\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"account\",\"attribute\":null},\"matcherType\":\"IN_SPLIT_TREATMENT\",\"negate\":false,\"userDefinedSegmentMatcherData\":null,\"whitelistMatcherData\":null,\"unaryNumericMatcherData\":null,\"betweenMatcherData\":null,\"booleanMatcherData\":null,\"dependencyMatcherData\":{\"split\":\"android_test_3\",\"treatments\":[\"on\"]},\"stringMatcherData\":null}]},\"partitions\":[{\"treatment\":\"on\",\"size\":100},{\"treatment\":\"off\",\"size\":0}],\"label\":\"in split android_test_3 treatment [on]\"},{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"account\",\"attribute\":null},\"matcherType\":\"ALL_KEYS\",\"negate\":false,\"userDefinedSegmentMatcherData\":null,\"whitelistMatcherData\":null,\"unaryNumericMatcherData\":null,\"betweenMatcherData\":null,\"booleanMatcherData\":null,\"dependencyMatcherData\":null,\"stringMatcherData\":null}]},\"partitions\":[{\"treatment\":\"on\",\"size\":0},{\"treatment\":\"off\",\"size\":100}],\"label\":\"default rule\"}]}";
+    private static final String TEST_RULE_BASED_SEGMENT = "{\"changeNumber\":5,\"name\":\"mauro_rule_based_segment\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\",\"excluded\":{\"keys\":[\"mauro@split.io\",\"gaston@split.io\"],\"segments\":[\"segment_test\"]},\"conditions\":[{\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"WHITELIST\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"mdp\",\"tandil\",\"bsas\"]}},{\"keySelector\":{\"trafficType\":\"user\",\"attribute\":\"email\"},\"matcherType\":\"ENDS_WITH\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"@split.io\"]}}]}},{\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"IN_SEGMENT\",\"negate\":false,\"userDefinedSegmentMatcherData\":{\"segmentName\":\"regular_segment\"}}]}}]}";
 
     @Before
     public void setup() {
         MockitoAnnotations.initMocks(this);
-        mNotificationsQueue = new ArrayBlockingQueue<>(50);
+        mNotificationsQueue = new ArrayBlockingQueue<>(10);
         mWorker = new SplitUpdatesWorker(mSynchronizer,
                 mNotificationsQueue,
                 mSplitsStorage,
@@ -193,6 +197,30 @@ public class SplitUpdateWorkerTest {
     }
 
     @Test
+    public void newRuleBasedSegmentNotificationSubmitsTaskOnExecutor() throws InterruptedException {
+        byte[] bytes = TEST_RULE_BASED_SEGMENT.getBytes();
+        CompressionUtil mockCompressor = mock(CompressionUtil.class);
+
+        RuleBasedSegmentInPlaceUpdateTask updateTask = mock(RuleBasedSegmentInPlaceUpdateTask.class);
+        RuleBasedSegmentChangeNotification notification = getRuleBasedSegmentNotification();
+
+        when(mSplitTaskFactory.createRuleBasedSegmentUpdateTask(any(), anyLong())).thenReturn(updateTask);
+        when(mRuleBasedSegmentStorage.getChangeNumber()).thenReturn(1000L);
+        when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
+        when(mockCompressor.decompress(any())).thenReturn(bytes);
+
+        when(mCompressionUtilProvider.get(any())).thenReturn(mockCompressor);
+        when(mBase64Decoder.decode(anyString())).thenReturn(bytes);
+
+        mNotificationsQueue.offer(notification);
+        Thread.sleep(100);
+
+        verify(mSplitTaskExecutor).submit(eq(updateTask), argThat(Objects::nonNull));
+        verify(mSynchronizer, never()).synchronizeSplits(anyLong());
+        verify(mSynchronizer, never()).synchronizeRuleBasedSegments(anyLong());
+    }
+
+    @Test
     public void synchronizeSplitsIsCalledOnSynchronizerWhenTaskFails() throws InterruptedException {
         initWorkerWithStubExecutor();
 
@@ -213,6 +241,29 @@ public class SplitUpdateWorkerTest {
         Thread.sleep(500);
 
         verify(mSynchronizer).synchronizeSplits(changeNumber + 1);
+    }
+
+    @Test
+    public void synchronizeRuleBasedSegmentsIsCalledOnSynchronizerWhenTaskFails() throws InterruptedException {
+        initWorkerWithStubExecutor();
+
+        long changeNumber = 1000L;
+        RuleBasedSegmentInPlaceUpdateTask updateTask = mock(RuleBasedSegmentInPlaceUpdateTask.class);
+        RuleBasedSegmentChangeNotification notification = getRuleBasedSegmentNotification();
+        CompressionUtil mockCompressor = mock(CompressionUtil.class);
+
+        when(updateTask.execute()).thenAnswer(invocation -> SplitTaskExecutionInfo.error(SplitTaskType.RULE_BASED_SEGMENT_SYNC));
+        when(mSplitTaskFactory.createRuleBasedSegmentUpdateTask(any(), anyLong())).thenReturn(updateTask);
+        when(mRuleBasedSegmentStorage.getChangeNumber()).thenReturn(changeNumber);
+        when(notification.getChangeNumber()).thenReturn(changeNumber + 1);
+        when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
+        when(mockCompressor.decompress(any())).thenReturn(TEST_RULE_BASED_SEGMENT.getBytes());
+        when(mCompressionUtilProvider.get(any())).thenReturn(mockCompressor);
+
+        mNotificationsQueue.offer(notification);
+        Thread.sleep(500);
+
+        verify(mSynchronizer).synchronizeRuleBasedSegments(changeNumber + 1);
     }
 
     @Test
@@ -331,6 +382,7 @@ public class SplitUpdateWorkerTest {
 
     private static SplitsChangeNotification getLegacyNotification() {
         SplitsChangeNotification mock = mock(SplitsChangeNotification.class);
+        when(mock.getType()).thenReturn(NotificationType.SPLIT_UPDATE);
         when(mock.getChangeNumber()).thenReturn(1000L);
         return mock;
     }
@@ -338,9 +390,20 @@ public class SplitUpdateWorkerTest {
     private static SplitsChangeNotification getNewNotification() {
         SplitsChangeNotification mock = mock(SplitsChangeNotification.class);
         when(mock.getCompressionType()).thenReturn(CompressionType.ZLIB);
+        when(mock.getType()).thenReturn(NotificationType.SPLIT_UPDATE);
         when(mock.getData()).thenReturn(TEST_SPLIT);
         when(mock.getPreviousChangeNumber()).thenReturn(1000L);
         when(mock.getChangeNumber()).thenReturn(2000L);
         return mock;
+    }
+
+    private RuleBasedSegmentChangeNotification getRuleBasedSegmentNotification() {
+        RuleBasedSegmentChangeNotification notification = mock(RuleBasedSegmentChangeNotification.class);
+        when(notification.getChangeNumber()).thenReturn(2000L);
+        when(notification.getCompressionType()).thenReturn(CompressionType.NONE);
+        when(notification.getData()).thenReturn(TEST_RULE_BASED_SEGMENT);
+        when(notification.getType()).thenReturn(NotificationType.RULE_BASED_SEGMENT_UPDATE);
+        when(notification.getPreviousChangeNumber()).thenReturn(1000L);
+        return notification;
     }
 }
