@@ -155,7 +155,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void synchronizeSplits(long since) {
-        mFeatureFlagsSynchronizer.synchronize(since, null); // TODO
+        mFeatureFlagsSynchronizer.synchronize(since, null);
+    }
+
+    @Override
+    public void synchronizeRuleBasedSegments(long changeNumber) {
+        mFeatureFlagsSynchronizer.synchronize(null, changeNumber);
     }
 
     @Override

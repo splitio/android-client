@@ -16,6 +16,8 @@ public interface Synchronizer extends SplitLifecycleAware {
 
     void synchronizeSplits();
 
+    void synchronizeRuleBasedSegments(long changeNumber);
+
     void synchronizeMySegments();
 
     void startPeriodicFetching();
