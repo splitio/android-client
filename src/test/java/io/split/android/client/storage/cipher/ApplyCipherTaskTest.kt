@@ -21,6 +21,8 @@ import io.split.android.client.storage.db.attributes.AttributesDao
 import io.split.android.client.storage.db.attributes.AttributesEntity
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao
+import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao
+import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity
 import org.junit.Assert.assertEquals
 import org.junit.Before
 import org.junit.Test
@@ -72,6 +74,9 @@ class ApplyCipherTaskTest {
     @Mock
     private lateinit var generalInfoDao: GeneralInfoDao
 
+    @Mock
+    private lateinit var ruleBasedSegmentDao: RuleBasedSegmentDao
+
     private lateinit var applyCipherTask: ApplyCipherTask
 
     @Before
@@ -86,6 +91,7 @@ class ApplyCipherTaskTest {
         `when`(splitDatabase.uniqueKeysDao()).thenReturn(uniqueKeysDao)
         `when`(splitDatabase.attributesDao()).thenReturn(attributesDao)
         `when`(splitDatabase.generalInfoDao()).thenReturn(generalInfoDao)
+        `when`(splitDatabase.ruleBasedSegmentDao()).thenReturn(ruleBasedSegmentDao)
 
         `when`(fromCipher.decrypt(anyString())).thenAnswer { invocation -> "decrypted_${invocation.arguments[0]}" }
         `when`(toCipher.encrypt(anyString())).thenAnswer { invocation -> "encrypted_${invocation.arguments[0]}" }
@@ -365,5 +371,37 @@ class ApplyCipherTaskTest {
         verify(toCipher).encrypt("decrypted_key2")
         verify(toCipher).encrypt("decrypted_{\"attr3\":\"val3\",\"attr4\":\"val4\"}")
         verify(attributesDao).update("key2", "encrypted_decrypted_key2", "encrypted_decrypted_{\"attr3\":\"val3\",\"attr4\":\"val4\"}")
+    }
+
+    @Test
+    fun `rule based segments are migrated`() {
+        `when`(ruleBasedSegmentDao.all).thenReturn(
+            listOf(
+                RuleBasedSegmentEntity().apply { name = "name1"; body = "body1"; updatedAt = 999991 },
+                RuleBasedSegmentEntity().apply { name = "name2"; body = "body2"; updatedAt = 999992 },
+                RuleBasedSegmentEntity().apply { name = "name3"; body = "body3"; updatedAt = 999993 },
+            )
+        )
+
+        applyCipherTask.execute()
+
+        verify(ruleBasedSegmentDao).all
+        verify(fromCipher).decrypt("name1")
+        verify(fromCipher).decrypt("body1")
+        verify(toCipher).encrypt("decrypted_name1")
+        verify(toCipher).encrypt("decrypted_body1")
+        verify(ruleBasedSegmentDao).update("decrypted_name1", "encrypted_decrypted_name1", "encrypted_decrypted_body1")
+
+        verify(fromCipher).decrypt("name2")
+        verify(fromCipher).decrypt("body2")
+        verify(toCipher).encrypt("decrypted_name2")
+        verify(toCipher).encrypt("decrypted_body2")
+        verify(ruleBasedSegmentDao).update("decrypted_name2", "encrypted_decrypted_name2", "encrypted_decrypted_body2")
+
+        verify(fromCipher).decrypt("name3")
+        verify(fromCipher).decrypt("body3")
+        verify(toCipher).encrypt("decrypted_name3")
+        verify(toCipher).encrypt("decrypted_body3")
+        verify(ruleBasedSegmentDao).update("decrypted_name3", "encrypted_decrypted_name3", "encrypted_decrypted_body3")
     }
 }
