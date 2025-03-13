@@ -254,6 +254,7 @@ public class SplitFactoryImpl implements SplitFactory {
                         mSynchronizer,
                         streamingComponents.getSplitsUpdateNotificationQueue(),
                         mStorageContainer.getSplitsStorage(),
+                        mStorageContainer.getRuleBasedSegmentStorage(),
                         compressionProvider),
                 streamingComponents.getSyncGuardian());
 

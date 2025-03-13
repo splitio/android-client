@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.WorkerThread;
 import androidx.work.WorkerParameters;
 
+import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.workmanager.SplitWorker;
 
 public class SplitsSyncWorker extends SplitWorker {
@@ -21,6 +22,7 @@ public class SplitsSyncWorker extends SplitWorker {
                 new StorageProvider(getDatabase(), params.apiKey(), params.encryptionEnabled(), params.shouldRecordTelemetry()),
                 new FetcherProvider(getHttpClient(), getEndPoint()),
                 new SplitChangeProcessorProvider().provideSplitChangeProcessor(params.configuredFilterType(), params.configuredFilterValues()),
+                new RuleBasedSegmentChangeProcessor(),
                 new SyncHelperProvider(),
                 params.flagsSpec());
 

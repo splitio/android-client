@@ -51,6 +51,11 @@ public class NotificationParser {
     }
 
     @NonNull
+    public RuleBasedSegmentChangeNotification parseRuleBasedSegmentUpdate(String notificationJson) {
+        return Json.fromJson(notificationJson, RuleBasedSegmentChangeNotification.class);
+    }
+
+    @NonNull
     public SplitKillNotification parseSplitKill(String jsonData) throws JsonSyntaxException {
         return Json.fromJson(jsonData, SplitKillNotification.class);
     }

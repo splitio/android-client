@@ -16,6 +16,7 @@ import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.TestingConfig;
+import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.service.CleanUpDatabaseTask;
@@ -32,8 +33,10 @@ import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsT
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTaskConfig;
 import io.split.android.client.service.rules.LoadRuleBasedSegmentsTask;
+import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
+import io.split.android.client.service.splits.RuleBasedSegmentInPlaceUpdateTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
 import io.split.android.client.service.splits.SplitKillTask;
@@ -64,6 +67,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final ISplitEventsManager mEventsManager;
     private final TelemetryTaskFactory mTelemetryTaskFactory;
     private final SplitChangeProcessor mSplitChangeProcessor;
+    private final RuleBasedSegmentChangeProcessor mRuleBasedSegmentChangeProcessor;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final List<SplitFilter> mFilters;
 
@@ -85,6 +89,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mFlagsSpecFromConfig = flagsSpecFromConfig;
         mEventsManager = eventsManager;
         mSplitChangeProcessor = new SplitChangeProcessor(filters, flagSetsFilter);
+        mRuleBasedSegmentChangeProcessor = new RuleBasedSegmentChangeProcessor();
         RuleBasedSegmentStorageProducer ruleBasedSegmentStorageProducer = mSplitsStorageContainer.getRuleBasedSegmentStorage();
 
         TelemetryStorage telemetryStorage = mSplitsStorageContainer.getTelemetryStorage();
@@ -93,6 +98,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
+                    mRuleBasedSegmentChangeProcessor,
                     ruleBasedSegmentStorageProducer,
                     mTelemetryRuntimeProducer,
                     new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()),
@@ -101,6 +107,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
+                    mRuleBasedSegmentChangeProcessor,
                     ruleBasedSegmentStorageProducer,
                     mTelemetryRuntimeProducer,
                     flagsSpecFromConfig);
@@ -220,6 +227,11 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public EncryptionMigrationTask createEncryptionMigrationTask(String sdkKey, SplitRoomDatabase splitRoomDatabase, boolean encryptionEnabled, SplitCipher splitCipher) {
         return new EncryptionMigrationTask(sdkKey, splitRoomDatabase, encryptionEnabled, splitCipher);
+    }
+
+    @Override
+    public RuleBasedSegmentInPlaceUpdateTask createRuleBasedSegmentUpdateTask(RuleBasedSegment ruleBasedSegment, long changeNumber) {
+        return new RuleBasedSegmentInPlaceUpdateTask(mSplitsStorageContainer.getRuleBasedSegmentStorage(), mRuleBasedSegmentChangeProcessor, mEventsManager, ruleBasedSegment, changeNumber);
     }
 
     @NonNull

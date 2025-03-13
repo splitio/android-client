@@ -3,6 +3,7 @@ package io.split.android.client.service;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -28,6 +29,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.RuleBasedSegmentChange;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TargetingRulesChange;
@@ -36,6 +38,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
+import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.sseclient.BackoffCounter;
@@ -56,6 +59,8 @@ public class SplitsSyncHelperTest {
     TargetingRulesChange mTargetingRulesChange = TargetingRulesChange.create(SplitChange.create(-1, 1506703262916L, Collections.emptyList()), RuleBasedSegmentChange.create(-1, 262325L, Collections.singletonList(RuleBasedSegmentStorageImplTest.createRuleBasedSegment("rbs"))));
     @Spy
     SplitChangeProcessor mSplitChangeProcessor;
+    @Spy
+    RuleBasedSegmentChangeProcessor mRuleBasedSegmentChangeProcessor;
     @Mock
     private TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     @Mock
@@ -76,7 +81,7 @@ public class SplitsSyncHelperTest {
         mDefaultParams = getSinceParams(-1, -1);
         mSecondFetchParams = getSinceParams(1506703262916L, 262325L);
         when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(262325L);
-        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mRuleBasedSegmentStorageProducer, mTelemetryRuntimeProducer, mBackoffCounter, "1.1");
+        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mRuleBasedSegmentChangeProcessor, mRuleBasedSegmentStorageProducer, mTelemetryRuntimeProducer, mBackoffCounter, "1.1");
         loadSplitChanges();
     }
 
@@ -105,6 +110,7 @@ public class SplitsSyncHelperTest {
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
         verify(mSplitChangeProcessor, times(1)).process(mTargetingRulesChange.getFeatureFlagsChange());
+        verify(mRuleBasedSegmentChangeProcessor).process((List<RuleBasedSegment>) any(), anyLong());
         verify(mRuleBasedSegmentStorageProducer, times(1)).update(any(), any(), eq(262325L));
         verify(mSplitsStorage, never()).clear();
         verify(mRuleBasedSegmentStorageProducer, never()).clear();
@@ -221,8 +227,6 @@ public class SplitsSyncHelperTest {
         TargetingRulesChange firstSplitChange = getSplitChange(-1, 2);
         TargetingRulesChange secondSplitChange = getSplitChange(2, 4);
         TargetingRulesChange thirdSplitChange = getSplitChange(4, 4);
-        Map<String, Object> firstParams = getSinceParams(-1L);
-        Map<String, Object> secondParams = getSinceParams(2L);
 
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
 
