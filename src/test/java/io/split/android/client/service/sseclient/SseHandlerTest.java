@@ -28,6 +28,7 @@ import io.split.android.client.service.sseclient.notifications.NotificationParse
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
+import io.split.android.client.service.sseclient.notifications.RuleBasedSegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.SplitKillNotification;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.sseclient.notifications.StreamingError;
@@ -273,6 +274,21 @@ public class SseHandlerTest {
         Assert.assertTrue(argumentCaptor.getValue() instanceof SseConnectionErrorStreamingEvent);
         Assert.assertEquals(SseConnectionErrorStreamingEvent.Status.REQUESTED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
         Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+    }
+
+    @Test
+    public void incomingRuleBasedSegmentChange() {
+        IncomingNotification incomingNotification =
+                new IncomingNotification(NotificationType.RULE_BASED_SEGMENT_UPDATE, "", "", 100);
+        RuleBasedSegmentChangeNotification notification = new RuleBasedSegmentChangeNotification(-1);
+
+        when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
+        when(mNotificationParser.parseRuleBasedSegmentUpdate(anyString())).thenReturn(notification);
+        when(mManagerKeeper.isStreamingActive()).thenReturn(true);
+
+        mSseHandler.handleIncomingMessage(buildMessage("{}"));
+
+        verify(mNotificationProcessor).process(incomingNotification);
     }
 
     private void setupNotification() {

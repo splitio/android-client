@@ -37,7 +37,7 @@ public class NotificationParser {
             Logger.e("Error parsing notification: " + e.getLocalizedMessage());
             return null;
         } catch (Exception e) {
-            Logger.e("Unexpected error while parsing incomming notification: " + e.getLocalizedMessage());
+            Logger.e("Unexpected error while parsing incoming notification: " + e.getLocalizedMessage());
             return null;
         }
 

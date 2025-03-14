@@ -1,7 +1,6 @@
 package io.split.android.client.events;
 
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 import org.junit.Assert;
@@ -33,6 +32,17 @@ public class EventsManagerCoordinatorTest {
         delay();
 
         verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+    }
+
+    @Test
+    public void RULE_BASED_SEGMENTEventIsPassedDownToChildren() {
+        mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
+
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+
+        delay();
+
+        verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
     }
 
     @Test

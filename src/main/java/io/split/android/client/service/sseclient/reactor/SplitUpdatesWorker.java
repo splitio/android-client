@@ -9,9 +9,9 @@ import androidx.annotation.VisibleForTesting;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.dtos.Helper;
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -82,11 +82,13 @@ public class SplitUpdatesWorker extends UpdateWorker {
     protected void onWaitForNotificationLoop() throws InterruptedException {
         try {
             InstantUpdateChangeNotification notification = mNotificationsQueue.take();
-            Logger.d("A new notification to update feature flags has been received");
+            String type = notification.getType() == NotificationType.SPLIT_UPDATE ? "feature flags" :
+                    "rule based segments";
+            Logger.d("A new notification to update " + type + " has been received");
 
             long storageChangeNumber = getStorageChangeNumber(notification.getType());
             if (notification.getChangeNumber() <= storageChangeNumber) {
-                Logger.d("Notification change number is lower than the current one. Ignoring notification");
+                Logger.d("Notification for " + type + " change number (" + notification.getChangeNumber() + ") is lower than the current one (" + storageChangeNumber + "). Ignoring notification");
                 return;
             }
 
@@ -130,15 +132,12 @@ public class SplitUpdatesWorker extends UpdateWorker {
         try {
             inPlaceUpdate(notification, decompressed);
         } catch (Exception e) {
-            Logger.e("Could not parse feature flag");
+            Logger.e("Could not parse instant update notification");
             handleLegacyNotification(notification);
         }
     }
 
     private void inPlaceUpdate(InstantUpdateChangeNotification notification, String decompressed) {
-        SplitTask updateTask = (notification.getType() == NotificationType.RULE_BASED_SEGMENT_UPDATE) ?
-                mSplitTaskFactory.createRuleBasedSegmentUpdateTask(Json.fromJson(decompressed, RuleBasedSegment.class), notification.getChangeNumber()) :
-                mSplitTaskFactory.createSplitsUpdateTask(Json.fromJson(decompressed, Split.class), notification.getChangeNumber());
         SplitTaskExecutionListener executionListener = new SplitTaskExecutionListener() {
             @Override
             public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
@@ -148,7 +147,31 @@ public class SplitUpdatesWorker extends UpdateWorker {
             }
         };
 
-        mSplitTaskExecutor.submit(updateTask, executionListener);
+        if (notification.getType() == NotificationType.RULE_BASED_SEGMENT_UPDATE) {
+            RuleBasedSegment ruleBasedSegment = Json.fromJson(decompressed, RuleBasedSegment.class);
+            inPlaceRbsUpdate(notification, ruleBasedSegment, notification.getChangeNumber(), executionListener);
+        } else {
+            Split split = Json.fromJson(decompressed, Split.class);
+            inPlaceSplitsUpdate(notification, split, notification.getChangeNumber(), executionListener);
+        }
+    }
+
+    private void inPlaceRbsUpdate(InstantUpdateChangeNotification notification, RuleBasedSegment ruleBasedSegment, long changeNumber, SplitTaskExecutionListener executionListener) {
+        if (mRuleBasedSegmentStorage.contains(Helper.getReferencedRuleBasedSegments(ruleBasedSegment.getConditions()))) {
+            mSplitTaskExecutor.submit(mSplitTaskFactory.createRuleBasedSegmentUpdateTask(ruleBasedSegment, changeNumber), executionListener);
+        } else {
+            Logger.d("Referenced rule based segment not found in storage. Forcing sync");
+            handleLegacyNotification(notification);
+        }
+    }
+
+    private void inPlaceSplitsUpdate(InstantUpdateChangeNotification notification, Split split, long changeNumber, SplitTaskExecutionListener executionListener) {
+        if (mRuleBasedSegmentStorage.contains(Helper.getReferencedRuleBasedSegments(split.conditions))) {
+            mSplitTaskExecutor.submit(mSplitTaskFactory.createSplitsUpdateTask(split, changeNumber), executionListener);
+        } else {
+            Logger.d("Referenced rule based segment not found in storage. Forcing sync");
+            handleLegacyNotification(notification);
+        }
     }
 
     private void handleLegacyNotification(InstantUpdateChangeNotification notification) {
