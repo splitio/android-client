@@ -3,6 +3,7 @@ package io.split.android.client.storage.common;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.service.impressions.observer.PersistentImpressionsObserverCacheStorage;
 import io.split.android.client.storage.attributes.AttributesStorage;
@@ -19,12 +20,10 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.rbs.PersistentRuleBasedSegmentStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorageImpl;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.engine.experiments.ParserCommons;
-import io.split.android.engine.experiments.RuleBasedSegmentParser;
 
 public class SplitStorageContainer {
 
@@ -43,8 +42,10 @@ public class SplitStorageContainer {
     private final PersistentImpressionsUniqueStorage mPersistentImpressionsUniqueStorage;
     private final PersistentImpressionsObserverCacheStorage mPersistentImpressionsObserverCacheStorage;
     private final GeneralInfoStorage mGeneralInfoStorage;
-    private final ParserCommons mParserCommons;
-    private final RuleBasedSegmentStorage mRuleBasedSegmentStorage;
+    @VisibleForTesting
+    final ParserCommons mParserCommons;
+    @VisibleForTesting
+    final RuleBasedSegmentStorage mRuleBasedSegmentStorage;
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
                                  @NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
@@ -78,10 +79,9 @@ public class SplitStorageContainer {
         mPersistentImpressionsUniqueStorage = checkNotNull(persistentImpressionsUniqueStorage);
         mPersistentImpressionsObserverCacheStorage = checkNotNull(persistentImpressionsObserverCacheStorage);
         mGeneralInfoStorage = checkNotNull(generalInfoStorage);
-        mParserCommons = new ParserCommons(
-                mySegmentsStorageContainer,
-                myLargeSegmentsStorageContainer);
-        mRuleBasedSegmentStorage = new RuleBasedSegmentStorageImpl(persistentRuleBasedSegmentStorage, new RuleBasedSegmentParser(mParserCommons));
+        RuleBasedSegmentStorageInitializer.Result initializerResult = RuleBasedSegmentStorageInitializer.initialize(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, persistentRuleBasedSegmentStorage);
+        mParserCommons = initializerResult.mParserCommons;
+        mRuleBasedSegmentStorage = initializerResult.mRuleBasedSegmentStorage;
     }
 
     public SplitsStorage getSplitsStorage() {

@@ -88,7 +88,7 @@ public class SplitUpdatesWorker extends UpdateWorker {
 
             long storageChangeNumber = getStorageChangeNumber(notification.getType());
             if (notification.getChangeNumber() <= storageChangeNumber) {
-                Logger.d("Notification change number ("+ notification.getChangeNumber() +") is lower than the current one ("+ storageChangeNumber +"). Ignoring notification");
+                Logger.d("Notification for " + type + " change number (" + notification.getChangeNumber() + ") is lower than the current one (" + storageChangeNumber + "). Ignoring notification");
                 return;
             }
 
