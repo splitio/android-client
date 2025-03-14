@@ -321,12 +321,35 @@ public class IntegrationHelper {
                 "data:{\"id\":\"-OT-rGuSwz:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:NDIxNjU0NTUyNw==\",\"timestamp\":" + System.currentTimeMillis() + ",\"encoding\":\"json\",\"channel\":\"NzM2MDI5Mzc0_MTgyNTg1MTgwNg==_splits\",\"data\":\"{\\\"type\\\":\\\"SPLIT_KILL\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"defaultTreatment\\\":\\\"off\\\",\\\"splitName\\\":\\\"" + splitName + "\\\"}\"}\n";
     }
 
+    public static String splitChangeWithReferencedRbs(long flagSince, long rbsSince) {
+        return "{\"ff\":{\"s\":" + flagSince + ",\"t\":" + flagSince + ",\"d\":[]},\"rbs\":{\"s\":" + rbsSince + ",\"t\":" + rbsSince + ",\"d\":[{\"name\":\"new_rbs_test\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\",\"excluded\":{\"keys\":[],\"segments\":[]},\"conditions\":[{\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"WHITELIST\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"mdp\",\"tandil\",\"bsas\"]}},{\"keySelector\":{\"trafficType\":\"user\",\"attribute\":\"email\"},\"matcherType\":\"ENDS_WITH\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"@split.io\"]}}]}}]},{\"name\":\"rbs_test\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\",\"excluded\":{\"keys\":[],\"segments\":[]},\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"IN_RULE_BASED_SEGMENT\",\"negate\":false,\"userDefinedSegmentMatcherData\":{\"segmentName\":\"new_rbs_test\"}}]}}]}]}}";
+    }
+
+    public static String rbsChange(String changeNumber, String previousChangeNumber, String compressedPayload) {
+        return rbsChange(changeNumber, previousChangeNumber, "0", compressedPayload);
+    }
+
+    public static String rbsChangeGZip(String changeNumber, String previousChangeNumber, String compressedPayload) {
+        return rbsChange(changeNumber, previousChangeNumber, "1", compressedPayload);
+    }
+
+    public static String rbsChangeZlib(String changeNumber, String previousChangeNumber, String compressedPayload) {
+        return rbsChange(changeNumber, previousChangeNumber, "2", compressedPayload);
+    }
+
+    public static String rbsChange(String changeNumber, String previousChangeNumber, String compressionType, String compressedPayload) {
+        return "id: 123123\n" +
+                "event: message\n" +
+                "data: {\"id\":\"1111\",\"clientId\":\"pri:ODc1NjQyNzY1\",\"timestamp\":" + System.currentTimeMillis() + ",\"encoding\":\"json\",\"channel\":\"xxxx_xxxx_flags\",\"data\":\"{\\\"type\\\":\\\"RB_SEGMENT_UPDATE\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"pcn\\\":" + previousChangeNumber + ",\\\"c\\\":" + compressionType + ",\\\"d\\\":\\\"" + compressedPayload + "\\\"}\"}\n\n";
+    }
+
     public static String loadSplitChanges(Context context, String fileName) {
         FileHelper fileHelper = new FileHelper();
         String change = fileHelper.loadFileContent(context, fileName);
-        SplitChange parsedChange = Json.fromJson(change, TargetingRulesChange.class).getFeatureFlagsChange();
+        TargetingRulesChange targetingRulesChange = Json.fromJson(change, TargetingRulesChange.class);
+        SplitChange parsedChange = targetingRulesChange.getFeatureFlagsChange();
         parsedChange.since = parsedChange.till;
-        return Json.toJson(TargetingRulesChange.create(parsedChange));
+        return Json.toJson(TargetingRulesChange.create(parsedChange, targetingRulesChange.getRuleBasedSegmentsChange()));
     }
 
     /**
@@ -406,6 +429,14 @@ public class IntegrationHelper {
     public static String getSinceFromUri(URI uri) {
         try {
             return parse(uri.getQuery()).get("since");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String getRbSinceFromUri(URI uri) {
+        try {
+            return parse(uri.getQuery()).get("rbSince");
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
