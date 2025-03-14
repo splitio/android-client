@@ -53,7 +53,8 @@ public class SplitStorageContainerTest {
                     mock(GeneralInfoStorage.class),
                     persistentRbsStorage);
 
-            verify(RuleBasedSegmentStorageInitializer.initialize(segmentStorage, largeSegmentStorage, persistentRbsStorage));
+
+            mockStatic.verify(() -> RuleBasedSegmentStorageInitializer.initialize(segmentStorage, largeSegmentStorage, persistentRbsStorage));
         }
     }
 
