@@ -80,8 +80,8 @@ public class SplitStorageContainer {
         mPersistentImpressionsObserverCacheStorage = checkNotNull(persistentImpressionsObserverCacheStorage);
         mGeneralInfoStorage = checkNotNull(generalInfoStorage);
         RuleBasedSegmentStorageInitializer.Result initializerResult = RuleBasedSegmentStorageInitializer.initialize(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, persistentRuleBasedSegmentStorage);
-        mParserCommons = initializerResult.mParserCommons;
-        mRuleBasedSegmentStorage = initializerResult.mRuleBasedSegmentStorage;
+        mParserCommons = initializerResult.getParserCommons();
+        mRuleBasedSegmentStorage = initializerResult.getRuleBasedSegmentStorage();
     }
 
     public SplitsStorage getSplitsStorage() {

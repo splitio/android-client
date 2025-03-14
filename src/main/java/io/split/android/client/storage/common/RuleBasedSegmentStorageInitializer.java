@@ -1,5 +1,7 @@
 package io.split.android.client.storage.common;
 
+import androidx.annotation.VisibleForTesting;
+
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.rbs.PersistentRuleBasedSegmentStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
@@ -13,26 +15,30 @@ class RuleBasedSegmentStorageInitializer {
         ParserCommons parserCommons = new ParserCommons(
                 mySegmentsStorageContainer,
                 myLargeSegmentsStorageContainer);
-        RuleBasedSegmentStorage ruleBasedSegmentStorage = new RuleBasedSegmentStorageImpl(persistentRuleBasedSegmentStorage, new RuleBasedSegmentParser(parserCommons));
+        return initialize(parserCommons,
+                new RuleBasedSegmentStorageImpl(persistentRuleBasedSegmentStorage, new RuleBasedSegmentParser(parserCommons)));
+    }
+
+    @VisibleForTesting
+    static Result initialize(ParserCommons parserCommons, RuleBasedSegmentStorage ruleBasedSegmentStorage) {
         parserCommons.setRuleBasedSegmentStorage(ruleBasedSegmentStorage);
         return new Result(ruleBasedSegmentStorage, parserCommons);
     }
 
     static class Result {
-        final RuleBasedSegmentStorage mRuleBasedSegmentStorage;
-        final ParserCommons mParserCommons;
+        private final RuleBasedSegmentStorage mRuleBasedSegmentStorage;
+        private final ParserCommons mParserCommons;
 
         Result(RuleBasedSegmentStorage ruleBasedSegmentStorage, ParserCommons parserCommons) {
             mRuleBasedSegmentStorage = ruleBasedSegmentStorage;
             mParserCommons = parserCommons;
-            mParserCommons.setRuleBasedSegmentStorage(mRuleBasedSegmentStorage);
         }
 
-        public ParserCommons getParserCommons() {
+        ParserCommons getParserCommons() {
             return mParserCommons;
         }
 
-        public RuleBasedSegmentStorage getRuleBasedSegmentStorage() {
+        RuleBasedSegmentStorage getRuleBasedSegmentStorage() {
             return mRuleBasedSegmentStorage;
         }
     }
