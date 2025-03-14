@@ -36,8 +36,10 @@ import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
+import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
+import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity;
 import io.split.android.client.utils.logger.Logger;
@@ -82,8 +84,8 @@ public class RuleBasedSegmentsIntegrationTest {
     public void referencedRuleBasedSegmentNotPresentTriggersFetch() throws IOException, InterruptedException {
         // {"name":"rbs_test","status":"ACTIVE","trafficTypeName":"user","excluded":{"keys":[],"segments":[]},"conditions":[{"conditionType":"ROLLOUT","matcherGroup":{"combiner":"AND","matchers":[{"keySelector":{"trafficType":"user"},"matcherType":"IN_RULE_BASED_SEGMENT","negate":false,"userDefinedSegmentMatcherData":{"segmentName":"new_rbs_test"}}]}}]}
         String data = "eyJuYW1lIjoicmJzX3Rlc3QiLCJzdGF0dXMiOiJBQ1RJVkUiLCJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiZXhjbHVkZWQiOnsia2V5cyI6W10sInNlZ21lbnRzIjpbXX0sImNvbmRpdGlvbnMiOlt7ImNvbmRpdGlvblR5cGUiOiJST0xMT1VUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7ImtleVNlbGVjdG9yIjp7InRyYWZmaWNUeXBlIjoidXNlciJ9LCJtYXRjaGVyVHlwZSI6IklOX1JVTEVfQkFTRURfU0VHTUVOVCIsIm5lZ2F0ZSI6ZmFsc2UsInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjp7InNlZ21lbnROYW1lIjoibmV3X3Jic190ZXN0In19XX19XX0=";
-
-        referencedRbsTest(IntegrationHelper.rbsChange("2", "1", data));
+        mCustomSplitChangesResponse.set(IntegrationHelper.splitChangeWithReferencedRbs(3, 3));
+        referencedRbsTest(IntegrationHelper.rbsChange("4", "4", data));
     }
 
     @Test
@@ -98,7 +100,7 @@ public class RuleBasedSegmentsIntegrationTest {
     public void evaluation() throws IOException, InterruptedException {
         LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
         mCustomSplitChangesResponse.set(IntegrationHelper.loadSplitChanges(mContext, "split_changes_rbs.json"));
-        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData);
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, IntegrationHelper.dummyUserKey());
         if (readyClient == null) {
             fail("Client not ready");
         }
@@ -106,10 +108,39 @@ public class RuleBasedSegmentsIntegrationTest {
         assertEquals("on", readyClient.getTreatment("rbs_split", Map.of("email", "test@split.io")));
     }
 
+    @Test
+    public void evaluationWithExcludedSegment() throws IOException, InterruptedException {
+        LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
+        MySegmentEntity mySegment = new MySegmentEntity();
+        mySegment.setSegmentList("segment_test");
+        mySegment.setUserKey(IntegrationHelper.dummyUserKey().matchingKey());
+        mRoomDb.mySegmentDao().update(mySegment);
+        mCustomSplitChangesResponse.set(IntegrationHelper.loadSplitChanges(mContext, "split_changes_rbs.json"));
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, IntegrationHelper.dummyUserKey());
+        if (readyClient == null) {
+            fail("Client not ready");
+        }
+
+        assertEquals("off", readyClient.getTreatment("rbs_split", Map.of("email", "test@split.io")));
+    }
+
+    @Test
+    public void evaluationWithExcludedKey() throws IOException, InterruptedException {
+        LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
+        String matchingKey = "key22";
+        mCustomSplitChangesResponse.set(IntegrationHelper.loadSplitChanges(mContext, "split_changes_rbs.json"));
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, new Key(matchingKey));
+        if (readyClient == null) {
+            fail("Client not ready");
+        }
+
+        assertEquals("off", readyClient.getTreatment("rbs_split", Map.of("email", "test@split.io")));
+    }
+
     private void referencedRbsTest(String notification) throws IOException, InterruptedException {
         // Initialize a factory with RBS enabled
         LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
-        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData);
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, IntegrationHelper.dummyUserKey());
         if (readyClient == null) {
             fail("Client not ready");
         }
@@ -121,13 +152,13 @@ public class RuleBasedSegmentsIntegrationTest {
         readyClient.on(SplitEvent.SDK_UPDATE, TestingHelper.testTask(updateLatch));
         Thread.sleep(100);
         pushToStreaming(streamingData, notification);
-        mCustomSplitChangesResponse.set(IntegrationHelper.splitChangeWithReferencedRbs(3, 3));
+        mCustomSplitChangesResponse.set(IntegrationHelper.splitChangeWithReferencedRbs(5, 5));
         boolean updateAwaited = updateLatch.await(10, TimeUnit.SECONDS);
         if (!updateAwaited) {
             fail("SDK_UPDATE not received");
         }
 
-        Thread.sleep(500);
+        Thread.sleep(200);
         List<RuleBasedSegmentEntity> entities = mRoomDb.ruleBasedSegmentDao().getAll();
         List<String> names = entities.stream().map(RuleBasedSegmentEntity::getName).collect(Collectors.toList());
         assertEquals(2, names.size());
@@ -138,7 +169,7 @@ public class RuleBasedSegmentsIntegrationTest {
     private void successfulInstantUpdateTest(String rbsChange0, String expectedContents) throws IOException, InterruptedException {
         // Initialize a factory with RBS enabled
         LinkedBlockingDeque<String> streamingData = new LinkedBlockingDeque<>();
-        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData);
+        SplitClient readyClient = getReadyClient(mContext, mRoomDb, streamingData, IntegrationHelper.dummyUserKey());
         if (readyClient == null) {
             fail("Client not ready");
         }
@@ -156,7 +187,7 @@ public class RuleBasedSegmentsIntegrationTest {
     private SplitClient getReadyClient(
             Context context,
             SplitRoomDatabase splitRoomDatabase,
-            BlockingQueue<String> streamingData) throws IOException, InterruptedException {
+            BlockingQueue<String> streamingData, Key key) throws IOException, InterruptedException {
         SplitClientConfig config = new TestableSplitConfigBuilder()
                 .trafficType("user")
                 .streamingEnabled(true)
@@ -169,7 +200,7 @@ public class RuleBasedSegmentsIntegrationTest {
 
         SplitFactory splitFactory = IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(),
-                IntegrationHelper.dummyUserKey(),
+                key,
                 config,
                 context,
                 new HttpClientMock(httpResponseMockDispatcher),
@@ -200,11 +231,7 @@ public class RuleBasedSegmentsIntegrationTest {
                 return new HttpResponseMock(200, mCustomSplitChangesResponse.get());
             }
 
-            if (IntegrationHelper.getRbSinceFromUri(uri).equals("2")) {
-                return new HttpResponseMock(200, "{\"ff\":{\"s\":1,\"t\":1,\"d\":[]},\"rbs\":{\"s\":3,\"t\":3,\"d\":[{\"name\":\"new_rbs_test\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\",\"excluded\":{\"keys\":[],\"segments\":[]},\"conditions\":[{\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"WHITELIST\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"mdp\",\"tandil\",\"bsas\"]}},{\"keySelector\":{\"trafficType\":\"user\",\"attribute\":\"email\"},\"matcherType\":\"ENDS_WITH\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"@split.io\"]}}]}}]},{\"name\":\"rbs_test\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\",\"excluded\":{\"keys\":[],\"segments\":[]},\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"IN_RULE_BASED_SEGMENT\",\"negate\":false,\"userDefinedSegmentMatcherData\":{\"segmentName\":\"new_rbs_test\"}}]}}]}]}}");
-            } else {
-                return new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(1, 1));
-            }
+            return new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(1, 1));
         });
         responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyAllSegments()));
         responses.put("v2/auth", (uri, httpMethod, body) -> {
@@ -212,6 +239,11 @@ public class RuleBasedSegmentsIntegrationTest {
             return new HttpResponseMock(200, IntegrationHelper.streamingEnabledToken());
         });
         return responses;
+    }
+
+    @NonNull
+    private static String missingSegmentFetch(long flagSince, long segmentSince) {
+        return "{\"ff\":{\"s\":" + flagSince + ",\"t\":" + flagSince + ",\"d\":[]},\"rbs\":{\"s\":" + segmentSince + ",\"t\":" + segmentSince + ",\"d\":[{\"name\":\"new_rbs_test\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\",\"excluded\":{\"keys\":[],\"segments\":[]},\"conditions\":[{\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"WHITELIST\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"mdp\",\"tandil\",\"bsas\"]}},{\"keySelector\":{\"trafficType\":\"user\",\"attribute\":\"email\"},\"matcherType\":\"ENDS_WITH\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"@split.io\"]}}]}}]},{\"name\":\"rbs_test\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\",\"excluded\":{\"keys\":[],\"segments\":[]},\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"IN_RULE_BASED_SEGMENT\",\"negate\":false,\"userDefinedSegmentMatcherData\":{\"segmentName\":\"new_rbs_test\"}}]}}]}]}}";
     }
 
     private boolean processUpdate(SplitClient client, LinkedBlockingDeque<String> streamingData, String change, String... expectedContents) throws InterruptedException {
