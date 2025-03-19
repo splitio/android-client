@@ -119,7 +119,7 @@ public class FlagsSpecInRequestTest {
         TestingConfig testingConfig = new TestingConfig();
         initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
-        assertEquals("s=1.2&users=CUSTOMER_ID", mAuthUrl.get().getQuery());
+        assertEquals("s=1.3&users=CUSTOMER_ID", mAuthUrl.get().getQuery());
     }
 
     @Test
