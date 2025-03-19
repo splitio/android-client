@@ -41,7 +41,8 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
                 encryptionMigrationTask,
                 storageContainer.getSplitsStorage(),
                 storageContainer.getMySegmentsStorageContainer(),
-                storageContainer.getMyLargeSegmentsStorageContainer());
+                storageContainer.getMyLargeSegmentsStorageContainer(),
+                storageContainer.getRuleBasedSegmentStorage());
     }
 
     @VisibleForTesting
