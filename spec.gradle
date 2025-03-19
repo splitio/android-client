@@ -1,5 +1,5 @@
 ext {
 
     // flags spec contains a String with the feature flags specification
-    flagsSpec = '1.2'
+    flagsSpec = '1.3'
 }

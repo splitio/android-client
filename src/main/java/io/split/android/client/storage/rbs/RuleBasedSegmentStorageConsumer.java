@@ -12,7 +12,5 @@ public interface RuleBasedSegmentStorageConsumer {
     @Nullable
     ParsedRuleBasedSegment get(String segmentName, String matchingKey);
 
-    long getChangeNumber();
-
     boolean contains(@NonNull Set<String> segmentNames);
 }
