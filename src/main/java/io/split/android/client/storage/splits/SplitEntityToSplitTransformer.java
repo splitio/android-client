@@ -89,6 +89,7 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
                 if (name != null && json != null) {
                     Split split = Json.fromJson(json, Split.class);
                     split.name = name;
+//                    split.json = json;
                     splits.add(split);
                 }
             } catch (JsonSyntaxException e) {

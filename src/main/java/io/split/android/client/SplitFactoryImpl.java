@@ -75,6 +75,19 @@ import io.split.android.engine.experiments.SplitParser;
 
 public class SplitFactoryImpl implements SplitFactory {
 
+    // Helper class for tracking SDK startup time
+    public static class StartupTimeTracker {
+        private static final long startTime = System.currentTimeMillis();
+        
+        public static long getElapsedTime() {
+            return System.currentTimeMillis() - startTime;
+        }
+        
+        public static String getElapsedTimeLog(String message) {
+            return "[DEBUG-SDK-STARTUP][+" + getElapsedTime() + "ms] " + message;
+        }
+    }
+
     private final Key mDefaultClientKey;
     private final SplitManager mManager;
     private final Runnable mDestroyer;
@@ -107,6 +120,7 @@ public class SplitFactoryImpl implements SplitFactory {
 
         mDefaultClientKey = key;
         final long initializationStartTime = System.currentTimeMillis();
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitFactoryImpl initialization started"));
         SplitFactoryHelper factoryHelper = new SplitFactoryHelper();
         setupValidations(config);
         ApiKeyValidator apiKeyValidator = new ApiKeyValidatorImpl();
@@ -156,52 +170,75 @@ public class SplitFactoryImpl implements SplitFactory {
         String databaseName = factoryHelper.getDatabaseName(config, apiToken, context);
         SplitRoomDatabase splitDatabase;
         if (testDatabase == null) {
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting database: " + databaseName));
             splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         } else {
             splitDatabase = testDatabase;
             Logger.d("Using test database");
         }
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Setting up HTTP client headers"));
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating SplitTaskExecutor"));
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
         splitTaskExecutor.pause();
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating EventsManagerCoordinator"));
         EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting SplitCipher"));
         SplitCipher splitCipher = factoryHelper.getCipher(apiToken, config.encryptionEnabled());
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating impressionsObserverExecutor"));
         ScheduledThreadPoolExecutor impressionsObserverExecutor = new ScheduledThreadPoolExecutor(1,
                 new ThreadPoolExecutor.CallerRunsPolicy());
+        
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Building storage container"));
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
                 splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage, config.observerCacheExpirationPeriod(), impressionsObserverExecutor);
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting filter configuration"));
         Pair<Map<SplitFilter.Type, SplitFilter>, String> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
         Map<SplitFilter.Type, SplitFilter> filters = filtersConfig.first;
         String splitsFilterQueryStringFromConfig = filtersConfig.second;
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting flags spec"));
         String flagsSpec = getFlagsSpec(testingConfig);
+        
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Building SplitApiFacade"));
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryStringFromConfig);
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting FlagSetsFilter"));
         FlagSetsFilter flagSetsFilter = factoryHelper.getFlagSetsFilter(filters);
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating SplitTaskFactory"));
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig,
                 getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Building WorkManagerWrapper"));
         WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
+        
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating SplitSingleThreadTaskExecutor"));
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
         splitSingleThreadTaskExecutor.pause();
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting ImpressionStrategyProvider"));
         ImpressionStrategyProvider impressionStrategyProvider = factoryHelper.getImpressionStrategyProvider(splitTaskExecutor, splitTaskFactory, mStorageContainer, config);
         Pair<ProcessStrategy, PeriodicTracker> noneComponents = impressionStrategyProvider.getNoneComponents();
+        
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating StrategyImpressionManager"));
         StrategyImpressionManager impressionManager = new StrategyImpressionManager(noneComponents, impressionStrategyProvider.getStrategy(config.impressionsMode()));
         final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Building StreamingComponents"));
         StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(splitTaskExecutor,
                 splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer, flagsSpec);
+        
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating Synchronizer"));
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 splitTaskExecutor,
@@ -225,9 +262,11 @@ public class SplitFactoryImpl implements SplitFactory {
 
         CompressionUtilProvider compressionProvider = new CompressionUtilProvider();
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting TelemetrySynchronizer"));
         TelemetrySynchronizer telemetrySynchronizer = factoryHelper.getTelemetrySynchronizer(splitTaskExecutor,
                 splitTaskFactory, config.telemetryRefreshRate(), config.shouldRecordTelemetry());
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Building SyncManager"));
         mSyncManager = factoryHelper.buildSyncManager(
                 config,
                 splitTaskExecutor,
@@ -243,7 +282,7 @@ public class SplitFactoryImpl implements SplitFactory {
                         mStorageContainer.getSplitsStorage(),
                         compressionProvider),
                 streamingComponents.getSyncGuardian());
-
+        
         if (testLifecycleManager == null) {
             mLifecycleManager = new SplitLifecycleManagerImpl();
         } else {
@@ -331,6 +370,7 @@ public class SplitFactoryImpl implements SplitFactory {
         });
 
         // Set up async initialization
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating SplitFactoryHelper.Initializer"));
         final SplitFactoryHelper.Initializer initializer = new SplitFactoryHelper.Initializer(apiToken,
                 config,
                 splitTaskFactory,
@@ -351,15 +391,18 @@ public class SplitFactoryImpl implements SplitFactory {
         }
 
         // Run initializer
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Starting initializer thread"));
         new Thread(initializer).start();
 
         // Initialize default client
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Initializing default client"));
         client();
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating SplitParser and SplitManager"));
         SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer(), mStorageContainer.getMyLargeSegmentsStorageContainer());
         mManager = new SplitManagerImpl(
                 mStorageContainer.getSplitsStorage(),
                 new SplitValidatorImpl(), mSplitParser);
-
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitFactoryImpl initialization completed in " + (System.currentTimeMillis() - initializationStartTime) + "ms"));
     }
 
     private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {

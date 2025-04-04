@@ -3,6 +3,8 @@ package io.split.android.client.service.splits;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import io.split.android.client.SplitFactoryImpl;
+import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -33,9 +35,15 @@ public class LoadSplitsTask implements SplitTask {
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: Starting execution"));
+        
+        long startTime = System.currentTimeMillis();
+        
         // This call loads the feature flags from the DB into memory, as well as the
         // filter and flags spec values
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: About to call loadLocal()"));
         mSplitsStorage.loadLocal();
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: loadLocal() completed in " + (System.currentTimeMillis() - startTime) + "ms"));
 
         String queryStringFromStorage = mSplitsStorage.getSplitsFilterQueryString();
         String flagsSpecFromStorage = mSplitsStorage.getFlagsSpec();
@@ -48,10 +56,20 @@ public class LoadSplitsTask implements SplitTask {
         }
 
         // If change number is not the initial one, and the filter and flags spec have not changed, we don't need to do anything
-        boolean isNotInitialChangeNumber = mSplitsStorage.getTill() > -1;
+        long till = mSplitsStorage.getTill();
+        boolean isNotInitialChangeNumber = till > -1;
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: till is " + till));
+
         boolean filterHasNotChanged = mSplitsFilterQueryStringFromConfig.equals(queryStringFromStorage);
         boolean flagsSpecHasNotChanged = mFlagsSpecFromConfig.equals(flagsSpecFromStorage);
+        
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: filterHasNotChanged=" + filterHasNotChanged + 
+                ", flagsSpecHasNotChanged=" + flagsSpecHasNotChanged + 
+                ", isNotInitialChangeNumber=" + isNotInitialChangeNumber));
+        
         if (isNotInitialChangeNumber && filterHasNotChanged && flagsSpecHasNotChanged) {
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: Returning success, total execution time: " + 
+                    (System.currentTimeMillis() - startTime) + "ms"));
             return SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS);
         }
 
@@ -60,21 +78,29 @@ public class LoadSplitsTask implements SplitTask {
         boolean flagsSpecHasChanged = !flagsSpecHasNotChanged;
         boolean shouldClearCache = filterHasChanged || flagsSpecHasChanged;
         if (shouldClearCache) {
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: Clearing cache"));
+            long clearStartTime = System.currentTimeMillis();
             mSplitsStorage.clear();
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: Cache cleared in " + 
+                    (System.currentTimeMillis() - clearStartTime) + "ms"));
 
             logClearingMessage(filterHasChanged, flagsSpecHasChanged);
 
             if (filterHasChanged) {
+                System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: Updating splits filter query string"));
                 mSplitsStorage.updateSplitsFilterQueryString(mSplitsFilterQueryStringFromConfig);
             }
 
             if (flagsSpecHasChanged) {
+                System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: Updating flags spec"));
                 mSplitsStorage.updateFlagsSpec(mFlagsSpecFromConfig);
             }
         }
 
         // Since change number is -1 or the storage has been cleared,
         // we don't consider the flags to be loaded, so the task status is error
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: Returning error, total execution time: " + 
+                (System.currentTimeMillis() - startTime) + "ms"));
         return SplitTaskExecutionInfo.error(SplitTaskType.LOAD_LOCAL_SPLITS);
     }
 

@@ -5,12 +5,16 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
+import androidx.sqlite.db.SupportSQLiteDatabase;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
 
 import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
@@ -64,9 +68,32 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
             if (instance == null) {
                 instance = Room.databaseBuilder(context.getApplicationContext(),
                         SplitRoomDatabase.class, databaseName)
-                        .setJournalMode(JournalMode.TRUNCATE)
+                        .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
+                        .setQueryExecutor(Executors.newFixedThreadPool(2))
                         .fallbackToDestructiveMigration()
+                        .setQueryCallback(new RoomDatabase.QueryCallback() {
+                            @Override
+                            public void onQuery(@NonNull String sqlQuery, @NonNull List<Object> bindArgs) {
+                                // This is just for logging/debugging if needed
+                            }
+                        }, Executors.newFixedThreadPool(4))
                         .build();
+                
+                // Get the underlying SQLite database and optimize it
+                try {
+                    SupportSQLiteDatabase db = instance.getOpenHelper().getWritableDatabase();
+                    // These pragmas should be safe to execute on an open database
+
+                    db.execSQL("PRAGMA cache_size = -48000");
+
+                    db.execSQL("PRAGMA temp_store = MEMORY");
+                    db.execSQL("PRAGMA automatic_index = ON");
+                    db.execSQL("PRAGMA foreign_keys = OFF");
+                } catch (Exception e) {
+                    // Log the error but don't crash
+                    System.out.println("Failed to set database pragmas: " + e.getMessage());
+                }
+                
                 mInstances.put(databaseName, instance);
             }
         }

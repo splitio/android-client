@@ -2,6 +2,8 @@ package io.split.android.client;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -23,6 +25,7 @@ import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryInitProducer;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.AttributesValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
@@ -148,18 +151,38 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
             return;
         }
 
+        System.out.println("[DEBUG-SDK-STARTUP]Registering SDK_READY_FROM_CACHE event handler");
         eventsManager.register(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
+                System.out.println("[DEBUG-SDK-STARTUP]SDK_READY_FROM_CACHE triggered, time elapsed: " + (System.currentTimeMillis() - initializationStartTime) + "ms");
                 telemetryInitProducer.recordTimeUntilReadyFromCache(System.currentTimeMillis() - initializationStartTime);
+                
+                // Log the number of splits available
+                try {
+                    int splitCount = mSplitFactory.manager().splitNames().size();
+                    System.out.println("[DEBUG-SDK-STARTUP]Number of splits loaded from cache: " + splitCount);
+                } catch (Exception e) {
+                    System.out.println("[DEBUG-SDK-STARTUP]Failed to get split count: " + e.getMessage());
+                }
             }
         });
 
+        System.out.println("[DEBUG-SDK-STARTUP]Registering SDK_READY event handler");
         eventsManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client) {
+                System.out.println("[DEBUG-SDK-STARTUP]SDK_READY triggered, time elapsed: " + (System.currentTimeMillis() - initializationStartTime) + "ms");
                 telemetryInitProducer.recordTimeUntilReady(System.currentTimeMillis() - initializationStartTime);
                 telemetrySynchronizer.synchronizeConfig();
+                
+                // Log the number of splits available
+                try {
+                    int splitCount = mSplitFactory.manager().splitNames().size();
+                    System.out.println("[DEBUG-SDK-STARTUP]Number of splits available after sync: " + splitCount);
+                } catch (Exception e) {
+                    System.out.println("[DEBUG-SDK-STARTUP]Failed to get split count: " + e.getMessage());
+                }
             }
         });
     }

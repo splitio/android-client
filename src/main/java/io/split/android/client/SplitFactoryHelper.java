@@ -94,11 +94,12 @@ import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
 
+import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
+
 class SplitFactoryHelper {
     private static final int DB_MAGIC_CHARS_COUNT = 4;
 
     String getDatabaseName(SplitClientConfig config, String apiToken, Context context) {
-
         String dbName = buildDatabaseName(config, apiToken);
         File dbPath = context.getDatabasePath(dbName);
         if (dbPath.exists()) {
@@ -520,8 +521,11 @@ class SplitFactoryHelper {
         @Override
         public void run() {
             Logger.v("Running SDK initializer");
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitFactoryHelper.Initializer.run() started"));
             mInitLock.lock();
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitFactoryHelper.Initializer acquired lock"));
             mRolloutCacheManager.validateCache(mListener);
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitFactoryHelper.Initializer.run() completed"));
         }
 
         static class Listener implements SplitTaskExecutionListener {
@@ -550,18 +554,28 @@ class SplitFactoryHelper {
             @Override
             public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
                 try {
+                    System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitFactoryHelper.Listener.taskExecuted() started"));
+                    System.out.println(StartupTimeTracker.getElapsedTimeLog("Notifying ENCRYPTION_MIGRATION_DONE event"));
                     mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
 
+                    System.out.println(StartupTimeTracker.getElapsedTimeLog("Resuming SplitTaskExecutor"));
                     mSplitTaskExecutor.resume();
+                    System.out.println(StartupTimeTracker.getElapsedTimeLog("Resuming SplitSingleThreadTaskExecutor"));
                     mSplitSingleThreadTaskExecutor.resume();
 
+                    System.out.println(StartupTimeTracker.getElapsedTimeLog("Starting SyncManager"));
                     mSyncManager.start();
+                    System.out.println(StartupTimeTracker.getElapsedTimeLog("Registering SyncManager with LifecycleManager"));
                     mLifecycleManager.register(mSyncManager);
+                    System.out.println(StartupTimeTracker.getElapsedTimeLog("Android SDK initialized!"));
                     Logger.i("Android SDK initialized!");
                 } catch (Exception e) {
+                    System.out.println(StartupTimeTracker.getElapsedTimeLog("Error initializing Android SDK: " + e.getMessage()));
                     Logger.e("Error initializing Android SDK", e);
                 } finally {
+                    System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitFactoryHelper.Listener releasing lock"));
                     mInitLock.unlock();
+                    System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitFactoryHelper.Listener.taskExecuted() completed"));
                 }
             }
         }

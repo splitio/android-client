@@ -17,6 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutor;
 
@@ -130,7 +131,11 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
 
     @Override
     public void resume() {
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitBaseTaskExecutor: About to resume scheduler"));
+        long startTime = System.currentTimeMillis();
         mScheduler.resume();
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitBaseTaskExecutor: Scheduler resumed in " + 
+                (System.currentTimeMillis() - startTime) + "ms"));
     }
 
     @Override

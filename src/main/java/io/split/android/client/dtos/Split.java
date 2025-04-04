@@ -52,4 +52,6 @@ public class Split {
 
     @SerializedName("impressionsDisabled")
     public boolean impressionsDisabled = false;
+
+    public String json = null;
 }

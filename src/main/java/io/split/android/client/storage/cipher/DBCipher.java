@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
+import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.logger.Logger;
 
@@ -37,10 +38,20 @@ public class DBCipher {
                     @NonNull SplitEncryptionLevel fromLevel,
                     @NonNull SplitEncryptionLevel toLevel,
                     @NonNull TaskProvider taskProvider) {
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Checking if migration is needed"));
+        long checkStartTime = System.currentTimeMillis();
         mMustApply = fromLevel != toLevel;
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Migration needed: " + mMustApply + 
+                " (from " + fromLevel + " to " + toLevel + "), check took " + 
+                (System.currentTimeMillis() - checkStartTime) + "ms"));
 
         if (mMustApply) {
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Creating cipher for level " + fromLevel));
+            long cipherStartTime = System.currentTimeMillis();
             mFromCipher = SplitCipherFactory.create(apiKey, fromLevel);
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Created cipher in " + 
+                    (System.currentTimeMillis() - cipherStartTime) + "ms"));
+            
             mToCipher = checkNotNull(toCipher);
             mSplitDatabase = checkNotNull(splitDatabase);
             mTaskProvider = checkNotNull(taskProvider);
@@ -50,11 +61,20 @@ public class DBCipher {
     @WorkerThread
     public void apply() {
         if (mMustApply) {
-            Logger.d("Migrating encryption mode");
-            mTaskProvider.get(mSplitDatabase, mFromCipher, mToCipher).execute();
-            Logger.d("Encryption mode migration done");
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Migrating encryption mode"));
+            long taskStartTime = System.currentTimeMillis();
+            ApplyCipherTask task = mTaskProvider.get(mSplitDatabase, mFromCipher, mToCipher);
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Created ApplyCipherTask in " + 
+                    (System.currentTimeMillis() - taskStartTime) + "ms"));
+            
+            long executeStartTime = System.currentTimeMillis();
+            task.execute();
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Executed ApplyCipherTask in " + 
+                    (System.currentTimeMillis() - executeStartTime) + "ms"));
+            
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Encryption mode migration done"));
         } else {
-            Logger.d("No need to migrate encryption mode");
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: No need to migrate encryption mode"));
         }
     }
 

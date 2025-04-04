@@ -17,6 +17,7 @@ import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
 
 public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
@@ -76,10 +77,28 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public SplitsSnapshot getSnapshot() {
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.getSnapshot: Starting"));
+        long startTime = System.currentTimeMillis();
+        
         SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase);
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.getSnapshot: Running database transaction"));
+        long transactionStartTime = System.currentTimeMillis();
         mDatabase.runInTransaction(loader);
-        return new SplitsSnapshot(loadSplits(), loader.getChangeNumber(),
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.getSnapshot: Database transaction completed in " + 
+                (System.currentTimeMillis() - transactionStartTime) + "ms"));
+        
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.getSnapshot: Loading splits"));
+        long loadSplitsStartTime = System.currentTimeMillis();
+        List<Split> splits = loadSplits();
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.getSnapshot: Loaded " + 
+                (splits != null ? splits.size() : 0) + " splits in " + (System.currentTimeMillis() - loadSplitsStartTime) + "ms"));
+        
+        SplitsSnapshot snapshot = new SplitsSnapshot(splits, loader.getChangeNumber(),
                 loader.getUpdateTimestamp(), loader.getSplitsFilterQueryString(), loader.getFlagsSpec());
+        
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.getSnapshot: Completed in " + 
+                (System.currentTimeMillis() - startTime) + "ms"));
+        return snapshot;
     }
 
     @Override
@@ -148,7 +167,24 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     }
 
     private List<Split> loadSplits() {
-        return mEntityToSplitTransformer.transform(mDatabase.splitDao().getAll());
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Starting"));
+        long startTime = System.currentTimeMillis();
+        
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Getting all split entities from database"));
+        long dbStartTime = System.currentTimeMillis();
+        List<SplitEntity> entities = mDatabase.splitDao().getAll();
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Got " + 
+                (entities != null ? entities.size() : 0) + " split entities in " + (System.currentTimeMillis() - dbStartTime) + "ms"));
+        
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Transforming entities to splits"));
+        long transformStartTime = System.currentTimeMillis();
+        List<Split> splits = mEntityToSplitTransformer.transform(entities);
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Transformed to " + 
+                (splits != null ? splits.size() : 0) + " splits in " + (System.currentTimeMillis() - transformStartTime) + "ms"));
+        
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Completed in " + 
+                (System.currentTimeMillis() - startTime) + "ms"));
+        return splits;
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {
@@ -179,10 +215,32 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
         @Override
         public void run() {
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Starting"));
+            long startTime = System.currentTimeMillis();
+            
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Getting timestamp entity"));
+            long timestampStartTime = System.currentTimeMillis();
             GeneralInfoEntity timestampEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP);
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Got timestamp entity in " + 
+                    (System.currentTimeMillis() - timestampStartTime) + "ms"));
+            
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Getting change number entity"));
+            long changeNumberStartTime = System.currentTimeMillis();
             GeneralInfoEntity changeNumberEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Got change number entity in " + 
+                    (System.currentTimeMillis() - changeNumberStartTime) + "ms"));
+            
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Getting filter query string entity"));
+            long filterQueryStartTime = System.currentTimeMillis();
             GeneralInfoEntity filterQueryStringEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING);
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Got filter query string entity in " + 
+                    (System.currentTimeMillis() - filterQueryStartTime) + "ms"));
+            
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Getting flags spec entity"));
+            long flagsSpecStartTime = System.currentTimeMillis();
             GeneralInfoEntity flagsSpecEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.FLAGS_SPEC);
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Got flags spec entity in " + 
+                    (System.currentTimeMillis() - flagsSpecStartTime) + "ms"));
 
             if (changeNumberEntity != null) {
                 mChangeNumber = changeNumberEntity.getLongValue();
@@ -199,6 +257,9 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             if (flagsSpecEntity != null) {
                 mFlagsSpec = flagsSpecEntity.getStringValue();
             }
+            
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Completed in " + 
+                    (System.currentTimeMillis() - startTime) + "ms"));
         }
 
         public Long getChangeNumber() {
