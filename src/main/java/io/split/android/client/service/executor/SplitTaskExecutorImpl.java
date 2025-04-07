@@ -6,7 +6,7 @@ import io.split.android.engine.scheduler.PausableScheduledThreadPoolExecutorImpl
 
 public class SplitTaskExecutorImpl extends SplitBaseTaskExecutor {
 
-    private static final int MIN_THREAD_POOL_SIZE_WHEN_IDLE = 6;
+    private static final int MIN_THREAD_POOL_SIZE_WHEN_IDLE = 2;
     private static final String THREAD_NAME_FORMAT = "split-taskExecutor-%d";
 
     @NonNull

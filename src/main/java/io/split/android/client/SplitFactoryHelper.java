@@ -556,12 +556,12 @@ class SplitFactoryHelper {
                 try {
                     System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitFactoryHelper.Listener.taskExecuted() started"));
                     System.out.println(StartupTimeTracker.getElapsedTimeLog("Notifying ENCRYPTION_MIGRATION_DONE event"));
-                    mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
 
                     System.out.println(StartupTimeTracker.getElapsedTimeLog("Resuming SplitTaskExecutor"));
                     mSplitTaskExecutor.resume();
                     System.out.println(StartupTimeTracker.getElapsedTimeLog("Resuming SplitSingleThreadTaskExecutor"));
                     mSplitSingleThreadTaskExecutor.resume();
+                    mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
 
                     System.out.println(StartupTimeTracker.getElapsedTimeLog("Starting SyncManager"));
                     mSyncManager.start();

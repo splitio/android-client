@@ -10,6 +10,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.SplitClientFactoryImpl;
+import io.split.android.client.SplitFactoryImpl;
 import io.split.android.client.utils.logger.Logger;
 
 public class SplitQueryDaoImpl implements SplitQueryDao {
@@ -22,7 +24,6 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
 
     public SplitQueryDaoImpl(SplitRoomDatabase mDatabase) {
         this.mDatabase = mDatabase;
-        
         // Start prefilling the map in a background thread
         mInitializationThread = new Thread(() -> {
             android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);

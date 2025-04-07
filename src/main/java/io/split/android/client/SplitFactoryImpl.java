@@ -58,6 +58,7 @@ import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.logger.Logger;
@@ -284,13 +285,15 @@ public class SplitFactoryImpl implements SplitFactory {
                         mStorageContainer.getSplitsStorage(),
                         compressionProvider),
                 streamingComponents.getSyncGuardian());
-        
+
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating LifecycleManager"));
         if (testLifecycleManager == null) {
             mLifecycleManager = new SplitLifecycleManagerImpl();
         } else {
             mLifecycleManager = testLifecycleManager;
         }
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating ImpressionListener"));
         ExecutorService impressionsLoggingTaskExecutor = factoryHelper.getImpressionsLoggingTaskExecutor();
         final DecoratedImpressionListener splitImpressionListener
                 = new SyncImpressionListener(mSyncManager, impressionsLoggingTaskExecutor);
@@ -303,22 +306,27 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             customerImpressionListener = new ImpressionListener.FederatedImpressionListener(splitImpressionListener, impressionListeners);
         }
-        EventsTracker eventsTracker = buildEventsTracker();
-        mUserConsentManager = new UserConsentManagerImpl(config,
-                mStorageContainer.getImpressionsStorage(),
-                mStorageContainer.getEventsStorage(),
-                mSyncManager, eventsTracker, impressionManager, splitTaskExecutor);
 
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating EventsTracker"));
+//        EventsTracker eventsTracker = buildEventsTracker();
+        EventsTrackerProvider eventsTrackerProvider = new EventsTrackerProvider(mStorageContainer.getSplitsStorage(),
+                mStorageContainer.getTelemetryStorage(), mSyncManager);
+
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating client components register"));
         ClientComponentsRegister componentsRegister = factoryHelper.getClientComponentsRegister(config, splitTaskExecutor,
                 mEventsManagerCoordinator, mSynchronizer, streamingComponents.getNotificationParser(),
                 streamingComponents.getNotificationProcessor(), streamingComponents.getSseAuthenticator(),
                 mStorageContainer, mSyncManager, compressionProvider);
+
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating SplitClientContainer"));
         mClientContainer = new SplitClientContainerImpl(
                 mDefaultClientKey.matchingKey(), this, config, mSyncManager,
                 telemetrySynchronizer, mStorageContainer, splitTaskExecutor, splitApiFacade,
                 validationLogger, keyValidator, customerImpressionListener,
                 streamingComponents.getPushNotificationManager(), componentsRegister, workManagerWrapper,
-                eventsTracker, flagSetsFilter);
+                eventsTrackerProvider, flagSetsFilter);
+
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating Destroyer"));
         mDestroyer = new Runnable() {
             public void run() {
                 mInitLock.lock();
@@ -371,6 +379,10 @@ public class SplitFactoryImpl implements SplitFactory {
             }
         });
 
+        mUserConsentManager = new UserConsentManagerImpl(config,
+                mStorageContainer.getImpressionsStorage(),
+                mStorageContainer.getEventsStorage(),
+                mSyncManager, eventsTrackerProvider, impressionManager, splitTaskExecutor);
         // Set up async initialization
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating SplitFactoryHelper.Initializer"));
         final SplitFactoryHelper.Initializer initializer = new SplitFactoryHelper.Initializer(apiToken,
@@ -497,9 +509,38 @@ public class SplitFactoryImpl implements SplitFactory {
         ValidationConfig.getInstance().setTrackEventNamePattern(splitClientConfig.trackEventNamePattern());
     }
 
-    private EventsTracker buildEventsTracker() {
-        EventValidator eventsValidator = new EventValidatorImpl(new KeyValidatorImpl(), mStorageContainer.getSplitsStorage());
-        return new EventsTrackerImpl(eventsValidator, new ValidationMessageLoggerImpl(), mStorageContainer.getTelemetryStorage(),
-                new EventPropertiesProcessorImpl(), mSyncManager);
+//    private EventsTracker buildEventsTracker() {
+//        EventValidator eventsValidator = new EventValidatorImpl(new KeyValidatorImpl(), mStorageContainer.getSplitsStorage());
+//        return new EventsTrackerImpl(eventsValidator, new ValidationMessageLoggerImpl(), mStorageContainer.getTelemetryStorage(),
+//                new EventPropertiesProcessorImpl(), mSyncManager);
+//    }
+
+    public static class EventsTrackerProvider {
+
+        private final SplitsStorage mSplitsStorage;
+        private final TelemetryStorage mTelemetryStorage;
+        private final SyncManager mSyncManager;
+        private volatile EventsTracker mEventsTracker;
+
+        public EventsTrackerProvider(SplitsStorage splitsStorage, TelemetryStorage telemetryStorage, SyncManager syncManager) {
+            mSplitsStorage = splitsStorage;
+            mTelemetryStorage = telemetryStorage;
+            mSyncManager = syncManager;
+        }
+
+        public EventsTracker getEventsTracker() {
+            if (mEventsTracker == null) {
+                synchronized (this) {
+                    if (mEventsTracker == null) {
+                        System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("Creating events tracker"));
+                        EventValidator eventsValidator = new EventValidatorImpl(new KeyValidatorImpl(), mSplitsStorage);
+                        mEventsTracker = new EventsTrackerImpl(eventsValidator, new ValidationMessageLoggerImpl(), mTelemetryStorage,
+                                new EventPropertiesProcessorImpl(), mSyncManager);
+                    }
+                }
+            }
+
+            return mEventsTracker;
+        }
     }
 }

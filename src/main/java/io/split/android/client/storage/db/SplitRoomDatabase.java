@@ -66,6 +66,7 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
         if (mSplitQueryDao == null) {
             synchronized (this) {
                 if (mSplitQueryDao == null) {
+                System.out.println("[SPLIT-PERF] SplitQueryDaoImpl: Init SplitQueryDao");
                     mSplitQueryDao = new SplitQueryDaoImpl(this);
                 }
             }
@@ -99,8 +100,10 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
                     // Log the error but don't crash
                     System.out.println("Failed to set database pragmas: " + e.getMessage());
                 }
-                
+
+
                 mInstances.put(databaseName, instance);
+                new Thread(() -> { mInstances.get(databaseName).getSplitQueryDao(); }).start();
             }
         }
         return instance;

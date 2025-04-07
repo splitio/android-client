@@ -48,7 +48,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
     private final TreatmentManagerFactory mTreatmentManagerFactory;
     private final ImpressionListener.FederatedImpressionListener mCustomerImpressionListener;
     private final SplitValidatorImpl mSplitValidator;
-    private final EventsTracker mEventsTracker;
+    private final SplitFactoryImpl.EventsTrackerProvider mEventsTrackerProvider;
 
     public SplitClientFactoryImpl(@NonNull SplitFactory splitFactory,
                                   @NonNull SplitClientContainer clientContainer,
@@ -59,7 +59,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                                   @NonNull SplitTaskExecutor splitTaskExecutor,
                                   @NonNull ValidationMessageLogger validationLogger,
                                   @NonNull KeyValidator keyValidator,
-                                  @NonNull EventsTracker eventsTracker,
+                                  @NonNull SplitFactoryImpl.EventsTrackerProvider eventsTrackerProvider,
                                   @NonNull ImpressionListener.FederatedImpressionListener customerImpressionListener,
                                   @Nullable FlagSetsFilter flagSetsFilter) {
         mSplitFactory = checkNotNull(splitFactory);
@@ -70,7 +70,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
         mStorageContainer = checkNotNull(storageContainer);
         mTelemetrySynchronizer = checkNotNull(telemetrySynchronizer);
         mCustomerImpressionListener = checkNotNull(customerImpressionListener);
-        mEventsTracker = checkNotNull(eventsTracker);
+        mEventsTrackerProvider = checkNotNull(eventsTrackerProvider);
 
         mAttributesManagerFactory = getAttributesManagerFactory(config.persistentAttributesEnabled(),
                 validationLogger,
@@ -109,7 +109,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 mCustomerImpressionListener,
                 mConfig,
                 eventsManager,
-                mEventsTracker,
+                mEventsTrackerProvider.getEventsTracker(),
                 mAttributesManagerFactory.getManager(key.matchingKey(), attributesStorage),
                 mSplitValidator,
                 mTreatmentManagerFactory.getTreatmentManager(key,

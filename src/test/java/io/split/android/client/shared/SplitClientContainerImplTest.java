@@ -321,8 +321,7 @@ public class SplitClientContainerImplTest {
                 mConfig,
                 mSplitClientFactory,
                 mClientComponentsRegister,
-                mWorkManagerWrapper,
-                mEventsTracker
+                mWorkManagerWrapper
         );
     }
 
