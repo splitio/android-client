@@ -171,6 +171,7 @@ class SplitFactoryHelperTest {
             singleThreadTaskExecutor,
             syncManager,
             lifecycleManager,
+            splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000),
             initLock
         )
 
