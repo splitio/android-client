@@ -58,6 +58,21 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
 
     private static volatile Map<String, SplitRoomDatabase> mInstances = new ConcurrentHashMap<>();
 
+    /**
+     * Get the SplitQueryDao instance for optimized split queries.
+     * This uses direct cursor access for better performance.
+     */
+    public SplitQueryDao getSplitQueryDao() {
+        if (mSplitQueryDao == null) {
+            synchronized (this) {
+                if (mSplitQueryDao == null) {
+                    mSplitQueryDao = new SplitQueryDaoImpl(this);
+                }
+            }
+        }
+        return mSplitQueryDao;
+    }
+
     public static SplitRoomDatabase getDatabase(final Context context, final String databaseName) {
         checkNotNull(context);
         checkNotNull(databaseName);
@@ -69,14 +84,7 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
                 instance = Room.databaseBuilder(context.getApplicationContext(),
                         SplitRoomDatabase.class, databaseName)
                         .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
-                        .setQueryExecutor(Executors.newFixedThreadPool(2))
                         .fallbackToDestructiveMigration()
-                        .setQueryCallback(new RoomDatabase.QueryCallback() {
-                            @Override
-                            public void onQuery(@NonNull String sqlQuery, @NonNull List<Object> bindArgs) {
-                                // This is just for logging/debugging if needed
-                            }
-                        }, Executors.newFixedThreadPool(4))
                         .build();
                 
                 // Get the underlying SQLite database and optimize it
@@ -87,23 +95,6 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
                     db.execSQL("PRAGMA cache_size = -3000");
                     db.execSQL("PRAGMA automatic_index = ON");
                     db.execSQL("PRAGMA foreign_keys = OFF");
-                    
-                    // Preload the splitDao().getAll() query to warm up the SQLite cache
-                    System.out.println("[SPLIT-PERF] Preloading splitDao().getAll() to warm up SQLite cache");
-                    long startTime = System.currentTimeMillis();
-                    Executors.newSingleThreadExecutor().execute(() -> {
-                        try {
-                            // Execute the query that will be used later to load splits
-                            db.query("SELECT name, body FROM splits");
-                            db.query("SELECT user_key, segment_list, updated_at FROM my_segments");
-                            db.query("SELECT user_key, segment_list, updated_at FROM my_large_segments");
-                            db.query("SELECT user_key, attributes, updated_at FROM attributes");
-                            long endTime = System.currentTimeMillis();
-                            System.out.println("[SPLIT-PERF] Preloaded splitDao().getAll() in " + (endTime - startTime) + "ms");
-                        } catch (Exception e) {
-                            System.out.println("[SPLIT-PERF] Failed to preload splitDao().getAll(): " + e.getMessage());
-                        }
-                    });
                 } catch (Exception e) {
                     // Log the error but don't crash
                     System.out.println("Failed to set database pragmas: " + e.getMessage());
@@ -113,15 +104,5 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
             }
         }
         return instance;
-    }
-
-    public SplitQueryDao splitQueryDao() {
-        if (mSplitQueryDao != null) {
-            return mSplitQueryDao;
-        }
-        synchronized (this) {
-            mSplitQueryDao = new SplitQueryDaoImpl(this);
-            return mSplitQueryDao;
-        }
     }
 }

@@ -17,6 +17,7 @@ import io.split.android.client.service.executor.parallel.SplitParallelTaskExecut
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
+import io.split.android.client.storage.db.SplitQueryDao;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
 
@@ -173,8 +174,10 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         
         System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Getting all split entities from database"));
         long dbStartTime = System.currentTimeMillis();
-//        List<SplitEntity> entities = mDatabase.splitDao().getAll();
-        Map<String, String> allNamesAndBodies = mDatabase.splitDao().getAllNamesAndBodies();
+        
+        // Use the optimized SplitQueryDao for better performance
+        Map<String, String> allNamesAndBodies = mDatabase.getSplitQueryDao().getAllAsMap();
+        
         System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Got " + 
                 (allNamesAndBodies != null ? allNamesAndBodies.size() : 0) + " split entities in " + (System.currentTimeMillis() - dbStartTime) + "ms"));
         
