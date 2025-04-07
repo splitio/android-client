@@ -507,7 +507,7 @@ class SplitFactoryHelper {
             this(new RolloutCacheManagerImpl(config,
                             storageContainer,
                             splitTaskFactory.createEncryptionMigrationTask(apiToken, splitDatabase, config.encryptionEnabled(), splitCipher)),
-                    new Listener(eventsManagerCoordinator, splitTaskExecutor, splitSingleThreadTaskExecutor, syncManager, lifecycleManager, splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000), initLock),
+                    new Listener(eventsManagerCoordinator, splitTaskExecutor, splitSingleThreadTaskExecutor, syncManager, lifecycleManager, initLock),
                     initLock);
         }
 
@@ -536,21 +536,18 @@ class SplitFactoryHelper {
             private final SyncManager mSyncManager;
             private final SplitLifecycleManager mLifecycleManager;
             private final ReentrantLock mInitLock;
-            private final CleanUpDatabaseTask mCleanUpDatabaseTask;
 
             Listener(EventsManagerCoordinator eventsManagerCoordinator,
                      SplitTaskExecutor splitTaskExecutor,
                      SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor,
                      SyncManager syncManager,
                      SplitLifecycleManager lifecycleManager,
-                     CleanUpDatabaseTask cleanUpDatabaseTask,
                      ReentrantLock initLock) {
                 mEventsManagerCoordinator = eventsManagerCoordinator;
                 mSplitTaskExecutor = splitTaskExecutor;
                 mSplitSingleThreadTaskExecutor = splitSingleThreadTaskExecutor;
                 mSyncManager = syncManager;
                 mLifecycleManager = lifecycleManager;
-                mCleanUpDatabaseTask = cleanUpDatabaseTask;
                 mInitLock = initLock;
             }
 
@@ -572,8 +569,6 @@ class SplitFactoryHelper {
                     mLifecycleManager.register(mSyncManager);
                     System.out.println(StartupTimeTracker.getElapsedTimeLog("Android SDK initialized!"));
                     Logger.i("Android SDK initialized!");
-
-                    mCleanUpDatabaseTask.execute();
                 } catch (Exception e) {
                     System.out.println(StartupTimeTracker.getElapsedTimeLog("Error initializing Android SDK: " + e.getMessage()));
                     Logger.e("Error initializing Android SDK", e);

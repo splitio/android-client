@@ -34,96 +34,34 @@ import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
 )
 public abstract class SplitRoomDatabase extends RoomDatabase {
 
-    // Eagerly loaded DAOs (directly exposed)
-    public abstract AttributesDao attributesDao();
-    public abstract GeneralInfoDao generalInfoDao();
     public abstract MySegmentDao mySegmentDao();
+
     public abstract MyLargeSegmentDao myLargeSegmentDao();
-    
-    // Lazily loaded DAOs (cached in volatile fields)
-    private volatile SplitDao mSplitDao;
-    private volatile EventDao mEventDao;
-    private volatile ImpressionDao mImpressionDao;
-    private volatile ImpressionsCountDao mImpressionsCountDao;
-    private volatile UniqueKeysDao mUniqueKeysDao;
-    private volatile ImpressionsObserverCacheDao mImpressionsObserverCacheDao;
+
+    public abstract SplitDao splitDao();
+
+    public abstract EventDao eventDao();
+
+    public abstract ImpressionDao impressionDao();
+
+    public abstract GeneralInfoDao generalInfoDao();
+
+    public abstract ImpressionsCountDao impressionsCountDao();
+
+    public abstract AttributesDao attributesDao();
+
+    public abstract UniqueKeysDao uniqueKeysDao();
+
+    public abstract ImpressionsObserverCacheDao impressionsObserverCacheDao();
+
     private volatile SplitQueryDao mSplitQueryDao;
 
-    // Abstract methods for lazy-loaded DAOs
-    protected abstract SplitDao splitDaoInternal();
-    protected abstract EventDao eventDaoInternal();
-    protected abstract ImpressionDao impressionDaoInternal();
-    protected abstract ImpressionsCountDao impressionsCountDaoInternal();
-    protected abstract UniqueKeysDao uniqueKeysDaoInternal();
-    protected abstract ImpressionsObserverCacheDao impressionsObserverCacheDaoInternal();
+    private static volatile Map<String, SplitRoomDatabase> mInstances = new ConcurrentHashMap<>();
 
-    // Lazy-loaded public methods
-    public SplitDao splitDao() {
-        if (mSplitDao == null) {
-            synchronized (this) {
-                if (mSplitDao == null) {
-                    mSplitDao = splitDaoInternal();
-                }
-            }
-        }
-        return mSplitDao;
-    }
-
-    public EventDao eventDao() {
-        if (mEventDao == null) {
-            synchronized (this) {
-                if (mEventDao == null) {
-                    mEventDao = eventDaoInternal();
-                }
-            }
-        }
-        return mEventDao;
-    }
-
-    public ImpressionDao impressionDao() {
-        if (mImpressionDao == null) {
-            synchronized (this) {
-                if (mImpressionDao == null) {
-                    mImpressionDao = impressionDaoInternal();
-                }
-            }
-        }
-        return mImpressionDao;
-    }
-
-    public ImpressionsCountDao impressionsCountDao() {
-        if (mImpressionsCountDao == null) {
-            synchronized (this) {
-                if (mImpressionsCountDao == null) {
-                    mImpressionsCountDao = impressionsCountDaoInternal();
-                }
-            }
-        }
-        return mImpressionsCountDao;
-    }
-
-    public UniqueKeysDao uniqueKeysDao() {
-        if (mUniqueKeysDao == null) {
-            synchronized (this) {
-                if (mUniqueKeysDao == null) {
-                    mUniqueKeysDao = uniqueKeysDaoInternal();
-                }
-            }
-        }
-        return mUniqueKeysDao;
-    }
-
-    public ImpressionsObserverCacheDao impressionsObserverCacheDao() {
-        if (mImpressionsObserverCacheDao == null) {
-            synchronized (this) {
-                if (mImpressionsObserverCacheDao == null) {
-                    mImpressionsObserverCacheDao = impressionsObserverCacheDaoInternal();
-                }
-            }
-        }
-        return mImpressionsObserverCacheDao;
-    }
-
+    /**
+     * Get the SplitQueryDao instance for optimized split queries.
+     * This uses direct cursor access for better performance.
+     */
     public SplitQueryDao getSplitQueryDao() {
         if (mSplitQueryDao == null) {
             synchronized (this) {
@@ -167,6 +105,4 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
         }
         return instance;
     }
-
-    private static volatile Map<String, SplitRoomDatabase> mInstances = new ConcurrentHashMap<>();
 }

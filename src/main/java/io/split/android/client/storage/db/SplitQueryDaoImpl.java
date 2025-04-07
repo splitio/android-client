@@ -1,6 +1,7 @@
 package io.split.android.client.storage.db;
 
 import android.database.Cursor;
+import android.os.Process;
 
 import androidx.annotation.NonNull;
 
@@ -24,6 +25,7 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
         
         // Start prefilling the map in a background thread
         mInitializationThread = new Thread(() -> {
+            android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
             long startTime = System.currentTimeMillis();
             System.out.println("[SPLIT-PERF] SplitQueryDaoImpl: Starting background prefill of splits map");
             

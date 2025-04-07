@@ -32,6 +32,7 @@ import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.lifecycle.SplitLifecycleManagerImpl;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
+import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutor;
@@ -127,23 +128,6 @@ public class SplitFactoryImpl implements SplitFactory {
         KeyValidator keyValidator = new KeyValidatorImpl();
         ValidationMessageLogger validationLogger = new ValidationMessageLoggerImpl();
 
-        HttpClient defaultHttpClient;
-        if (httpClient == null) {
-            HttpClientImpl.Builder builder = new HttpClientImpl.Builder()
-                    .setConnectionTimeout(config.connectionTimeout())
-                    .setReadTimeout(config.readTimeout())
-                    .setProxy(config.proxy())
-                    .setDevelopmentSslConfig(config.developmentSslConfig())
-                    .setContext(context)
-                    .setProxyAuthenticator(config.authenticator());
-            if (config.certificatePinningConfiguration() != null) {
-                builder.setCertificatePinningConfiguration(config.certificatePinningConfiguration());
-            }
-
-            defaultHttpClient = builder.build();
-        } else {
-            defaultHttpClient = httpClient;
-        }
         ValidationErrorInfo errorInfo = keyValidator.validate(key.matchingKey(), key.bucketingKey());
         String validationTag = "factory instantiation";
         if (errorInfo != null) {
@@ -177,10 +161,6 @@ public class SplitFactoryImpl implements SplitFactory {
             Logger.d("Using test database");
         }
 
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("Setting up HTTP client headers"));
-        defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
-        defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
-
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating SplitTaskExecutor"));
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
         splitTaskExecutor.pause();
@@ -208,6 +188,28 @@ public class SplitFactoryImpl implements SplitFactory {
         String flagsSpec = getFlagsSpec(testingConfig);
         
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Building SplitApiFacade"));
+
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Setting up HTTP client headers"));
+
+        HttpClient defaultHttpClient;
+        if (httpClient == null) {
+            HttpClientImpl.Builder builder = new HttpClientImpl.Builder()
+                    .setConnectionTimeout(config.connectionTimeout())
+                    .setReadTimeout(config.readTimeout())
+                    .setProxy(config.proxy())
+                    .setDevelopmentSslConfig(config.developmentSslConfig())
+                    .setContext(context)
+                    .setProxyAuthenticator(config.authenticator());
+            if (config.certificatePinningConfiguration() != null) {
+                builder.setCertificatePinningConfiguration(config.certificatePinningConfiguration());
+            }
+
+            defaultHttpClient = builder.build();
+        } else {
+            defaultHttpClient = httpClient;
+        }
+        defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
+        defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryStringFromConfig);
 
@@ -393,6 +395,9 @@ public class SplitFactoryImpl implements SplitFactory {
         // Run initializer
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Starting initializer thread"));
         new Thread(initializer).start();
+
+        CleanUpDatabaseTask cleanUpDatabaseTask = splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000);
+        splitTaskExecutor.schedule(cleanUpDatabaseTask, 5L, null);
 
         // Initialize default client
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Initializing default client"));
