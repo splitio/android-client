@@ -9,6 +9,7 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactory;
@@ -172,13 +173,14 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         
         System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Getting all split entities from database"));
         long dbStartTime = System.currentTimeMillis();
-        List<SplitEntity> entities = mDatabase.splitDao().getAll();
+//        List<SplitEntity> entities = mDatabase.splitDao().getAll();
+        Map<String, String> allNamesAndBodies = mDatabase.splitDao().getAllNamesAndBodies();
         System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Got " + 
-                (entities != null ? entities.size() : 0) + " split entities in " + (System.currentTimeMillis() - dbStartTime) + "ms"));
+                (allNamesAndBodies != null ? allNamesAndBodies.size() : 0) + " split entities in " + (System.currentTimeMillis() - dbStartTime) + "ms"));
         
         System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Transforming entities to splits"));
         long transformStartTime = System.currentTimeMillis();
-        List<Split> splits = mEntityToSplitTransformer.transform(entities);
+        List<Split> splits = mEntityToSplitTransformer.transform(allNamesAndBodies);
         System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Transformed to " + 
                 (splits != null ? splits.size() : 0) + " splits in " + (System.currentTimeMillis() - transformStartTime) + "ms"));
         

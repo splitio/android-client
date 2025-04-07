@@ -8,7 +8,9 @@ import androidx.annotation.NonNull;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import io.split.android.client.dtos.Split;
@@ -51,6 +53,27 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
         }
     }
 
+    @Override
+    public List<Split> transform(Map<String, String> allNamesAndBodies) {
+        if (allNamesAndBodies == null) {
+            return new ArrayList<>();
+        }
+
+        List<Split> splits = new ArrayList<>(allNamesAndBodies.size());
+        for (Map.Entry<String, String> entry : allNamesAndBodies.entrySet()) {
+            try {
+                Split split = new Split();
+                split.name = entry.getKey();
+                split.json = entry.getValue();
+                splits.add(split);
+            } catch (JsonSyntaxException e) {
+
+            }
+        }
+
+        return splits;
+    }
+
     @NonNull
     private List<SplitDeferredTaskItem<List<Split>>> getSplitDeserializationTasks(List<SplitEntity> allEntities, int entitiesCount) {
         int availableThreads = mTaskExecutor.getAvailableThreads();
@@ -74,11 +97,10 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
     @NonNull
     private static List<Split> convertEntitiesToSplitList(List<SplitEntity> entities,
                                                           SplitCipher cipher) {
-        List<Split> splits = new ArrayList<>();
-
         if (entities == null) {
-            return splits;
+            return new ArrayList<>();
         }
+        List<Split> splits = new ArrayList<>(entities.size());
 
         for (SplitEntity entity : entities) {
             String name;
@@ -87,9 +109,10 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
                 name = cipher.decrypt(entity.getName());
                 json = cipher.decrypt(entity.getBody());
                 if (name != null && json != null) {
-                    Split split = Json.fromJson(json, Split.class);
+//                    Split split = Json.fromJson(json, Split.class);
+                    Split split = new Split();
                     split.name = name;
-//                    split.json = json;
+                    split.json = json;
                     splits.add(split);
                 }
             } catch (JsonSyntaxException e) {

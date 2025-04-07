@@ -6,6 +6,8 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.WorkerThread;
 
+import com.google.gson.JsonSyntaxException;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -80,19 +82,36 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     @Override
     public Split get(@NonNull String name) {
-        return mInMemorySplits.get(name);
+        Split split = mInMemorySplits.get(name);
+        if (split == null) {
+            return null;
+        }
+
+        if (split.json == null) {
+            return split;
+        }
+
+        try {
+            Split parsedSplit = Json.fromJson(split.json, Split.class);
+            parsedSplit.json = null;
+            return mInMemorySplits.put(name, parsedSplit);
+        } catch (JsonSyntaxException e) {
+            return null;
+        }
     }
 
     @Override
     public Map<String, Split> getMany(@Nullable List<String> splitNames) {
         Map<String, Split> splits = new HashMap<>();
         if (splitNames == null || splitNames.isEmpty()) {
-            splits.putAll(mInMemorySplits);
+            for (String name : mInMemorySplits.keySet()) {
+                splits.put(name, get(name));
+            }
             return splits;
         }
 
         for (String name : splitNames) {
-            Split split = mInMemorySplits.get(name);
+            Split split = get(name);
             if (split != null) {
                 splits.put(name, split);
             }

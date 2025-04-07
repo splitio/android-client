@@ -84,11 +84,26 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
                     SupportSQLiteDatabase db = instance.getOpenHelper().getWritableDatabase();
                     // These pragmas should be safe to execute on an open database
 
-                    db.execSQL("PRAGMA cache_size = -48000");
-
-                    db.execSQL("PRAGMA temp_store = MEMORY");
+                    db.execSQL("PRAGMA cache_size = -3000");
                     db.execSQL("PRAGMA automatic_index = ON");
                     db.execSQL("PRAGMA foreign_keys = OFF");
+                    
+                    // Preload the splitDao().getAll() query to warm up the SQLite cache
+                    System.out.println("[SPLIT-PERF] Preloading splitDao().getAll() to warm up SQLite cache");
+                    long startTime = System.currentTimeMillis();
+                    Executors.newSingleThreadExecutor().execute(() -> {
+                        try {
+                            // Execute the query that will be used later to load splits
+                            db.query("SELECT name, body FROM splits");
+                            db.query("SELECT user_key, segment_list, updated_at FROM my_segments");
+                            db.query("SELECT user_key, segment_list, updated_at FROM my_large_segments");
+                            db.query("SELECT user_key, attributes, updated_at FROM attributes");
+                            long endTime = System.currentTimeMillis();
+                            System.out.println("[SPLIT-PERF] Preloaded splitDao().getAll() in " + (endTime - startTime) + "ms");
+                        } catch (Exception e) {
+                            System.out.println("[SPLIT-PERF] Failed to preload splitDao().getAll(): " + e.getMessage());
+                        }
+                    });
                 } catch (Exception e) {
                     // Log the error but don't crash
                     System.out.println("Failed to set database pragmas: " + e.getMessage());

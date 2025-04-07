@@ -6,7 +6,9 @@ import static io.split.android.client.utils.Utils.partition;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import io.split.android.client.dtos.Split;
@@ -49,6 +51,12 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
         } else {
             return getSplitEntities(splits, mSplitCipher);
         }
+    }
+
+    @Override
+    public List<SplitEntity> transform(Map<String, String> allNamesAndBodies) {
+        // no op
+        return Collections.emptyList();
     }
 
     @NonNull
