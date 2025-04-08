@@ -83,12 +83,7 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
         }
         return c.getColumnIndexOrThrow("`" + name + "`");
     }
-    
-    /**
-     * Get all splits as a Map with name as key and body as value.
-     * This is a more efficient way to get splits compared to Room's automatic entity mapping.
-     * If the map has been prefilled, it returns immediately.
-     */
+
     public Map<String, String> getAllAsMap() {
         // Fast path - if the map is already initialized, return it immediately
         if (mIsInitialized) {
