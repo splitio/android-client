@@ -54,8 +54,7 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
     }
 
     @Override
-    public List<SplitEntity> transform(Map<String, String> allNamesAndBodies) {
-        // no op
+    public List<SplitEntity> transform(Map<String, Split> allNamesAndBodies) {
         return Collections.emptyList();
     }
 
@@ -66,6 +65,8 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
         for (Split split : partition) {
             String encryptedName = cipher.encrypt(split.name);
             String encryptedJson = cipher.encrypt(Json.toJson(split));
+            String encryptedTrafficType = cipher.encrypt(split.trafficTypeName);
+            String encryptedSets = cipher.encrypt(Json.toJson(split.sets));
             if (encryptedName == null || encryptedJson == null) {
                 Logger.e("Error encrypting split: " + split.name);
                 continue;
@@ -73,6 +74,9 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
             SplitEntity entity = new SplitEntity();
             entity.setName(encryptedName);
             entity.setBody(encryptedJson);
+            entity.setTrafficType(encryptedTrafficType);
+            entity.setSets(encryptedSets);
+
             entity.setUpdatedAt(System.currentTimeMillis() / 1000);
             result.add(entity);
         }

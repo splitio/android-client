@@ -175,7 +175,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         long dbStartTime = System.currentTimeMillis();
         
         // Use the optimized SplitQueryDao for better performance
-        Map<String, String> allNamesAndBodies = mDatabase.getSplitQueryDao().getAllAsMap();
+        Map<String, SplitEntity> allNamesAndBodies = mDatabase.getSplitQueryDao().getAllAsMap();
         
         System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Got " + 
                 (allNamesAndBodies != null ? allNamesAndBodies.size() : 0) + " split entities in " + (System.currentTimeMillis() - dbStartTime) + "ms"));

@@ -48,22 +48,10 @@ public abstract class BaseEventsManager implements Runnable {
     }
 
     public BaseEventsManager() {
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("BaseEventsManager: Constructor started"));
-        
         mQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("BaseEventsManager: Queue created"));
-        
         mTriggered = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("BaseEventsManager: Set created"));
-
         // Use the shared thread factory instead of creating a new one each time
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("BaseEventsManager: Using shared ThreadFactory"));
-        
-        long launchStartTime = System.currentTimeMillis();
         launch(EVENTS_THREAD_FACTORY);
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("BaseEventsManager: Thread launch completed in " + (System.currentTimeMillis() - launchStartTime) + "ms"));
-        
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("BaseEventsManager: Constructor completed"));
     }
 
     @Override
@@ -76,19 +64,9 @@ public abstract class BaseEventsManager implements Runnable {
     }
 
     private void launch(ThreadFactory threadFactory) {
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("BaseEventsManager.launch: Started"));
-        
         PausableThreadPoolExecutor mScheduler = PausableThreadPoolExecutorImpl.newSingleThreadExecutor(threadFactory);
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("BaseEventsManager.launch: Executor created"));
-        
         mScheduler.submit(this);
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("BaseEventsManager.launch: Task submitted"));
-        
-        long resumeStartTime = System.currentTimeMillis();
         mScheduler.resume();
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("BaseEventsManager.launch: Executor resumed in " + (System.currentTimeMillis() - resumeStartTime) + "ms"));
-        
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("BaseEventsManager.launch: Completed"));
     }
 
     protected abstract void triggerEventsWhenAreAvailable();

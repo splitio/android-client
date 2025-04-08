@@ -17,7 +17,7 @@ import io.split.android.client.utils.logger.Logger;
 public class SplitQueryDaoImpl implements SplitQueryDao {
 
     private final SplitRoomDatabase mDatabase;
-    private volatile Map<String, String> mCachedSplitsMap;
+    private volatile Map<String, SplitEntity> mCachedSplitsMap;
     private final Object mLock = new Object();
     private boolean mIsInitialized = false;
     private Thread mInitializationThread;
@@ -30,7 +30,7 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
             long startTime = System.currentTimeMillis();
             System.out.println("[SPLIT-PERF] SplitQueryDaoImpl: Starting background prefill of splits map");
             
-            Map<String, String> result = loadSplitsMap();
+            Map<String, SplitEntity> result = loadSplitsMap();
             
             synchronized (mLock) {
                 mCachedSplitsMap = result;
@@ -84,7 +84,7 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
         return c.getColumnIndexOrThrow("`" + name + "`");
     }
 
-    public Map<String, String> getAllAsMap() {
+    public Map<String, SplitEntity> getAllAsMap() {
         // Fast path - if the map is already initialized, return it immediately
         if (mIsInitialized) {
             System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.getAllAsMap: Using prefilled map with " + 
@@ -119,7 +119,7 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
             // If we get here, either initialization failed or timed out
             // Load the map directly
             System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.getAllAsMap: Loading map directly");
-            Map<String, String> result = loadSplitsMap();
+            Map<String, SplitEntity> result = loadSplitsMap();
             
             // Cache the result for future calls
             mCachedSplitsMap = result;
@@ -133,11 +133,11 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
      * Internal method to load the splits map from the database.
      * This contains the actual loading logic separated from the caching/synchronization.
      */
-    private Map<String, String> loadSplitsMap() {
+    private Map<String, SplitEntity> loadSplitsMap() {
         long startTime = System.currentTimeMillis();
         System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.loadSplitsMap: Starting");
         
-        String sql = "SELECT name, body FROM splits";
+        String sql = "SELECT name, body, trafficType, sets FROM splits";
         long beforeQueryTime = System.currentTimeMillis();
         
         Cursor cursor = mDatabase.query(sql, null);
@@ -146,11 +146,13 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
         
         // Use an estimated initial capacity based on previous runs
         final int ESTIMATED_CAPACITY = 2000; // Slightly higher than your observed 1736 entries
-        Map<String, String> result = new HashMap<>(ESTIMATED_CAPACITY);
+        Map<String, SplitEntity> result = new HashMap<>(ESTIMATED_CAPACITY);
         
         try {
             final int nameIndex = getColumnIndexOrThrow(cursor, "name");
             final int bodyIndex = getColumnIndexOrThrow(cursor, "body");
+            final int trafficTypeIndex = getColumnIndexOrThrow(cursor, "trafficType");
+            final int setsIndex = getColumnIndexOrThrow(cursor, "sets");
 
             int processedCount = 0;
             
@@ -158,27 +160,42 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
             final int BATCH_SIZE = 100;
             String[] names = new String[BATCH_SIZE];
             String[] bodies = new String[BATCH_SIZE];
+            String[] trafficTypes = new String[BATCH_SIZE];
+            String[] sets = new String[BATCH_SIZE];
             int batchCount = 0;
             
             long cursorIterationStart = System.currentTimeMillis();
             while (cursor.moveToNext()) {
                 names[batchCount] = cursor.getString(nameIndex);
                 bodies[batchCount] = cursor.getString(bodyIndex);
+                trafficTypes[batchCount] = cursor.getString(trafficTypeIndex);
+                sets[batchCount] = cursor.getString(setsIndex);
                 batchCount++;
                 processedCount++;
-                
+
                 // Process in batches for better cache locality
                 if (batchCount == BATCH_SIZE) {
                     for (int i = 0; i < BATCH_SIZE; i++) {
-                        result.put(names[i], bodies[i]);
+                        SplitEntity entity = new SplitEntity();
+                        entity.setName(names[i]);
+                        entity.setBody(bodies[i]);
+                        entity.setTrafficType(trafficTypes[i]);
+                        entity.setSets(sets[i]);
+                        result.put(names[i], entity);
                     }
                     batchCount = 0;
                 }
             }
-            
+
             // Process any remaining items
             for (int i = 0; i < batchCount; i++) {
-                result.put(names[i], bodies[i]);
+                SplitEntity entity = new SplitEntity();
+                entity.setName(names[i]);
+                entity.setBody(bodies[i]);
+                entity.setTrafficType(trafficTypes[i]);
+                entity.setSets(sets[i]);
+                result.put(names[i], entity);
+                result.put(names[i], entity);
             }
             
             long cursorIterationEnd = System.currentTimeMillis();

@@ -18,19 +18,15 @@ public interface SplitDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     void insert(SplitEntity split);
 
-    @Query("UPDATE splits SET name = :name, body = :body WHERE name = :formerName")
-    void update(String formerName, String name, String body);
+    @Query("UPDATE splits SET name = :name, body = :body, trafficType = :trafficType, sets = :sets WHERE name = :formerName")
+    void update(String formerName, String name, String body, String trafficType, String sets);
 
     @Query("DELETE FROM splits WHERE name IN (:names)")
     void delete(List<String> names);
 
-    @Query("SELECT name, body, updated_at FROM splits")
+    @Query("SELECT name, body, trafficType, sets, updated_at FROM splits")
     List<SplitEntity> getAll();
 
     @Query("DELETE FROM splits")
     void deleteAll();
-
-    @MapInfo(keyColumn = "name", valueColumn = "body")
-    @Query("SELECT name, body FROM splits")
-    Map<String, String> getAllNamesAndBodies();
 }

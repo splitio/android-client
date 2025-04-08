@@ -13,5 +13,5 @@ public interface SplitListTransformer<I, O> {
 
     List<O> transform(List<I> inputList);
 
-    List<O> transform(Map<String, String> allNamesAndBodies);
+    List<O> transform(Map<String, I> allNamesAndBodies);
 }

@@ -7,8 +7,10 @@ import androidx.annotation.NonNull;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.cipher.SplitCipher;
@@ -30,26 +32,28 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
     }
 
     @Override
-    public List<Split> transform(Map<String, String> allNamesAndBodies) {
+    public List<Split> transform(Map<String, SplitEntity> allNamesAndBodies) {
         if (allNamesAndBodies == null) {
             return new ArrayList<>();
         }
 
         List<Split> splits = new ArrayList<>(allNamesAndBodies.size());
-        for (Map.Entry<String, String> entry : allNamesAndBodies.entrySet()) {
+        for (Map.Entry<String, SplitEntity> entry : allNamesAndBodies.entrySet()) {
             if (entry == null || entry.getValue() == null) {
                 continue;
             }
             try {
-                String decryptedName = mSplitCipher.decrypt(entry.getValue());
+                String decryptedName = mSplitCipher.decrypt(entry.getKey());
                 if (decryptedName == null) {
                     continue;
                 }
-                String decryptedBody = mSplitCipher.decrypt(entry.getValue());
+                String decryptedBody = mSplitCipher.decrypt(entry.getValue().getBody());
                 if (decryptedBody == null) {
                     continue;
                 }
-                splits.add(getUnparsedSplit(decryptedName, decryptedBody));
+                String trafficType = mSplitCipher.decrypt(entry.getValue().getTrafficType());
+                Set<String> flagSets = Json.fromJson(mSplitCipher.decrypt(entry.getValue().getSets()), HashSet.class);
+                splits.add(getUnparsedSplit(decryptedName, decryptedBody, trafficType, flagSets));
             } catch (JsonSyntaxException e) {
                 Logger.e("Could not parse entity to split: " + entry.getKey());
             }
@@ -59,11 +63,10 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
     }
 
     @NonNull
-    private static Split getUnparsedSplit(String name, String body) {
+    private static Split getUnparsedSplit(String name, String body, String trafficType, Set<String> flagSets) {
         Split split = new Split(name, body);
-        Json.SplitFieldsResult splitFieldsResult = Json.extractSplitFields(body);
-        split.sets = splitFieldsResult.getSets();
-        split.trafficTypeName = splitFieldsResult.getTrafficTypeName();
+        split.trafficTypeName = trafficType;
+        split.sets = flagSets;
         return split;
     }
 }

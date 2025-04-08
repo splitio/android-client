@@ -167,12 +167,14 @@ public class SplitFactoryImpl implements SplitFactory {
 
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting SplitsStorage"));
         SplitsStorage splitsStorage = getSplitsStorage(splitDatabase, splitCipher);
-//
-//        new Thread(() -> {
-//            System.out.println(StartupTimeTracker.getElapsedTimeLog("Initializing SplitsStorage"));
-//            splitsStorage.loadLocal();
-//            System.out.println(StartupTimeTracker.getElapsedTimeLog("Initializing SplitsStorage done"));
-//        }).start();
+
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating impressionsObserverExecutor"));
+        ScheduledThreadPoolExecutor impressionsObserverExecutor = new ScheduledThreadPoolExecutor(1,
+                new ThreadPoolExecutor.CallerRunsPolicy());
+
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Building storage container"));
+        mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
+                splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage, config.observerCacheExpirationPeriod(), impressionsObserverExecutor, splitsStorage);
 
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating SplitTaskExecutor"));
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
@@ -180,14 +182,6 @@ public class SplitFactoryImpl implements SplitFactory {
 
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating EventsManagerCoordinator"));
         EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
-
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating impressionsObserverExecutor"));
-        ScheduledThreadPoolExecutor impressionsObserverExecutor = new ScheduledThreadPoolExecutor(1,
-                new ThreadPoolExecutor.CallerRunsPolicy());
-        
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("Building storage container"));
-        mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
-                splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage, config.observerCacheExpirationPeriod(), impressionsObserverExecutor, splitsStorage);
 
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting filter configuration"));
         Pair<Map<SplitFilter.Type, SplitFilter>, String> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());

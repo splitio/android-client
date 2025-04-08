@@ -5,5 +5,5 @@ import java.util.Map;
 
 public interface SplitQueryDao {
     List<SplitEntity> get(long rowIdFrom, int maxRows);
-    Map<String, String> getAllAsMap();
+    Map<String, SplitEntity> getAllAsMap();
 }
