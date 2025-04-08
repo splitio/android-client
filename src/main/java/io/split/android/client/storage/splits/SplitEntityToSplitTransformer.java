@@ -1,7 +1,6 @@
 package io.split.android.client.storage.splits;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
-import static io.split.android.client.utils.Utils.partition;
 
 import androidx.annotation.NonNull;
 
@@ -10,45 +9,23 @@ import com.google.gson.JsonSyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 
 import io.split.android.client.dtos.Split;
-import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
-import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.utils.logger.Logger;
 
 public class SplitEntityToSplitTransformer implements SplitListTransformer<SplitEntity, Split> {
 
-    private final SplitParallelTaskExecutor<List<Split>> mTaskExecutor;
     private final SplitCipher mSplitCipher;
 
-    public SplitEntityToSplitTransformer(@NonNull SplitParallelTaskExecutor<List<Split>> taskExecutor,
-                                         @NonNull SplitCipher splitCipher) {
-        mTaskExecutor = checkNotNull(taskExecutor);
+    public SplitEntityToSplitTransformer(@NonNull SplitCipher splitCipher) {
         mSplitCipher = checkNotNull(splitCipher);
     }
 
     @Override
     public List<Split> transform(List<SplitEntity> entities) {
-        if (entities == null) {
-            return new ArrayList<>();
-        }
-
-        int entitiesCount = entities.size();
-
-        if (entitiesCount > mTaskExecutor.getAvailableThreads()) {
-            List<List<Split>> result = mTaskExecutor.execute(getSplitDeserializationTasks(entities, entitiesCount));
-            List<Split> splits = new ArrayList<>();
-            for (List<Split> subList : result) {
-                splits.addAll(subList);
-            }
-
-            return splits;
-        } else {
-            return convertEntitiesToSplitList(entities, mSplitCipher);
-        }
+        return new ArrayList<>(); // no - op
     }
 
     @Override
@@ -83,51 +60,5 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
     @NonNull
     private static Split getUnparsedSplit(String name, String body) {
         return new Split(name, body);
-    }
-
-    @NonNull
-    private List<SplitDeferredTaskItem<List<Split>>> getSplitDeserializationTasks(List<SplitEntity> allEntities, int entitiesCount) {
-        int availableThreads = mTaskExecutor.getAvailableThreads();
-        int partitionSize = availableThreads > 0 ? entitiesCount / availableThreads : 1;
-        List<List<SplitEntity>> partitions = partition(allEntities, partitionSize);
-        List<SplitDeferredTaskItem<List<Split>>> taskList = new ArrayList<>(partitions.size());
-
-        for (List<SplitEntity> partition : partitions) {
-            taskList.add(new SplitDeferredTaskItem<>(
-                    new Callable<List<Split>>() {
-                        @Override
-                        public List<Split> call() {
-                            return convertEntitiesToSplitList(partition, mSplitCipher);
-                        }
-                    }));
-        }
-
-        return taskList;
-    }
-
-    @NonNull
-    private static List<Split> convertEntitiesToSplitList(List<SplitEntity> entities,
-                                                          SplitCipher cipher) {
-        if (entities == null) {
-            return new ArrayList<>();
-        }
-        List<Split> splits = new ArrayList<>(entities.size());
-
-        for (SplitEntity entity : entities) {
-            String name;
-            String json;
-            try {
-                name = cipher.decrypt(entity.getName());
-                json = cipher.decrypt(entity.getBody());
-                if (name != null && json != null) {
-//                    Split split = Json.fromJson(json, Split.class);
-                    Split split = getUnparsedSplit(name, json);
-                    splits.add(split);
-                }
-            } catch (JsonSyntaxException e) {
-                Logger.e("Could not parse entity to split: " + entity.getName());
-            }
-        }
-        return splits;
     }
 }

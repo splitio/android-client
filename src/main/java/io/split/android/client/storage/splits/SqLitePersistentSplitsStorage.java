@@ -17,7 +17,6 @@ import io.split.android.client.service.executor.parallel.SplitParallelTaskExecut
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
-import io.split.android.client.storage.db.SplitQueryDao;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
 
@@ -48,7 +47,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                                           @NonNull SplitParallelTaskExecutorFactory executorFactory,
                                           @NonNull SplitCipher splitCipher) {
         this(database,
-                new SplitEntityToSplitTransformer(executorFactory.createForList(Split.class), splitCipher),
+                new SplitEntityToSplitTransformer(splitCipher),
                 new SplitToSplitEntityTransformer(executorFactory.createForList(SplitEntity.class), splitCipher),
                 splitCipher);
     }
