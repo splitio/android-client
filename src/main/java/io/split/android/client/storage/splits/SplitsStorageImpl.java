@@ -77,7 +77,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         }
         
         System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Completed in " + 
-                (System.currentTimeMillis() - startTime) + "ms"));
+                (System.currentTimeMillis() - startTime) + "ms with " + mFlagSets.size() + " flag sets and " + mTrafficTypes.size() + " TTs"));
     }
 
     @Override

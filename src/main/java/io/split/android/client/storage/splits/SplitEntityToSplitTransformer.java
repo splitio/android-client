@@ -13,6 +13,7 @@ import java.util.Map;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.SplitEntity;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 
 public class SplitEntityToSplitTransformer implements SplitListTransformer<SplitEntity, Split> {
@@ -59,6 +60,10 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
 
     @NonNull
     private static Split getUnparsedSplit(String name, String body) {
-        return new Split(name, body);
+        Split split = new Split(name, body);
+        Json.SplitFieldsResult splitFieldsResult = Json.extractSplitFields(body);
+        split.sets = splitFieldsResult.getSets();
+        split.trafficTypeName = splitFieldsResult.getTrafficTypeName();
+        return split;
     }
 }
