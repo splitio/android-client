@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
@@ -30,8 +31,10 @@ public class SplitsStorageImpl implements SplitsStorage {
     private String mSplitsFilterQueryString;
     private String mFlagsSpec;
     private final Map<String, Integer> mTrafficTypes;
+    private final AtomicBoolean mInitialized;
 
     public SplitsStorageImpl(@NonNull PersistentSplitsStorage persistentStorage) {
+        mInitialized = new AtomicBoolean(false);
         mPersistentStorage = checkNotNull(persistentStorage);
         mInMemorySplits = new ConcurrentHashMap<>();
         mTrafficTypes = new ConcurrentHashMap<>();
@@ -40,44 +43,52 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     @Override
     @WorkerThread
-    public void loadLocal() {
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Starting"));
-        long startTime = System.currentTimeMillis();
-        
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Getting snapshot from persistent storage"));
-        long snapshotStartTime = System.currentTimeMillis();
-        SplitsSnapshot snapshot = mPersistentStorage.getSnapshot();
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Got snapshot in " + 
-                (System.currentTimeMillis() - snapshotStartTime) + "ms"));
-        
-        List<Split> splits = snapshot.getSplits();
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Loaded " + 
-                (splits != null ? splits.size() : 0) + " splits"));
-        
-        mChangeNumber = snapshot.getChangeNumber();
-        mUpdateTimestamp = snapshot.getUpdateTimestamp();
-        mSplitsFilterQueryString = snapshot.getSplitsFilterQueryString();
-        mFlagsSpec = snapshot.getFlagsSpec();
-        
-        if (splits != null) {
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Processing splits"));
-            long processingStartTime = System.currentTimeMillis();
-            int count = 0;
-            for (Split split : splits) {
-                mInMemorySplits.put(split.name, split);
-                addOrUpdateFlagSets(split);
-                increaseTrafficTypeCount(split.trafficTypeName);
-                count++;
-                if (count % 1000 == 0) {
-                    System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Processed " + count + " splits"));
-                }
+    public synchronized void loadLocal() {
+        try {
+            if (mInitialized.get()) {
+                return;
             }
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Finished processing " + 
-                    count + " splits in " + (System.currentTimeMillis() - processingStartTime) + "ms"));
+
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Starting"));
+            long startTime = System.currentTimeMillis();
+
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Getting snapshot from persistent storage"));
+            long snapshotStartTime = System.currentTimeMillis();
+            SplitsSnapshot snapshot = mPersistentStorage.getSnapshot();
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Got snapshot in " +
+                    (System.currentTimeMillis() - snapshotStartTime) + "ms"));
+
+            List<Split> splits = snapshot.getSplits();
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Loaded " +
+                    (splits != null ? splits.size() : 0) + " splits"));
+
+            mChangeNumber = snapshot.getChangeNumber();
+            mUpdateTimestamp = snapshot.getUpdateTimestamp();
+            mSplitsFilterQueryString = snapshot.getSplitsFilterQueryString();
+            mFlagsSpec = snapshot.getFlagsSpec();
+
+            if (splits != null) {
+                System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Processing splits"));
+                long processingStartTime = System.currentTimeMillis();
+                int count = 0;
+                for (Split split : splits) {
+                    mInMemorySplits.put(split.name, split);
+                    addOrUpdateFlagSets(split);
+                    increaseTrafficTypeCount(split.trafficTypeName);
+                    count++;
+                    if (count % 1000 == 0) {
+                        System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Processed " + count + " splits"));
+                    }
+                }
+                System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Finished processing " +
+                        count + " splits in " + (System.currentTimeMillis() - processingStartTime) + "ms"));
+            }
+
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Completed in " +
+                    (System.currentTimeMillis() - startTime) + "ms with " + mFlagSets.size() + " flag sets and " + mTrafficTypes.size() + " TTs"));
+        } finally {
+            mInitialized.compareAndSet(false, true);
         }
-        
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Completed in " + 
-                (System.currentTimeMillis() - startTime) + "ms with " + mFlagSets.size() + " flag sets and " + mTrafficTypes.size() + " TTs"));
     }
 
     @Override

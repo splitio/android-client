@@ -118,9 +118,6 @@ public class Json {
                 trafficTypeName = jsonObject.get("trafficTypeName").getAsString();
             }
             
-            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("Json.extractSplitFields: Extracted fields in " +
-                    (System.currentTimeMillis() - startTime) + "ms"));
-            
             return new SplitFieldsResult(sets, trafficTypeName);
         } catch (Exception e) {
             // Return empty results in case of parsing error

@@ -29,7 +29,6 @@ import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.SdkTargetPath;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
-import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.ServiceFactory;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
@@ -164,7 +163,8 @@ class SplitFactoryHelper {
                                                 SplitCipher splitCipher,
                                                 TelemetryStorage telemetryStorage,
                                                 long observerCacheExpirationPeriod,
-                                                ScheduledThreadPoolExecutor impressionsObserverExecutor) {
+                                                ScheduledThreadPoolExecutor impressionsObserverExecutor,
+                                                SplitsStorage splitsStorage) {
 
         boolean isPersistenceEnabled = userConsentStatus == UserConsent.GRANTED;
         PersistentEventsStorage persistentEventsStorage =
@@ -172,7 +172,7 @@ class SplitFactoryHelper {
         PersistentImpressionsStorage persistentImpressionsStorage =
                 StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase, splitCipher);
         return new SplitStorageContainer(
-                StorageFactory.getSplitsStorage(splitRoomDatabase, splitCipher),
+                splitsStorage,
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getMyLargeSegmentsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, splitCipher),

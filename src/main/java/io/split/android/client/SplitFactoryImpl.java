@@ -58,6 +58,7 @@ import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
@@ -161,6 +162,17 @@ public class SplitFactoryImpl implements SplitFactory {
             splitDatabase = testDatabase;
             Logger.d("Using test database");
         }
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting SplitCipher"));
+        SplitCipher splitCipher = factoryHelper.getCipher(apiToken, config.encryptionEnabled());
+
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting SplitsStorage"));
+        SplitsStorage splitsStorage = getSplitsStorage(splitDatabase, splitCipher);
+//
+//        new Thread(() -> {
+//            System.out.println(StartupTimeTracker.getElapsedTimeLog("Initializing SplitsStorage"));
+//            splitsStorage.loadLocal();
+//            System.out.println(StartupTimeTracker.getElapsedTimeLog("Initializing SplitsStorage done"));
+//        }).start();
 
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating SplitTaskExecutor"));
         SplitTaskExecutor splitTaskExecutor = new SplitTaskExecutorImpl();
@@ -169,16 +181,13 @@ public class SplitFactoryImpl implements SplitFactory {
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating EventsManagerCoordinator"));
         EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting SplitCipher"));
-        SplitCipher splitCipher = factoryHelper.getCipher(apiToken, config.encryptionEnabled());
-
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating impressionsObserverExecutor"));
         ScheduledThreadPoolExecutor impressionsObserverExecutor = new ScheduledThreadPoolExecutor(1,
                 new ThreadPoolExecutor.CallerRunsPolicy());
         
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Building storage container"));
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
-                splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage, config.observerCacheExpirationPeriod(), impressionsObserverExecutor);
+                splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage, config.observerCacheExpirationPeriod(), impressionsObserverExecutor, splitsStorage);
 
         System.out.println(StartupTimeTracker.getElapsedTimeLog("Getting filter configuration"));
         Pair<Map<SplitFilter.Type, SplitFilter>, String> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
@@ -420,6 +429,11 @@ public class SplitFactoryImpl implements SplitFactory {
                 mStorageContainer.getSplitsStorage(),
                 new SplitValidatorImpl(), mSplitParser);
         System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitFactoryImpl initialization completed in " + (System.currentTimeMillis() - initializationStartTime) + "ms"));
+    }
+
+    @NonNull
+    private static SplitsStorage getSplitsStorage(SplitRoomDatabase splitDatabase, SplitCipher splitCipher) {
+        return StorageFactory.getSplitsStorage(splitDatabase, splitCipher);
     }
 
     private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {
