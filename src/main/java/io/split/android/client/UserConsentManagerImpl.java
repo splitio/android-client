@@ -40,7 +40,14 @@ public class UserConsentManagerImpl implements UserConsentManager {
         mEventsTracker = checkNotNull(eventsTracker);
         mImpressionManager = checkNotNull(impressionManager);
         mTaskExecutor = taskExecutor;
-        setStatus(splitConfig.userConsent());
+        new Thread(() -> {
+            try {
+                Thread.sleep(200);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            setStatus(splitConfig.userConsent());
+        }).start();
     }
 
     public void setStatus(UserConsent status) {
