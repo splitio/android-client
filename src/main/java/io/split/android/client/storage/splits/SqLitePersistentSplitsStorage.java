@@ -412,6 +412,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                 }
             } else {
                 Logger.v("Migration not required");
+                System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("Migration not required, " + trafficTypesEntity.getStringValue() + ", sets: " + flagSetsEntity.getStringValue()));
                 if (trafficTypesEntity != null) {
                     Type mapType = new TypeToken<Map<String, Integer>>(){}.getType();
                     mTrafficTypes = Json.fromJson(trafficTypesEntity.getStringValue(), mapType);
