@@ -1,5 +1,10 @@
 package io.split.android.client.storage.splits;
 
+import static io.split.android.client.storage.splits.MetadataHelper.addOrUpdateFlagSets;
+import static io.split.android.client.storage.splits.MetadataHelper.decreaseTrafficTypeCount;
+import static io.split.android.client.storage.splits.MetadataHelper.deleteFromFlagSets;
+import static io.split.android.client.storage.splits.MetadataHelper.deleteFromFlagSetsIfNecessary;
+import static io.split.android.client.storage.splits.MetadataHelper.increaseTrafficTypeCount;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
@@ -52,39 +57,21 @@ public class SplitsStorageImpl implements SplitsStorage {
             System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Starting"));
             long startTime = System.currentTimeMillis();
 
-            // Load splits with metadata in a single call
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Getting snapshot from persistent storage"));
-            long loadStartTime = System.currentTimeMillis();
-            
             SplitsSnapshot snapshot = mPersistentStorage.getSnapshot();
             List<Split> splits = snapshot.getSplits();
-            
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Got snapshot with " +
-                    (splits != null ? splits.size() : 0) + " splits in " + 
-                    (System.currentTimeMillis() - loadStartTime) + "ms"));
 
             mChangeNumber = snapshot.getChangeNumber();
             mUpdateTimestamp = snapshot.getUpdateTimestamp();
             mSplitsFilterQueryString = snapshot.getSplitsFilterQueryString();
             mFlagsSpec = snapshot.getFlagsSpec();
-
-            // Populate in-memory maps
-            long metadataStartTime = System.currentTimeMillis();
-
             // Populate traffic types and flag sets
             mTrafficTypes.putAll(snapshot.getTrafficTypesMap());
             for (Map.Entry<String, Set<String>> entry : snapshot.getFlagSetsMap().entrySet()) {
                 mFlagSets.put(entry.getKey(), new HashSet<>(entry.getValue()));
             }
 
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Populated metadata with " + 
-                    mTrafficTypes.size() + " traffic types and " + mFlagSets.size() + " flag sets in " + 
-                    (System.currentTimeMillis() - metadataStartTime) + "ms"));
-
-            if (splits != null) {
-                for (Split split : splits) {
-                    mInMemorySplits.put(split.name, split);
-                }
+            for (Split split : splits) {
+                mInMemorySplits.put(split.name, split);
             }
 
             System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Completed in " +
@@ -157,11 +144,11 @@ public class SplitsStorageImpl implements SplitsStorage {
             for (Split split : activeSplits) {
                 Split loadedSplit = mInMemorySplits.get(split.name);
                 if (loadedSplit != null && loadedSplit.trafficTypeName != null) {
-                    decreaseTrafficTypeCount(loadedSplit.trafficTypeName);
+                    decreaseTrafficTypeCount(loadedSplit.trafficTypeName, mTrafficTypes);
                 }
-                increaseTrafficTypeCount(split.trafficTypeName);
+                increaseTrafficTypeCount(split.trafficTypeName, mTrafficTypes);
                 mInMemorySplits.put(split.name, split);
-                addOrUpdateFlagSets(split);
+                addOrUpdateFlagSets(split, mFlagSets);
             }
         }
 
@@ -170,8 +157,8 @@ public class SplitsStorageImpl implements SplitsStorage {
                 if (mInMemorySplits.remove(split.name) != null) {
                     // The flag was in memory, so it will be updated
                     appliedUpdates = true;
-                    decreaseTrafficTypeCount(split.trafficTypeName);
-                    deleteFromFlagSetsIfNecessary(split);
+                    decreaseTrafficTypeCount(split.trafficTypeName, mTrafficTypes);
+                    deleteFromFlagSetsIfNecessary(split, mFlagSets);
                 }
             }
         }
@@ -188,7 +175,7 @@ public class SplitsStorageImpl implements SplitsStorage {
     public void updateWithoutChecks(Split split) {
         mInMemorySplits.put(split.name, split);
         mPersistentStorage.update(split);
-        deleteFromFlagSets(split);
+        deleteFromFlagSets(split, mFlagSets);
     }
 
     @Override
@@ -257,81 +244,5 @@ public class SplitsStorageImpl implements SplitsStorage {
             return false;
         }
         return (mTrafficTypes.get(name.toLowerCase()) != null);
-    }
-
-    private void increaseTrafficTypeCount(@Nullable String name) {
-        if (name == null) {
-            return;
-        }
-
-        String lowercaseName = name.toLowerCase();
-        int count = countForTrafficType(lowercaseName);
-        mTrafficTypes.put(lowercaseName, ++count);
-    }
-
-    private void decreaseTrafficTypeCount(@Nullable String name) {
-        if (name == null) {
-            return;
-        }
-        String lowercaseName = name.toLowerCase();
-
-        int count = countForTrafficType(lowercaseName);
-        if (count > 1) {
-            mTrafficTypes.put(lowercaseName, --count);
-        } else {
-            mTrafficTypes.remove(lowercaseName);
-        }
-    }
-
-    private int countForTrafficType(@NonNull String name) {
-        int count = 0;
-        Integer countValue = mTrafficTypes.get(name);
-        if (countValue != null) {
-            count = countValue;
-        }
-        return count;
-    }
-
-    private void addOrUpdateFlagSets(Split split) {
-        if (split.sets == null) {
-            return;
-        }
-
-        for (String set : split.sets) {
-            Set<String> splitsForSet = mFlagSets.get(set);
-            if (splitsForSet == null) {
-                splitsForSet = new HashSet<>();
-                mFlagSets.put(set, splitsForSet);
-            }
-            splitsForSet.add(split.name);
-        }
-
-        deleteFromFlagSetsIfNecessary(split);
-    }
-
-    private void deleteFromFlagSetsIfNecessary(Split featureFlag) {
-        if (featureFlag.sets == null) {
-            return;
-        }
-
-        for (String set : mFlagSets.keySet()) {
-            if (featureFlag.sets.contains(set)) {
-                continue;
-            }
-
-            Set<String> flagsForSet = mFlagSets.get(set);
-            if (flagsForSet != null) {
-                flagsForSet.remove(featureFlag.name);
-            }
-        }
-    }
-
-    private void deleteFromFlagSets(Split featureFlag) {
-        for (String set : mFlagSets.keySet()) {
-            Set<String> flagsForSet = mFlagSets.get(set);
-            if (flagsForSet != null) {
-                flagsForSet.remove(featureFlag.name);
-            }
-        }
     }
 }
