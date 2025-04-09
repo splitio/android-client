@@ -1,5 +1,6 @@
 package io.split.android.client.dtos;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
@@ -59,8 +60,10 @@ public class Split {
 
     }
 
-    public Split(String name, String json) {
+    public Split(String name, String json, String trafficTypeName, @NonNull Set<String> flagSets) {
         this.name = name;
         this.json = json;
+        this.trafficTypeName = trafficTypeName;
+        this.sets = flagSets;
     }
 }

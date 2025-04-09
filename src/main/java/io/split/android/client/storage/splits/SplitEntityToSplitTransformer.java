@@ -52,21 +52,14 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
                     continue;
                 }
                 String trafficType = mSplitCipher.decrypt(entry.getValue().getTrafficType());
-                Set<String> flagSets = Json.fromJson(mSplitCipher.decrypt(entry.getValue().getSets()), HashSet.class);
-                splits.add(getUnparsedSplit(decryptedName, decryptedBody, trafficType, flagSets));
+                String encryptedSets = mSplitCipher.decrypt(entry.getValue().getSets());
+                Set<String> flagSets = (encryptedSets != null) ? Json.fromJson(encryptedSets, HashSet.class) : new HashSet<>();
+                splits.add(new Split(decryptedName, decryptedBody, trafficType, flagSets));
             } catch (JsonSyntaxException e) {
                 Logger.e("Could not parse entity to split: " + entry.getKey());
             }
         }
 
         return splits;
-    }
-
-    @NonNull
-    private static Split getUnparsedSplit(String name, String body, String trafficType, Set<String> flagSets) {
-        Split split = new Split(name, body);
-        split.trafficTypeName = trafficType;
-        split.sets = flagSets;
-        return split;
     }
 }
