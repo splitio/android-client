@@ -32,12 +32,6 @@ public class SplitsSnapshot {
         mFlagSetsMap = flagSetsMap != null ? flagSetsMap : new HashMap<>();
     }
 
-    public SplitsSnapshot(List<Split> splits, long changeNumber, long updateTimestamp, 
-                         String splitsFilterQueryString, String flagsSpec) {
-        this(splits, changeNumber, updateTimestamp, splitsFilterQueryString, flagsSpec, 
-             new HashMap<>(), new HashMap<>());
-    }
-
     public long getChangeNumber() {
         return mChangeNumber;
     }

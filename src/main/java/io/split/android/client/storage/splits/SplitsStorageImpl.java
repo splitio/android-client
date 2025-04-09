@@ -69,32 +69,22 @@ public class SplitsStorageImpl implements SplitsStorage {
             mFlagsSpec = snapshot.getFlagsSpec();
 
             // Populate in-memory maps
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Populating in-memory maps"));
             long metadataStartTime = System.currentTimeMillis();
-            
+
             // Populate traffic types and flag sets
             mTrafficTypes.putAll(snapshot.getTrafficTypesMap());
             for (Map.Entry<String, Set<String>> entry : snapshot.getFlagSetsMap().entrySet()) {
                 mFlagSets.put(entry.getKey(), new HashSet<>(entry.getValue()));
             }
-            
+
             System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Populated metadata with " + 
                     mTrafficTypes.size() + " traffic types and " + mFlagSets.size() + " flag sets in " + 
                     (System.currentTimeMillis() - metadataStartTime) + "ms"));
 
             if (splits != null) {
-                System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Processing splits"));
-                long processingStartTime = System.currentTimeMillis();
-                int count = 0;
                 for (Split split : splits) {
                     mInMemorySplits.put(split.name, split);
-                    count++;
-                    if (count % 1000 == 0) {
-                        System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Processed " + count + " splits"));
-                    }
                 }
-                System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Finished processing " +
-                        count + " splits in " + (System.currentTimeMillis() - processingStartTime) + "ms"));
             }
 
             System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Completed in " +
@@ -188,7 +178,7 @@ public class SplitsStorageImpl implements SplitsStorage {
 
         mChangeNumber = splitChange.getChangeNumber();
         mUpdateTimestamp = splitChange.getUpdateTimestamp();
-        mPersistentStorage.update(splitChange);
+        mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets);
 
         return appliedUpdates;
     }

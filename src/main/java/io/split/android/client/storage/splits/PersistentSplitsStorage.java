@@ -9,7 +9,7 @@ import java.util.Set;
 import io.split.android.client.dtos.Split;
 
 public interface PersistentSplitsStorage {
-    boolean update(ProcessedSplitChange splitChange);
+    boolean update(ProcessedSplitChange splitChange, Map<String, Integer> mTrafficTypes, Map<String, Set<String>> mFlagSets);
     SplitsSnapshot getSnapshot();
     List<Split> getAll();
 

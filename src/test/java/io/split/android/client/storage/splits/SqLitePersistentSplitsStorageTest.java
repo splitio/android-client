@@ -129,7 +129,7 @@ public class SqLitePersistentSplitsStorageTest {
         ProcessedSplitChange change = new ProcessedSplitChange(activeSplits, archivedSplits, changeNumber, timestamp);
         when(mCipher.encrypt(any())).thenAnswer((Answer<String>) invocation -> invocation.getArgument(0) + "_encrypted");
 
-        mStorage.update(change);
+        mStorage.update(change, mTrafficTypes, mFlagSets);
 
         verify(mSplitDao).delete(argThat(list -> list.contains("split-1_encrypted") && list.contains("split-2_encrypted") && list.contains("split-3_encrypted") && list.size() == 3));
     }
@@ -153,14 +153,14 @@ public class SqLitePersistentSplitsStorageTest {
         ProcessedSplitChange change = new ProcessedSplitChange(activeSplits, archivedSplits, changeNumber, timestamp);
         when(mCipher.encrypt(any())).thenAnswer((Answer<String>) invocation -> invocation.getArgument(0) + "_encrypted");
 
-        mStorage.update(change);
+        mStorage.update(change, mTrafficTypes, mFlagSets);
 
         verify(mSplitToSplitEntityTransformer).transform(activeSplits);
     }
 
     @Test
     public void updatingNullSplitChangeDoesNotInteractWithDatabase() {
-        mStorage.update((ProcessedSplitChange) null);
+        mStorage.update((ProcessedSplitChange) null, mTrafficTypes, mFlagSets);
 
         verifyNoInteractions(mSplitToSplitEntityTransformer);
         verifyNoInteractions(mCipher);

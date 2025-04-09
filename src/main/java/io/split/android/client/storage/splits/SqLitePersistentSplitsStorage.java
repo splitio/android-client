@@ -60,12 +60,12 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     }
 
     @Override
-    public boolean update(ProcessedSplitChange splitChange) {
+    public boolean update(ProcessedSplitChange splitChange, Map<String, Integer> mTrafficTypes, Map<String, Set<String>> mFlagSets) {
 
         if (splitChange == null) {
             return false;
         }
-        
+
         // Process archived splits
         List<Split> archivedSplits = splitChange.getArchivedSplits();
         List<String> removedSplitNames = splitNameList(archivedSplits);
@@ -73,7 +73,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         SplitToSplitEntityTransformer transformer = (SplitToSplitEntityTransformer) mSplitToEntityTransformer;
         SplitToSplitEntityTransformer.TransformResult result = transformer.transformWithMetadata(splitChange.getActiveSplits());
         List<SplitEntity> splitEntities = result.getEntities();
-        
+
         mDatabase.runInTransaction(new Runnable() {
             @Override
             public void run() {
