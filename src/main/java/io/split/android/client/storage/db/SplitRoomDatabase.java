@@ -30,7 +30,7 @@ import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
                 AttributesEntity.class, UniqueKeyEntity.class, ImpressionsObserverCacheEntity.class,
                 MyLargeSegmentEntity.class
         },
-        version = 7
+        version = 6
 )
 public abstract class SplitRoomDatabase extends RoomDatabase {
 

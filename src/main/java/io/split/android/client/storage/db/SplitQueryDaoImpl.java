@@ -20,7 +20,7 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
     private volatile Map<String, SplitEntity> mCachedSplitsMap;
     private final Object mLock = new Object();
     private boolean mIsInitialized = false;
-    private Thread mInitializationThread;
+    private final Thread mInitializationThread;
 
     public SplitQueryDaoImpl(SplitRoomDatabase mDatabase) {
         this.mDatabase = mDatabase;
@@ -137,7 +137,7 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
         long startTime = System.currentTimeMillis();
         System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.loadSplitsMap: Starting");
         
-        String sql = "SELECT name, body, trafficType, sets FROM splits";
+        String sql = "SELECT name, body FROM splits";
         long beforeQueryTime = System.currentTimeMillis();
         
         Cursor cursor = mDatabase.query(sql, null);
@@ -151,8 +151,6 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
         try {
             final int nameIndex = getColumnIndexOrThrow(cursor, "name");
             final int bodyIndex = getColumnIndexOrThrow(cursor, "body");
-            final int trafficTypeIndex = getColumnIndexOrThrow(cursor, "trafficType");
-            final int setsIndex = getColumnIndexOrThrow(cursor, "sets");
 
             int processedCount = 0;
             
@@ -160,16 +158,12 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
             final int BATCH_SIZE = 100;
             String[] names = new String[BATCH_SIZE];
             String[] bodies = new String[BATCH_SIZE];
-            String[] trafficTypes = new String[BATCH_SIZE];
-            String[] sets = new String[BATCH_SIZE];
             int batchCount = 0;
             
             long cursorIterationStart = System.currentTimeMillis();
             while (cursor.moveToNext()) {
                 names[batchCount] = cursor.getString(nameIndex);
                 bodies[batchCount] = cursor.getString(bodyIndex);
-                trafficTypes[batchCount] = cursor.getString(trafficTypeIndex);
-                sets[batchCount] = cursor.getString(setsIndex);
                 batchCount++;
                 processedCount++;
 
@@ -179,8 +173,6 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
                         SplitEntity entity = new SplitEntity();
                         entity.setName(names[i]);
                         entity.setBody(bodies[i]);
-                        entity.setTrafficType(trafficTypes[i]);
-                        entity.setSets(sets[i]);
                         result.put(names[i], entity);
                     }
                     batchCount = 0;
@@ -192,9 +184,6 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
                 SplitEntity entity = new SplitEntity();
                 entity.setName(names[i]);
                 entity.setBody(bodies[i]);
-                entity.setTrafficType(trafficTypes[i]);
-                entity.setSets(sets[i]);
-                result.put(names[i], entity);
                 result.put(names[i], entity);
             }
             

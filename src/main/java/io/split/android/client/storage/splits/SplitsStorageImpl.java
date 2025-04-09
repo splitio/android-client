@@ -44,28 +44,43 @@ public class SplitsStorageImpl implements SplitsStorage {
     @Override
     @WorkerThread
     public synchronized void loadLocal() {
-        try {
-            if (mInitialized.get()) {
-                return;
-            }
+        if (mInitialized.get()) {
+            return;
+        }
 
+        try {
             System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Starting"));
             long startTime = System.currentTimeMillis();
 
+            // Load splits with metadata in a single call
             System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Getting snapshot from persistent storage"));
-            long snapshotStartTime = System.currentTimeMillis();
+            long loadStartTime = System.currentTimeMillis();
+            
             SplitsSnapshot snapshot = mPersistentStorage.getSnapshot();
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Got snapshot in " +
-                    (System.currentTimeMillis() - snapshotStartTime) + "ms"));
-
             List<Split> splits = snapshot.getSplits();
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Loaded " +
-                    (splits != null ? splits.size() : 0) + " splits"));
+            
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Got snapshot with " +
+                    (splits != null ? splits.size() : 0) + " splits in " + 
+                    (System.currentTimeMillis() - loadStartTime) + "ms"));
 
             mChangeNumber = snapshot.getChangeNumber();
             mUpdateTimestamp = snapshot.getUpdateTimestamp();
             mSplitsFilterQueryString = snapshot.getSplitsFilterQueryString();
             mFlagsSpec = snapshot.getFlagsSpec();
+
+            // Populate in-memory maps
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Populating in-memory maps"));
+            long metadataStartTime = System.currentTimeMillis();
+            
+            // Populate traffic types and flag sets
+            mTrafficTypes.putAll(snapshot.getTrafficTypesMap());
+            for (Map.Entry<String, Set<String>> entry : snapshot.getFlagSetsMap().entrySet()) {
+                mFlagSets.put(entry.getKey(), new HashSet<>(entry.getValue()));
+            }
+            
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Populated metadata with " + 
+                    mTrafficTypes.size() + " traffic types and " + mFlagSets.size() + " flag sets in " + 
+                    (System.currentTimeMillis() - metadataStartTime) + "ms"));
 
             if (splits != null) {
                 System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Processing splits"));
@@ -73,8 +88,6 @@ public class SplitsStorageImpl implements SplitsStorage {
                 int count = 0;
                 for (Split split : splits) {
                     mInMemorySplits.put(split.name, split);
-                    addOrUpdateFlagSets(split);
-                    increaseTrafficTypeCount(split.trafficTypeName);
                     count++;
                     if (count % 1000 == 0) {
                         System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Processed " + count + " splits"));
@@ -85,7 +98,7 @@ public class SplitsStorageImpl implements SplitsStorage {
             }
 
             System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Completed in " +
-                    (System.currentTimeMillis() - startTime) + "ms with " + mFlagSets.size() + " flag sets and " + mTrafficTypes.size() + " TTs"));
+                    (System.currentTimeMillis() - startTime) + "ms with " + mFlagSets.size() + " flag sets and " + mTrafficTypes.size() + " TTs and " + mInMemorySplits.size() + " splits"));
         } finally {
             mInitialized.compareAndSet(false, true);
         }

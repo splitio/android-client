@@ -19,12 +19,6 @@ public class SplitEntity {
     @NonNull
     private String body;
 
-    @ColumnInfo(name = "sets")
-    private String sets;
-
-    @ColumnInfo(name = "trafficType")
-    private String trafficType;
-
     @ColumnInfo(name = "updated_at")
     private long updatedAt;
 
@@ -60,21 +54,5 @@ public class SplitEntity {
 
     public void setUpdatedAt(long updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    public String getSets() {
-        return sets;
-    }
-
-    public void setSets(String sets) {
-        this.sets = sets;
-    }
-
-    public String getTrafficType() {
-        return trafficType;
-    }
-
-    public void setTrafficType(String trafficType) {
-        this.trafficType = trafficType;
     }
 }

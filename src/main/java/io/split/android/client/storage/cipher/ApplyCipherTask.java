@@ -194,16 +194,12 @@ public class ApplyCipherTask implements SplitTask {
             String name = item.getName();
             String fromName = mFromCipher.decrypt(name);
             String fromBody = mFromCipher.decrypt(item.getBody());
-            String fromTrafficType = mFromCipher.decrypt(item.getTrafficType());
-            String fromSets = mFromCipher.decrypt(item.getSets());
 
             String toName = mToCipher.encrypt(fromName);
             String toBody = mToCipher.encrypt(fromBody);
-            String toTrafficType = mToCipher.encrypt(fromTrafficType);
-            String toSets = mToCipher.encrypt(fromSets);
 
             if (toName != null && toBody != null) {
-                dao.update(name, toName, toBody, toTrafficType, toSets);
+                dao.update(name, toName, toBody);
             } else {
                 Logger.e("Error applying cipher to split storage");
             }
