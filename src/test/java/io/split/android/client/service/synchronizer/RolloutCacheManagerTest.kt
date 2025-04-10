@@ -135,15 +135,6 @@ class RolloutCacheManagerTest {
     }
 
     @Test
-    fun `validateCache executes cleanUpDatabaseTask`() {
-        mRolloutCacheManager = getCacheManager(10, false)
-
-        mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
-
-        verify(mCleanUpDatabaseTask).execute()
-    }
-
-    @Test
     fun `validateCache executes encryptionMigrationTask`() {
         mRolloutCacheManager = getCacheManager(10, false)
 

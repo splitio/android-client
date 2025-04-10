@@ -5,6 +5,7 @@ on:
     branches:
       - 'development'
       - '*_baseline'
+      - 'SDKS-9595'
 
 jobs:
   build-app:

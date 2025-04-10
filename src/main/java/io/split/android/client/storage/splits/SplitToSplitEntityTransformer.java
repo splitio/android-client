@@ -56,6 +56,7 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
     }
 
     @Override
+    @Deprecated
     public List<SplitEntity> transform(Map<String, Split> allNamesAndBodies) {
         return Collections.emptyList(); // to be removed
     }

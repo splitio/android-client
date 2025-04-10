@@ -104,7 +104,8 @@ public class SplitsStorageImpl implements SplitsStorage {
         try {
             Split parsedSplit = Json.fromJson(split.json, Split.class);
             parsedSplit.json = null;
-            return mInMemorySplits.put(name, parsedSplit);
+            mInMemorySplits.put(name, parsedSplit);
+            return mInMemorySplits.get(name);
         } catch (JsonSyntaxException e) {
             return null;
         }
@@ -151,7 +152,7 @@ public class SplitsStorageImpl implements SplitsStorage {
                 appliedUpdates = true;
             }
             for (Split split : activeSplits) {
-                Split loadedSplit = mInMemorySplits.get(split.name);
+                Split loadedSplit = get(split.name);
                 if (loadedSplit != null && loadedSplit.trafficTypeName != null) {
                     decreaseTrafficTypeCount(loadedSplit.trafficTypeName, mTrafficTypes);
                 }

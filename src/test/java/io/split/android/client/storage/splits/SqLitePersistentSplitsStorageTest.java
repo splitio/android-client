@@ -31,6 +31,7 @@ import io.split.android.client.storage.db.GeneralInfoDao;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitDao;
 import io.split.android.client.storage.db.SplitEntity;
+import io.split.android.client.storage.db.SplitQueryDao;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 
 public class SqLitePersistentSplitsStorageTest {
@@ -75,12 +76,20 @@ public class SqLitePersistentSplitsStorageTest {
     @Test
     public void getAllUsesTransformer() {
         List<SplitEntity> mockEntities = getMockEntities();
+        Map<String, SplitEntity> map = new HashMap<>();
+        for (SplitEntity entity : mockEntities) {
+            map.put(entity.getName(), entity);
+        }
+
         when(mSplitDao.getAll()).thenReturn(mockEntities);
         when(mDatabase.splitDao()).thenReturn(mSplitDao);
+        SplitQueryDao queryDao = mock(SplitQueryDao.class);
+        when(queryDao.getAllAsMap()).thenReturn(map);
+        when(mDatabase.getSplitQueryDao()).thenReturn(queryDao);
 
         mStorage.getAll();
 
-        verify(mEntityToSplitTransformer).transform(mockEntities);
+        verify(mEntityToSplitTransformer).transform(map);
     }
 
     @Test

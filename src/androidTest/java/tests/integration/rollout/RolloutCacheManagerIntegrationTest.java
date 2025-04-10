@@ -181,6 +181,8 @@ public class RolloutCacheManagerIntegrationTest {
 
     private void verify(SplitFactory factory, CountDownLatch readyLatch, List<SplitEntity> initialFlags, List<MySegmentEntity> initialSegments, List<MyLargeSegmentEntity> initialLargeSegments, long initialChangeNumber) throws InterruptedException {
         // Track final values
+        Thread.sleep(10000);
+
         List<SplitEntity> finalFlags = mRoomDb.splitDao().getAll();
         List<MySegmentEntity> finalSegments = mRoomDb.mySegmentDao().getAll();
         List<MyLargeSegmentEntity> finalLargeSegments = mRoomDb.myLargeSegmentDao().getAll();

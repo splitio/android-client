@@ -7,15 +7,12 @@ import androidx.annotation.NonNull;
 import com.google.gson.JsonSyntaxException;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.SplitEntity;
-import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 
 public class SplitEntityToSplitTransformer implements SplitListTransformer<SplitEntity, Split> {
@@ -27,6 +24,7 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
     }
 
     @Override
+    @Deprecated
     public List<Split> transform(List<SplitEntity> entities) {
         return new ArrayList<>(); // no - op
     }
