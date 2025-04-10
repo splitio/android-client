@@ -26,9 +26,13 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
         this.mDatabase = mDatabase;
         // Start prefilling the map in a background thread
         mInitializationThread = new Thread(() -> {
-            android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
+            try {
+                android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
+            } catch (Exception ignore) {
+                // Ignore
+            }
             long startTime = System.currentTimeMillis();
-            System.out.println("[SPLIT-PERF] SplitQueryDaoImpl: Starting background prefill of splits map");
+            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl: Starting background prefill of splits map"));
             
             Map<String, SplitEntity> result = loadSplitsMap();
             
@@ -39,41 +43,11 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
             }
             
             long endTime = System.currentTimeMillis();
-            System.out.println("[SPLIT-PERF] SplitQueryDaoImpl: Completed background prefill in " + (endTime - startTime) + 
-                              "ms, loaded " + (result != null ? result.size() : 0) + " entries");
+            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl: Completed background prefill in " + (endTime - startTime) +
+                              "ms, loaded " + (result != null ? result.size() : 0) + " entries"));
         });
         mInitializationThread.setName("SplitMapPrefill");
         mInitializationThread.start();
-    }
-
-    public List<SplitEntity> get(long rowIdFrom, int maxRows) {
-
-        String sql =    "SELECT rowid, name, body, updated_at FROM splits WHERE rowId > ? ORDER BY rowId LIMIT ?";
-        Object[] arguments = {rowIdFrom, maxRows};
-        Cursor cursor = mDatabase.query(sql, arguments);
-
-        try {
-            final int rowIdIndex = getColumnIndexOrThrow(cursor, "rowid");
-            final int nameIndex = getColumnIndexOrThrow(cursor, "name");
-            final int bodyIndex = getColumnIndexOrThrow(cursor, "body");
-            final int updatedAtIndex = getColumnIndexOrThrow(cursor, "updated_at");
-            final List<SplitEntity> entities = new ArrayList<SplitEntity>(cursor.getCount());
-            while (cursor.moveToNext()) {
-                final SplitEntity item;
-                item = new SplitEntity();
-                item.setRowId(cursor.getLong(rowIdIndex));
-                item.setName(cursor.getString(nameIndex));
-                item.setBody(cursor.getString(bodyIndex));
-                item.setUpdatedAt(cursor.getLong(updatedAtIndex));
-                entities.add(item);
-            }
-            return entities;
-        } catch (Exception e) {
-            Logger.e("Error executing splits query: " + e.getLocalizedMessage());
-        } finally {
-            cursor.close();
-        }
-        return new ArrayList<>();
     }
 
     int getColumnIndexOrThrow(@NonNull Cursor c, @NonNull String name) {
@@ -87,38 +61,38 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
     public Map<String, SplitEntity> getAllAsMap() {
         // Fast path - if the map is already initialized, return it immediately
         if (mIsInitialized) {
-            System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.getAllAsMap: Using prefilled map with " + 
-                              (mCachedSplitsMap != null ? mCachedSplitsMap.size() : 0) + " entries");
-            return new HashMap<>(mCachedSplitsMap); // Return a copy to avoid concurrent modification issues
+            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl.getAllAsMap: Using prefilled map with " +
+                              (mCachedSplitsMap != null ? mCachedSplitsMap.size() : 0) + " entries"));
+            return new HashMap<>(mCachedSplitsMap);
         }
         
         // Wait for initialization to complete if it's in progress
         synchronized (mLock) {
             if (mIsInitialized) {
-                System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.getAllAsMap: Using prefilled map after waiting");
+                System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl.getAllAsMap: Using prefilled map after waiting"));
                 return new HashMap<>(mCachedSplitsMap);
             }
             
             // If initialization thread is running, wait for it
             if (mInitializationThread != null && mInitializationThread.isAlive()) {
                 try {
-                    System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.getAllAsMap: Waiting for prefill to complete");
+                    System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl.getAllAsMap: Waiting for prefill to complete"));
                     mLock.wait(5000); // Wait up to 5 seconds
                     
                     if (mIsInitialized) {
-                        System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.getAllAsMap: Prefill completed while waiting");
+                        System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl.getAllAsMap: Prefill completed while waiting"));
                         return new HashMap<>(mCachedSplitsMap);
                     } else {
-                        System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.getAllAsMap: Timeout waiting for prefill, loading directly");
+                        System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl.getAllAsMap: Timeout waiting for prefill, loading directly"));
                     }
                 } catch (InterruptedException e) {
-                    System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.getAllAsMap: Interrupted while waiting for prefill");
+                    System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl.getAllAsMap: Interrupted while waiting for prefill"));
                 }
             }
             
             // If we get here, either initialization failed or timed out
             // Load the map directly
-            System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.getAllAsMap: Loading map directly");
+            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl.getAllAsMap: Loading map directly"));
             Map<String, SplitEntity> result = loadSplitsMap();
             
             // Cache the result for future calls
@@ -135,17 +109,16 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
      */
     private Map<String, SplitEntity> loadSplitsMap() {
         long startTime = System.currentTimeMillis();
-        System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.loadSplitsMap: Starting");
+        System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl.loadSplitsMap: Starting"));
         
         String sql = "SELECT name, body FROM splits";
         long beforeQueryTime = System.currentTimeMillis();
         
         Cursor cursor = mDatabase.query(sql, null);
         long afterQueryTime = System.currentTimeMillis();
-        System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.loadSplitsMap: Query execution took " + (afterQueryTime - beforeQueryTime) + "ms");
-        
-        // Use an estimated initial capacity based on previous runs
-        final int ESTIMATED_CAPACITY = 2000; // Slightly higher than your observed 1736 entries
+        System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl.loadSplitsMap: Query execution took " + (afterQueryTime - beforeQueryTime) + "ms"));
+
+        final int ESTIMATED_CAPACITY = 2000;
         Map<String, SplitEntity> result = new HashMap<>(ESTIMATED_CAPACITY);
         
         try {
@@ -154,7 +127,6 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
 
             int processedCount = 0;
             
-            // Optimize cursor iteration by using a buffer
             final int BATCH_SIZE = 100;
             String[] names = new String[BATCH_SIZE];
             String[] bodies = new String[BATCH_SIZE];
@@ -167,7 +139,7 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
                 batchCount++;
                 processedCount++;
 
-                // Process in batches for better cache locality
+                // Process in batches
                 if (batchCount == BATCH_SIZE) {
                     for (int i = 0; i < BATCH_SIZE; i++) {
                         SplitEntity entity = new SplitEntity();
@@ -188,8 +160,8 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
             }
             
             long cursorIterationEnd = System.currentTimeMillis();
-            System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.loadSplitsMap: Cursor iteration took " + 
-                              (cursorIterationEnd - cursorIterationStart) + "ms for " + processedCount + " rows");
+            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl.loadSplitsMap: Cursor iteration took " +
+                              (cursorIterationEnd - cursorIterationStart) + "ms for " + processedCount + " rows"));
         } catch (Exception e) {
             Logger.e("Error executing loadSplitsMap query: " + e.getLocalizedMessage());
         } finally {
@@ -197,8 +169,8 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
         }
         
         long endTime = System.currentTimeMillis();
-        System.out.println("[SPLIT-PERF] SplitQueryDaoImpl.loadSplitsMap: Total execution time " + 
-                          (endTime - startTime) + "ms, returned " + result.size() + " entries");
+        System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitQueryDaoImpl.loadSplitsMap: Total execution time " +
+                          (endTime - startTime) + "ms, returned " + result.size() + " entries"));
         
         return result;
     }

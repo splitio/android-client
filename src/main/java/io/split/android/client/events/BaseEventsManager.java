@@ -26,9 +26,6 @@ public abstract class BaseEventsManager implements Runnable {
 
     protected final Set<SplitInternalEvent> mTriggered;
 
-    /**
-     * Creates a lightweight thread factory without using the expensive ThreadFactoryBuilder
-     */
     private static ThreadFactory createThreadFactory() {
         final AtomicInteger threadNumber = new AtomicInteger(1);
         return new ThreadFactory() {
@@ -50,7 +47,6 @@ public abstract class BaseEventsManager implements Runnable {
     public BaseEventsManager() {
         mQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
         mTriggered = Collections.newSetFromMap(new ConcurrentHashMap<>());
-        // Use the shared thread factory instead of creating a new one each time
         launch(EVENTS_THREAD_FACTORY);
     }
 

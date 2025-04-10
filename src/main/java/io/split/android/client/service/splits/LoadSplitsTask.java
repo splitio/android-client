@@ -62,11 +62,7 @@ public class LoadSplitsTask implements SplitTask {
 
         boolean filterHasNotChanged = mSplitsFilterQueryStringFromConfig.equals(queryStringFromStorage);
         boolean flagsSpecHasNotChanged = mFlagsSpecFromConfig.equals(flagsSpecFromStorage);
-        
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: filterHasNotChanged=" + filterHasNotChanged + 
-                ", flagsSpecHasNotChanged=" + flagsSpecHasNotChanged + 
-                ", isNotInitialChangeNumber=" + isNotInitialChangeNumber));
-        
+
         if (isNotInitialChangeNumber && filterHasNotChanged && flagsSpecHasNotChanged) {
             System.out.println(StartupTimeTracker.getElapsedTimeLog("LoadSplitsTask: Returning success, total execution time: " + 
                     (System.currentTimeMillis() - startTime) + "ms"));

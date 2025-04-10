@@ -10,8 +10,6 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.RolloutCacheConfiguration;
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.SplitFactoryImpl;
-import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -61,17 +59,13 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     @Override
     public void validateCache(SplitTaskExecutionListener listener) {
         try {
-            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("RolloutCacheManager: Validating cache"));
             Logger.v("Rollout cache manager: Validating cache");
             execute();
-            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("RolloutCacheManager: Migrating encryption"));
             Logger.v("Rollout cache manager: Migrating encryption");
             mEncryptionMigrationTask.execute();
-            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("RolloutCacheManager: Validation finished"));
             Logger.v("Rollout cache manager: Validation finished");
             listener.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
         } catch (Exception ex) {
-            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("RolloutCacheManager: Error occurred validating cache: " + ex.getMessage()));
             Logger.e("Error occurred validating cache: " + ex.getMessage());
             listener.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK));
         }
@@ -81,16 +75,11 @@ public class RolloutCacheManagerImpl implements RolloutCacheManager, SplitTask {
     @Override
     public SplitTaskExecutionInfo execute() {
         try {
-            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("RolloutCacheManager: Checking cache expiration"));
             boolean expired = validateExpiration();
             if (expired) {
-                System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("RolloutCacheManager: Cache expired, clearing"));
                 clear();
-            } else {
-                System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("RolloutCacheManager: Cache is valid"));
             }
         } catch (Exception e) {
-            System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("RolloutCacheManager: Error validating cache: " + e.getMessage()));
             Logger.e("Error occurred validating cache: " + e.getMessage());
 
             return SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK);

@@ -316,7 +316,6 @@ public class SplitFactoryImpl implements SplitFactory {
             customerImpressionListener = new ImpressionListener.FederatedImpressionListener(splitImpressionListener, impressionListeners);
         }
 
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("Creating EventsTracker"));
         mEventsTrackerProvider = new EventsTrackerProvider(mStorageContainer.getSplitsStorage(),
                 mStorageContainer.getTelemetryStorage(), mSyncManager);
 
@@ -533,12 +532,6 @@ public class SplitFactoryImpl implements SplitFactory {
         ValidationConfig.getInstance().setMaximumKeyLength(splitClientConfig.maximumKeyLength());
         ValidationConfig.getInstance().setTrackEventNamePattern(splitClientConfig.trackEventNamePattern());
     }
-
-//    private EventsTracker buildEventsTracker() {
-//        EventValidator eventsValidator = new EventValidatorImpl(new KeyValidatorImpl(), mStorageContainer.getSplitsStorage());
-//        return new EventsTrackerImpl(eventsValidator, new ValidationMessageLoggerImpl(), mStorageContainer.getTelemetryStorage(),
-//                new EventPropertiesProcessorImpl(), mSyncManager);
-//    }
 
     public static class EventsTrackerProvider {
 

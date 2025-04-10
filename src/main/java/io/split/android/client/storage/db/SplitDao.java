@@ -1,14 +1,11 @@
 package io.split.android.client.storage.db;
 
-import androidx.room.ColumnInfo;
 import androidx.room.Dao;
 import androidx.room.Insert;
-import androidx.room.MapInfo;
 import androidx.room.OnConflictStrategy;
 import androidx.room.Query;
 
 import java.util.List;
-import java.util.Map;
 
 @Dao
 public interface SplitDao {

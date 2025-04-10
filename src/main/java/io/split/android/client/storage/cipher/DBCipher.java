@@ -8,7 +8,6 @@ import androidx.annotation.WorkerThread;
 
 import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.logger.Logger;
 
 public class DBCipher {
 
@@ -61,20 +60,9 @@ public class DBCipher {
     @WorkerThread
     public void apply() {
         if (mMustApply) {
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Migrating encryption mode"));
-            long taskStartTime = System.currentTimeMillis();
             ApplyCipherTask task = mTaskProvider.get(mSplitDatabase, mFromCipher, mToCipher);
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Created ApplyCipherTask in " + 
-                    (System.currentTimeMillis() - taskStartTime) + "ms"));
-            
-            long executeStartTime = System.currentTimeMillis();
+
             task.execute();
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Executed ApplyCipherTask in " + 
-                    (System.currentTimeMillis() - executeStartTime) + "ms"));
-            
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Encryption mode migration done"));
-        } else {
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: No need to migrate encryption mode"));
         }
     }
 

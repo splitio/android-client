@@ -12,8 +12,6 @@ import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -70,95 +68,52 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
     @Override
     public boolean update(ProcessedSplitChange splitChange, Map<String, Integer> mTrafficTypes, Map<String, Set<String>> mFlagSets) {
 
+        SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.update: Starting");
         if (splitChange == null) {
             return false;
         }
 
-        // Process archived splits
-        List<Split> archivedSplits = splitChange.getArchivedSplits();
-        List<String> removedSplitNames = splitNameList(archivedSplits);
-
-        SplitToSplitEntityTransformer transformer = (SplitToSplitEntityTransformer) mSplitToEntityTransformer;
-        List<SplitEntity> splitEntities = transformer.transform(splitChange.getActiveSplits());
+        List<String> removedSplits = splitNameList(splitChange.getArchivedSplits());
+        List<SplitEntity> splitEntities = convertSplitListToEntities(splitChange.getActiveSplits());
 
         mDatabase.runInTransaction(new Runnable() {
             @Override
             public void run() {
+                System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.update: Starting"));
                 mDatabase.generalInfoDao().update(
                         new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, splitChange.getChangeNumber()));
-                mDatabase.splitDao().insert(splitEntities);
-                mDatabase.splitDao().delete(removedSplitNames);
-                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, Json.toJson(mFlagSets)));
-                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, Json.toJson(mTrafficTypes)));
+                if (!splitEntities.isEmpty()) {
+                    mDatabase.splitDao().insert(splitEntities);
+                }
+                if (!removedSplits.isEmpty()) {
+                    mDatabase.splitDao().delete(removedSplits);
+                }
+                if (!mTrafficTypes.isEmpty()) {
+                    mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP,
+                            Json.toJson(mTrafficTypes)));
+                }
+                if (!mFlagSets.isEmpty()) {
+                    mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP,
+                            Json.toJson(mFlagSets)));
+                }
                 mDatabase.generalInfoDao().update(
                         new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, splitChange.getUpdateTimestamp()));
+
+                System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog(
+                        "Updated " + splitEntities.size() + " splits, traffictypes: " + mTrafficTypes.size() + ", flagsets: " + mFlagSets.size()));
             }
         });
 
         return true;
     }
 
-    private void updateTrafficTypesAndFlagSets(Map<String, Integer> trafficTypesMap, Map<String, Set<String>> flagSetsMap) {
-        try {
-            if (trafficTypesMap.isEmpty() && flagSetsMap.isEmpty()) {
-                System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage: No traffic types or flag sets to store"));
-                return;
-            }
-
-            // Store traffic types
-            String trafficTypesJson = Json.toJson(trafficTypesMap);
-            GeneralInfoEntity trafficTypesEntity = new GeneralInfoEntity(
-                GeneralInfoEntity.TRAFFIC_TYPES_MAP, 
-                trafficTypesJson
-            );
-            trafficTypesEntity.setUpdatedAt(System.currentTimeMillis());
-
-            // Store flag sets
-            String flagSetsJson = Json.toJson(flagSetsMap);
-            GeneralInfoEntity flagSetsEntity = new GeneralInfoEntity(
-                GeneralInfoEntity.FLAG_SETS_MAP, 
-                flagSetsJson
-            );
-            flagSetsEntity.setUpdatedAt(System.currentTimeMillis());
-
-            // Update in database
-            mDatabase.generalInfoDao().update(trafficTypesEntity);
-            mDatabase.generalInfoDao().update(flagSetsEntity);
-            
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage: Stored traffic types (" + 
-                    trafficTypesMap.size() + ") and flag sets (" + flagSetsMap.size() + ")"));
-
-        } catch (Exception e) {
-            System.out.println("Error updating traffic types and flag sets: " + e.getMessage());
-        }
-    }
-
     @Override
     public SplitsSnapshot getSnapshot() {
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.getSnapshot: Starting"));
-        long startTime = System.currentTimeMillis();
-        
-        // Load splits
-        List<Split> splits = loadSplits();
-
-        // Run the snapshot loader to get metadata
-        SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase, splits);
+        SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase, loadSplits(), mCipher);
         loader.run();
-        
-        SplitsSnapshot snapshot = new SplitsSnapshot(
-            splits,
-            loader.getChangeNumber(),
-            loader.getUpdateTimestamp(),
-            loader.getSplitsFilterQueryString(),
-            loader.getFlagsSpec(),
-            loader.getTrafficTypes(),
-            loader.getFlagSets()
-        );
-        
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.getSnapshot: Completed in " + 
-                (System.currentTimeMillis() - startTime) + "ms"));
-        
-        return snapshot;
+        return new SplitsSnapshot(loader.getSplits(), loader.getChangeNumber(),
+                loader.getUpdateTimestamp(), loader.getSplitsFilterQueryString(), loader.getFlagsSpec(),
+                loader.getTrafficTypes(), loader.getFlagSets());
     }
 
     @Override
@@ -228,75 +183,16 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         return generalInfoEntity != null ? generalInfoEntity.getStringValue() : null;
     }
 
-    /**
-     * Extracts traffic types and flag sets from splits
-     */
-    private void extractMetadataFromSplits(List<Split> splits, Map<String, Integer> outputTrafficTypeMap, Map<String, Set<String>> outputFlagSetsMap) {
-        if (splits == null || splits.isEmpty()) {
-            return;
-        }
-
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage: Extracting metadata from splits"));
-        long startTime = System.currentTimeMillis();
-
-        // Pre-allocate collections for better performance
-        if (outputTrafficTypeMap.isEmpty()) {
-            outputTrafficTypeMap = new HashMap<>((int)(splits.size() * 0.75));
-        }
-        if (outputFlagSetsMap.isEmpty()) {
-            outputFlagSetsMap = new HashMap<>((int)(splits.size() * 0.25));
-        }
-
-        for (Split split : splits) {
-            // Process traffic type
-            if (split.trafficTypeName != null) {
-                String ttLower = split.trafficTypeName.toLowerCase();
-                Integer count = outputTrafficTypeMap.get(ttLower);
-                outputTrafficTypeMap.put(ttLower, (count == null) ? 1 : count + 1);
-            }
-
-            // Process flag sets
-            if (split.sets != null && !split.sets.isEmpty()) {
-                for (String set : split.sets) {
-                    Set<String> splitNames = outputFlagSetsMap.get(set);
-                    if (splitNames == null) {
-                        splitNames = new HashSet<>();
-                        outputFlagSetsMap.put(set, splitNames);
-                    }
-                    splitNames.add(split.name);
-                }
-            }
-        }
-
-        // Store extracted metadata for future use
-        updateTrafficTypesAndFlagSets(outputTrafficTypeMap, outputFlagSetsMap);
-
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage: Extracted metadata in " +
-                (System.currentTimeMillis() - startTime) + "ms, found " +
-                outputTrafficTypeMap.size() + " traffic types and " + outputFlagSetsMap.size() + " flag sets"));
-    }
-
     private List<Split> loadSplits() {
         System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Starting"));
-        long startTime = System.currentTimeMillis();
-        
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Getting all split entities from database"));
-        long dbStartTime = System.currentTimeMillis();
-        
-        // Use the optimized SplitQueryDao for better performance
+
         Map<String, SplitEntity> allNamesAndBodies = mDatabase.getSplitQueryDao().getAllAsMap();
-        
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Got " + 
-                (allNamesAndBodies != null ? allNamesAndBodies.size() : 0) + " split entities in " + (System.currentTimeMillis() - dbStartTime) + "ms"));
-        
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Transforming entities to splits"));
         long transformStartTime = System.currentTimeMillis();
         List<Split> splits = mEntityToSplitTransformer.transform(allNamesAndBodies);
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Transformed to " + 
+
+        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Transformed to " +
                 (splits != null ? splits.size() : 0) + " splits in " + (System.currentTimeMillis() - transformStartTime) + "ms"));
         
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("SqLitePersistentSplitsStorage.loadSplits: Completed in " + 
-                (System.currentTimeMillis() - startTime) + "ms"));
         return splits;
     }
 
@@ -327,52 +223,25 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         private Map<String, Integer> mTrafficTypes = new ConcurrentHashMap<>();
         private Map<String, Set<String>> mFlagSets = new ConcurrentHashMap<>();
         private final List<Split> mSplits;
+        private final SplitCipher mCipher;
 
-        public SplitsSnapshotLoader(SplitRoomDatabase database, List<Split> splits) {
+        public SplitsSnapshotLoader(SplitRoomDatabase database, List<Split> splits, SplitCipher cipher) {
             mDatabase = database;
             mSplits = splits;
+            mCipher = cipher;
         }
 
         @Override
         public void run() {
             System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Starting"));
             long startTime = System.currentTimeMillis();
-            
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Getting timestamp entity"));
-            long timestampStartTime = System.currentTimeMillis();
+
             GeneralInfoEntity timestampEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP);
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Got timestamp entity in " + 
-                    (System.currentTimeMillis() - timestampStartTime) + "ms"));
-            
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Getting change number entity"));
-            long changeNumberStartTime = System.currentTimeMillis();
             GeneralInfoEntity changeNumberEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Got change number entity in " + 
-                    (System.currentTimeMillis() - changeNumberStartTime) + "ms"));
-            
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Getting filter query string entity"));
-            long filterQueryStartTime = System.currentTimeMillis();
             GeneralInfoEntity filterQueryStringEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING);
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Got filter query string entity in " + 
-                    (System.currentTimeMillis() - filterQueryStartTime) + "ms"));
-            
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Getting flags spec entity"));
-            long flagsSpecStartTime = System.currentTimeMillis();
             GeneralInfoEntity flagsSpecEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.FLAGS_SPEC);
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Got flags spec entity in " + 
-                    (System.currentTimeMillis() - flagsSpecStartTime) + "ms"));
-
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Getting traffic types"));
-            long trafficTypesStartTime = System.currentTimeMillis();
             GeneralInfoEntity trafficTypesEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.TRAFFIC_TYPES_MAP);
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Got traffic types in " +
-                    (System.currentTimeMillis() - trafficTypesStartTime) + "ms"));
-
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Getting flag sets"));
-            long flagSetsStartTime = System.currentTimeMillis();
             GeneralInfoEntity flagSetsEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.FLAG_SETS_MAP);
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Got flag sets in " +
-                    (System.currentTimeMillis() - flagSetsStartTime) + "ms"));
 
             if (changeNumberEntity != null) {
                 mChangeNumber = changeNumberEntity.getLongValue();
@@ -390,44 +259,72 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                 mFlagsSpec = flagsSpecEntity.getStringValue();
             }
 
-            boolean trafficTypesAndSetsMigrationRequired = !mSplits.isEmpty() && trafficTypesEntity == null && flagSetsEntity == null;
+            boolean splitsAreNotEmpty = !mSplits.isEmpty();
+            boolean trafficTypesEntityIsEmpty = trafficTypesEntity == null || trafficTypesEntity.getStringValue().isEmpty();
+            boolean flagSetsEntityIsEmpty = flagSetsEntity == null || flagSetsEntity.getStringValue().isEmpty();
+            boolean trafficTypesAndSetsMigrationRequired = splitsAreNotEmpty &&
+                    (trafficTypesEntityIsEmpty || flagSetsEntityIsEmpty);
             if (trafficTypesAndSetsMigrationRequired) {
-                Logger.i("Migration required for cached traffic types and flag sets. Migrating now.");
-                System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("Migration required for cached traffic types and flag sets. Migrating now."));
-                try {
-                    for (Split split : mSplits) {
-                        if (split.status == Status.ACTIVE) {
-                            increaseTrafficTypeCount(split.trafficTypeName, mTrafficTypes);
-                            addOrUpdateFlagSets(split, mFlagSets);
-                        } else {
-                            decreaseTrafficTypeCount(split.trafficTypeName, mTrafficTypes);
-                            deleteFromFlagSetsIfNecessary(split, mFlagSets);
-                        }
-                    }
-
-                    mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, Json.toJson(mTrafficTypes)));
-                    mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, Json.toJson(mFlagSets)));
-                } catch (Exception e) {
-                    Logger.e("Failed to migrate traffic types and flag sets", e);
-                }
-            } else {
-                Logger.v("Migration not required");
-                System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("Migration not required, " + trafficTypesEntity.getStringValue() + ", sets: " + flagSetsEntity.getStringValue()));
-                if (trafficTypesEntity != null) {
-                    Type mapType = new TypeToken<Map<String, Integer>>(){}.getType();
-                    mTrafficTypes = Json.fromJson(trafficTypesEntity.getStringValue(), mapType);
-                    System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("Traffic types loaded from general info: " + mTrafficTypes.size()));
-                }
-
-                if (flagSetsEntity != null) {
-                    Type mapType = new TypeToken<Map<String, Set<String>>>(){}.getType();
-                    mFlagSets = Json.fromJson(flagSetsEntity.getStringValue(), mapType);
-                    System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog( "Flag sets loaded from general info: " + mFlagSets.size()));
-                }
+                migrateTrafficTypesAndSetsFromStoredData();
             }
+
+            parseTrafficTypesAndSets(trafficTypesEntity, flagSetsEntity);
 
             System.out.println(StartupTimeTracker.getElapsedTimeLog("SplitsSnapshotLoader.run: Completed in " + 
                     (System.currentTimeMillis() - startTime) + "ms"));
+        }
+
+        private synchronized void parseTrafficTypesAndSets(@Nullable GeneralInfoEntity trafficTypesEntity, @Nullable GeneralInfoEntity flagSetsEntity) {
+            Logger.v("Migration not required");
+            if (trafficTypesEntity != null) {
+                Type mapType = new TypeToken<Map<String, Integer>>(){}.getType();
+                String encryptedTrafficTypes = trafficTypesEntity.getStringValue();
+                SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("encryptedTrafficTypes: " + encryptedTrafficTypes);
+                String decryptedTrafficTypes = mCipher.decrypt(encryptedTrafficTypes);
+                mTrafficTypes = Json.fromJson(decryptedTrafficTypes, mapType);
+            }
+
+            if (flagSetsEntity != null) {
+                Type flagsMapType = new TypeToken<Map<String, Set<String>>>(){}.getType();
+                String encryptedFlagSets = flagSetsEntity.getStringValue();
+                String decryptedFlagSets = mCipher.decrypt(encryptedFlagSets);
+                SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("encryptedFlagSets: " + encryptedFlagSets);
+                mFlagSets = Json.fromJson(decryptedFlagSets, flagsMapType);
+            }
+        }
+
+        private void migrateTrafficTypesAndSetsFromStoredData() {
+            Logger.i("Migration required for cached traffic types and flag sets. Migrating now.");
+            System.out.println(StartupTimeTracker.getElapsedTimeLog("Migration required for cached traffic types and flag sets. Migrating now."));
+            try {
+                for (Split split : mSplits) {
+                    Split parsedSplit = Json.fromJson(split.json, Split.class);
+                    if (parsedSplit != null && parsedSplit.status == Status.ACTIVE) {
+                        increaseTrafficTypeCount(parsedSplit.trafficTypeName, mTrafficTypes);
+                        addOrUpdateFlagSets(parsedSplit, mFlagSets);
+                    } else {
+                        decreaseTrafficTypeCount(parsedSplit.trafficTypeName, mTrafficTypes);
+                        deleteFromFlagSetsIfNecessary(parsedSplit, mFlagSets);
+                    }
+                }
+
+                // persist TTs
+                String decryptedTrafficTypes = Json.toJson(mTrafficTypes);
+                String encryptedTrafficTypes = mCipher.encrypt(decryptedTrafficTypes);
+
+                // persist flag sets
+                String decryptedFlagSets = Json.toJson(mFlagSets);
+                String encryptedFlagSets = mCipher.encrypt(decryptedFlagSets);
+
+                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, encryptedTrafficTypes));
+                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, encryptedFlagSets));
+            } catch (Exception e) {
+                Logger.e("Failed to migrate traffic types and flag sets", e);
+            }
+        }
+
+        public List<Split> getSplits() {
+            return mSplits;
         }
 
         public Long getChangeNumber() {
@@ -452,10 +349,6 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
         public Map<String, Set<String>> getFlagSets() {
             return mFlagSets;
-        }
-
-        private void migrateIfNeeded() {
-
         }
     }
 }

@@ -51,12 +51,8 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
                 if (decryptedBody == null) {
                     continue;
                 }
-                
-                // Create Split object directly from name and body
-                Split split = new Split(decryptedName, decryptedBody);
-                
-                // Note: trafficType and sets will be loaded separately from GeneralInfo
-                splits.add(split);
+
+                splits.add(new Split(decryptedName, decryptedBody));
             } catch (JsonSyntaxException e) {
                 Logger.e("Could not parse entity to split: " + entry.getKey());
             }

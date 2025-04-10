@@ -22,6 +22,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import io.split.android.client.SplitFactoryImpl;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
 import io.split.android.client.utils.Json;
@@ -65,6 +66,14 @@ public class SplitsStorageImpl implements SplitsStorage {
             mSplitsFilterQueryString = snapshot.getSplitsFilterQueryString();
             mFlagsSpec = snapshot.getFlagsSpec();
             // Populate traffic types and flag sets
+            if (snapshot.getTrafficTypesMap().isEmpty()) {
+                System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Traffic types are empty"));
+            }
+
+            if (snapshot.getFlagSetsMap().isEmpty()) {
+                System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("SplitsStorageImpl.loadLocal: Flag sets are empty"));
+            }
+
             mTrafficTypes.putAll(snapshot.getTrafficTypesMap());
             for (Map.Entry<String, Set<String>> entry : snapshot.getFlagSetsMap().entrySet()) {
                 mFlagSets.put(entry.getKey(), new HashSet<>(entry.getValue()));
@@ -165,6 +174,9 @@ public class SplitsStorageImpl implements SplitsStorage {
 
         mChangeNumber = splitChange.getChangeNumber();
         mUpdateTimestamp = splitChange.getUpdateTimestamp();
+
+        System.out.println(SplitFactoryImpl.StartupTimeTracker.getElapsedTimeLog("for update, traffictypes amount: " + mTrafficTypes.size() + ", flagsets amount: " + mFlagSets.size()));
+
         mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets);
 
         return appliedUpdates;
