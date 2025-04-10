@@ -20,7 +20,10 @@ import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.cipher.SplitCipher;
@@ -44,6 +47,8 @@ public class SqLitePersistentSplitsStorageTest {
     private SplitCipher mCipher;
     private SqLitePersistentSplitsStorage mStorage;
     private AutoCloseable mAutoCloseable;
+    private final Map<String, Set<String>> mFlagSets = new HashMap<>();
+    private final Map<String, Integer> mTrafficTypes = new HashMap<>();
 
     @Before
     public void setUp() {

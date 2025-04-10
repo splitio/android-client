@@ -6,6 +6,9 @@ on:
       - 'development'
       - 'master'
       - '*_baseline'
+  push:
+    branches:
+      - 'SDKS-9595'
 
 jobs:
   test:

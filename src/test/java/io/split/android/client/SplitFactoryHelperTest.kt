@@ -5,6 +5,7 @@ import io.split.android.client.SplitFactoryHelper.Initializer.Listener
 import io.split.android.client.events.EventsManagerCoordinator
 import io.split.android.client.events.SplitInternalEvent
 import io.split.android.client.lifecycle.SplitLifecycleManager
+import io.split.android.client.service.CleanUpDatabaseTask
 import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor
 import io.split.android.client.service.executor.SplitTaskExecutionInfo
 import io.split.android.client.service.executor.SplitTaskExecutionListener
@@ -171,7 +172,6 @@ class SplitFactoryHelperTest {
             singleThreadTaskExecutor,
             syncManager,
             lifecycleManager,
-            splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000),
             initLock
         )
 

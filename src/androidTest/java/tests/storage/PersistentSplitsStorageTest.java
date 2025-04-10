@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import helper.DatabaseHelper;
 import io.split.android.client.dtos.Split;
@@ -32,6 +33,8 @@ public class PersistentSplitsStorageTest {
     SplitRoomDatabase mRoomDb;
     Context mContext;
     PersistentSplitsStorage mPersistentSplitsStorage;
+    private final Map<String, Set<String>> mFlagSets = new HashMap<>();
+    private final Map<String, Integer> mTrafficTypes = new HashMap<>();
 
     @Before
     public void setUp() {
