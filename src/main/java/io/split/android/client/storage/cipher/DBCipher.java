@@ -6,7 +6,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
-import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 
 public class DBCipher {
@@ -37,20 +36,11 @@ public class DBCipher {
                     @NonNull SplitEncryptionLevel fromLevel,
                     @NonNull SplitEncryptionLevel toLevel,
                     @NonNull TaskProvider taskProvider) {
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Checking if migration is needed"));
-        long checkStartTime = System.currentTimeMillis();
         mMustApply = fromLevel != toLevel;
-        System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Migration needed: " + mMustApply + 
-                " (from " + fromLevel + " to " + toLevel + "), check took " + 
-                (System.currentTimeMillis() - checkStartTime) + "ms"));
 
         if (mMustApply) {
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Creating cipher for level " + fromLevel));
-            long cipherStartTime = System.currentTimeMillis();
             mFromCipher = SplitCipherFactory.create(apiKey, fromLevel);
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("DBCipher: Created cipher in " + 
-                    (System.currentTimeMillis() - cipherStartTime) + "ms"));
-            
+
             mToCipher = checkNotNull(toCipher);
             mSplitDatabase = checkNotNull(splitDatabase);
             mTaskProvider = checkNotNull(taskProvider);

@@ -94,8 +94,6 @@ import io.split.android.client.telemetry.storage.TelemetryStorage;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
 
-import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
-
 class SplitFactoryHelper {
     private static final int DB_MAGIC_CHARS_COUNT = 4;
 
@@ -551,16 +549,13 @@ class SplitFactoryHelper {
             @Override
             public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
                 try {
-                    System.out.println(StartupTimeTracker.getElapsedTimeLog("Resuming SplitTaskExecutor"));
                     mSplitTaskExecutor.resume();
                     mSplitSingleThreadTaskExecutor.resume();
                     mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
 
-                    System.out.println(StartupTimeTracker.getElapsedTimeLog("Starting SyncManager"));
                     mSyncManager.start();
                     mLifecycleManager.register(mSyncManager);
 
-                    System.out.println(StartupTimeTracker.getElapsedTimeLog("Android SDK initialized!"));
                     Logger.i("Android SDK initialized!");
                 } catch (Exception e) {
                     Logger.e("Error initializing Android SDK", e);

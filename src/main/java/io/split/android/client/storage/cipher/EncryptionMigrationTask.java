@@ -4,7 +4,6 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -34,7 +33,6 @@ public class EncryptionMigrationTask implements SplitTask {
     @Override
     public SplitTaskExecutionInfo execute() {
         try {
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("EncryptionMigrationTask: Starting execution"));
             long startTime = System.currentTimeMillis();
             
             // Get current encryption level
@@ -51,8 +49,6 @@ public class EncryptionMigrationTask implements SplitTask {
             // Update encryption level
             updateCurrentLevel(toLevel);
 
-            System.out.println(StartupTimeTracker.getElapsedTimeLog("EncryptionMigrationTask: Completed in " + 
-                    (System.currentTimeMillis() - startTime) + "ms"));
             return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
         } catch (Exception e) {
             Logger.e("Error while migrating encryption: " + e.getMessage());

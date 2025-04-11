@@ -22,6 +22,7 @@ import io.split.android.client.storage.db.impressions.observer.ImpressionsObserv
 import io.split.android.client.storage.db.impressions.observer.ImpressionsObserverCacheEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
+import io.split.android.client.utils.logger.Logger;
 
 @Database(
         entities = {
@@ -66,7 +67,6 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
         if (mSplitQueryDao == null) {
             synchronized (this) {
                 if (mSplitQueryDao == null) {
-                System.out.println("[SPLIT-PERF] SplitQueryDaoImpl: Init SplitQueryDao");
                     mSplitQueryDao = new SplitQueryDaoImpl(this);
                 }
             }
@@ -83,27 +83,30 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
             instance = mInstances.get(databaseName);
             if (instance == null) {
                 instance = Room.databaseBuilder(context.getApplicationContext(),
-                        SplitRoomDatabase.class, databaseName)
+                                SplitRoomDatabase.class, databaseName)
                         .setJournalMode(JournalMode.WRITE_AHEAD_LOGGING)
                         .fallbackToDestructiveMigration()
                         .build();
-                
-                // Get the underlying SQLite database and optimize it
+
                 try {
                     SupportSQLiteDatabase db = instance.getOpenHelper().getWritableDatabase();
-                    // These pragmas should be safe to execute on an open database
 
                     db.execSQL("PRAGMA cache_size = -3000");
                     db.execSQL("PRAGMA automatic_index = ON");
                     db.execSQL("PRAGMA foreign_keys = OFF");
                 } catch (Exception e) {
-                    // Log the error but don't crash
-                    System.out.println("Failed to set database pragmas: " + e.getMessage());
+                    Logger.i("Failed to set optimized pragma");
                 }
 
 
                 mInstances.put(databaseName, instance);
-                new Thread(() -> { mInstances.get(databaseName).getSplitQueryDao(); }).start();
+                new Thread(() -> {
+                    try {
+                        mInstances.get(databaseName).getSplitQueryDao();
+                    } catch (Exception e) {
+                        Logger.i("Failed to preload query DAO");
+                    }
+                }).start();
             }
         }
         return instance;

@@ -4,6 +4,7 @@ import java.util.Arrays;
 import java.util.zip.Inflater;
 
 import io.split.android.client.service.ServiceConstants;
+import io.split.android.client.utils.logger.Logger;
 
 public class Zlib implements CompressionUtil {
 
@@ -20,9 +21,9 @@ public class Zlib implements CompressionUtil {
             inflater.end();
             return Arrays.copyOfRange(result, 0, resultLength);
         } catch (java.util.zip.DataFormatException e) {
-            System.out.println("DataFormatException error: " + e.getLocalizedMessage());
+            Logger.e("DataFormatException error: " + e.getLocalizedMessage());
         } catch (Exception e) {
-            System.out.println("Error decompressing: " + e.getLocalizedMessage());
+            Logger.e("Error decompressing: " + e.getLocalizedMessage());
         }
         return null;
     }
