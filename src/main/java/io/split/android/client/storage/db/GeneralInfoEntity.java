@@ -14,6 +14,8 @@ public class GeneralInfoEntity {
     public static final String SPLITS_FILTER_QUERY_STRING = "splitsFilterQueryString";
     public static final String DATABASE_ENCRYPTION_MODE = "databaseEncryptionMode";
     public static final String FLAGS_SPEC = "flagsSpec";
+    public static final String TRAFFIC_TYPES_MAP = "trafficTypesMap";
+    public static final String FLAG_SETS_MAP = "flagSetsMap";
 
     @PrimaryKey()
     @NonNull

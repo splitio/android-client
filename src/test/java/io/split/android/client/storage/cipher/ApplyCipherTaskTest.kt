@@ -4,6 +4,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus
 import io.split.android.client.service.executor.SplitTaskType
 import io.split.android.client.storage.db.EventDao
 import io.split.android.client.storage.db.EventEntity
+import io.split.android.client.storage.db.GeneralInfoDao
+import io.split.android.client.storage.db.GeneralInfoEntity
 import io.split.android.client.storage.db.ImpressionDao
 import io.split.android.client.storage.db.ImpressionEntity
 import io.split.android.client.storage.db.ImpressionsCountDao
@@ -12,8 +14,6 @@ import io.split.android.client.storage.db.MyLargeSegmentDao
 import io.split.android.client.storage.db.MyLargeSegmentEntity
 import io.split.android.client.storage.db.MySegmentDao
 import io.split.android.client.storage.db.MySegmentEntity
-import io.split.android.client.storage.db.SegmentDao
-import io.split.android.client.storage.db.SegmentEntity
 import io.split.android.client.storage.db.SplitDao
 import io.split.android.client.storage.db.SplitEntity
 import io.split.android.client.storage.db.SplitRoomDatabase
@@ -69,6 +69,9 @@ class ApplyCipherTaskTest {
     @Mock
     private lateinit var attributesDao: AttributesDao
 
+    @Mock
+    private lateinit var generalInfoDao: GeneralInfoDao
+
     private lateinit var applyCipherTask: ApplyCipherTask
 
     @Before
@@ -82,6 +85,7 @@ class ApplyCipherTaskTest {
         `when`(splitDatabase.impressionsCountDao()).thenReturn(impressionsCountDao)
         `when`(splitDatabase.uniqueKeysDao()).thenReturn(uniqueKeysDao)
         `when`(splitDatabase.attributesDao()).thenReturn(attributesDao)
+        `when`(splitDatabase.generalInfoDao()).thenReturn(generalInfoDao)
 
         `when`(fromCipher.decrypt(anyString())).thenAnswer { invocation -> "decrypted_${invocation.arguments[0]}" }
         `when`(toCipher.encrypt(anyString())).thenAnswer { invocation -> "encrypted_${invocation.arguments[0]}" }
@@ -121,6 +125,38 @@ class ApplyCipherTaskTest {
         verify(toCipher).encrypt("decrypted_name2")
         verify(toCipher).encrypt("decrypted_body2")
         verify(splitDao).update("name2", "encrypted_decrypted_name2", "encrypted_decrypted_body2")
+    }
+
+    @Test
+    fun `traffic types are migrated`() {
+        `when`(generalInfoDao.getByName(GeneralInfoEntity.TRAFFIC_TYPES_MAP)).thenReturn(
+            GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, "trafficTypesMap")
+        )
+
+        applyCipherTask.execute()
+
+        verify(generalInfoDao).getByName(GeneralInfoEntity.TRAFFIC_TYPES_MAP)
+        verify(fromCipher).decrypt("trafficTypesMap")
+        verify(toCipher).encrypt("decrypted_trafficTypesMap")
+        verify(generalInfoDao).update(argThat {
+            it.stringValue.equals("encrypted_decrypted_trafficTypesMap")
+        })
+    }
+
+    @Test
+    fun `flag sets are migrated`() {
+        `when`(generalInfoDao.getByName(GeneralInfoEntity.FLAG_SETS_MAP)).thenReturn(
+            GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, "flagSetsMap")
+        )
+
+        applyCipherTask.execute()
+
+        verify(generalInfoDao).getByName(GeneralInfoEntity.FLAG_SETS_MAP)
+        verify(fromCipher).decrypt("flagSetsMap")
+        verify(toCipher).encrypt("decrypted_flagSetsMap")
+        verify(generalInfoDao).update(argThat {
+            it.stringValue.equals("encrypted_decrypted_flagSetsMap")
+        })
     }
 
     @Test
