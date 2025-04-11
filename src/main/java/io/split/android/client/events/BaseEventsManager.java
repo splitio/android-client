@@ -6,12 +6,9 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import io.split.android.client.SplitFactoryImpl.StartupTimeTracker;
-import io.split.android.client.service.executor.ThreadFactoryBuilder;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.scheduler.PausableThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableThreadPoolExecutorImpl;

@@ -43,7 +43,6 @@ public class EventsTrackerImpl implements EventsTracker {
     public void enableTracking(boolean enable) {
         isTrackingEnabled.set(enable);
     }
-
     public boolean track(String key, String trafficType, String eventType,
                          double value, Map<String, Object> properties, boolean isSdkReady) {
 

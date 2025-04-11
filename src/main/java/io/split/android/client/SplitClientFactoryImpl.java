@@ -2,8 +2,6 @@ package io.split.android.client;
 
 import static io.split.android.client.utils.Utils.checkNotNull;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -25,7 +23,6 @@ import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryInitProducer;
-import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.AttributesValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
