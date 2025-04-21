@@ -14,7 +14,7 @@ public class SplitClientImplFlagSetsTest extends SplitClientImplBaseTest {
         Map<String, Object> attributes = Collections.singletonMap("key", "value");
         splitClient.getTreatmentsByFlagSet("set", attributes);
 
-        verify(treatmentManager).getTreatmentsByFlagSet("set", attributes, false);
+        verify(treatmentManager).getTreatmentsByFlagSet("set", attributes, null, false);
     }
 
     @Test
@@ -22,7 +22,7 @@ public class SplitClientImplFlagSetsTest extends SplitClientImplBaseTest {
         Map<String, Object> attributes = Collections.singletonMap("key", "value");
         splitClient.getTreatmentsByFlagSets(Collections.singletonList("set"), attributes);
 
-        verify(treatmentManager).getTreatmentsByFlagSets(Collections.singletonList("set"), attributes, false);
+        verify(treatmentManager).getTreatmentsByFlagSets(Collections.singletonList("set"), attributes, null, false);
     }
 
     @Test
@@ -30,7 +30,7 @@ public class SplitClientImplFlagSetsTest extends SplitClientImplBaseTest {
         Map<String, Object> attributes = Collections.singletonMap("key", "value");
         splitClient.getTreatmentsWithConfigByFlagSet("set", attributes);
 
-        verify(treatmentManager).getTreatmentsWithConfigByFlagSet("set", attributes, false);
+        verify(treatmentManager).getTreatmentsWithConfigByFlagSet("set", attributes, null, false);
     }
 
     @Test
@@ -38,6 +38,6 @@ public class SplitClientImplFlagSetsTest extends SplitClientImplBaseTest {
         Map<String, Object> attributes = Collections.singletonMap("key", "value");
         splitClient.getTreatmentsWithConfigByFlagSets(Collections.singletonList("set"), attributes);
 
-        verify(treatmentManager).getTreatmentsWithConfigByFlagSets(Collections.singletonList("set"), attributes, false);
+        verify(treatmentManager).getTreatmentsWithConfigByFlagSets(Collections.singletonList("set"), attributes, null, false);
     }
 }
