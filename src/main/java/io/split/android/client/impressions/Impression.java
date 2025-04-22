@@ -1,5 +1,7 @@
 package io.split.android.client.impressions;
 
+import androidx.annotation.Nullable;
+
 import java.util.Map;
 
 public class Impression {
@@ -13,9 +15,11 @@ public class Impression {
     private final Long _changeNumber;
     private Long _previousTime;
     private final Map<String, Object> _attributes;
+    @Nullable
+    private final String _propertiesJson;
 
 
-    public Impression(String key, String bucketingKey, String split, String treatment, long time, String appliedRule, Long changeNumber, Map<String, Object> atributes) {
+    public Impression(String key, String bucketingKey, String split, String treatment, long time, String appliedRule, Long changeNumber, Map<String, Object> attributes, String propertiesJson) {
         _key = key;
         _bucketingKey = bucketingKey;
         _split = split;
@@ -23,7 +27,8 @@ public class Impression {
         _time = time;
         _appliedRule = appliedRule;
         _changeNumber = changeNumber;
-        _attributes = atributes;
+        _attributes = attributes;
+        _propertiesJson = propertiesJson;
     }
 
     public String key() {
@@ -56,6 +61,11 @@ public class Impression {
 
     public Map<String, Object> attributes() {
         return _attributes;
+    }
+
+    @Nullable
+    public String properties() {
+        return _propertiesJson;
     }
 
     public Long previousTime() {

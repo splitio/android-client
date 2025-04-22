@@ -30,6 +30,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
     private final SplitsStorage mSplitsStorage;
     private final ValidationMessageLogger mValidationMessageLogger;
     private final SplitFilterValidator mFlagSetsValidator;
+    private final PropertyValidator mPropertyValidator;
 
     public TreatmentManagerFactoryImpl(@NonNull KeyValidator keyValidator,
                                        @NonNull SplitValidator splitValidator,
@@ -51,6 +52,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
         mSplitsStorage = checkNotNull(splitsStorage);
         mValidationMessageLogger = new ValidationMessageLoggerImpl();
         mFlagSetsValidator = new FlagSetsValidatorImpl();
+        mPropertyValidator = new PropertyValidatorImpl();
     }
 
     @Override
@@ -70,7 +72,8 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
                 mFlagSetsFilter,
                 mSplitsStorage,
                 mValidationMessageLogger,
-                mFlagSetsValidator
+                mFlagSetsValidator,
+                mPropertyValidator
         );
     }
 }

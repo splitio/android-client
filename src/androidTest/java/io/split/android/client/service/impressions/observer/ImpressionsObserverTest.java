@@ -47,6 +47,7 @@ public class ImpressionsObserverTest {
                     System.currentTimeMillis(),
                     (i % 2 == 0) ? "in segment all" : "whitelisted",
                     i * i,
+                    null,
                     null);
             imps.add(imp);
         }
@@ -61,6 +62,7 @@ public class ImpressionsObserverTest {
                 "on", System.currentTimeMillis(),
                 "in segment all",
                 1234L,
+                null,
                 null);
 
         // Add 5 new impressions so that the old one is evicted and re-try the test.
@@ -80,13 +82,14 @@ public class ImpressionsObserverTest {
                 "on", System.currentTimeMillis(),
                 "in segment all",
                 1234L,
+                null,
                 null);
         Impression imp2 = new Impression("someOtherKey",
                 null, "someOtherFeature",
                 "on", System.currentTimeMillis(),
                 "in segment all",
                 1234L,
-                null);
+                null, null);
 
         // These are not in the cache, so they should return null
         Long firstImp = observer.testAndSet(imp);
@@ -177,6 +180,7 @@ public class ImpressionsObserverTest {
                     System.currentTimeMillis(),
                     "label" + mRandom.nextInt(5),
                     1234567L,
+                    null,
                     null);
 
             i = i.withPreviousTime(o.testAndSet(i));
