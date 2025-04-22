@@ -798,12 +798,12 @@ public class SynchronizerTest {
 
     private DecoratedImpression createImpression() {
         return new DecoratedImpression(new Impression("key", "bkey", "split", "on",
-                100L, "default rule", 999L, null), true);
+                100L, "default rule", 999L, null, null), true);
     }
 
     private DecoratedImpression createUniqueImpression() {
         return new DecoratedImpression(new Impression("key", "bkey", UUID.randomUUID().toString(), "on",
-                100L, "default rule", 999L, null), true);
+                100L, "default rule", 999L, null, null), true);
     }
 
     private KeyImpression keyImpression(Impression impression) {

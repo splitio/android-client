@@ -38,6 +38,7 @@ import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.FlagSetsValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
+import io.split.android.client.validators.PropertyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
@@ -100,7 +101,7 @@ public class TreatmentManagerTest {
         String splitName = "FACUNDO_TEST";
 
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
-        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false);
+        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, null, false);
 
         Assert.assertNotNull(splitResult);
         Assert.assertEquals("off", splitResult.treatment());
@@ -113,7 +114,7 @@ public class TreatmentManagerTest {
         String splitName = "Test";
 
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
-        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false);
+        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, null, false);
 
         Assert.assertNotNull(splitResult);
         Assert.assertEquals("off", splitResult.treatment());
@@ -126,7 +127,7 @@ public class TreatmentManagerTest {
         List<String> splitList = Arrays.asList("FACUNDO_TEST", "testo2222", "Test");
 
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
-        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, false);
+        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, null, false);
 
         SplitResult r1 = splitResultList.get("FACUNDO_TEST");
         SplitResult r2 = splitResultList.get("testo2222");
@@ -152,10 +153,10 @@ public class TreatmentManagerTest {
         List<String> splitList = Arrays.asList("FACUNDO_TEST", "a_new_split_2", "benchmark_jw_1");
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
 
-        String treatment = treatmentManager.getTreatment(splitName, null, true);
-        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, true);
-        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, true);
-        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, true);
+        String treatment = treatmentManager.getTreatment(splitName, null, null, true);
+        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, null, true);
+        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, null, true);
+        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, null, true);
         assertControl(splitList, treatment, treatmentList, splitResult, splitResultList);
     }
 
@@ -166,10 +167,10 @@ public class TreatmentManagerTest {
         List<String> splitList = Arrays.asList("NON_EXISTING_1", "NON_EXISTING_2", "NON_EXISTING_3");
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
 
-        String treatment = treatmentManager.getTreatment(splitName, null, false);
-        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false);
-        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, false);
-        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, false);
+        String treatment = treatmentManager.getTreatment(splitName, null, null, false);
+        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, null, false);
+        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, null, false);
+        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, null, false);
         assertControl(splitList, treatment, treatmentList, splitResult, splitResultList);
     }
 
@@ -180,10 +181,10 @@ public class TreatmentManagerTest {
         List<String> splitList = new ArrayList<>();
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
 
-        String treatment = treatmentManager.getTreatment(splitName, null, false);
-        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false);
-        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, false);
-        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, false);
+        String treatment = treatmentManager.getTreatment(splitName, null, null, false);
+        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, null, false);
+        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, null, false);
+        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, null, false);
 
         assertControl(splitList, treatment, treatmentList, splitResult, splitResultList);
     }
@@ -195,10 +196,10 @@ public class TreatmentManagerTest {
         List<String> splitList = Arrays.asList("FACUNDO_TEST", "a_new_split_2", "benchmark_jw_1");
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
 
-        String treatment = treatmentManager.getTreatment(splitName, null, false);
-        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false);
-        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, false);
-        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, false);
+        String treatment = treatmentManager.getTreatment(splitName, null, null, false);
+        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, null, false);
+        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, null, false);
+        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, null, false);
 
         assertControl(splitList, treatment, treatmentList, splitResult, splitResultList);
     }
@@ -210,10 +211,10 @@ public class TreatmentManagerTest {
         List<String> splitList = new ArrayList<>();
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
 
-        String treatment = treatmentManager.getTreatment(splitName, null, false);
-        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false);
-        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, false);
-        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, false);
+        String treatment = treatmentManager.getTreatment(splitName, null, null, false);
+        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, null, false);
+        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, null, false);
+        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, null, false);
 
         assertControl(splitList, treatment, treatmentList, splitResult, splitResultList);
     }
@@ -225,10 +226,10 @@ public class TreatmentManagerTest {
         List<String> splitList = new ArrayList<>();
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
 
-        String treatment = treatmentManager.getTreatment(splitName, null, false);
-        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false);
-        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, false);
-        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, false);
+        String treatment = treatmentManager.getTreatment(splitName, null, null, false);
+        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, null, false);
+        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, null, false);
+        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, null, false);
 
         assertControl(splitList, treatment, treatmentList, splitResult, splitResultList);
     }
@@ -240,10 +241,10 @@ public class TreatmentManagerTest {
         List<String> splitList = null;
         TreatmentManager treatmentManager = createTreatmentManager(matchingKey, matchingKey);
 
-        String treatment = treatmentManager.getTreatment(splitName, null, false);
-        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, false);
-        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, false);
-        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, false);
+        String treatment = treatmentManager.getTreatment(splitName, null, null, false);
+        SplitResult splitResult = treatmentManager.getTreatmentWithConfig(splitName, null, null, false);
+        Map<String, String> treatmentList = treatmentManager.getTreatments(splitList, null, null, false);
+        Map<String, SplitResult> splitResultList = treatmentManager.getTreatmentsWithConfig(splitList, null, null, false);
 
         Assert.assertNotNull(treatment);
         Assert.assertEquals(Treatments.CONTROL, treatment);
@@ -257,14 +258,14 @@ public class TreatmentManagerTest {
 
         TreatmentManagerImpl tManager = initializeTreatmentManager(evaluatorMock);
 
-        tManager.getTreatment("FACUNDO_TEST", null, false);
+        tManager.getTreatment("FACUNDO_TEST", null, null, false);
         verifyNoInteractions(impressionListener);
     }
 
     @Test
     public void getTreatmentTakesValuesFromAttributesManagerIntoAccount() {
 
-        treatmentManager.getTreatment("test_split", new HashMap<>(), false);
+        treatmentManager.getTreatment("test_split", new HashMap<>(), null, false);
 
         verify(attributesManager).getAllAttributes();
     }
@@ -272,7 +273,7 @@ public class TreatmentManagerTest {
     @Test
     public void getTreatmentWithConfigTakesValuesFromAttributesManagerIntoAccount() {
 
-        treatmentManager.getTreatmentWithConfig("test_split", new HashMap<>(), false);
+        treatmentManager.getTreatmentWithConfig("test_split", new HashMap<>(), null, false);
 
         verify(attributesManager).getAllAttributes();
     }
@@ -283,7 +284,7 @@ public class TreatmentManagerTest {
         splits.add("test_split_1");
         splits.add("test_split_2");
 
-        treatmentManager.getTreatments(splits, new HashMap<>(), false);
+        treatmentManager.getTreatments(splits, new HashMap<>(), null, false);
 
         verify(attributesManager).getAllAttributes();
     }
@@ -294,7 +295,7 @@ public class TreatmentManagerTest {
         splits.add("test_split_1");
         splits.add("test_split_2");
 
-        treatmentManager.getTreatmentsWithConfig(splits, new HashMap<>(), false);
+        treatmentManager.getTreatmentsWithConfig(splits, new HashMap<>(), null, false);
 
         verify(attributesManager).getAllAttributes();
     }
@@ -312,7 +313,7 @@ public class TreatmentManagerTest {
         when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(false);
         when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)).thenReturn(false);
         createTreatmentManager("my_key", null, validationMessageLogger, splitValidator, evaluatorMock, eventsManager)
-                .getTreatment("test_split", null, false);
+                .getTreatment("test_split", null, null, false);
 
         verify(validationMessageLogger).w(eq("the SDK is not ready, results may be incorrect for feature flag test_split. Make sure to wait for SDK readiness before using this method"), any());
     }
@@ -324,7 +325,7 @@ public class TreatmentManagerTest {
                 .thenReturn(new EvaluationResult("test", "test", true));
         TreatmentManagerImpl tManager = initializeTreatmentManager(evaluatorMock);
 
-        tManager.getTreatment("test_impressions_disabled", null, false);
+        tManager.getTreatment("test_impressions_disabled", null, null, false);
 
         verify(impressionListener).log(argThat((DecoratedImpression decoratedImpression) -> {
             return decoratedImpression.isImpressionsDisabled();
@@ -367,7 +368,7 @@ public class TreatmentManagerTest {
                 new KeyValidatorImpl(), splitValidator,
                 mock(ImpressionListener.FederatedImpressionListener.class), config.labelsEnabled(), eventsManager,
                 mock(AttributesManager.class), mock(AttributesMerger.class),
-                mock(TelemetryStorageProducer.class), mFlagSetsFilter, mSplitsStorage, validationLogger, new FlagSetsValidatorImpl());
+                mock(TelemetryStorageProducer.class), mFlagSetsFilter, mSplitsStorage, validationLogger, new FlagSetsValidatorImpl(), new PropertyValidatorImpl());
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
@@ -397,7 +398,7 @@ public class TreatmentManagerTest {
                 telemetryStorageProducer,
                 mFlagSetsFilter,
                 mSplitsStorage,
-                new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl());
+                new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(), new PropertyValidatorImpl());
     }
 
     private Map<String, Split> splitsMap(List<Split> splits) {

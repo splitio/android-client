@@ -32,6 +32,7 @@ import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.FlagSetsValidatorImpl;
 import io.split.android.client.validators.KeyValidatorImpl;
+import io.split.android.client.validators.PropertyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.client.validators.TreatmentManagerImpl;
@@ -75,7 +76,8 @@ public final class LocalhostSplitClient implements SplitClient {
                 new EvaluatorImpl(splitsStorage, splitParser), new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
                 splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger,
-                telemetryStorageProducer, flagSetsFilter, splitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl());
+                telemetryStorageProducer, flagSetsFilter, splitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(),
+                new PropertyValidatorImpl());
     }
 
     @Override
