@@ -2,12 +2,10 @@ package io.split.android.client.storage.splits;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
@@ -15,10 +13,11 @@ import org.mockito.stubbing.Answer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.dtos.Split;
-import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.SplitEntity;
@@ -37,30 +36,19 @@ public class SplitEntityToSplitTransformerTest {
         when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(2);
         when(mSplitCipher.decrypt(any())).then((Answer<String>) invocation -> (String) invocation.getArguments()[0]);
 
-        mConverter = new SplitEntityToSplitTransformer(mSplitTaskExecutor, mSplitCipher);
-    }
-
-    @Test
-    public void tasksAreCreatedAccordingToTheAmountOfThreadsAvailable() {
-        ArgumentCaptor<List<SplitDeferredTaskItem<List<Split>>>> argumentCaptor = ArgumentCaptor.forClass(List.class);
-
-        when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(4);
-        List<SplitEntity> mockEntities = getMockEntities(65);
-
-        int expectedNumberOfLists = 5;
-
-        mConverter.transform(mockEntities);
-
-        verify(mSplitTaskExecutor).execute(argumentCaptor.capture());
-        assertEquals(expectedNumberOfLists, argumentCaptor.getValue().size());
+        mConverter = new SplitEntityToSplitTransformer(mSplitCipher);
     }
 
     @Test
     public void amountOfSplitsEqualsAmountOfEntities() {
         when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(4);
         List<SplitEntity> mockEntities = getMockEntities(3);
+        Map<String, SplitEntity> map = new HashMap<>();
+        for (SplitEntity entity : mockEntities) {
+            map.put(entity.getName(), entity);
+        }
 
-        List<Split> splits = mConverter.transform(mockEntities);
+        List<Split> splits = mConverter.transform(map);
 
         assertEquals(3, splits.size());
     }
@@ -69,12 +57,16 @@ public class SplitEntityToSplitTransformerTest {
     public void amountOfSplitsEqualsAmountOfEntitiesWhenParallel() {
         when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(2);
         List<SplitEntity> mockEntities = getMockEntities(3);
+        Map<String, SplitEntity> map = new HashMap<>();
+        for (SplitEntity entity : mockEntities) {
+            map.put(entity.getName(), entity);
+        }
         when(mSplitTaskExecutor.execute(any())).thenReturn(
                 Arrays.asList(Collections.singletonList(new Split()),
                         Collections.singletonList(new Split()),
                         Collections.singletonList(new Split())));
 
-        List<Split> splits = mConverter.transform(mockEntities);
+        List<Split> splits = mConverter.transform(map);
 
         assertEquals(3, splits.size());
     }
@@ -83,7 +75,7 @@ public class SplitEntityToSplitTransformerTest {
     public void transformingNullReturnsEmptyList() {
         when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(4);
 
-        List<Split> splits = mConverter.transform(null);
+        List<Split> splits = mConverter.transform((Map<String, SplitEntity>) null);
 
         assertEquals(0, splits.size());
     }
