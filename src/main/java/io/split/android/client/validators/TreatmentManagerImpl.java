@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.split.android.client.EvaluationOptions;
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
 import io.split.android.client.FlagSetsFilter;
@@ -84,11 +85,52 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
     @Override
     public String getTreatment(String split, Map<String, Object> attributes, boolean isClientDestroyed) {
+        return getTreatment(split, attributes, null, isClientDestroyed);
+    }
+
+    @Override
+    public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes, boolean isClientDestroyed) {
+        return getTreatmentWithConfig(split, attributes, null, isClientDestroyed);
+    }
+
+    @Override
+    public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes, boolean isClientDestroyed) {
+        return getTreatments(splits, attributes, null, isClientDestroyed);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes, boolean isClientDestroyed) {
+        return getTreatmentsWithConfig(splits, attributes, null, isClientDestroyed);
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        return getTreatmentsByFlagSet(flagSet, attributes, null, isClientDestroyed);
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        return getTreatmentsByFlagSets(flagSets, attributes, null, isClientDestroyed);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        return getTreatmentsWithConfigByFlagSet(flagSet, attributes, null, isClientDestroyed);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+        return getTreatmentsWithConfigByFlagSets(flagSets, attributes, null, isClientDestroyed);
+    }
+
+    @Override
+    public String getTreatment(String split, Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         try {
             String treatment = getTreatmentsWithConfigGeneric(
                     Collections.singletonList(split),
                     null,
                     attributes,
+                    evaluationOptions,
                     isClientDestroyed,
                     SplitResult::treatment,
                     Method.TREATMENT
@@ -106,12 +148,13 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     @Override
-    public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes, boolean isClientDestroyed) {
+    public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         try {
             SplitResult splitResult = getTreatmentsWithConfigGeneric(
                     Collections.singletonList(split),
                     null,
                     attributes,
+                    evaluationOptions,
                     isClientDestroyed,
                     ResultTransformer::identity,
                     Method.TREATMENT_WITH_CONFIG
@@ -128,66 +171,72 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     @Override
-    public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 splits,
                 null,
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 SplitResult::treatment,
                 Method.TREATMENTS);
     }
 
     @Override
-    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 splits,
                 null,
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 ResultTransformer::identity,
                 Method.TREATMENTS_WITH_CONFIG);
     }
 
     @Override
-    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 null,
                 Collections.singletonList(flagSet),
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 SplitResult::treatment,
                 Method.TREATMENTS_BY_FLAG_SET);
     }
 
     @Override
-    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 null,
                 flagSets,
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 SplitResult::treatment,
                 Method.TREATMENTS_BY_FLAG_SETS);
     }
 
     @Override
-    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 null,
                 Collections.singletonList(flagSet),
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 ResultTransformer::identity,
                 Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET);
     }
 
     @Override
-    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 null,
                 flagSets,
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 ResultTransformer::identity,
                 Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS);
@@ -196,6 +245,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private <T> Map<String, T> getTreatmentsWithConfigGeneric(@Nullable List<String> names,
                                                               @Nullable List<String> flagSets,
                                                               @Nullable Map<String, Object> attributes,
+                                                              EvaluationOptions evaluationOptions,
                                                               boolean isClientDestroyed,
                                                               ResultTransformer<T> resultTransformer,
                                                               Method telemetryMethodName) {

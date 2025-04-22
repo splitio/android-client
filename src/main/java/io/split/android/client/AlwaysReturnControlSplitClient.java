@@ -38,6 +38,11 @@ public class AlwaysReturnControlSplitClient implements SplitClient {
     }
 
     @Override
+    public Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return Collections.emptyMap();
+    }
+
+    @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes) {
         Map<String, SplitResult> results = new HashMap<>();
         if(featureFlagNames == null) {
@@ -51,8 +56,18 @@ public class AlwaysReturnControlSplitClient implements SplitClient {
     }
 
     @Override
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return Collections.emptyMap();
+    }
+
+    @Override
     public String getTreatment(String featureFlagName, Map<String, Object> attributes) {
         return Treatments.CONTROL;
+    }
+
+    @Override
+    public String getTreatment(String featureFlagName, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return getTreatment(featureFlagName, attributes);
     }
 
     @Override
@@ -61,7 +76,17 @@ public class AlwaysReturnControlSplitClient implements SplitClient {
     }
 
     @Override
+    public SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return getTreatmentWithConfig(featureFlagName, attributes);
+    }
+
+    @Override
     public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
+        return Collections.emptyMap();
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
         return Collections.emptyMap();
     }
 
@@ -71,13 +96,28 @@ public class AlwaysReturnControlSplitClient implements SplitClient {
     }
 
     @Override
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return getTreatmentsByFlagSets(flagSets, attributes);
+    }
+
+    @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
         return Collections.emptyMap();
     }
 
     @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return getTreatmentsWithConfigByFlagSet(flagSet, attributes);
+    }
+
+    @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
         return Collections.emptyMap();
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return getTreatmentsWithConfigByFlagSets(flagSets, attributes);
     }
 
     @Override

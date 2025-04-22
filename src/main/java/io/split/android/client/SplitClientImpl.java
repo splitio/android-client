@@ -34,7 +34,6 @@ public final class SplitClientImpl implements SplitClient {
     private final TreatmentManager mTreatmentManager;
     private final ValidationMessageLogger mValidationLogger;
     private final AttributesManager mAttributesManager;
-    private final SplitValidator mSplitValidator;
     private final EventsTracker mEventsTracker;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
@@ -64,7 +63,6 @@ public final class SplitClientImpl implements SplitClient {
         mValidationLogger = new ValidationMessageLoggerImpl();
         mTreatmentManager = treatmentManager;
         mAttributesManager = checkNotNull(attributesManager);
-        mSplitValidator = checkNotNull(splitValidator);
     }
 
     @Override
@@ -110,42 +108,82 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public String getTreatment(String featureFlagName, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatment(featureFlagName, attributes, mIsClientDestroyed);
+        return getTreatment(featureFlagName, attributes, null);
+    }
+
+    @Override
+    public String getTreatment(String featureFlagName, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return mTreatmentManager.getTreatment(featureFlagName, attributes, evaluationOptions, mIsClientDestroyed);
     }
 
     @Override
     public SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentWithConfig(featureFlagName, attributes, mIsClientDestroyed);
+        return getTreatmentWithConfig(featureFlagName, attributes, null);
+    }
+
+    @Override
+    public SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return mTreatmentManager.getTreatmentWithConfig(featureFlagName, attributes, evaluationOptions, mIsClientDestroyed);
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatments(featureFlagNames, attributes, mIsClientDestroyed);
+        return getTreatments(featureFlagNames, attributes, null);
+    }
+
+    @Override
+    public Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return mTreatmentManager.getTreatments(featureFlagNames, attributes, evaluationOptions, mIsClientDestroyed);
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentsWithConfig(featureFlagNames, attributes, mIsClientDestroyed);
+        return getTreatmentsWithConfig(featureFlagNames, attributes, null);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return mTreatmentManager.getTreatmentsWithConfig(featureFlagNames, attributes, evaluationOptions, mIsClientDestroyed);
     }
 
     @Override
     public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentsByFlagSet(flagSet, attributes, mIsClientDestroyed);
+        return getTreatmentsByFlagSet(flagSet, attributes, null);
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return mTreatmentManager.getTreatmentsByFlagSet(flagSet, attributes, evaluationOptions, mIsClientDestroyed);
     }
 
     @Override
     public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentsByFlagSets(flagSets, attributes, mIsClientDestroyed);
+        return getTreatmentsByFlagSets(flagSets, attributes, null);
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return mTreatmentManager.getTreatmentsByFlagSets(flagSets, attributes, evaluationOptions, mIsClientDestroyed);
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentsWithConfigByFlagSet(flagSet, attributes, mIsClientDestroyed);
+        return getTreatmentsWithConfigByFlagSet(flagSet, attributes, null);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return mTreatmentManager.getTreatmentsWithConfigByFlagSet(flagSet, attributes, evaluationOptions, mIsClientDestroyed);
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
-        return mTreatmentManager.getTreatmentsWithConfigByFlagSets(flagSets, attributes, mIsClientDestroyed);
+        return getTreatmentsWithConfigByFlagSets(flagSets, attributes, null);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return mTreatmentManager.getTreatmentsWithConfigByFlagSets(flagSets, attributes, evaluationOptions, mIsClientDestroyed);
     }
 
     public void on(SplitEvent event, SplitEventTask task) {
