@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.FlagSetsFilter;
+import io.split.android.client.PropertyValidatorImpl;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
@@ -40,8 +41,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
                                        @NonNull TelemetryStorageProducer telemetryStorageProducer,
                                        @NonNull SplitParser splitParser,
                                        @Nullable FlagSetsFilter flagSetsFilter,
-                                       @NonNull SplitsStorage splitsStorage,
-                                       @NonNull PropertyValidator propertyValidator) {
+                                       @NonNull SplitsStorage splitsStorage) {
         mKeyValidator = checkNotNull(keyValidator);
         mSplitValidator = checkNotNull(splitValidator);
         mCustomerImpressionListener = checkNotNull(customerImpressionListener);
@@ -53,7 +53,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
         mSplitsStorage = checkNotNull(splitsStorage);
         mValidationMessageLogger = new ValidationMessageLoggerImpl();
         mFlagSetsValidator = new FlagSetsValidatorImpl();
-        mPropertyValidator = checkNotNull(propertyValidator);
+        mPropertyValidator = new PropertyValidatorImpl();
     }
 
     @Override

@@ -25,7 +25,6 @@ import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryInitProducer;
 import io.split.android.client.validators.AttributesValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
-import io.split.android.client.validators.PropertyValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManagerFactory;
 import io.split.android.client.validators.TreatmentManagerFactoryImpl;
@@ -59,8 +58,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                                   @NonNull KeyValidator keyValidator,
                                   @NonNull EventsTracker eventsTracker,
                                   @NonNull ImpressionListener.FederatedImpressionListener customerImpressionListener,
-                                  @Nullable FlagSetsFilter flagSetsFilter,
-                                  @NonNull PropertyValidator propertyValidator) {
+                                  @Nullable FlagSetsFilter flagSetsFilter) {
         mSplitFactory = checkNotNull(splitFactory);
         mClientContainer = checkNotNull(clientContainer);
         mConfig = checkNotNull(config);
@@ -87,8 +85,7 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 mStorageContainer.getTelemetryStorage(),
                 mSplitParser,
                 flagSetsFilter,
-                splitsStorage,
-                propertyValidator
+                splitsStorage
         );
     }
 

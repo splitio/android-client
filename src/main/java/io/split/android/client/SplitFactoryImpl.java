@@ -66,7 +66,6 @@ import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
-import io.split.android.client.validators.PropertyValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.ValidationConfig;
 import io.split.android.client.validators.ValidationErrorInfo;
@@ -263,8 +262,7 @@ public class SplitFactoryImpl implements SplitFactory {
         } else {
             customerImpressionListener = new ImpressionListener.FederatedImpressionListener(splitImpressionListener, impressionListeners);
         }
-        PropertyValidator propertyValidator = new PropertyValidatorImpl();
-        EventsTracker eventsTracker = buildEventsTracker(propertyValidator);
+        EventsTracker eventsTracker = buildEventsTracker();
         mUserConsentManager = new UserConsentManagerImpl(config,
                 mStorageContainer.getImpressionsStorage(),
                 mStorageContainer.getEventsStorage(),
@@ -279,7 +277,7 @@ public class SplitFactoryImpl implements SplitFactory {
                 telemetrySynchronizer, mStorageContainer, splitTaskExecutor, splitApiFacade,
                 validationLogger, keyValidator, customerImpressionListener,
                 streamingComponents.getPushNotificationManager(), componentsRegister, workManagerWrapper,
-                eventsTracker, flagSetsFilter, propertyValidator);
+                eventsTracker, flagSetsFilter);
         mDestroyer = new Runnable() {
             public void run() {
                 mInitLock.lock();
@@ -451,9 +449,9 @@ public class SplitFactoryImpl implements SplitFactory {
         ValidationConfig.getInstance().setTrackEventNamePattern(splitClientConfig.trackEventNamePattern());
     }
 
-    private EventsTracker buildEventsTracker(PropertyValidator propertyValidator) {
+    private EventsTracker buildEventsTracker() {
         EventValidator eventsValidator = new EventValidatorImpl(new KeyValidatorImpl(), mStorageContainer.getSplitsStorage());
         return new EventsTrackerImpl(eventsValidator, new ValidationMessageLoggerImpl(), mStorageContainer.getTelemetryStorage(),
-                propertyValidator, mSyncManager);
+                new PropertyValidatorImpl(), mSyncManager);
     }
 }

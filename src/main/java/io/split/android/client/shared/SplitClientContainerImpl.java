@@ -36,7 +36,6 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkMan
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.validators.KeyValidator;
-import io.split.android.client.validators.PropertyValidator;
 import io.split.android.client.validators.ValidationMessageLogger;
 
 public final class SplitClientContainerImpl extends BaseSplitClientContainer {
@@ -75,8 +74,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
                                     @NonNull ClientComponentsRegister clientComponentsRegister,
                                     @NonNull MySegmentsWorkManagerWrapper workManagerWrapper,
                                     @NonNull EventsTracker eventsTracker,
-                                    @Nullable FlagSetsFilter flagSetsFilter,
-                                    @NonNull PropertyValidator propertyValidator) {
+                                    @Nullable FlagSetsFilter flagSetsFilter) {
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mPushNotificationManager = pushNotificationManager;
         mStreamingEnabled = config.streamingEnabled();
@@ -95,8 +93,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
                 keyValidator,
                 eventsTracker,
                 customerImpressionListener,
-                flagSetsFilter,
-                propertyValidator
+                flagSetsFilter
         );
         mClientComponentsRegister = checkNotNull(clientComponentsRegister);
         mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
