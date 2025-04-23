@@ -27,6 +27,10 @@ public class ImpressionsObserverImpl implements ImpressionsObserver {
         if (null == impression) {
             return null;
         }
+        final String properties = impression.properties();
+        if (properties != null && !properties.isEmpty()) {
+            return null;
+        }
 
         Long hash = ImpressionHasher.process(impression);
         @Nullable
