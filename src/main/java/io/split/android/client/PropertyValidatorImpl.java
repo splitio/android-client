@@ -15,7 +15,7 @@ public class PropertyValidatorImpl implements PropertyValidator {
             ValidationConfig.getInstance().getMaximumEventPropertyBytes();
 
     @Override
-    public Result validate(Map<String, Object> properties, String validationTag) {
+    public synchronized Result validate(Map<String, Object> properties, String validationTag) {
         if (properties == null) {
             return Result.valid(null, 0);
         }
