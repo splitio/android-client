@@ -13,6 +13,7 @@ import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.EventValidator;
+import io.split.android.client.validators.PropertyValidator;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
 
@@ -23,20 +24,20 @@ public class EventsTrackerImpl implements EventsTracker {
     private final EventValidator mEventValidator;
     private final ValidationMessageLogger mValidationLogger;
     private final TelemetryStorageProducer mTelemetryStorageProducer;
-    private final EventPropertiesProcessor mEventPropertiesProcessor;
+    private final PropertyValidator mPropertyValidator;
     private final SyncManager mSyncManager;
     private final AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
 
     public EventsTrackerImpl(@NonNull EventValidator eventValidator,
                              @NonNull ValidationMessageLogger validationLogger,
                              @NonNull TelemetryStorageProducer telemetryStorageProducer,
-                             @NonNull EventPropertiesProcessor eventPropertiesProcessor,
+                             @NonNull PropertyValidator eventPropertiesProcessor,
                              @NonNull SyncManager syncManager) {
 
         mEventValidator = checkNotNull(eventValidator);
         mValidationLogger = checkNotNull(validationLogger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
-        mEventPropertiesProcessor = checkNotNull(eventPropertiesProcessor);
+        mPropertyValidator = checkNotNull(eventPropertiesProcessor);
         mSyncManager = checkNotNull(syncManager);
     }
 
@@ -74,8 +75,8 @@ public class EventsTrackerImpl implements EventsTracker {
                 event.trafficTypeName = event.trafficTypeName.toLowerCase();
             }
 
-            ProcessedEventProperties processedProperties =
-                    mEventPropertiesProcessor.process(event.properties);
+            PropertyValidator.Result processedProperties =
+                    mPropertyValidator.validate(event.properties, validationTag);
             if (!processedProperties.isValid()) {
                 return false;
             }

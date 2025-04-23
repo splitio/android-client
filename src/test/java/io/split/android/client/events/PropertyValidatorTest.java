@@ -7,18 +7,16 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.EventPropertiesProcessor;
-import io.split.android.client.EventPropertiesProcessorImpl;
-import io.split.android.client.ProcessedEventProperties;
+import io.split.android.client.PropertyValidatorImpl;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.utils.Utils;
+import io.split.android.client.validators.PropertyValidator;
 import io.split.android.client.validators.ValidationConfig;
 
-public class EventPropertiesProcessorTest {
+public class PropertyValidatorTest {
 
-    private EventPropertiesProcessor processor = new EventPropertiesProcessorImpl();
+    private final PropertyValidator processor = new PropertyValidatorImpl();
     private final static long MAX_BYTES = ValidationConfig.getInstance().getMaximumEventPropertyBytes();
-    private final static int MAX_COUNT = 300;
 
     @Before
     public void setup() {
@@ -33,7 +31,7 @@ public class EventPropertiesProcessorTest {
             properties.put("key" + count, Utils.repeat("a", 1021)); // 1025 bytes
             count++;
         }
-        ProcessedEventProperties result = processor.process(properties);
+        PropertyValidator.Result result = validate(properties);
 
         Assert.assertFalse(result.isValid());
     }
@@ -47,7 +45,7 @@ public class EventPropertiesProcessorTest {
         for (int i = 0; i < 10; i++) {
             properties.put("key" + i, new Split());
         }
-        ProcessedEventProperties result = processor.process(properties);
+        PropertyValidator.Result result = validate(properties);
 
         Assert.assertTrue(result.isValid());
         Assert.assertEquals(10, result.getProperties().size());
@@ -62,7 +60,7 @@ public class EventPropertiesProcessorTest {
         for (int i = 10; i < 20; i++) {
             properties.put("key" + i + 10, null);
         }
-        ProcessedEventProperties result = processor.process(properties);
+        PropertyValidator.Result result = validate(properties);
 
         Assert.assertTrue(result.isValid());
         Assert.assertEquals(20, result.getProperties().size());
@@ -74,9 +72,13 @@ public class EventPropertiesProcessorTest {
         for (int i = 0; i < 10; i++) {
             properties.put("k" + i, "10 bytes");
         }
-        ProcessedEventProperties result = processor.process(properties);
+        PropertyValidator.Result result = validate(properties);
 
         Assert.assertTrue(result.isValid());
         Assert.assertEquals(100, result.getSizeInBytes());
+    }
+
+    private PropertyValidator.Result validate(Map<String, Object> properties) {
+        return processor.validate(properties, "test");
     }
 }

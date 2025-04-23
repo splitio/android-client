@@ -7,9 +7,7 @@ import java.util.Map;
 
 public interface PropertyValidator {
 
-    Result validate(Map<String, Object> properties);
-
-    Result validate(Map<String, Object> properties, int initialSizeInBytes, String validationTag);
+    Result validate(Map<String, Object> properties, String validationTag);
 
     class Result {
 
@@ -20,7 +18,7 @@ public interface PropertyValidator {
         @Nullable
         private final String mErrorMessage;
 
-        private Result(boolean isValid, Map<String, Object> properties, int sizeInBytes, String errorMessage) {
+        private Result(boolean isValid, @Nullable Map<String, Object> properties, int sizeInBytes, @Nullable String errorMessage) {
             mIsValid = isValid;
             mValidatedProperties = properties;
             mSizeInBytes = sizeInBytes;
@@ -32,7 +30,7 @@ public interface PropertyValidator {
         }
 
         @Nullable
-        public Map<String, Object> getValidatedProperties() {
+        public Map<String, Object> getProperties() {
             return mValidatedProperties;
         }
 

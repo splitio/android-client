@@ -32,7 +32,6 @@ import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.FlagSetsValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
-import io.split.android.client.validators.PropertyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManagerImpl;
 import io.split.android.client.validators.ValidationMessageLoggerImpl;

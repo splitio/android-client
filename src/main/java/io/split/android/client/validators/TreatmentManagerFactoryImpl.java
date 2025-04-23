@@ -40,7 +40,8 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
                                        @NonNull TelemetryStorageProducer telemetryStorageProducer,
                                        @NonNull SplitParser splitParser,
                                        @Nullable FlagSetsFilter flagSetsFilter,
-                                       @NonNull SplitsStorage splitsStorage) {
+                                       @NonNull SplitsStorage splitsStorage,
+                                       @NonNull PropertyValidator propertyValidator) {
         mKeyValidator = checkNotNull(keyValidator);
         mSplitValidator = checkNotNull(splitValidator);
         mCustomerImpressionListener = checkNotNull(customerImpressionListener);
@@ -52,7 +53,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
         mSplitsStorage = checkNotNull(splitsStorage);
         mValidationMessageLogger = new ValidationMessageLoggerImpl();
         mFlagSetsValidator = new FlagSetsValidatorImpl();
-        mPropertyValidator = new PropertyValidatorImpl();
+        mPropertyValidator = checkNotNull(propertyValidator);
     }
 
     @Override
