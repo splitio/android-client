@@ -5,6 +5,7 @@ on:
     branches:
       - 'development'
       - '*_baseline'
+      - 'release_5.2.0-alpha.1'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

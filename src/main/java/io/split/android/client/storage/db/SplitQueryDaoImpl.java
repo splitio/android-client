@@ -5,13 +5,9 @@ import android.os.Process;
 
 import androidx.annotation.NonNull;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.SplitClientFactoryImpl;
-import io.split.android.client.SplitFactoryImpl;
 import io.split.android.client.utils.logger.Logger;
 
 public class SplitQueryDaoImpl implements SplitQueryDao {
@@ -55,13 +51,13 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
 
     public Map<String, SplitEntity> getAllAsMap() {
         // Fast path - if the map is already initialized, return it immediately
-        if (mIsInitialized) {
+        if (mIsInitialized && !mCachedSplitsMap.isEmpty()) {
             return new HashMap<>(mCachedSplitsMap);
         }
         
         // Wait for initialization to complete if it's in progress
         synchronized (mLock) {
-            if (mIsInitialized) {
+            if (mIsInitialized && !mCachedSplitsMap.isEmpty()) {
                 return new HashMap<>(mCachedSplitsMap);
             }
             
