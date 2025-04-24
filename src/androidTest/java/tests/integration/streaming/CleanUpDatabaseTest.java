@@ -153,7 +153,7 @@ public class CleanUpDatabaseTest {
         mClient.on(SplitEvent.SDK_READY, readyTask);
 
         latch.await(40, TimeUnit.SECONDS);
-        Thread.sleep(1000);
+        Thread.sleep(8000);
 
         // Load all records again after cleanup
         List<UniqueKeyEntity> remainingKeys = mUniqueKeysDao.getBy(0, StorageRecordStatus.ACTIVE, 10);

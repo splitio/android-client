@@ -33,6 +33,8 @@ public class LoadSplitsTask implements SplitTask {
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
+        long startTime = System.currentTimeMillis();
+        
         // This call loads the feature flags from the DB into memory, as well as the
         // filter and flags spec values
         mSplitsStorage.loadLocal();
@@ -48,9 +50,12 @@ public class LoadSplitsTask implements SplitTask {
         }
 
         // If change number is not the initial one, and the filter and flags spec have not changed, we don't need to do anything
-        boolean isNotInitialChangeNumber = mSplitsStorage.getTill() > -1;
+        long till = mSplitsStorage.getTill();
+        boolean isNotInitialChangeNumber = till > -1;
+
         boolean filterHasNotChanged = mSplitsFilterQueryStringFromConfig.equals(queryStringFromStorage);
         boolean flagsSpecHasNotChanged = mFlagsSpecFromConfig.equals(flagsSpecFromStorage);
+
         if (isNotInitialChangeNumber && filterHasNotChanged && flagsSpecHasNotChanged) {
             return SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS);
         }

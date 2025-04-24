@@ -98,7 +98,6 @@ class SplitFactoryHelper {
     private static final int DB_MAGIC_CHARS_COUNT = 4;
 
     String getDatabaseName(SplitClientConfig config, String apiToken, Context context) {
-
         String dbName = buildDatabaseName(config, apiToken);
         File dbPath = context.getDatabasePath(dbName);
         if (dbPath.exists()) {
@@ -162,7 +161,8 @@ class SplitFactoryHelper {
                                                 SplitCipher splitCipher,
                                                 TelemetryStorage telemetryStorage,
                                                 long observerCacheExpirationPeriod,
-                                                ScheduledThreadPoolExecutor impressionsObserverExecutor) {
+                                                ScheduledThreadPoolExecutor impressionsObserverExecutor,
+                                                SplitsStorage splitsStorage) {
 
         boolean isPersistenceEnabled = userConsentStatus == UserConsent.GRANTED;
         PersistentEventsStorage persistentEventsStorage =
@@ -170,7 +170,7 @@ class SplitFactoryHelper {
         PersistentImpressionsStorage persistentImpressionsStorage =
                 StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase, splitCipher);
         return new SplitStorageContainer(
-                StorageFactory.getSplitsStorage(splitRoomDatabase, splitCipher),
+                splitsStorage,
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getMyLargeSegmentsStorage(splitRoomDatabase, splitCipher),
                 StorageFactory.getPersistentSplitsStorage(splitRoomDatabase, splitCipher),
@@ -504,7 +504,6 @@ class SplitFactoryHelper {
 
             this(new RolloutCacheManagerImpl(config,
                             storageContainer,
-                            splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000),
                             splitTaskFactory.createEncryptionMigrationTask(apiToken, splitDatabase, config.encryptionEnabled(), splitCipher)),
                     new Listener(eventsManagerCoordinator, splitTaskExecutor, splitSingleThreadTaskExecutor, syncManager, lifecycleManager, initLock),
                     initLock);
@@ -550,13 +549,13 @@ class SplitFactoryHelper {
             @Override
             public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
                 try {
-                    mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
-
                     mSplitTaskExecutor.resume();
                     mSplitSingleThreadTaskExecutor.resume();
+                    mEventsManagerCoordinator.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
 
                     mSyncManager.start();
                     mLifecycleManager.register(mSyncManager);
+
                     Logger.i("Android SDK initialized!");
                 } catch (Exception e) {
                     Logger.e("Error initializing Android SDK", e);
