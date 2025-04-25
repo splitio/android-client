@@ -1,8 +1,10 @@
 package io.split.android.client.service.impressions.strategy;
 
+import static io.split.android.client.service.impressions.strategy.Utils.hasProperties;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -68,7 +70,8 @@ class OptimizedStrategy implements ProcessStrategy {
 
     @Override
     public void apply(@NonNull Impression impression) {
-        Long previousTime = mImpressionsObserver.testAndSet(impression);
+        @Nullable Long previousTime = hasProperties(impression) ? null :
+                mImpressionsObserver.testAndSet(impression);
         impression = impression.withPreviousTime(previousTime);
 
         if (previousTimeIsValid(previousTime)) {

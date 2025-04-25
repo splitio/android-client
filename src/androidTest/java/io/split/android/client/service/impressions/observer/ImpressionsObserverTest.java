@@ -170,23 +170,6 @@ public class ImpressionsObserverTest {
         verify(cache).persist();
     }
 
-    @Test
-    public void previousTimeIsAlwaysNullWhenImpressionHasProperties() {
-        ImpressionsObserver observer = new ImpressionsObserverImpl(mStorage, 1);
-        Impression i = new Impression("key",
-                null,
-                "feature",
-                "on",
-                System.currentTimeMillis(),
-                "label",
-                1234567L,
-                null,
-                "{\"key\":\"value\"}");
-        for (int j = 0; j < 10; j++) {
-            assertNull(observer.testAndSet(i));
-        }
-    }
-
     private void caller(ImpressionsObserver o, int count, ConcurrentLinkedQueue<Impression> imps) {
 
         while (count-- > 0) {
