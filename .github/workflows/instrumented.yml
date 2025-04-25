@@ -5,7 +5,10 @@ on:
     branches:
       - 'development'
       - 'master'
-      - '*_baseline'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
