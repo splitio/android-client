@@ -16,6 +16,7 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -35,6 +36,7 @@ import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
 import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
+import io.split.android.client.utils.Json;
 
 public class SplitsStorageTest {
 
@@ -334,6 +336,11 @@ public class SplitsStorageTest {
         mRoomDb.clearAllTables();
         mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type"), newSplitEntity("split_test_2", "test_type_2")));
 
+        Map<String, Integer> trafficTypes = new HashMap<>();
+        trafficTypes.put("test_type", 1);
+        trafficTypes.put("test_type_2", 1);
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, Json.toJson(trafficTypes)));
+
         mSplitsStorage.loadLocal();
 
         assertTrue(mSplitsStorage.isValidTrafficType("test_type"));
@@ -345,6 +352,11 @@ public class SplitsStorageTest {
     public void loadedFromStorageTrafficTypesAreCorrectlyUpdated() {
         mRoomDb.clearAllTables();
         mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type"), newSplitEntity("split_test_2", "test_type_2")));
+
+        Map<String, Integer> trafficTypes = new HashMap<>();
+        trafficTypes.put("test_type", 1);
+        trafficTypes.put("test_type_2", 1);
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, Json.toJson(trafficTypes)));
 
         mSplitsStorage.loadLocal();
 
@@ -365,6 +377,12 @@ public class SplitsStorageTest {
                 newSplitEntity("split_test_3", "test_type_2", Collections.singleton("set_2")),
                 newSplitEntity("split_test_4", "test_type_2", Collections.singleton("set_1"))));
 
+        Map<String, Set<String>> flagSets = new HashMap<>();
+        flagSets.put("set_1", new HashSet<>(Arrays.asList("split_test", "split_test_4")));
+        flagSets.put("set_2", new HashSet<>(Arrays.asList("split_test_2", "split_test_3")));
+
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, Json.toJson(flagSets)));
+
         mSplitsStorage.loadLocal();
 
         Assert.assertEquals(new HashSet<>(Arrays.asList("split_test", "split_test_4")), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")));
@@ -378,6 +396,13 @@ public class SplitsStorageTest {
                 newSplitEntity("split_test", "test_type", Collections.singleton("set_1")),
                 newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2")),
                 newSplitEntity("split_test_3", "test_type_2", Collections.singleton("set_2"))));
+
+        Map<String, Set<String>> flagSets = new HashMap<>();
+        flagSets.put("set_1", new HashSet<>(Arrays.asList("split_test")));
+        flagSets.put("set_2", new HashSet<>(Arrays.asList("split_test_2", "split_test_3")));
+
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, Json.toJson(flagSets)));
+
         mSplitsStorage.loadLocal();
 
         Set<String> initialSet1 = mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1"));
@@ -396,6 +421,13 @@ public class SplitsStorageTest {
     public void updateWithoutChecksRemovesFromFlagSet() {
         mRoomDb.clearAllTables();
         mRoomDb.splitDao().insert(Arrays.asList(newSplitEntity("split_test", "test_type", Collections.singleton("set_1")), newSplitEntity("split_test_2", "test_type_2", Collections.singleton("set_2"))));
+
+        Map<String, Set<String>> flagSets = new HashMap<>();
+        flagSets.put("set_1", new HashSet<>(Arrays.asList("split_test")));
+        flagSets.put("set_2", new HashSet<>(Arrays.asList("split_test_2")));
+
+        mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, Json.toJson(flagSets)));
+
         mSplitsStorage.loadLocal();
 
         Set<String> initialSet1 = mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1"));

@@ -9,6 +9,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.db.EventDao;
 import io.split.android.client.storage.db.EventEntity;
+import io.split.android.client.storage.db.GeneralInfoDao;
+import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.ImpressionDao;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.ImpressionsCountDao;
@@ -50,7 +52,7 @@ public class ApplyCipherTask implements SplitTask {
                 @Override
                 public void run() {
                     updateAttributes(mSplitDatabase.attributesDao());
-                    updateSplits(mSplitDatabase.splitDao());
+                    updateSplits(mSplitDatabase.splitDao(), mSplitDatabase.generalInfoDao());
                     updateSegments(mSplitDatabase.mySegmentDao());
                     updateLargeSegments(mSplitDatabase.myLargeSegmentDao());
                     updateImpressions(mSplitDatabase.impressionDao());
@@ -187,7 +189,7 @@ public class ApplyCipherTask implements SplitTask {
         }
     }
 
-    private void updateSplits(SplitDao dao) {
+    private void updateSplits(SplitDao dao, GeneralInfoDao generalInfoDao) {
         List<SplitEntity> items = dao.getAll();
 
         for (SplitEntity item : items) {
@@ -202,6 +204,28 @@ public class ApplyCipherTask implements SplitTask {
                 dao.update(name, toName, toBody);
             } else {
                 Logger.e("Error applying cipher to split storage");
+            }
+        }
+
+        GeneralInfoEntity trafficTypesEntity = generalInfoDao.getByName(GeneralInfoEntity.TRAFFIC_TYPES_MAP);
+        if (trafficTypesEntity != null) {
+            String fromTrafficTypes = mFromCipher.decrypt(trafficTypesEntity.getStringValue());
+            String toTrafficTypes = mToCipher.encrypt(fromTrafficTypes);
+            if (toTrafficTypes != null) {
+                generalInfoDao.update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, toTrafficTypes));
+            } else {
+                Logger.e("Error applying cipher to traffic types");
+            }
+        }
+
+        GeneralInfoEntity flagSetsEntity = generalInfoDao.getByName(GeneralInfoEntity.FLAG_SETS_MAP);
+        if (flagSetsEntity != null) {
+            String fromFlagSets = mFromCipher.decrypt(flagSetsEntity.getStringValue());
+            String toFlagSets = mToCipher.encrypt(fromFlagSets);
+            if (toFlagSets != null) {
+                generalInfoDao.update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, toFlagSets));
+            } else {
+                Logger.e("Error applying cipher to flag sets");
             }
         }
     }

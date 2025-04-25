@@ -135,15 +135,6 @@ class RolloutCacheManagerTest {
     }
 
     @Test
-    fun `validateCache executes cleanUpDatabaseTask`() {
-        mRolloutCacheManager = getCacheManager(10, false)
-
-        mRolloutCacheManager.validateCache(mock(SplitTaskExecutionListener::class.java))
-
-        verify(mCleanUpDatabaseTask).execute()
-    }
-
-    @Test
     fun `validateCache executes encryptionMigrationTask`() {
         mRolloutCacheManager = getCacheManager(10, false)
 
@@ -177,7 +168,7 @@ class RolloutCacheManagerTest {
     }
 
     private fun getCacheManager(expiration: Int, clearOnInit: Boolean): RolloutCacheManager {
-        return RolloutCacheManagerImpl(mGeneralInfoStorage, RolloutCacheConfiguration.builder().expirationDays(expiration).clearOnInit(clearOnInit).build(), mCleanUpDatabaseTask, mEncryptionMigrationTask, mSplitsCache, mSegmentsCache)
+        return RolloutCacheManagerImpl(mGeneralInfoStorage, RolloutCacheConfiguration.builder().expirationDays(expiration).clearOnInit(clearOnInit).build(), mEncryptionMigrationTask, mSplitsCache, mSegmentsCache)
     }
 
     private fun createMockedTimestamp(period: Long): Long {

@@ -2,6 +2,7 @@ package io.split.android.client;
 
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,6 +32,8 @@ public class UserConsentManagerTest {
     @Mock
     private EventsTracker mEventsTracker;
     @Mock
+    private SplitFactoryImpl.EventsTrackerProvider mEventsTrackerProvider;
+    @Mock
     private ImpressionManager mImpressionManager;
 
     private SplitTaskExecutor mTaskExecutor;
@@ -41,6 +44,7 @@ public class UserConsentManagerTest {
     public void setup() {
         mTaskExecutor = new SplitTaskExecutorStub();
         MockitoAnnotations.openMocks(this);
+        when(mEventsTrackerProvider.getEventsTracker()).thenReturn(mEventsTracker);
     }
 
     @Test
@@ -137,7 +141,7 @@ public class UserConsentManagerTest {
         mManager = new UserConsentManagerImpl(mSplitConfig,
                 mImpressionsStorage,
                 mEventsStorage, mSyncManager,
-                mEventsTracker,
+                mEventsTrackerProvider,
                 mImpressionManager,
                 mTaskExecutor);
     }

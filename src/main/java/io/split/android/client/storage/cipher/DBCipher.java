@@ -7,7 +7,6 @@ import androidx.annotation.VisibleForTesting;
 import androidx.annotation.WorkerThread;
 
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.logger.Logger;
 
 public class DBCipher {
 
@@ -41,6 +40,7 @@ public class DBCipher {
 
         if (mMustApply) {
             mFromCipher = SplitCipherFactory.create(apiKey, fromLevel);
+
             mToCipher = checkNotNull(toCipher);
             mSplitDatabase = checkNotNull(splitDatabase);
             mTaskProvider = checkNotNull(taskProvider);
@@ -50,11 +50,9 @@ public class DBCipher {
     @WorkerThread
     public void apply() {
         if (mMustApply) {
-            Logger.d("Migrating encryption mode");
-            mTaskProvider.get(mSplitDatabase, mFromCipher, mToCipher).execute();
-            Logger.d("Encryption mode migration done");
-        } else {
-            Logger.d("No need to migrate encryption mode");
+            ApplyCipherTask task = mTaskProvider.get(mSplitDatabase, mFromCipher, mToCipher);
+
+            task.execute();
         }
     }
 

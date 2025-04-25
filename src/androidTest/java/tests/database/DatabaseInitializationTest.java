@@ -187,6 +187,8 @@ public class DatabaseInitializationTest {
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        return Arrays.stream(context.databaseList()).filter(db -> !db.endsWith("-journal")).toArray(String[]::new);
+        return Arrays.stream(context.databaseList())
+                .filter(db -> !db.endsWith("-journal") && !db.endsWith("-wal") && !db.endsWith("-shm"))
+                .toArray(String[]::new);
     }
 }
