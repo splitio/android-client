@@ -354,19 +354,19 @@ public class TreatmentManagerImpl implements TreatmentManager {
         }
 
         // validate using property validator
-        PropertyValidator.Result result = mPropertyValidator.validate(evaluationOptions.getProperties());
+        PropertyValidator.Result result = mPropertyValidator.validate(evaluationOptions.getProperties(), validationTag);
 
         if (!result.isValid()) {
             mValidationLogger.e("Properties validation failed: " + (result.getErrorMessage() != null ? result.getErrorMessage() : "Unknown error"), validationTag);
             return null;
         }
 
-        if (result.getValidatedProperties() == null || result.getValidatedProperties().isEmpty()) {
+        if (result.getProperties() == null || result.getProperties().isEmpty()) {
             return null;
         }
 
         try {
-            return Json.toJson(result.getValidatedProperties());
+            return Json.toJson(result.getProperties());
         } catch (Exception e) {
             mValidationLogger.e("Failed to serialize properties to JSON: " + e.getLocalizedMessage(), validationTag);
             return null;

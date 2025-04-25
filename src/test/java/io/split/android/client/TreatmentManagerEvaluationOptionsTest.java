@@ -75,7 +75,7 @@ public class TreatmentManagerEvaluationOptionsTest {
     public void evaluationWithValidPropertiesAddsThemToImpressionAsJsonString() {
         when(mEvaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
         EvaluationOptions evaluationOptions = getEvaluationOptions();
-        when(mPropertyValidator.validate(any())).thenReturn(PropertyValidator.Result.valid(evaluationOptions.getProperties(), 0));
+        when(mPropertyValidator.validate(any(), any())).thenReturn(PropertyValidator.Result.valid(evaluationOptions.getProperties(), 0));
 
         mTreatmentManager.getTreatmentWithConfig("test", null, evaluationOptions, false);
 
@@ -92,7 +92,7 @@ public class TreatmentManagerEvaluationOptionsTest {
     @Test
     public void evaluationWithEmptyPropertiesAddsNullPropertiesToImpression() {
         when(mEvaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
-        when(mPropertyValidator.validate(any())).thenReturn(PropertyValidator.Result.valid(null, 0));
+        when(mPropertyValidator.validate(any(), any())).thenReturn(PropertyValidator.Result.valid(null, 0));
 
         mTreatmentManager.getTreatmentWithConfig("test", null, new EvaluationOptions(new HashMap<>()), false);
 
@@ -108,7 +108,7 @@ public class TreatmentManagerEvaluationOptionsTest {
     public void invalidPropertiesAreNotAddedToImpression() {
         when(mEvaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
         EvaluationOptions evaluationOptions = getEvaluationOptions();
-        when(mPropertyValidator.validate(any())).thenReturn(PropertyValidator.Result.invalid("Invalid properties", 0));
+        when(mPropertyValidator.validate(any(), any())).thenReturn(PropertyValidator.Result.invalid("Invalid properties", 0));
 
         mTreatmentManager.getTreatmentWithConfig("test", null, evaluationOptions, false);
 
@@ -124,7 +124,7 @@ public class TreatmentManagerEvaluationOptionsTest {
     public void invalidPropertiesLogsMessageInValidationMessageLogger() {
         when(mEvaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
         EvaluationOptions evaluationOptions = getEvaluationOptions();
-        when(mPropertyValidator.validate(any())).thenReturn(PropertyValidator.Result.invalid("Invalid properties", 0));
+        when(mPropertyValidator.validate(any(), any())).thenReturn(PropertyValidator.Result.invalid("Invalid properties", 0));
 
         mTreatmentManager.getTreatmentWithConfig("test", null, evaluationOptions, false);
 
@@ -138,7 +138,7 @@ public class TreatmentManagerEvaluationOptionsTest {
 
         mTreatmentManager.getTreatmentWithConfig("test", null, evaluationOptions, false);
 
-        verify(mPropertyValidator).validate(evaluationOptions.getProperties());
+        verify(mPropertyValidator).validate(evaluationOptions.getProperties(), "getTreatmentWithConfig");
     }
 
     @NonNull

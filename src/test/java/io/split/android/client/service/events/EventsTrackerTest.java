@@ -3,7 +3,6 @@ package io.split.android.client.service.events;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -17,9 +16,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.util.HashMap;
-
-import io.split.android.client.EventPropertiesProcessor;
 import io.split.android.client.EventsTracker;
 import io.split.android.client.EventsTrackerImpl;
 import io.split.android.client.ProcessedEventProperties;
@@ -28,6 +24,7 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.validators.EventValidator;
+import io.split.android.client.validators.PropertyValidator;
 import io.split.android.client.validators.ValidationMessageLogger;
 
 public class EventsTrackerTest {
@@ -40,7 +37,7 @@ public class EventsTrackerTest {
     @Mock
     private TelemetryStorageProducer mTelemetryStorageProducer;
     @Mock
-    private EventPropertiesProcessor mEventPropertiesProcessor;
+    private PropertyValidator mPropertyValidator;
     @Mock
     private SyncManager mSyncManager;
 
@@ -51,10 +48,10 @@ public class EventsTrackerTest {
         MockitoAnnotations.openMocks(this);
         when(mEventValidator.validate(any(), anyBoolean())).thenReturn(null);
         when(mEventsManager.eventAlreadyTriggered(any())).thenReturn(true);
-        when(mEventPropertiesProcessor.process(any())).thenReturn(new ProcessedEventProperties(true, null, 0));
+        when(mPropertyValidator.validate(any(), any())).thenReturn(PropertyValidator.Result.valid(null, 0));
 
         mEventsTracker = new EventsTrackerImpl(mEventValidator, mValidationLogger, mTelemetryStorageProducer,
-                mEventPropertiesProcessor, mSyncManager);
+                mPropertyValidator, mSyncManager);
     }
 
     @Test
@@ -92,7 +89,7 @@ public class EventsTrackerTest {
 
     @Test
     public void trackRecordsExceptionInCaseThereIsOne() {
-        when(mEventPropertiesProcessor.process(any())).thenAnswer(invocation -> {
+        when(mPropertyValidator.validate(any(), any())).thenAnswer(invocation -> {
             throw new Exception("test exception");
         });
 

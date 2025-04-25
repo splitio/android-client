@@ -15,6 +15,7 @@ import java.util.Set;
 import io.split.android.client.EvaluationOptions;
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.FlagSetsFilter;
+import io.split.android.client.PropertyValidatorImpl;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;

@@ -501,7 +501,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     if (mEventsTracker == null) {
                         EventValidator eventsValidator = new EventValidatorImpl(new KeyValidatorImpl(), mSplitsStorage);
                         mEventsTracker = new EventsTrackerImpl(eventsValidator, new ValidationMessageLoggerImpl(), mTelemetryStorage,
-                                new EventPropertiesProcessorImpl(), mSyncManager);
+                                new PropertyValidatorImpl(), mSyncManager);
                     }
                 }
             }
