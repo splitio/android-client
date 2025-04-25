@@ -7,8 +7,8 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import io.split.android.client.service.executor.ThreadFactoryBuilder;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.scheduler.PausableThreadPoolExecutor;
 import io.split.android.engine.scheduler.PausableThreadPoolExecutorImpl;
@@ -16,27 +16,35 @@ import io.split.android.engine.scheduler.PausableThreadPoolExecutorImpl;
 public abstract class BaseEventsManager implements Runnable {
 
     private final static int QUEUE_CAPACITY = 20;
+    // Shared thread factory for all instances
+    private static final ThreadFactory EVENTS_THREAD_FACTORY = createThreadFactory();
 
     protected final ArrayBlockingQueue<SplitInternalEvent> mQueue;
 
     protected final Set<SplitInternalEvent> mTriggered;
 
-    public BaseEventsManager() {
-
-        mQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
-        mTriggered = Collections.newSetFromMap(new ConcurrentHashMap<>());
-
-        ThreadFactory threadFactory = new ThreadFactoryBuilder()
-                .setDaemon(true)
-                .setNameFormat("Split-FactoryEventsManager-%d")
-                .setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
+    private static ThreadFactory createThreadFactory() {
+        final AtomicInteger threadNumber = new AtomicInteger(1);
+        return new ThreadFactory() {
+            @Override
+            public Thread newThread(Runnable r) {
+                Thread thread = new Thread(r, "Split-FactoryEventsManager-" + threadNumber.getAndIncrement());
+                thread.setDaemon(true);
+                thread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
                     @Override
                     public void uncaughtException(@NonNull Thread t, @NonNull Throwable e) {
                         Logger.e("Unexpected error " + e.getLocalizedMessage());
                     }
-                })
-                .build();
-        launch(threadFactory);
+                });
+                return thread;
+            }
+        };
+    }
+
+    public BaseEventsManager() {
+        mQueue = new ArrayBlockingQueue<>(QUEUE_CAPACITY);
+        mTriggered = Collections.newSetFromMap(new ConcurrentHashMap<>());
+        launch(EVENTS_THREAD_FACTORY);
     }
 
     @Override

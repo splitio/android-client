@@ -13,15 +13,21 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     strategy:
       fail-fast: false
       matrix:
         api-level: [ 29 ]
-        shard: [ 0, 1, 2, 3 ]
+        shard: [ 0, 1, 2, 3, 4, 5 ]
 
     steps:
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
       - name: checkout
         uses: actions/checkout@v4
 
@@ -44,12 +50,6 @@ jobs:
             ~/.android/adb*
           key: avd-${{ matrix.api-level }}
 
-      - name: Enable KVM group perms
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
       - name: create AVD and generate snapshot for caching
         if: steps.avd-cache.outputs.cache-hit != 'true'
         uses: reactivecircus/android-emulator-runner@v2
@@ -69,4 +69,4 @@ jobs:
         with:
           api-level: ${{ matrix.api-level }}
           profile: Galaxy Nexus
-          script: ./gradlew connectedCheck --continue -Pandroid.testInstrumentationRunnerArguments.numShards=4 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }}
+          script: ./gradlew connectedCheck --continue -Pandroid.testInstrumentationRunnerArguments.numShards=6 -Pandroid.testInstrumentationRunnerArguments.shardIndex=${{ matrix.shard }}

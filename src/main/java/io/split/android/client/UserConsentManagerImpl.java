@@ -20,7 +20,7 @@ public class UserConsentManagerImpl implements UserConsentManager {
     private final ImpressionsStorage mImpressionsStorage;
     private final EventsStorage mEventsStorage;
     private final SyncManager mSyncManager;
-    private final EventsTracker mEventsTracker;
+    private final SplitFactoryImpl.EventsTrackerProvider mEventsTracker;
     private final ImpressionManager mImpressionManager;
     private UserConsent mCurrentStatus;
     private final SplitTaskExecutor mTaskExecutor;
@@ -30,7 +30,7 @@ public class UserConsentManagerImpl implements UserConsentManager {
                                   @NonNull ImpressionsStorage impressionsStorage,
                                   @NonNull EventsStorage eventsStorage,
                                   @NonNull SyncManager syncManager,
-                                  @NonNull EventsTracker eventsTracker,
+                                  @NonNull SplitFactoryImpl.EventsTrackerProvider eventsTracker,
                                   @NonNull ImpressionManager impressionManager,
                                   @NonNull SplitTaskExecutor taskExecutor) {
         mSplitConfig = checkNotNull(splitConfig);
@@ -67,7 +67,7 @@ public class UserConsentManagerImpl implements UserConsentManager {
 
     private void enableTracking(UserConsent status) {
         final boolean enable = (status != UserConsent.DECLINED);
-        mEventsTracker.enableTracking(enable);
+        mEventsTracker.getEventsTracker().enableTracking(enable);
         mImpressionManager.enableTracking(enable);
         Logger.d("Tracking has been set to " + enable );
     }
