@@ -44,6 +44,6 @@ public class SyncImpressionListenerTest {
     }
 
     private static DecoratedImpression createImpression() {
-        return new DecoratedImpression(new Impression("key", "feature", "treatment", "on", 1402040204L, "label", 123123L, new HashMap<>()), true);
+        return new DecoratedImpression(new Impression("key", "feature", "treatment", "on", 1402040204L, "label", 123123L, new HashMap<>(), null), true);
     }
 }

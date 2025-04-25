@@ -3,6 +3,8 @@ package io.split.android.client.dtos;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.Objects;
+
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.common.InBytesSizable;
 import io.split.android.client.impressions.Impression;
@@ -17,6 +19,7 @@ public class KeyImpression implements InBytesSizable, Identifiable {
     /* package private */ static final String FIELD_TIME = "m";
     /* package private */ static final String FIELD_CHANGE_NUMBER = "c";
     /* package private */ static final String FIELD_PREVIOUS_TIME = "pt";
+    /* package private */ static final String FIELD_PROPERTIES = "properties";
 
     public transient String feature; // Non-serializable
 
@@ -41,6 +44,9 @@ public class KeyImpression implements InBytesSizable, Identifiable {
     @SerializedName(FIELD_PREVIOUS_TIME)
     public Long previousTime;
 
+    @SerializedName(FIELD_PROPERTIES)
+    public String properties;
+
     public KeyImpression() {
     }
 
@@ -53,6 +59,7 @@ public class KeyImpression implements InBytesSizable, Identifiable {
         this.time = impression.time();
         this.changeNumber = impression.changeNumber();
         this.previousTime = impression.previousTime();
+        this.properties = impression.properties();
     }
 
     @Override
@@ -63,7 +70,7 @@ public class KeyImpression implements InBytesSizable, Identifiable {
         KeyImpression that = (KeyImpression) o;
 
         if (time != that.time) return false;
-        if (feature != null ? !feature.equals(that.feature) : that.feature != null) return false;
+        if (!Objects.equals(feature, that.feature)) return false;
         if (!keyName.equals(that.keyName)) return false;
         if (!treatment.equals(that.treatment)) return false;
 
@@ -71,6 +78,7 @@ public class KeyImpression implements InBytesSizable, Identifiable {
             return that.bucketingKey == null;
         }
         if (!previousTime.equals(that.previousTime)) return false;
+        if (!Objects.equals(properties, that.properties)) return false;
 
         return bucketingKey.equals(that.bucketingKey);
     }
@@ -101,6 +109,9 @@ public class KeyImpression implements InBytesSizable, Identifiable {
         keyImpression.treatment = impression.treatment();
         keyImpression.label = impression.appliedRule();
         keyImpression.previousTime = impression.previousTime();
+        if (impression.properties() != null) {
+            keyImpression.properties = impression.properties();
+        }
         return keyImpression;
     }
 

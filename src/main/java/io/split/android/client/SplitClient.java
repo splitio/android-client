@@ -59,6 +59,7 @@ public interface SplitClient extends AttributesManager {
      */
     String getTreatment(String featureFlagName, Map<String, Object> attributes);
 
+    String getTreatment(String featureFlagName, Map<String, Object> attributes, EvaluationOptions evaluationOptions);
 
     /**
      * This method is useful when you want to determine the treatment to show
@@ -77,6 +78,8 @@ public interface SplitClient extends AttributesManager {
      */
     SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes);
 
+    SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes, EvaluationOptions evaluationOptions);
+
     /**
      * This method is useful when you want to determine the treatment of several feature flags at
      * the same time.
@@ -90,6 +93,7 @@ public interface SplitClient extends AttributesManager {
      */
     Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes);
 
+    Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes, EvaluationOptions evaluationOptions);
 
     /**
      * This method is useful when you want to determine the treatment of several feature flags at
@@ -105,6 +109,8 @@ public interface SplitClient extends AttributesManager {
      */
     Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes);
 
+    Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes, EvaluationOptions evaluationOptions);
+
     /**
      * This method is useful when you want to determine the treatment of several feature flags
      * belonging to a specific Flag Set at the same time.
@@ -114,6 +120,8 @@ public interface SplitClient extends AttributesManager {
      * @return a {@link Map} containing for each feature flag the evaluated treatment, the default treatment of this feature flag, or 'control'
      */
     Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes);
+
+    Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions);
 
     /**
      * This method is useful when you want to determine the treatment of several feature flags
@@ -125,6 +133,8 @@ public interface SplitClient extends AttributesManager {
      */
     Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes);
 
+    Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions);
+
     /**
      * This method is useful when you want to determine the treatment of several feature flags
      * belonging to a specific Flag Set
@@ -135,6 +145,8 @@ public interface SplitClient extends AttributesManager {
      */
     Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes);
 
+    Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions);
+
     /**
      * This method is useful when you want to determine the treatment of several feature flags
      * belonging to a specific list of Flag Sets
@@ -144,6 +156,8 @@ public interface SplitClient extends AttributesManager {
      * @return a {@link Map} containing for each feature flag the evaluated treatment, the default treatment of this feature flag, or 'control'
      */
     Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes);
+
+    Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions);
 
     /**
      * Destroys the background processes and clears the cache, releasing the resources used by

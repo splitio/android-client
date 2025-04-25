@@ -82,7 +82,8 @@ public class TreatmentManagerExceptionsTest {
                 mFlagSetsFilter,
                 mSplitsStorage,
                 new ValidationMessageLoggerImpl(),
-                mFlagSetsValidator);
+                mFlagSetsValidator,
+                new PropertyValidatorImpl());
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
     }
@@ -101,7 +102,7 @@ public class TreatmentManagerExceptionsTest {
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenThrow(new RuntimeException("test"));
         when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
 
-        treatmentManager.getTreatment("test", Collections.emptyMap(), false);
+        treatmentManager.getTreatment("test", Collections.emptyMap(), null, false);
         ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
 
         verify(impressionListener, times(1)).log(argumentCaptor.capture());
@@ -115,7 +116,7 @@ public class TreatmentManagerExceptionsTest {
         when(evaluator.getTreatment(anyString(), anyString(), eq("test2"), anyMap())).thenReturn(new EvaluationResult("on", "default"));
         when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
 
-        Map<String, String> treatments = treatmentManager.getTreatments(Arrays.asList("test", "test2"), Collections.emptyMap(), false);
+        Map<String, String> treatments = treatmentManager.getTreatments(Arrays.asList("test", "test2"), Collections.emptyMap(), null, false);
         ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
 
         verify(impressionListener, times(2)).log(argumentCaptor.capture());
@@ -134,7 +135,7 @@ public class TreatmentManagerExceptionsTest {
         when(evaluator.getTreatment(anyString(), anyString(), eq("test"), anyMap())).thenThrow(new RuntimeException("test"));
         when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
 
-        treatmentManager.getTreatmentWithConfig("test", Collections.emptyMap(), false);
+        treatmentManager.getTreatmentWithConfig("test", Collections.emptyMap(), null, false);
         ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
 
         verify(impressionListener, times(1)).log(argumentCaptor.capture());
@@ -148,7 +149,7 @@ public class TreatmentManagerExceptionsTest {
         when(evaluator.getTreatment(anyString(), anyString(), eq("test2"), anyMap())).thenReturn(new EvaluationResult("on", "default"));
         when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(true);
 
-        Map<String, SplitResult> treatments = treatmentManager.getTreatmentsWithConfig(Arrays.asList("test", "test2"), Collections.emptyMap(), false);
+        Map<String, SplitResult> treatments = treatmentManager.getTreatmentsWithConfig(Arrays.asList("test", "test2"), Collections.emptyMap(), null, false);
         ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
 
         verify(impressionListener, times(2)).log(argumentCaptor.capture());
@@ -170,7 +171,7 @@ public class TreatmentManagerExceptionsTest {
         when(mSplitsStorage.getNamesByFlagSets(any())).thenReturn(new HashSet<>(Arrays.asList("test", "test2")));
         when(mFlagSetsValidator.items(any(), any(), any())).thenReturn(Collections.singleton("set"));
 
-        Map<String, String> treatments = treatmentManager.getTreatmentsByFlagSet("set", null, false);
+        Map<String, String> treatments = treatmentManager.getTreatmentsByFlagSet("set", null, null, false);
         ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
 
         verify(impressionListener, times(2)).log(argumentCaptor.capture());
@@ -192,7 +193,7 @@ public class TreatmentManagerExceptionsTest {
         when(mSplitsStorage.getNamesByFlagSets(any())).thenReturn(new HashSet<>(Arrays.asList("test", "test2")));
         when(mFlagSetsValidator.items(any(), any(), any())).thenReturn(Collections.singleton("set"));
 
-        Map<String, String> treatments = treatmentManager.getTreatmentsByFlagSets(Collections.singletonList("set"), null, false);
+        Map<String, String> treatments = treatmentManager.getTreatmentsByFlagSets(Collections.singletonList("set"), null, null, false);
         ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
 
         verify(impressionListener, times(2)).log(argumentCaptor.capture());
@@ -214,7 +215,7 @@ public class TreatmentManagerExceptionsTest {
         when(mSplitsStorage.getNamesByFlagSets(any())).thenReturn(new HashSet<>(Arrays.asList("test", "test2")));
         when(mFlagSetsValidator.items(any(), any(), any())).thenReturn(Collections.singleton("set"));
 
-        Map<String, SplitResult> treatments = treatmentManager.getTreatmentsWithConfigByFlagSet("set", null, false);
+        Map<String, SplitResult> treatments = treatmentManager.getTreatmentsWithConfigByFlagSet("set", null, null, false);
         ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
 
         verify(impressionListener, times(2)).log(argumentCaptor.capture());
@@ -236,7 +237,7 @@ public class TreatmentManagerExceptionsTest {
         when(mSplitsStorage.getNamesByFlagSets(any())).thenReturn(new HashSet<>(Arrays.asList("test", "test2")));
         when(mFlagSetsValidator.items(any(), any(), any())).thenReturn(Collections.singleton("set"));
 
-        Map<String, SplitResult> treatments = treatmentManager.getTreatmentsWithConfigByFlagSets(Collections.singletonList("set"), null, false);
+        Map<String, SplitResult> treatments = treatmentManager.getTreatmentsWithConfigByFlagSets(Collections.singletonList("set"), null, null, false);
         ArgumentCaptor<Impression> argumentCaptor = ArgumentCaptor.forClass(Impression.class);
 
         verify(impressionListener, times(2)).log(argumentCaptor.capture());

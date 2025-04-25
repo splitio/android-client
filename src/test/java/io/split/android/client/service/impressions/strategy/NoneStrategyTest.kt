@@ -83,7 +83,8 @@ class NoneStrategyTest {
 
 fun createUniqueImpression(
     split: String = UUID.randomUUID().toString(),
-    time: Long = 100L
+    time: Long = 100L,
+    propertiesJson: String? = null
 ): Impression =
     Impression(
         "key",
@@ -93,5 +94,6 @@ fun createUniqueImpression(
         time,
         "default rule",
         999L,
-        null
+        null,
+        propertiesJson
     )
