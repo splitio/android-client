@@ -131,8 +131,7 @@ public class SplitUpdateWorkerTest {
     @Test
     public void nullPreviousChangeNumberDoesNothing() {
         when(mSplitsStorage.getTill()).thenReturn(1000L);
-        SplitsChangeNotification notification = getNewNotification();
-        when(notification.getPreviousChangeNumber()).thenReturn(null);
+        SplitsChangeNotification notification = getNewNotification(null);
         mNotificationsQueue.offer(notification);
 
         verify(mSynchronizer, never())
@@ -142,8 +141,7 @@ public class SplitUpdateWorkerTest {
     @Test
     public void zeroPreviousChangeNumberDoesNothing() {
         when(mSplitsStorage.getTill()).thenReturn(1000L);
-        SplitsChangeNotification notification = getNewNotification();
-        when(notification.getPreviousChangeNumber()).thenReturn(0L);
+        SplitsChangeNotification notification = getNewNotification(0L);
         mNotificationsQueue.offer(notification);
 
         verify(mSynchronizer, never())
@@ -167,7 +165,7 @@ public class SplitUpdateWorkerTest {
         long changeNumber = 1000L;
         byte[] bytes = TEST_SPLIT.getBytes();
         SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
-        SplitsChangeNotification notification = getNewNotification();
+        SplitsChangeNotification notification = getNewNotification(2000L);
         CompressionUtil mockCompressor = mock(CompressionUtil.class);
 
         when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
@@ -193,7 +191,7 @@ public class SplitUpdateWorkerTest {
 
         long changeNumber = 1000L;
         SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
-        SplitsChangeNotification notification = getNewNotification();
+        SplitsChangeNotification notification = getNewNotification(2000L);
         CompressionUtil mockCompressor = mock(CompressionUtil.class);
 
         when(updateTask.execute()).thenAnswer(invocation -> SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC));
@@ -216,7 +214,7 @@ public class SplitUpdateWorkerTest {
 
         long changeNumber = 1000L;
         SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
-        SplitsChangeNotification notification = getNewNotification();
+        SplitsChangeNotification notification = getNewNotification(2000L);
         CompressionUtil mockCompressor = mock(CompressionUtil.class);
 
         when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
@@ -236,7 +234,7 @@ public class SplitUpdateWorkerTest {
     public void synchronizeSplitsIsCalledOnSynchronizerWhenDecompressingFailsDueToException() throws InterruptedException {
         long changeNumber = 1000L;
         SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
-        SplitsChangeNotification notification = getNewNotification();
+        SplitsChangeNotification notification = getNewNotification(2000L);
         CompressionUtil mockCompressor = mock(CompressionUtil.class);
 
         when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
@@ -256,7 +254,7 @@ public class SplitUpdateWorkerTest {
     public void synchronizeSplitsIsCalledOnSynchronizerWhenDecompressingFailsDueToNullDecompressor() throws InterruptedException {
         long changeNumber = 1000L;
         SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
-        SplitsChangeNotification notification = getNewNotification();
+        SplitsChangeNotification notification = getNewNotification(2000L);
 
         when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
         when(mSplitsStorage.getTill()).thenReturn(changeNumber);
@@ -274,7 +272,7 @@ public class SplitUpdateWorkerTest {
     public void synchronizeSplitsIsCalledOnSynchronizerWhenDecompressingFailsDueToNullDecompressedBytes() throws InterruptedException {
         long changeNumber = 1000L;
         SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
-        SplitsChangeNotification notification = getNewNotification();
+        SplitsChangeNotification notification = getNewNotification(2000L);
         CompressionUtil mockCompressor = mock(CompressionUtil.class);
 
         when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
@@ -294,7 +292,7 @@ public class SplitUpdateWorkerTest {
     public void synchronizeSplitsIsCalledOnSynchronizerWhenDecompressingFailsDueToFailedBase64Decoding() throws InterruptedException {
         long changeNumber = 1000L;
         SplitInPlaceUpdateTask updateTask = mock(SplitInPlaceUpdateTask.class);
-        SplitsChangeNotification notification = getNewNotification();
+        SplitsChangeNotification notification = getNewNotification(2000L);
         CompressionUtil mockCompressor = mock(CompressionUtil.class);
 
         when(mSplitTaskFactory.createSplitsUpdateTask(any(), anyLong())).thenReturn(updateTask);
@@ -323,18 +321,18 @@ public class SplitUpdateWorkerTest {
         mWorker.start();
     }
 
-    private static SplitsChangeNotification getLegacyNotification() {
+    private synchronized static SplitsChangeNotification getLegacyNotification() {
         SplitsChangeNotification mock = mock(SplitsChangeNotification.class);
         when(mock.getChangeNumber()).thenReturn(1000L);
         return mock;
     }
 
-    private static SplitsChangeNotification getNewNotification() {
+    private synchronized static SplitsChangeNotification getNewNotification(Long changeNumber) {
         SplitsChangeNotification mock = mock(SplitsChangeNotification.class);
         when(mock.getCompressionType()).thenReturn(CompressionType.ZLIB);
         when(mock.getData()).thenReturn(TEST_SPLIT);
         when(mock.getPreviousChangeNumber()).thenReturn(1000L);
-        when(mock.getChangeNumber()).thenReturn(2000L);
+        when(mock.getChangeNumber()).thenReturn(changeNumber == null ? 0 : changeNumber);
         return mock;
     }
 }

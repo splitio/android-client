@@ -93,5 +93,6 @@ fun createUniqueImpression(
         time,
         "default rule",
         999L,
+        null,
         null
     )
