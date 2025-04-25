@@ -125,6 +125,10 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
     }
 
     public void pause() {
+        long start = System.currentTimeMillis();
+        while (!mScheduledTasks.isEmpty() && (System.currentTimeMillis() - start) < 500L) {
+            try { Thread.sleep(50); } catch (InterruptedException e) { break; }
+        }
         mScheduler.pause();
     }
 

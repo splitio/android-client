@@ -52,4 +52,15 @@ public class Split {
 
     @SerializedName("impressionsDisabled")
     public boolean impressionsDisabled = false;
+
+    public String json = null;
+
+    public Split() {
+
+    }
+
+    public Split(String name, String json) {
+        this.name = name;
+        this.json = json;
+    }
 }

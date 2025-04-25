@@ -8,7 +8,6 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.split.android.client.EventsTracker;
 import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
@@ -73,7 +72,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
                                     @Nullable PushNotificationManager pushNotificationManager,
                                     @NonNull ClientComponentsRegister clientComponentsRegister,
                                     @NonNull MySegmentsWorkManagerWrapper workManagerWrapper,
-                                    @NonNull EventsTracker eventsTracker,
+                                    @NonNull SplitFactoryImpl.EventsTrackerProvider eventsTrackerProvider,
                                     @Nullable FlagSetsFilter flagSetsFilter) {
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mPushNotificationManager = pushNotificationManager;
@@ -91,7 +90,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
                 splitTaskExecutor,
                 validationLogger,
                 keyValidator,
-                eventsTracker,
+                eventsTrackerProvider,
                 customerImpressionListener,
                 flagSetsFilter
         );
@@ -118,8 +117,7 @@ public final class SplitClientContainerImpl extends BaseSplitClientContainer {
                                     SplitClientConfig config,
                                     SplitClientFactory splitClientFactory,
                                     ClientComponentsRegister clientComponentsRegister,
-                                    MySegmentsWorkManagerWrapper workManagerWrapper,
-                                    EventsTracker eventsTracker) {
+                                    MySegmentsWorkManagerWrapper workManagerWrapper) {
         mDefaultMatchingKey = checkNotNull(defaultMatchingKey);
         mPushNotificationManager = pushNotificationManager;
         mStreamingEnabled = streamingEnabled;

@@ -6,7 +6,9 @@ import static io.split.android.client.utils.Utils.partition;
 import androidx.annotation.NonNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 import io.split.android.client.dtos.Split;
@@ -21,7 +23,7 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
 
     private final SplitParallelTaskExecutor<List<SplitEntity>> mTaskExecutor;
     private final SplitCipher mSplitCipher;
-
+    
     public SplitToSplitEntityTransformer(@NonNull SplitParallelTaskExecutor<List<SplitEntity>> taskExecutor,
                                          @NonNull SplitCipher splitCipher) {
         mTaskExecutor = checkNotNull(taskExecutor);
@@ -30,6 +32,7 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
 
     @Override
     public List<SplitEntity> transform(List<Split> splits) {
+        
         List<SplitEntity> splitEntities = new ArrayList<>();
 
         if (splits == null) {
@@ -38,7 +41,8 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
 
         int splitsSize = splits.size();
         if (splitsSize > mTaskExecutor.getAvailableThreads()) {
-            List<List<SplitEntity>> subLists = mTaskExecutor.execute(getSplitEntityTasks(splits, splitsSize));
+            List<SplitDeferredTaskItem<List<SplitEntity>>> tasks = getSplitEntityTasks(splits, splitsSize);
+            List<List<SplitEntity>> subLists = mTaskExecutor.execute(tasks);
 
             for (List<SplitEntity> subList : subLists) {
                 splitEntities.addAll(subList);
@@ -51,11 +55,18 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
         }
     }
 
+    @Override
+    @Deprecated
+    public List<SplitEntity> transform(Map<String, Split> allNamesAndBodies) {
+        return Collections.emptyList(); // to be removed
+    }
+
     @NonNull
-    private static List<SplitEntity> getSplitEntities(List<Split> partition, SplitCipher cipher) {
+    private List<SplitEntity> getSplitEntities(List<Split> partition, SplitCipher cipher) {
         List<SplitEntity> result = new ArrayList<>();
 
         for (Split split : partition) {
+            // Create entity
             String encryptedName = cipher.encrypt(split.name);
             String encryptedJson = cipher.encrypt(Json.toJson(split));
             if (encryptedName == null || encryptedJson == null) {
@@ -65,6 +76,7 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
             SplitEntity entity = new SplitEntity();
             entity.setName(encryptedName);
             entity.setBody(encryptedJson);
+            
             entity.setUpdatedAt(System.currentTimeMillis() / 1000);
             result.add(entity);
         }
@@ -91,4 +103,5 @@ public class SplitToSplitEntityTransformer implements SplitListTransformer<Split
 
         return taskList;
     }
+
 }
