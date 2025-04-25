@@ -1,3 +1,7 @@
+5.2.0 (Apr 25, 2025)
+- Added a new optional argument to the client `getTreatment` methods to allow passing additional evaluation options, such as a map of properties to append to the generated impressions sent to Split backend. Read more in our docs.
+- Added improvements for SDK ready status.
+
 5.1.1 (Feb 11, 2025)
 - Fixed issue when calling destroy() before the SDK has initialized.
 
