@@ -17,13 +17,17 @@ apply plugin: 'kotlin-android'
 apply from: 'spec.gradle'
 
 ext {
-    splitVersion = '5.1.1'
+    splitVersion = '5.2.0'
 }
 
 android {
     compileSdk 33
     targetCompatibility = '1.8'
     sourceCompatibility = '1.8'
+
+    buildFeatures {
+        buildConfig true
+    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

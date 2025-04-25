@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
@@ -13,6 +14,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.service.impressions.KeyImpressionSerializer;
 import io.split.android.client.utils.serializer.DoubleSerializer;
 
 public class Json {
@@ -20,6 +23,7 @@ public class Json {
     private static final Gson mJson = new GsonBuilder()
             .serializeNulls()
             .registerTypeAdapter(Double.class, new DoubleSerializer())
+            .registerTypeAdapter(KeyImpression.class, new KeyImpressionSerializer())
             .create();
     private static volatile Gson mNonNullJson;
 
@@ -58,6 +62,10 @@ public class Json {
         return map;
     }
 
+    public static JsonElement toJsonTree(Object obj) {
+        return mJson.toJsonTree(obj);
+    }
+
     private static Gson getNonNullsGsonInstance() {
         if (mNonNullJson == null) {
             synchronized (Json.class) {
@@ -71,4 +79,5 @@ public class Json {
 
         return mNonNullJson;
     }
+
 }

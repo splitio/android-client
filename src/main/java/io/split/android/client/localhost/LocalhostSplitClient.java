@@ -12,8 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.split.android.client.EvaluationOptions;
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.FlagSetsFilter;
+import io.split.android.client.PropertyValidatorImpl;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -74,24 +76,24 @@ public final class LocalhostSplitClient implements SplitClient {
                 new EvaluatorImpl(splitsStorage, splitParser), new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
                 splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger,
-                telemetryStorageProducer, flagSetsFilter, splitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl());
+                telemetryStorageProducer, flagSetsFilter, splitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(),
+                new PropertyValidatorImpl());
     }
 
     @Override
     public String getTreatment(String featureFlagName) {
-        try {
-            return mTreatmentManager.getTreatment(featureFlagName, null, mIsClientDestroyed);
-        } catch (Exception exception) {
-            Logger.e(exception);
-
-            return Treatments.CONTROL;
-        }
+        return getTreatment(featureFlagName, Collections.emptyMap(), null);
     }
 
     @Override
     public String getTreatment(String featureFlagName, Map<String, Object> attributes) {
+        return getTreatment(featureFlagName, attributes, null);
+    }
+
+    @Override
+    public String getTreatment(String featureFlagName, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
         try {
-            return mTreatmentManager.getTreatment(featureFlagName, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatment(featureFlagName, attributes, evaluationOptions, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
@@ -101,8 +103,13 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes) {
+        return getTreatmentWithConfig(featureFlagName, attributes, null);
+    }
+
+    @Override
+    public SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
         try {
-            return mTreatmentManager.getTreatmentWithConfig(featureFlagName, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatmentWithConfig(featureFlagName, attributes, evaluationOptions, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
@@ -112,8 +119,13 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes) {
+        return getTreatments(featureFlagNames, attributes, null);
+    }
+
+    @Override
+    public Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
         try {
-            return mTreatmentManager.getTreatments(featureFlagNames, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatments(featureFlagNames, attributes, evaluationOptions, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
@@ -129,8 +141,13 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes) {
+        return getTreatmentsWithConfig(featureFlagNames, attributes, null);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
         try {
-            return mTreatmentManager.getTreatmentsWithConfig(featureFlagNames, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatmentsWithConfig(featureFlagNames, attributes, evaluationOptions, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
@@ -146,8 +163,13 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
+        return getTreatmentsByFlagSet(flagSet, attributes, null);
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
         try {
-            return mTreatmentManager.getTreatmentsByFlagSet(flagSet, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatmentsByFlagSet(flagSet, attributes, evaluationOptions, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
@@ -157,8 +179,13 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
+        return getTreatmentsByFlagSets(flagSets, attributes, null);
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
         try {
-            return mTreatmentManager.getTreatmentsByFlagSets(flagSets, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatmentsByFlagSets(flagSets, attributes, evaluationOptions, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
@@ -168,8 +195,13 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
+        return getTreatmentsWithConfigByFlagSet(flagSet, attributes, null);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
         try {
-            return mTreatmentManager.getTreatmentsWithConfigByFlagSet(flagSet, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatmentsWithConfigByFlagSet(flagSet, attributes, evaluationOptions, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
@@ -179,8 +211,13 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
+        return getTreatmentsWithConfigByFlagSets(flagSets, attributes, null);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
         try {
-            return mTreatmentManager.getTreatmentsWithConfigByFlagSets(flagSets, attributes, mIsClientDestroyed);
+            return mTreatmentManager.getTreatmentsWithConfigByFlagSets(flagSets, attributes, evaluationOptions, mIsClientDestroyed);
         } catch (Exception exception) {
             Logger.e(exception);
 
@@ -216,7 +253,7 @@ public final class LocalhostSplitClient implements SplitClient {
         checkNotNull(task);
 
         if (!event.equals(SplitEvent.SDK_READY_FROM_CACHE) && mEventsManager.eventAlreadyTriggered(event)) {
-            Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won’t be emitted again. The callback won’t be executed.", event.toString()));
+            Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won’t be emitted again. The callback won’t be executed.", event));
             return;
         }
 

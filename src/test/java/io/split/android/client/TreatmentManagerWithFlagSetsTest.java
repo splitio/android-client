@@ -88,7 +88,7 @@ public class TreatmentManagerWithFlagSetsTest {
 
     @Test
     public void getTreatmentsByFlagSetDestroyedDoesNotUseEvaluator() {
-        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, true);
+        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, null, true);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -99,7 +99,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_1")));
 
-        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, false);
+        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(Collections.singleton("set_1"));
         verify(mEvaluator).getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_1"), anyMap());
@@ -110,7 +110,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
 
-        mTreatmentManager.getTreatmentsByFlagSet("SET!", null, false);
+        mTreatmentManager.getTreatmentsByFlagSet("SET!", null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -122,7 +122,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_1")));
 
-        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, false);
+        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(Collections.singleton("set_1"));
         verify(mEvaluator).getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_1"), anyMap());
@@ -135,7 +135,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
 
-        mTreatmentManager.getTreatmentsByFlagSet("set_2", null, false);
+        mTreatmentManager.getTreatmentsByFlagSet("set_2", null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -155,7 +155,7 @@ public class TreatmentManagerWithFlagSetsTest {
                 mAttributesMerger,
                 mTelemetryStorageProducer,
                 mFlagSetsFilter,
-                mSplitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl());
+                mSplitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(), new PropertyValidatorImpl());
     }
 
     @Test
@@ -166,7 +166,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1"))).thenReturn(mockNames);
         mFlagSetsFilter = new FlagSetsFilterImpl(Collections.singleton("set_1"));
 
-        Map<String, String> result = mTreatmentManager.getTreatmentsByFlagSet("set_1", null, false);
+        Map<String, String> result = mTreatmentManager.getTreatmentsByFlagSet("set_1", null, null, false);
 
         assertEquals(2, result.size());
         assertEquals("result_1", result.get("test_1"));
@@ -177,7 +177,7 @@ public class TreatmentManagerWithFlagSetsTest {
     public void getTreatmentsByFlagSetRecordsTelemetry() {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1"))).thenReturn(Collections.singleton("test_1"));
 
-        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, false);
+        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, null, false);
 
         verify(mTelemetryStorageProducer).recordLatency(eq(Method.TREATMENTS_BY_FLAG_SET), anyLong());
     }
@@ -185,7 +185,7 @@ public class TreatmentManagerWithFlagSetsTest {
     ///
     @Test
     public void getTreatmentsByFlagSetsDestroyedDoesNotUseEvaluator() {
-        mTreatmentManager.getTreatmentsByFlagSets(Collections.singletonList("set_1"), null, true);
+        mTreatmentManager.getTreatmentsByFlagSets(Collections.singletonList("set_1"), null, null, true);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -196,7 +196,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(new HashSet<>(Arrays.asList("set_1", "set_2"))))
                 .thenReturn(new HashSet<>(Arrays.asList("test_1", "test_2")));
 
-        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_2"), null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(new HashSet<>(Arrays.asList("set_1", "set_2")));
         verify(mEvaluator).getTreatment(anyString(), anyString(), eq("test_1"), anyMap());
@@ -208,7 +208,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_1")));
 
-        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "SET!"), null, false);
+        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "SET!"), null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(Collections.singleton("set_1"));
         verify(mEvaluator).getTreatment(any(), any(), eq("test_1"), anyMap());
@@ -221,7 +221,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_1")));
 
-        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_2"), null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(Collections.singleton("set_1"));
         verify(mEvaluator).getTreatment(anyString(), anyString(), eq("test_1"), anyMap());
@@ -232,7 +232,7 @@ public class TreatmentManagerWithFlagSetsTest {
         mFlagSetsFilter = new FlagSetsFilterImpl(Collections.singleton("set_1"));
         initializeTreatmentManager();
 
-        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_2", "set_3"), null, false);
+        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_2", "set_3"), null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -245,7 +245,7 @@ public class TreatmentManagerWithFlagSetsTest {
         mockNames.add("test_2");
         when(mSplitsStorage.getNamesByFlagSets(new HashSet<>(Arrays.asList("set_1", "set_2")))).thenReturn(mockNames);
 
-        Map<String, String> result = mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+        Map<String, String> result = mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_2"), null, null, false);
 
         assertEquals(2, result.size());
         assertEquals("result_1", result.get("test_1"));
@@ -254,14 +254,14 @@ public class TreatmentManagerWithFlagSetsTest {
 
     @Test
     public void getTreatmentsByFlagSetsWithDuplicatedSetDeduplicates() {
-        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_1"), null, false);
+        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_1"), null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(Collections.singleton("set_1"));
     }
 
     @Test
     public void getTreatmentsByFlagSetsWithNullSetListReturnsEmpty() {
-        Map<String, String> result = mTreatmentManager.getTreatmentsByFlagSets(null, null, false);
+        Map<String, String> result = mTreatmentManager.getTreatmentsByFlagSets(null, null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -272,7 +272,7 @@ public class TreatmentManagerWithFlagSetsTest {
     public void getTreatmentsByFlagSetsRecordsTelemetry() {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1"))).thenReturn(Collections.singleton("test_1"));
 
-        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_2"), null, null, false);
 
         verify(mTelemetryStorageProducer).recordLatency(eq(Method.TREATMENTS_BY_FLAG_SETS), anyLong());
     }
@@ -280,7 +280,7 @@ public class TreatmentManagerWithFlagSetsTest {
     ///
     @Test
     public void getTreatmentsWithConfigByFlagSetDestroyedDoesNotUseEvaluator() {
-        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, true);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, null, true);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -291,7 +291,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(Collections.singleton("test_1"));
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(Collections.singleton("set_1"));
         verify(mEvaluator).getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_1"), anyMap());
@@ -302,7 +302,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSet("SET!", null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSet("SET!", null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -314,7 +314,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_1")));
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(Collections.singleton("set_1"));
         verify(mEvaluator).getTreatment(eq("matching_key"), eq("bucketing_key"), eq("test_1"), anyMap());
@@ -327,7 +327,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_split")));
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_2", null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_2", null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -341,7 +341,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1"))).thenReturn(mockNames);
         mFlagSetsFilter = new FlagSetsFilterImpl(Collections.singleton("set_1"));
 
-        Map<String, SplitResult> result = mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, false);
+        Map<String, SplitResult> result = mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, null, false);
 
         assertEquals(2, result.size());
         assertEquals("result_1", result.get("test_1").treatment());
@@ -352,7 +352,7 @@ public class TreatmentManagerWithFlagSetsTest {
     public void getTreatmentsWithConfigByFlagSetRecordsTelemetry() {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1"))).thenReturn(Collections.singleton("test_1"));
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, null, false);
 
         verify(mTelemetryStorageProducer).recordLatency(eq(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET), anyLong());
     }
@@ -360,7 +360,7 @@ public class TreatmentManagerWithFlagSetsTest {
     ///
     @Test
     public void getTreatmentsWithConfigByFlagSetsDestroyedDoesNotUseEvaluator() {
-        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Collections.singletonList("set_1"), null, true);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Collections.singletonList("set_1"), null, null, true);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -371,7 +371,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(new HashSet<>(Arrays.asList("set_1", "set_2"))))
                 .thenReturn(new HashSet<>(Arrays.asList("test_1", "test_2")));
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(new HashSet<>(Arrays.asList("set_1", "set_2")));
         verify(mEvaluator).getTreatment(anyString(), anyString(), eq("test_1"), anyMap());
@@ -383,7 +383,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_1")));
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "SET!"), null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "SET!"), null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(Collections.singleton("set_1"));
         verify(mEvaluator).getTreatment(any(), any(), eq("test_1"), anyMap());
@@ -397,7 +397,7 @@ public class TreatmentManagerWithFlagSetsTest {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1")))
                 .thenReturn(new HashSet<>(Collections.singletonList("test_1")));
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(Collections.singleton("set_1"));
         verify(mEvaluator).getTreatment(anyString(), anyString(), eq("test_1"), anyMap());
@@ -408,7 +408,7 @@ public class TreatmentManagerWithFlagSetsTest {
         mFlagSetsFilter = new FlagSetsFilterImpl(Collections.singleton("set_1"));
         initializeTreatmentManager();
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_2", "set_3"), null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_2", "set_3"), null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -421,7 +421,7 @@ public class TreatmentManagerWithFlagSetsTest {
         mockNames.add("test_2");
         when(mSplitsStorage.getNamesByFlagSets(new HashSet<>(Arrays.asList("set_1", "set_2")))).thenReturn(mockNames);
 
-        Map<String, SplitResult> result = mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+        Map<String, SplitResult> result = mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, null, false);
 
         assertEquals(2, result.size());
         assertEquals("result_1", result.get("test_1").treatment());
@@ -430,14 +430,14 @@ public class TreatmentManagerWithFlagSetsTest {
 
     @Test
     public void getTreatmentsWithConfigByFlagSetsWithDuplicatedSetDeduplicates() {
-        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_1"), null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_1"), null, null, false);
 
         verify(mSplitsStorage).getNamesByFlagSets(Collections.singleton("set_1"));
     }
 
     @Test
     public void getTreatmentsWithConfigByFlagSetsWithNullSetListReturnsEmpty() {
-        Map<String, SplitResult> result = mTreatmentManager.getTreatmentsWithConfigByFlagSets(null, null, false);
+        Map<String, SplitResult> result = mTreatmentManager.getTreatmentsWithConfigByFlagSets(null, null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -448,7 +448,7 @@ public class TreatmentManagerWithFlagSetsTest {
     public void getTreatmentsWithConfigByFlagSetsRecordsTelemetry() {
         when(mSplitsStorage.getNamesByFlagSets(Collections.singleton("set_1"))).thenReturn(Collections.singleton("test_1"));
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, null, false);
 
         verify(mTelemetryStorageProducer).recordLatency(eq(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS), anyLong());
     }
@@ -457,7 +457,7 @@ public class TreatmentManagerWithFlagSetsTest {
     public void getTreatmentsByFlagSetExceptionIsRecordedInTelemetry() {
         when(mSplitsStorage.getNamesByFlagSets(any())).thenThrow(new RuntimeException("test"));
 
-        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, false);
+        mTreatmentManager.getTreatmentsByFlagSet("set_1", null, null, false);
 
         verify(mTelemetryStorageProducer).recordException(eq(Method.TREATMENTS_BY_FLAG_SET));
     }
@@ -466,7 +466,7 @@ public class TreatmentManagerWithFlagSetsTest {
     public void getTreatmentsByFlagSetsExceptionIsRecordedInTelemetry() {
         when(mSplitsStorage.getNamesByFlagSets(any())).thenThrow(new RuntimeException("test"));
 
-        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+        mTreatmentManager.getTreatmentsByFlagSets(Arrays.asList("set_1", "set_2"), null, null, false);
 
         verify(mTelemetryStorageProducer).recordException(eq(Method.TREATMENTS_BY_FLAG_SETS));
     }
@@ -475,7 +475,7 @@ public class TreatmentManagerWithFlagSetsTest {
     public void getTreatmentsWithConfigByFlagSetExceptionIsRecordedInTelemetry() {
         when(mSplitsStorage.getNamesByFlagSets(any())).thenThrow(new RuntimeException("test"));
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSet("set_1", null, null, false);
 
         verify(mTelemetryStorageProducer).recordException(eq(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET));
     }
@@ -484,14 +484,14 @@ public class TreatmentManagerWithFlagSetsTest {
     public void getTreatmentsWithConfigByFlagSetsExceptionIsRecordedInTelemetry() {
         when(mSplitsStorage.getNamesByFlagSets(any())).thenThrow(new RuntimeException("test"));
 
-        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(Arrays.asList("set_1", "set_2"), null, null, false);
 
         verify(mTelemetryStorageProducer).recordException(eq(Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS));
     }
 
     @Test
     public void getTreatmentsByFlagSetWithNullFlagSet() {
-        mTreatmentManager.getTreatmentsByFlagSet(null, null, false);
+        mTreatmentManager.getTreatmentsByFlagSet(null, null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -499,7 +499,7 @@ public class TreatmentManagerWithFlagSetsTest {
 
     @Test
     public void getTreatmentsByFlagSetsWithNullFlagSets() {
-        mTreatmentManager.getTreatmentsByFlagSets(null, null, false);
+        mTreatmentManager.getTreatmentsByFlagSets(null, null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -507,7 +507,7 @@ public class TreatmentManagerWithFlagSetsTest {
 
     @Test
     public void getTreatmentsWithConfigByFlagSetWithNullFlagSet() {
-        mTreatmentManager.getTreatmentsWithConfigByFlagSet(null, null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSet(null, null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());
@@ -515,7 +515,7 @@ public class TreatmentManagerWithFlagSetsTest {
 
     @Test
     public void getTreatmentsWithConfigByFlagSetsWithNullFlagSets() {
-        mTreatmentManager.getTreatmentsWithConfigByFlagSets(null, null, false);
+        mTreatmentManager.getTreatmentsWithConfigByFlagSets(null, null, null, false);
 
         verify(mSplitsStorage, times(0)).getNamesByFlagSets(any());
         verify(mEvaluator, times(0)).getTreatment(any(), any(), any(), anyMap());

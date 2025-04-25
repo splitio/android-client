@@ -74,7 +74,9 @@ public class TreatmentManagerTelemetryTest {
                 attributesMerger,
                 telemetryStorageProducer,
                 mFlagSetsFilter,
-                mSplitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl());
+                mSplitsStorage, new ValidationMessageLoggerImpl(),
+                new FlagSetsValidatorImpl(),
+                new PropertyValidatorImpl());
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
     }
@@ -91,7 +93,7 @@ public class TreatmentManagerTelemetryTest {
     @Test
     public void getTreatmentRecordsLatencyInTelemetry() {
 
-        treatmentManager.getTreatment("split", new HashMap<>(), false);
+        treatmentManager.getTreatment("split", new HashMap<>(), null, false);
 
         verify(telemetryStorageProducer).recordLatency(eq(Method.TREATMENT), anyLong());
     }
@@ -99,21 +101,21 @@ public class TreatmentManagerTelemetryTest {
     @Test
     public void getTreatmentsRecordsLatencyInTelemetry() {
 
-        treatmentManager.getTreatments(Arrays.asList("split"), new HashMap<>(), false);
+        treatmentManager.getTreatments(Arrays.asList("split"), new HashMap<>(), null, false);
 
         verify(telemetryStorageProducer).recordLatency(eq(Method.TREATMENTS), anyLong());
     }
 
     @Test
     public void getTreatmentWithConfigRecordsLatencyInTelemetry() {
-        treatmentManager.getTreatmentWithConfig("split", new HashMap<>(), false);
+        treatmentManager.getTreatmentWithConfig("split", new HashMap<>(), null, false);
 
         verify(telemetryStorageProducer).recordLatency(eq(Method.TREATMENT_WITH_CONFIG), anyLong());
     }
 
     @Test
     public void getTreatmentsWithConfigRecordsLatencyInTelemetry() {
-        treatmentManager.getTreatmentsWithConfig(Arrays.asList("split"), new HashMap<>(), false);
+        treatmentManager.getTreatmentsWithConfig(Arrays.asList("split"), new HashMap<>(), null, false);
 
         verify(telemetryStorageProducer).recordLatency(eq(Method.TREATMENTS_WITH_CONFIG), anyLong());
     }
@@ -122,7 +124,7 @@ public class TreatmentManagerTelemetryTest {
     public void nonReadyUsagesAreRecordedInProducer() {
         when(eventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)).thenReturn(false);
 
-        treatmentManager.getTreatment("test", Collections.emptyMap(), false);
+        treatmentManager.getTreatment("test", Collections.emptyMap(), null, false);
 
         verify(telemetryStorageProducer).recordNonReadyUsage();
     }
@@ -131,7 +133,7 @@ public class TreatmentManagerTelemetryTest {
     public void getTreatmentRecordsException() {
         when(keyValidator.validate(anyString(), anyString())).thenThrow(new RuntimeException("test"));
 
-        treatmentManager.getTreatment("test", Collections.emptyMap(), false);
+        treatmentManager.getTreatment("test", Collections.emptyMap(), null, false);
 
         verify(telemetryStorageProducer).recordException(Method.TREATMENT);
     }
@@ -140,7 +142,7 @@ public class TreatmentManagerTelemetryTest {
     public void getTreatmentsRecordsException() {
         when(keyValidator.validate(anyString(), anyString())).thenThrow(new RuntimeException("test"));
 
-        treatmentManager.getTreatments(Arrays.asList("test", "test2"), Collections.emptyMap(), false);
+        treatmentManager.getTreatments(Arrays.asList("test", "test2"), Collections.emptyMap(), null, false);
 
         verify(telemetryStorageProducer).recordException(Method.TREATMENTS);
     }
@@ -149,7 +151,7 @@ public class TreatmentManagerTelemetryTest {
     public void getTreatmentWithConfigRecordsException() {
         when(keyValidator.validate(anyString(), anyString())).thenThrow(new RuntimeException("test"));
 
-        treatmentManager.getTreatmentWithConfig("test", Collections.emptyMap(), false);
+        treatmentManager.getTreatmentWithConfig("test", Collections.emptyMap(), null, false);
 
         verify(telemetryStorageProducer).recordException(Method.TREATMENT_WITH_CONFIG);
     }
@@ -158,7 +160,7 @@ public class TreatmentManagerTelemetryTest {
     public void getTreatmentsWithConfigRecordsException() {
         when(keyValidator.validate(anyString(), anyString())).thenThrow(new RuntimeException("test"));
 
-        treatmentManager.getTreatmentsWithConfig(Arrays.asList("test", "test2"), Collections.emptyMap(), false);
+        treatmentManager.getTreatmentsWithConfig(Arrays.asList("test", "test2"), Collections.emptyMap(), null, false);
 
         verify(telemetryStorageProducer).recordException(Method.TREATMENTS_WITH_CONFIG);
     }

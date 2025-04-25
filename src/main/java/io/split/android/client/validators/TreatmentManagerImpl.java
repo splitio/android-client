@@ -12,6 +12,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import io.split.android.client.EvaluationOptions;
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
 import io.split.android.client.FlagSetsFilter;
@@ -27,6 +28,7 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
+import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.grammar.Treatments;
 
@@ -49,6 +51,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final FlagSetsFilter mFlagSetsFilter;
     private final SplitsStorage mSplitsStorage;
     private final SplitFilterValidator mFlagSetsValidator;
+    private final PropertyValidator mPropertyValidator;
 
     public TreatmentManagerImpl(String matchingKey,
                                 String bucketingKey,
@@ -64,7 +67,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 @Nullable FlagSetsFilter flagSetsFilter,
                                 @NonNull SplitsStorage splitsStorage,
                                 @NonNull ValidationMessageLogger validationLogger,
-                                @NonNull SplitFilterValidator flagSetsValidator) {
+                                @NonNull SplitFilterValidator flagSetsValidator,
+                                @NonNull PropertyValidator propertyValidator) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
@@ -80,15 +84,17 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mFlagSetsFilter = flagSetsFilter;
         mSplitsStorage = checkNotNull(splitsStorage);
         mFlagSetsValidator = checkNotNull(flagSetsValidator);
+        mPropertyValidator = checkNotNull(propertyValidator);
     }
 
     @Override
-    public String getTreatment(String split, Map<String, Object> attributes, boolean isClientDestroyed) {
+    public String getTreatment(String split, Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         try {
             String treatment = getTreatmentsWithConfigGeneric(
                     Collections.singletonList(split),
                     null,
                     attributes,
+                    evaluationOptions,
                     isClientDestroyed,
                     SplitResult::treatment,
                     Method.TREATMENT
@@ -106,12 +112,13 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     @Override
-    public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes, boolean isClientDestroyed) {
+    public SplitResult getTreatmentWithConfig(String split, Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         try {
             SplitResult splitResult = getTreatmentsWithConfigGeneric(
                     Collections.singletonList(split),
                     null,
                     attributes,
+                    evaluationOptions,
                     isClientDestroyed,
                     ResultTransformer::identity,
                     Method.TREATMENT_WITH_CONFIG
@@ -128,66 +135,72 @@ public class TreatmentManagerImpl implements TreatmentManager {
     }
 
     @Override
-    public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, String> getTreatments(List<String> splits, Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 splits,
                 null,
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 SplitResult::treatment,
                 Method.TREATMENTS);
     }
 
     @Override
-    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> splits, Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 splits,
                 null,
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 ResultTransformer::identity,
                 Method.TREATMENTS_WITH_CONFIG);
     }
 
     @Override
-    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 null,
                 Collections.singletonList(flagSet),
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 SplitResult::treatment,
                 Method.TREATMENTS_BY_FLAG_SET);
     }
 
     @Override
-    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 null,
                 flagSets,
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 SplitResult::treatment,
                 Method.TREATMENTS_BY_FLAG_SETS);
     }
 
     @Override
-    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 null,
                 Collections.singletonList(flagSet),
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 ResultTransformer::identity,
                 Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SET);
     }
 
     @Override
-    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, boolean isClientDestroyed) {
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions, boolean isClientDestroyed) {
         return getTreatmentsWithConfigGeneric(
                 null,
                 flagSets,
                 attributes,
+                evaluationOptions,
                 isClientDestroyed,
                 ResultTransformer::identity,
                 Method.TREATMENTS_WITH_CONFIG_BY_FLAG_SETS);
@@ -196,6 +209,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private <T> Map<String, T> getTreatmentsWithConfigGeneric(@Nullable List<String> names,
                                                               @Nullable List<String> flagSets,
                                                               @Nullable Map<String, Object> attributes,
+                                                              EvaluationOptions evaluationOptions,
                                                               boolean isClientDestroyed,
                                                               ResultTransformer<T> resultTransformer,
                                                               Method telemetryMethodName) {
@@ -238,7 +252,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
 
                 // Perform evaluations for every feature flag
                 for (String featureFlagName : names) {
-                    TreatmentResult evaluationResult = getTreatmentWithConfigWithoutMetrics(featureFlagName, mergedAttributes, validationTag);
+                    TreatmentResult evaluationResult = getTreatmentWithConfigWithoutMetrics(featureFlagName, mergedAttributes, validationTag, evaluationOptions);
 
                     result.put(featureFlagName, resultTransformer.transform(evaluationResult.getSplitResult()));
                     if (evaluationResult.isException()) {
@@ -261,7 +275,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         }
     }
 
-    private TreatmentResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> mergedAttributes, String validationTag) {
+    private TreatmentResult getTreatmentWithConfigWithoutMetrics(String split, Map<String, Object> mergedAttributes, String validationTag, EvaluationOptions evaluationOptions) {
         EvaluationResult evaluationResult = null;
         try {
 
@@ -296,7 +310,9 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     mLabelsEnabled ? evaluationResult.getLabel() : null,
                     evaluationResult.getChangeNumber(),
                     mergedAttributes,
-                    evaluationResult.isImpressionsDisabled());
+                    evaluationResult.isImpressionsDisabled(),
+                    evaluationOptions,
+                    validationTag);
 
             return new TreatmentResult(splitResult, false);
         } catch (Exception ex) {
@@ -310,21 +326,50 @@ public class TreatmentManagerImpl implements TreatmentManager {
                         TreatmentLabels.EXCEPTION,
                         (evaluationResult != null) ? evaluationResult.getChangeNumber() : null,
                         mergedAttributes,
-                        evaluationResult != null && evaluationResult.isImpressionsDisabled());
+                        evaluationResult != null && evaluationResult.isImpressionsDisabled(),
+                        evaluationOptions,
+                        validationTag);
             }
 
             return new TreatmentResult(new SplitResult(Treatments.CONTROL), true);
         }
     }
 
-    private void logImpression(String matchingKey, String bucketingKey, String splitName, String result, String label, Long changeNumber, Map<String, Object> attributes, boolean impressionsDisabled) {
+    private void logImpression(String matchingKey, String bucketingKey, String splitName, String result, String label, Long changeNumber, Map<String, Object> attributes, boolean impressionsDisabled, EvaluationOptions evaluationOptions, String validationTag) {
         try {
-            Impression impression = new Impression(matchingKey, bucketingKey, splitName, result, System.currentTimeMillis(), label, changeNumber, attributes);
+            String propertiesJson = serializeProperties(evaluationOptions, validationTag);
+            Impression impression = new Impression(matchingKey, bucketingKey, splitName, result, System.currentTimeMillis(), label, changeNumber, attributes, propertiesJson);
             DecoratedImpression decoratedImpression = new DecoratedImpression(impression, impressionsDisabled);
             mImpressionListener.log(decoratedImpression);
             mImpressionListener.log(impression);
         } catch (Throwable t) {
             Logger.e("An error occurred logging impression: " + t.getLocalizedMessage());
+        }
+    }
+
+    @Nullable
+    private String serializeProperties(@Nullable EvaluationOptions evaluationOptions, String validationTag) {
+        if (evaluationOptions == null || evaluationOptions.getProperties() == null || evaluationOptions.getProperties().isEmpty()) {
+            return null;
+        }
+
+        // validate using property validator
+        PropertyValidator.Result result = mPropertyValidator.validate(evaluationOptions.getProperties(), validationTag);
+
+        if (!result.isValid()) {
+            mValidationLogger.e("Properties validation failed: " + (result.getErrorMessage() != null ? result.getErrorMessage() : "Unknown error"), validationTag);
+            return null;
+        }
+
+        if (result.getProperties() == null || result.getProperties().isEmpty()) {
+            return null;
+        }
+
+        try {
+            return Json.toJson(result.getProperties());
+        } catch (Exception e) {
+            mValidationLogger.e("Failed to serialize properties to JSON: " + e.getLocalizedMessage(), validationTag);
+            return null;
         }
     }
 

@@ -3,10 +3,12 @@ package fake;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.EvaluationOptions;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitResult;
 import io.split.android.client.events.SplitEvent;
@@ -24,38 +26,78 @@ public class SplitClientStub implements SplitClient {
     }
 
     @Override
+    public String getTreatment(String featureFlagName, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return getTreatment(featureFlagName, attributes);
+    }
+
+    @Override
     public SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes) {
+        return getTreatmentWithConfig(featureFlagName, attributes, null);
+    }
+
+    @Override
+    public SplitResult getTreatmentWithConfig(String featureFlagName, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
         return null;
     }
 
     @Override
     public Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes) {
-        return null;
+        return getTreatments(featureFlagNames, attributes, null);
+    }
+
+    @Override
+    public Map<String, String> getTreatments(List<String> featureFlagNames, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return Collections.emptyMap();
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes) {
-        return null;
+        return getTreatmentsWithConfig(featureFlagNames, attributes, null);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfig(List<String> featureFlagNames, Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return Collections.emptyMap();
     }
 
     @Override
     public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
-        return null;
+        return getTreatmentsByFlagSet(flagSet, attributes, null);
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return Collections.emptyMap();
     }
 
     @Override
     public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
-        return null;
+        return getTreatmentsByFlagSets(flagSets, attributes, null);
+    }
+
+    @Override
+    public Map<String, String> getTreatmentsByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return Collections.emptyMap();
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes) {
-        return null;
+        return getTreatmentsWithConfigByFlagSet(flagSet, attributes, null);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSet(@NonNull String flagSet, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return Collections.emptyMap();
     }
 
     @Override
     public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes) {
-        return null;
+        return getTreatmentsWithConfigByFlagSets(flagSets, attributes, null);
+    }
+
+    @Override
+    public Map<String, SplitResult> getTreatmentsWithConfigByFlagSets(@NonNull List<String> flagSets, @Nullable Map<String, Object> attributes, EvaluationOptions evaluationOptions) {
+        return Collections.emptyMap();
     }
 
     @Override

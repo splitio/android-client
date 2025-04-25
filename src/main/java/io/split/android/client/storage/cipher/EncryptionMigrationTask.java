@@ -33,14 +33,18 @@ public class EncryptionMigrationTask implements SplitTask {
     @Override
     public SplitTaskExecutionInfo execute() {
         try {
+            long startTime = System.currentTimeMillis();
+            
             // Get current encryption level
             SplitEncryptionLevel fromLevel = getFromLevel(mSplitDatabase.generalInfoDao(), mEncryptionEnabled);
 
             // Determine target encryption level
             SplitEncryptionLevel toLevel = getLevel(mEncryptionEnabled);
 
+            DBCipher dbCipher = new DBCipher(mApiKey, mSplitDatabase, fromLevel, toLevel, mToCipher);
+
             // Apply encryption
-            new DBCipher(mApiKey, mSplitDatabase, fromLevel, toLevel, mToCipher).apply();
+            dbCipher.apply();
 
             // Update encryption level
             updateCurrentLevel(toLevel);
@@ -65,8 +69,7 @@ public class EncryptionMigrationTask implements SplitTask {
                 .getByName(GeneralInfoEntity.DATABASE_ENCRYPTION_MODE);
 
         if (entity != null) {
-            return SplitEncryptionLevel.fromString(
-                    entity.getStringValue());
+            return SplitEncryptionLevel.fromString(entity.getStringValue());
         }
 
         return getLevel(encryptionEnabled);

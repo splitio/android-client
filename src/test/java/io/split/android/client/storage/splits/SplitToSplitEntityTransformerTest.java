@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitDeferredTaskItem;
@@ -85,7 +86,7 @@ public class SplitToSplitEntityTransformerTest {
     public void transformingNullReturnsEmptyList() {
         when(mSplitTaskExecutor.getAvailableThreads()).thenReturn(4);
 
-        List<SplitEntity> splits = mConverter.transform(null);
+        List<SplitEntity> splits = mConverter.transform((Map<String, Split>) null);
 
         assertEquals(0, splits.size());
     }

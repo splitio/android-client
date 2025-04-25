@@ -28,6 +28,7 @@ public class ImpressionHasherTest {
                 System.currentTimeMillis(),
                 "someLabel",
                 123L,
+                null,
                 null);
 
         Long hash2 = ImpressionHasher.process(imp2);
@@ -46,6 +47,7 @@ public class ImpressionHasherTest {
                 System.currentTimeMillis(),
                 "someLabel",
                 123L,
+                null,
                 null);
 
         Long hash2 = ImpressionHasher.process(imp2);
@@ -65,6 +67,7 @@ public class ImpressionHasherTest {
                 System.currentTimeMillis(),
                 "someLabel",
                 456L,
+                null,
                 null);
         Long hash2 = ImpressionHasher.process(imp2);
 
@@ -81,6 +84,7 @@ public class ImpressionHasherTest {
                 System.currentTimeMillis(),
                 "someOtherLabel",
                 123L,
+                null,
                 null);
         Long hash2 = ImpressionHasher.process(imp2);
 
@@ -97,6 +101,7 @@ public class ImpressionHasherTest {
                 System.currentTimeMillis(),
                 "someLabel",
                 123L,
+                null,
                 null);
 
         Long hash2 = ImpressionHasher.process(imp2);
@@ -113,6 +118,7 @@ public class ImpressionHasherTest {
                 System.currentTimeMillis(),
                 "someLabel",
                 123L,
+                null,
                 null);
 
         Long hash = ImpressionHasher.process(imp1);
@@ -130,6 +136,7 @@ public class ImpressionHasherTest {
                 System.currentTimeMillis(),
                 "someLabel",
                 123L,
+                null,
                 null);
 
         Long hash = ImpressionHasher.process(imp1);
@@ -146,6 +153,7 @@ public class ImpressionHasherTest {
                 "someTreatment",
                 System.currentTimeMillis(),
                 "someLabel",
+                null,
                 null,
                 null);
 
@@ -164,6 +172,7 @@ public class ImpressionHasherTest {
                 System.currentTimeMillis(),
                 null,
                 null,
+                null,
                 null);
 
         Long hash = ImpressionHasher.process(imp1);
@@ -180,6 +189,7 @@ public class ImpressionHasherTest {
                 null,
                 System.currentTimeMillis(),
                 "someLabel",
+                null,
                 null,
                 null);
 
@@ -202,6 +212,7 @@ public class ImpressionHasherTest {
                 System.currentTimeMillis(),
                 "someLabel",
                 123L,
+                null,
                 null);
     }
 }
