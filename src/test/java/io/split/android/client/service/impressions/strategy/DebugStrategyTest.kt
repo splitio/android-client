@@ -157,4 +157,15 @@ class DebugStrategyTest {
             eq<SplitTaskExecutionListener?>(impressionsSyncHelper)
         )
     }
+
+    @Test
+    fun `impressions observer is not called when impression has properties`() {
+        val impression = createUniqueImpression(time = 1000000000L, propertiesJson = "{\"key\":\"value\"}")
+        val impression2 = createUniqueImpression(time = 1000000000L, propertiesJson = "{\"key\":\"value\"}")
+
+        strategy.apply(impression)
+        strategy.apply(impression2)
+
+        verify(impressionsObserver, times(0)).testAndSet(impression)
+    }
 }
