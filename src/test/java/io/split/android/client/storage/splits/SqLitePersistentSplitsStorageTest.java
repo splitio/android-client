@@ -20,7 +20,10 @@ import org.mockito.stubbing.Answer;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.cipher.SplitCipher;
@@ -28,6 +31,7 @@ import io.split.android.client.storage.db.GeneralInfoDao;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitDao;
 import io.split.android.client.storage.db.SplitEntity;
+import io.split.android.client.storage.db.SplitQueryDao;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 
 public class SqLitePersistentSplitsStorageTest {
@@ -44,6 +48,8 @@ public class SqLitePersistentSplitsStorageTest {
     private SplitCipher mCipher;
     private SqLitePersistentSplitsStorage mStorage;
     private AutoCloseable mAutoCloseable;
+    private final Map<String, Set<String>> mFlagSets = new HashMap<>();
+    private final Map<String, Integer> mTrafficTypes = new HashMap<>();
 
     @Before
     public void setUp() {
@@ -70,12 +76,20 @@ public class SqLitePersistentSplitsStorageTest {
     @Test
     public void getAllUsesTransformer() {
         List<SplitEntity> mockEntities = getMockEntities();
+        Map<String, SplitEntity> map = new HashMap<>();
+        for (SplitEntity entity : mockEntities) {
+            map.put(entity.getName(), entity);
+        }
+
         when(mSplitDao.getAll()).thenReturn(mockEntities);
         when(mDatabase.splitDao()).thenReturn(mSplitDao);
+        SplitQueryDao queryDao = mock(SplitQueryDao.class);
+        when(queryDao.getAllAsMap()).thenReturn(map);
+        when(mDatabase.getSplitQueryDao()).thenReturn(queryDao);
 
         mStorage.getAll();
 
-        verify(mEntityToSplitTransformer).transform(mockEntities);
+        verify(mEntityToSplitTransformer).transform(map);
     }
 
     @Test
@@ -129,7 +143,7 @@ public class SqLitePersistentSplitsStorageTest {
         ProcessedSplitChange change = new ProcessedSplitChange(activeSplits, archivedSplits, changeNumber, timestamp);
         when(mCipher.encrypt(any())).thenAnswer((Answer<String>) invocation -> invocation.getArgument(0) + "_encrypted");
 
-        mStorage.update(change);
+        mStorage.update(change, mTrafficTypes, mFlagSets);
 
         verify(mSplitDao).delete(argThat(list -> list.contains("split-1_encrypted") && list.contains("split-2_encrypted") && list.contains("split-3_encrypted") && list.size() == 3));
     }
@@ -153,14 +167,14 @@ public class SqLitePersistentSplitsStorageTest {
         ProcessedSplitChange change = new ProcessedSplitChange(activeSplits, archivedSplits, changeNumber, timestamp);
         when(mCipher.encrypt(any())).thenAnswer((Answer<String>) invocation -> invocation.getArgument(0) + "_encrypted");
 
-        mStorage.update(change);
+        mStorage.update(change, mTrafficTypes, mFlagSets);
 
         verify(mSplitToSplitEntityTransformer).transform(activeSplits);
     }
 
     @Test
     public void updatingNullSplitChangeDoesNotInteractWithDatabase() {
-        mStorage.update((ProcessedSplitChange) null);
+        mStorage.update((ProcessedSplitChange) null, mTrafficTypes, mFlagSets);
 
         verifyNoInteractions(mSplitToSplitEntityTransformer);
         verifyNoInteractions(mCipher);
