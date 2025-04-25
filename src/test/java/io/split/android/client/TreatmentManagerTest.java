@@ -38,7 +38,6 @@ import io.split.android.client.utils.Utils;
 import io.split.android.client.validators.FlagSetsValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
-import io.split.android.client.validators.PropertyValidatorImpl;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
