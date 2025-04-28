@@ -3,6 +3,7 @@ package io.split.android.client.service.rules;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -29,6 +30,11 @@ public class TargetingRulesResponseParserTest {
         assertNotNull(result);
         assertNotNull(result.getFeatureFlagsChange());
         assertEquals("FACUNDO_TEST", result.getFeatureFlagsChange().splits.get(0).name);
+        assertEquals(1506703262916L, result.getFeatureFlagsChange().till);
+        assertEquals(-1, result.getFeatureFlagsChange().since);
+        assertEquals(1506703262920L, result.getRuleBasedSegmentsChange().getSince());
+        assertEquals(1506703263000L, result.getRuleBasedSegmentsChange().getTill());
+        assertEquals("mauro_rule_based_segment", result.getRuleBasedSegmentsChange().getSegments().get(0).getName());
     }
 
     @Test
@@ -38,6 +44,11 @@ public class TargetingRulesResponseParserTest {
         assertNotNull(result);
         assertNotNull(result.getFeatureFlagsChange());
         assertEquals("FACUNDO_TEST", result.getFeatureFlagsChange().splits.get(0).name);
+        assertEquals(1506703262916L, result.getFeatureFlagsChange().till);
+        assertEquals(-1, result.getFeatureFlagsChange().since);
+        assertEquals(-1, result.getRuleBasedSegmentsChange().getSince());
+        assertEquals(-1, result.getRuleBasedSegmentsChange().getTill());
+        assertTrue(result.getRuleBasedSegmentsChange().getSegments().isEmpty());
     }
 
     @Test

@@ -117,12 +117,80 @@
         ]
       }
     ],
-    "since": -1,
-    "till": 1506703262916
+    "s": -1,
+    "t": 1506703262916
   },
   "rbs": {
-    "d": [],
-    "s": -1,
-    "t": 1506703261916
+    "d": [
+      {
+        "changeNumber": 5,
+        "name": "mauro_rule_based_segment",
+        "status": "ACTIVE",
+        "trafficTypeName": "user",
+        "excluded": {
+          "keys": [
+            "mauro@split.io"
+          ],
+          "segments": [
+            "segment_test"
+          ]
+        },
+        "conditions": [
+          {
+            "matcherGroup": {
+              "combiner": "AND",
+              "matchers": [
+                {
+                  "keySelector": {
+                    "trafficType": "user"
+                  },
+                  "matcherType": "WHITELIST",
+                  "negate": false,
+                  "whitelistMatcherData": {
+                    "whitelist": [
+                      "mdp",
+                      "tandil",
+                      "bsas"
+                    ]
+                  }
+                },
+                {
+                  "keySelector": {
+                    "trafficType": "user",
+                    "attribute": "email"
+                  },
+                  "matcherType": "ENDS_WITH",
+                  "negate": false,
+                  "whitelistMatcherData": {
+                    "whitelist": [
+                      "@split.io"
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "matcherGroup": {
+              "combiner": "AND",
+              "matchers": [
+                {
+                  "keySelector": {
+                    "trafficType": "user"
+                  },
+                  "matcherType": "IN_SEGMENT",
+                  "negate": false,
+                  "userDefinedSegmentMatcherData": {
+                    "segmentName": "regular_segment"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    ],
+    "s": 1506703262920,
+    "t": 1506703263000
   }
 }
