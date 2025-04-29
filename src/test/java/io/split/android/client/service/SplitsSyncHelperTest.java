@@ -105,7 +105,7 @@ public class SplitsSyncHelperTest {
         when(mSplitsStorage.getTill()).thenReturn(-1L);
         when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(262325L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
@@ -115,6 +115,10 @@ public class SplitsSyncHelperTest {
         verify(mSplitsStorage, never()).clear();
         verify(mRuleBasedSegmentStorageProducer, never()).clear();
         assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
+    }
+
+    private static SplitsSyncHelper.SinceChangeNumbers getSinceChangeNumbers(int flagsSince, long rbsSince) {
+        return new SplitsSyncHelper.SinceChangeNumbers(flagsSince, rbsSince);
     }
 
     @Test
@@ -130,7 +134,7 @@ public class SplitsSyncHelperTest {
                 .thenReturn(TargetingRulesChange.create(secondSplitChange, RuleBasedSegmentChange.create(262325L, 262325L, Collections.emptyList())));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, headers);
         verify(mSplitsStorage, times(1)).update(any());
@@ -145,7 +149,7 @@ public class SplitsSyncHelperTest {
                 .thenThrow(HttpFetcherException.class);
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, never()).update(any());
@@ -160,7 +164,7 @@ public class SplitsSyncHelperTest {
         doThrow(NullPointerException.class).when(mSplitsStorage).update(any(ProcessedSplitChange.class));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
@@ -178,7 +182,7 @@ public class SplitsSyncHelperTest {
                 .thenReturn(TargetingRulesChange.create(secondSplitChange, RuleBasedSegmentChange.create(262325L, 262325L, Collections.emptyList())));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsFetcher, times(1)).execute(mDefaultParams, null);
         verify(mSplitsStorage, times(1)).update(any());
@@ -194,7 +198,7 @@ public class SplitsSyncHelperTest {
                 .thenThrow(new HttpFetcherException("error", "error", 500));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.SPLITS, 500);
     }
@@ -214,7 +218,7 @@ public class SplitsSyncHelperTest {
         when(mSplitsFetcher.execute(eq(secondParams), any())).thenReturn(secondSplitChange);
         when(mSplitsFetcher.execute(eq(thirdParams), any())).thenReturn(thirdSplitChange);
 
-        mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(3, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(3, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsStorage, times(3)).getTill();
         verify(mSplitsFetcher).execute(eq(firstParams), any());
@@ -232,7 +236,7 @@ public class SplitsSyncHelperTest {
 
         when(mSplitsFetcher.execute(any(), any())).thenReturn(firstSplitChange).thenReturn(secondSplitChange).thenReturn(thirdSplitChange);
 
-        mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(3, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(3, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsStorage, times(3)).getTill();
         verify(mSplitsFetcher, times(3)).execute(any(), any());
@@ -243,7 +247,7 @@ public class SplitsSyncHelperTest {
         when(mSplitsFetcher.execute(mDefaultParams, null)).thenReturn(mTargetingRulesChange);
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
 
-        mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(3, -1), true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(3, -1), true, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsStorage).clear();
     }
@@ -252,7 +256,7 @@ public class SplitsSyncHelperTest {
     public void syncWithoutClearBeforeUpdateDoesNotClearStorage() {
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 4L);
 
-        mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(3, -1), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(3, -1), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsStorage, never()).clear();
     }
@@ -277,7 +281,7 @@ public class SplitsSyncHelperTest {
                 getSplitChange(4, 4)
         );
 
-        mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(4, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(4, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         Map<String, String> headers = new HashMap<>();
         headers.put("Cache-Control", "no-cache");
@@ -313,7 +317,7 @@ public class SplitsSyncHelperTest {
                 getRuleBasedSegmentChange(4, 4)
         );
 
-        mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, 4), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, 4), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         Map<String, String> headers = new HashMap<>();
         headers.put("Cache-Control", "no-cache");
@@ -341,7 +345,7 @@ public class SplitsSyncHelperTest {
                 getSplitChange(4, 4)
         );
 
-        mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(4, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(4, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mBackoffCounter).resetCounter();
         verify(mBackoffCounter, times(2)).getNextRetryTime();
@@ -349,7 +353,7 @@ public class SplitsSyncHelperTest {
 
     @Test
     public void replaceTillWhenFilterHasChanged() throws HttpFetcherException {
-        mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(14829471, -1), true, true, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(14829471, -1), true, true, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         Map<String, Object> params = new HashMap<>();
         params.put("s", "1.1");
@@ -365,7 +369,7 @@ public class SplitsSyncHelperTest {
                 .thenThrow(new HttpFetcherException("error", "error", 414));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         assertEquals(true, result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
     }
@@ -376,7 +380,7 @@ public class SplitsSyncHelperTest {
                 .thenThrow(new HttpFetcherException("error", "error", 500));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         assertNull(result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
     }
@@ -387,7 +391,7 @@ public class SplitsSyncHelperTest {
                 .thenThrow(new HttpFetcherException("error", "error", 9009));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         assertEquals(true, result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
     }
@@ -398,14 +402,14 @@ public class SplitsSyncHelperTest {
                 .thenThrow(new HttpFetcherException("error", "error", 500));
         when(mSplitsStorage.getTill()).thenReturn(-1L);
 
-        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(-1, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         assertNull(result.getBoolValue(SplitTaskExecutionInfo.DO_NOT_RETRY));
     }
 
     @Test
     public void defaultQueryParamOrderIsCorrect() throws HttpFetcherException {
-        mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(100, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(100, -1), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         verify(mSplitsFetcher).execute(argThat(new ArgumentMatcher<Map<String, Object>>() {
             @Override

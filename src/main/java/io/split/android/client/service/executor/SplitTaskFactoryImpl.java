@@ -110,7 +110,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mRuleBasedSegmentChangeProcessor,
                     ruleBasedSegmentStorageProducer,
                     mTelemetryRuntimeProducer,
-                    flagsSpecFromConfig);
+                    flagsSpecFromConfig,
+                    false);
         }
 
         mFilters = (filters == null) ? new ArrayList<>() : new ArrayList<>(filters.values());

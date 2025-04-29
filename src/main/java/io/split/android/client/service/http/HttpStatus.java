@@ -52,7 +52,7 @@ public enum HttpStatus {
         return isNotRetryable(fromCode(code));
     }
 
-    public static boolean isProxyOutdated(Integer code) {
-        return fromCode(code) == HttpStatus.INTERNAL_PROXY_OUTDATED;
+    public static boolean isProxyOutdated(HttpStatus status) {
+        return status == HttpStatus.INTERNAL_PROXY_OUTDATED;
     }
 }

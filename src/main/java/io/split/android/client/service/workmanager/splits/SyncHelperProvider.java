@@ -24,6 +24,7 @@ class SyncHelperProvider {
                 ruleBasedSegmentChangeProcessor,
                 ruleBasedSegmentStorage,
                 telemetryStorage,
-                mFlagsSpec);
+                mFlagsSpec,
+                true);
     }
 }
