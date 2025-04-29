@@ -34,4 +34,8 @@ public interface GeneralInfoStorage {
     long getRolloutCacheLastClearTimestamp();
 
     void setRolloutCacheLastClearTimestamp(long timestamp);
+
+    void setLastProxyUpdateTimestamp(long timestamp);
+
+    long getLastProxyUpdateTimestamp();
 }

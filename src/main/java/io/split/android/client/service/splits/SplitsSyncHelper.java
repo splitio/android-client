@@ -26,6 +26,7 @@ import io.split.android.client.service.rules.ProcessedRuleBasedSegmentChange;
 import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.sseclient.BackoffCounter;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.OperationType;
@@ -53,6 +54,7 @@ public class SplitsSyncHelper {
                             @NonNull SplitChangeProcessor splitChangeProcessor,
                             @NonNull RuleBasedSegmentChangeProcessor ruleBasedSegmentChangeProcessor,
                             @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
+                            @NonNull GeneralInfoStorage generalInfoStorage,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @Nullable String flagsSpec,
                             boolean forBackgroundSync) {
@@ -61,6 +63,7 @@ public class SplitsSyncHelper {
                 splitChangeProcessor,
                 ruleBasedSegmentChangeProcessor,
                 ruleBasedSegmentStorage,
+                generalInfoStorage,
                 telemetryRuntimeProducer,
                 new ReconnectBackoffCounter(1, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT),
                 flagsSpec,
@@ -72,6 +75,7 @@ public class SplitsSyncHelper {
                             @NonNull SplitChangeProcessor splitChangeProcessor,
                             @NonNull RuleBasedSegmentChangeProcessor ruleBasedSegmentChangeProcessor,
                             @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
+                            @NonNull GeneralInfoStorage generalInfoStorage,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @NonNull BackoffCounter backoffCounter,
                             @Nullable String flagsSpec) {
@@ -80,6 +84,7 @@ public class SplitsSyncHelper {
                 splitChangeProcessor,
                 ruleBasedSegmentChangeProcessor,
                 ruleBasedSegmentStorage,
+                generalInfoStorage,
                 telemetryRuntimeProducer,
                 backoffCounter,
                 flagsSpec,
@@ -92,6 +97,7 @@ public class SplitsSyncHelper {
                             @NonNull SplitChangeProcessor splitChangeProcessor,
                             @NonNull RuleBasedSegmentChangeProcessor ruleBasedSegmentChangeProcessor,
                             @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
+                            @NonNull GeneralInfoStorage generalInfoStorage,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @NonNull BackoffCounter backoffCounter,
                             @Nullable String flagsSpec,
@@ -104,7 +110,7 @@ public class SplitsSyncHelper {
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mBackoffCounter = checkNotNull(backoffCounter);
         String mPreviousSpec = "1.2";
-        mOutdatedSplitProxyHandler = new OutdatedSplitProxyHandler(flagsSpec, mPreviousSpec, forBackgroundSync);
+        mOutdatedSplitProxyHandler = new OutdatedSplitProxyHandler(flagsSpec, mPreviousSpec, forBackgroundSync, generalInfoStorage);
     }
 
     public SplitTaskExecutionInfo sync(SinceChangeNumbers till, int onDemandFetchBackoffMaxRetries) {
@@ -117,6 +123,12 @@ public class SplitsSyncHelper {
 
     private SplitTaskExecutionInfo sync(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
         try {
+            OutdatedSplitProxyHandler.ProxyHandlingType proxyHandlingType = mOutdatedSplitProxyHandler.proxyCheck();
+            if (proxyHandlingType == OutdatedSplitProxyHandler.ProxyHandlingType.RECOVERY) {
+                clearBeforeUpdate = true;
+                resetChangeNumber = true;
+            }
+
             CdnByPassType cdnByPassType = attemptSplitSync(till, clearBeforeUpdate, avoidCache, CdnByPassType.NONE, resetChangeNumber, onDemandFetchBackoffMaxRetries);
 
             if (cdnByPassType != CdnByPassType.NONE) {
@@ -154,30 +166,20 @@ public class SplitsSyncHelper {
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 
-    private SplitTaskExecutionInfo handleOutdatedProxy(SinceChangeNumbers till, boolean avoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) throws Exception {
+    private SplitTaskExecutionInfo handleOutdatedProxy(SinceChangeNumbers till, boolean ignoredAvoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) throws Exception {
         OutdatedSplitProxyHandler.ProxyHandlingType handle = mOutdatedSplitProxyHandler.handle();
-        switch (handle) {
-            case FALLBACK: {
-                long flagsSince = till.getFlagsSince();
-                SinceChangeNumbers newTill = new SinceChangeNumbers(flagsSince, null);
-                attemptSplitSync(newTill, false, false, CdnByPassType.NONE, false, onDemandFetchBackoffMaxRetries);
-                break;
-            }
-            case RECOVERY: {
-                SinceChangeNumbers newTill = new SinceChangeNumbers(-1, -1L);
-                attemptSplitSync(newTill, true, false, CdnByPassType.NONE, true, onDemandFetchBackoffMaxRetries);
-                break;
-            }
-        }
+        long flagsSince = till.getFlagsSince();
+        SinceChangeNumbers newTill = new SinceChangeNumbers(flagsSince, null);
+        attemptSplitSync(newTill, false, false, CdnByPassType.NONE, false, onDemandFetchBackoffMaxRetries);
 
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 
     /**
-     * @param targetChangeNumber              target changeNumber
-     * @param clearBeforeUpdate whether to clear splits storage before updating it
-     * @param avoidCache        whether to send no-cache header to api
-     * @param withCdnBypass     whether to add additional query param to bypass CDN
+     * @param targetChangeNumber             target changeNumber
+     * @param clearBeforeUpdate              whether to clear splits storage before updating it
+     * @param avoidCache                     whether to send no-cache header to api
+     * @param withCdnBypass                  whether to add additional query param to bypass CDN
      * @param onDemandFetchBackoffMaxRetries max backoff retries for CDN bypass
      * @return whether sync finished successfully
      */
@@ -245,7 +247,7 @@ public class SplitsSyncHelper {
             params.put(FLAGS_SPEC_PARAM, flagsSpec);
         }
         params.put(SINCE_PARAM, till.getFlagsSince());
-        if (till.getRbsSince() != null) {
+        if (!mOutdatedSplitProxyHandler.isFallbackMode() && till.getRbsSince() != null) {
             params.put(RBS_SINCE_PARAM, till.getRbsSince());
         }
 
