@@ -14,7 +14,7 @@ import io.split.android.client.utils.logger.Logger;
 
 public class OutdatedSplitProxyHandler {
 
-    private static final long PROXY_CHECK_INTERVAL_MILLIS = TimeUnit.SECONDS.toMillis(1);
+    private static final long PROXY_CHECK_INTERVAL_MILLIS = TimeUnit.HOURS.toMillis(1);
 
     private final String mLatestSpec;
     private final String mPreviousSpec;
@@ -46,24 +46,18 @@ public class OutdatedSplitProxyHandler {
         }
 
         if (mCurrentSpec.get().equals(mLatestSpec)) {
+            updateLastProxyCheckTimestamp(System.currentTimeMillis());
             return fallback();
         }
 
         return ProxyHandlingType.NONE;
     }
 
-    @NonNull
-    private ProxyHandlingType fallback() {
-        Logger.i("Switching to previous spec: " + mPreviousSpec);
-
-        updateLastProxyCheckTimestamp(System.currentTimeMillis());
-
-        mCurrentSpec.set(mPreviousSpec);
-
-        return ProxyHandlingType.FALLBACK;
-    }
-
     ProxyHandlingType proxyCheck() {
+        if (mForBackgroundSync) {
+            return ProxyHandlingType.NONE;
+        }
+
         if (mCurrentSpec.get().equals(mLatestSpec)) {
             long lastProxyCheckTimestamp = getLastProxyCheckTimestamp();
             if (lastProxyCheckTimestamp != 0L) {
@@ -73,9 +67,10 @@ public class OutdatedSplitProxyHandler {
                     mCurrentSpec.set(mLatestSpec);
                     updateLastProxyCheckTimestamp(System.currentTimeMillis());
                     return ProxyHandlingType.RECOVERY;
+                } else {
+                    Logger.i("No time passed since last proxy check");
+                    return fallback();
                 }
-            } else {
-                return fallback();
             }
         }
         Logger.v("No need to handle outdated proxy");
@@ -83,7 +78,17 @@ public class OutdatedSplitProxyHandler {
     }
 
     void resetProxyCheckTimestamp() {
+        Logger.i("Resetting proxy check timestamp due to successful recovery");
         updateLastProxyCheckTimestamp(0L);
+    }
+
+    @NonNull
+    private ProxyHandlingType fallback() {
+        Logger.i("Switching to previous spec: " + mPreviousSpec);
+
+        mCurrentSpec.set(mPreviousSpec);
+
+        return ProxyHandlingType.FALLBACK;
     }
 
     private long getLastProxyCheckTimestamp() {

@@ -150,9 +150,9 @@ public class SplitsSyncHelper {
 
             if (HttpStatus.isProxyOutdated(httpStatus)) {
                 try {
-                    return handleOutdatedProxy(till, avoidCache, resetChangeNumber, onDemandFetchBackoffMaxRetries);
+                    mOutdatedSplitProxyHandler.handle();
                 } catch (Exception e1) {
-                    logError("Unexpected while handling outdated proxy" + e1.getLocalizedMessage());
+                    logError("Unexpected while handling outdated proxy " + e1.getLocalizedMessage());
                 }
             }
 
@@ -163,14 +163,15 @@ public class SplitsSyncHelper {
         }
 
         Logger.d("Feature flags have been updated");
+
+//        if (mOutdatedSplitProxyHandler.isNormalMode()) {
+//            mOutdatedSplitProxyHandler.resetProxyCheckTimestamp();
+//        }
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 
     private SplitTaskExecutionInfo handleOutdatedProxy(SinceChangeNumbers till, boolean ignoredAvoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) throws Exception {
-        OutdatedSplitProxyHandler.ProxyHandlingType handle = mOutdatedSplitProxyHandler.handle();
-        long flagsSince = till.getFlagsSince();
-        SinceChangeNumbers newTill = new SinceChangeNumbers(flagsSince, null);
-        attemptSplitSync(newTill, false, false, CdnByPassType.NONE, false, onDemandFetchBackoffMaxRetries);
+
 
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
