@@ -88,9 +88,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     public void close() {
         try {
             Logger.d("Closing streaming connection");
-            if (mConnection != null) {
-                mConnection.disconnect();
-            }
+            disconnect();
         } catch (Exception e) {
             Logger.d("Unknown error closing connection: " + e.getLocalizedMessage());
         } finally {
@@ -119,24 +117,16 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                 response = handleAuthentication(response);
             }
         } catch (MalformedURLException e) {
-            if (mConnection != null) {
-                mConnection.disconnect();
-            }
+            disconnect();
             throw new HttpException("URL is malformed: " + e.getLocalizedMessage());
         } catch (ProtocolException e) {
-            if (mConnection != null) {
-                mConnection.disconnect();
-            }
+            disconnect();
             throw new HttpException("Http method not allowed: " + e.getLocalizedMessage());
         } catch (SSLPeerUnverifiedException e) {
-            if (mConnection != null) {
-                mConnection.disconnect();
-            }
+            disconnect();
             throw new HttpException("SSL peer not verified: " + e.getLocalizedMessage(), HttpStatus.INTERNAL_NON_RETRYABLE.getCode());
         } catch (IOException e) {
-            if (mConnection != null) {
-                mConnection.disconnect();
-            }
+            disconnect();
             throw new HttpException("Something happened while retrieving data: " + e.getLocalizedMessage());
         }
 
@@ -186,5 +176,11 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         }
 
         return new HttpStreamResponseImpl(responseCode);
+    }
+
+    private void disconnect() {
+        if (mConnection != null) {
+            mConnection.disconnect();
+        }
     }
 }

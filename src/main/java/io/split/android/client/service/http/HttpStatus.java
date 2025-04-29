@@ -6,8 +6,10 @@ public enum HttpStatus {
 
     URI_TOO_LONG(414, "URI Too Long"),
     FORBIDDEN(403, "Forbidden"),
+    BAD_REQUEST(400, "Bad request"),
 
-    INTERNAL_NON_RETRYABLE(9009, "Non retryable");
+    INTERNAL_NON_RETRYABLE(9009, "Non retryable"),
+    INTERNAL_PROXY_OUTDATED(9010, "Split Proxy outdated");
 
     private final int mCode;
     private final String mDescription;
@@ -48,5 +50,9 @@ public enum HttpStatus {
 
     public static boolean isNotRetryable(Integer code) {
         return isNotRetryable(fromCode(code));
+    }
+
+    public static boolean isProxyOutdated(Integer code) {
+        return fromCode(code) == HttpStatus.INTERNAL_PROXY_OUTDATED;
     }
 }

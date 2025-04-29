@@ -100,7 +100,7 @@ public class SplitsSyncHelper {
                 attemptSplitSync(till, clearBeforeUpdate, avoidCache, cdnByPassType, resetChangeNumber, onDemandFetchBackoffMaxRetries);
             }
         } catch (HttpFetcherException e) {
-            logError("Network error while fetching feature flags" + e.getLocalizedMessage());
+            logError("Network error while fetching feature flags - " + e.getLocalizedMessage());
             mTelemetryRuntimeProducer.recordSyncError(OperationType.SPLITS, e.getHttpStatus());
 
             HttpStatus httpStatus = HttpStatus.fromCode(e.getHttpStatus());
