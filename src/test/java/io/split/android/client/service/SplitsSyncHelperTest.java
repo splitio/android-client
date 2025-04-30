@@ -2,12 +2,15 @@ package io.split.android.client.service;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -17,7 +20,9 @@ import static org.mockito.Mockito.when;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
@@ -28,6 +33,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.RuleBasedSegmentChange;
@@ -38,6 +44,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
+import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
@@ -84,7 +91,8 @@ public class SplitsSyncHelperTest {
         mDefaultParams = getSinceParams(-1, -1);
         mSecondFetchParams = getSinceParams(1506703262916L, 262325L);
         when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(262325L);
-        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mRuleBasedSegmentChangeProcessor, mRuleBasedSegmentStorageProducer, mGeneralInfoStorage, mTelemetryRuntimeProducer, mBackoffCounter, "1.1");
+        // Use a short proxy check interval for all tests
+        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mRuleBasedSegmentChangeProcessor, mRuleBasedSegmentStorageProducer, mGeneralInfoStorage, mTelemetryRuntimeProducer, mBackoffCounter, "1.3", false, 1L);
         loadSplitChanges();
     }
 
@@ -118,10 +126,6 @@ public class SplitsSyncHelperTest {
         verify(mSplitsStorage, never()).clear();
         verify(mRuleBasedSegmentStorageProducer, never()).clear();
         assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
-    }
-
-    private static SplitsSyncHelper.SinceChangeNumbers getSinceChangeNumbers(int flagsSince, long rbsSince) {
-        return new SplitsSyncHelper.SinceChangeNumbers(flagsSince, rbsSince);
     }
 
     @Test
@@ -359,7 +363,7 @@ public class SplitsSyncHelperTest {
         mSplitsSyncHelper.sync(getSinceChangeNumbers(14829471, -1), true, true, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
         Map<String, Object> params = new HashMap<>();
-        params.put("s", "1.1");
+        params.put("s", "1.3");
         params.put("since", -1L);
         params.put("rbSince", -1L);
         verify(mSplitsFetcher).execute(eq(params), eq(null));
@@ -424,6 +428,134 @@ public class SplitsSyncHelperTest {
         }), any());
     }
 
+    @Test
+    public void proxyErrorTriggersFallbackAndOmitsRbSince() throws Exception {
+        // Before first sync (no fallback)
+        when(mGeneralInfoStorage.getLastProxyUpdateTimestamp()).thenReturn(0L);
+
+        // Simulate proxy outdated error (400 with latest spec)
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenThrow(new HttpFetcherException("Proxy outdated", "Proxy outdated", HttpStatus.INTERNAL_PROXY_OUTDATED.getCode())) // Use real status code
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(-1, 2, Collections.emptyList()), RuleBasedSegmentChange.create(-1, 2, Collections.emptyList())))
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(2, 2, Collections.emptyList()), RuleBasedSegmentChange.create(2, 2, Collections.emptyList())));
+        when(mSplitsStorage.getTill()).thenReturn(-1L, -1L);
+
+        // First sync triggers the proxy error and sets fallback mode
+        try {
+            mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        } catch (Exception ignored) {}
+
+        // Now simulate fallback state persisted
+        when(mGeneralInfoStorage.getLastProxyUpdateTimestamp()).thenReturn(System.currentTimeMillis());
+
+        // Second sync, now in fallback mode, should use fallback spec and omit rbSince
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+
+        // Capture and verify the params
+        ArgumentCaptor<Map> paramsCaptor = ArgumentCaptor.forClass(Map.class);
+        verify(mSplitsFetcher, atLeastOnce()).execute(paramsCaptor.capture(), any());
+        boolean foundFallback = false;
+        for (Map params : paramsCaptor.getAllValues()) {
+            System.out.println("Captured params: " + params);
+
+            if ("1.2".equals(params.get("s")) && params.get("since") != null && !params.containsKey("rbSince")) {
+                foundFallback = true;
+                break;
+            }
+        }
+        assertTrue("Expected a fallback call with s=1.2 and no rbSince", foundFallback);
+    }
+
+    @Test
+    public void fallbackPersistsUntilIntervalElapses() throws Exception {
+        // Simulate proxy outdated error
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenThrow(new HttpFetcherException("Proxy outdated", "Proxy outdated", HttpStatus.INTERNAL_PROXY_OUTDATED.getCode()))
+                // First fallback fetch returns till=2, second fallback fetch returns till=2 (still not caught up),
+                // third fallback fetch returns till=3 (caught up, loop can exit)
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(-1, 2, Collections.emptyList()), RuleBasedSegmentChange.create(-1, 2, Collections.emptyList())))
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(2, 3, Collections.emptyList()), RuleBasedSegmentChange.create(2, 3, Collections.emptyList())));
+        // Simulate advancing change numbers for storage
+        when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 3L);
+        // Trigger fallback
+        try { mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES); } catch (Exception ignored) {}
+        // Simulate time NOT elapsed
+        when(mGeneralInfoStorage.getLastProxyUpdateTimestamp()).thenReturn(System.currentTimeMillis());
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        verify(mSplitsFetcher, times(2)).execute(argThat(params ->
+                "1.2".equals(params.get("s")) &&
+                !params.containsKey("rbSince")
+        ), any());
+    }
+
+    @Test
+    public void recoveryAttemptsWithLatestSpecAfterInterval() throws Exception {
+        // Simulate proxy outdated error
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenThrow(new HttpFetcherException("Proxy outdated", "Proxy outdated", HttpStatus.INTERNAL_PROXY_OUTDATED.getCode()))
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(-1, 2, Collections.emptyList()), RuleBasedSegmentChange.create(-1, 2, Collections.emptyList())))
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(2, 2, Collections.emptyList()), RuleBasedSegmentChange.create(2, 2, Collections.emptyList())));
+        when(mSplitsStorage.getTill()).thenReturn(-1L, -1L, 2L);
+        // Trigger fallback
+        try { mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES); } catch (Exception ignored) {}
+        // Simulate interval elapsed
+        when(mGeneralInfoStorage.getLastProxyUpdateTimestamp()).thenReturn(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        // Should now attempt with latest spec
+        verify(mSplitsFetcher, times(1)).execute(argThat(params ->
+                "1.3".equals(params.get("s")) &&
+                params.containsKey("rbSince")
+        ), any());
+        // Assert that storage is cleared before update during recovery
+        InOrder inOrder = inOrder(mSplitsStorage, mRuleBasedSegmentStorageProducer);
+        inOrder.verify(mSplitsStorage).clear();
+        inOrder.verify(mRuleBasedSegmentStorageProducer).clear();
+        inOrder.verify(mSplitsStorage).update(any());
+        inOrder.verify(mRuleBasedSegmentStorageProducer).update(any(), any(), any());
+    }
+
+    @Test
+    public void generic400InFallbackDoesNotResetToNone() throws Exception {
+        // Simulate proxy outdated error
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenThrow(new HttpFetcherException("Proxy outdated", "Proxy outdated", HttpStatus.INTERNAL_PROXY_OUTDATED.getCode()))
+                .thenThrow(new HttpFetcherException("Bad Request", "Bad Request", 400));
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+        // Trigger fallback
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        // Next call gets a generic 400, should remain in fallback
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        verify(mSplitsFetcher, times(2)).execute(argThat(params ->
+                "1.2".equals(params.get("s")) &&
+                !params.containsKey("rbSince")
+        ), any());
+    }
+
+    @Test
+    public void successfulRecoveryReturnsToNormalSpec() throws Exception {
+        // Simulate proxy outdated error, then recovery
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenThrow(new HttpFetcherException("Proxy outdated", "Proxy outdated", HttpStatus.INTERNAL_PROXY_OUTDATED.getCode()))
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(-1, 2, Collections.emptyList()), RuleBasedSegmentChange.create(-1, 2, Collections.emptyList())))
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(2, 2, Collections.emptyList()), RuleBasedSegmentChange.create(2, 2, Collections.emptyList())));
+        when(mSplitsStorage.getTill()).thenReturn(-1L);
+        // Trigger fallback
+        try { mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES); } catch (Exception ignored) {}
+        // Simulate interval elapsed
+        when(mGeneralInfoStorage.getLastProxyUpdateTimestamp()).thenReturn(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        // Next call should be with latest spec
+        verify(mSplitsFetcher, times(1)).execute(argThat(params ->
+                "1.3".equals(params.get("s")) &&
+                params.containsKey("rbSince")
+        ), any());
+    }
+
+    private static SplitsSyncHelper.SinceChangeNumbers getSinceChangeNumbers(int flagsSince, long rbsSince) {
+        return new SplitsSyncHelper.SinceChangeNumbers(flagsSince, rbsSince);
+    }
+
     private void loadSplitChanges() {
         if (mTargetingRulesChange == null) {
             FileHelper fileHelper = new FileHelper();
@@ -433,7 +565,7 @@ public class SplitsSyncHelperTest {
 
     private Map<String, Object> getSinceParams(long since, long rbSince) {
         Map<String, Object> params = new LinkedHashMap<>();
-        params.put("s", "1.1");
+        params.put("s", "1.3");
         params.put("since", since);
         params.put("rbSince", rbSince);
 
