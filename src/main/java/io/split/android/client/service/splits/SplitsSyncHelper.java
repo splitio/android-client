@@ -39,6 +39,7 @@ public class SplitsSyncHelper {
     private static final String TILL_PARAM = "till";
     private static final String RBS_SINCE_PARAM = "rbSince";
     private static final int ON_DEMAND_FETCH_BACKOFF_MAX_WAIT = ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_WAIT;
+    private static final long DEFAULT_PROXY_CHECK_INTERVAL_MILLIS = TimeUnit.HOURS.toMillis(1);
 
     private final HttpFetcher<TargetingRulesChange> mSplitFetcher;
     private final SplitsStorage mSplitsStorage;
@@ -67,7 +68,8 @@ public class SplitsSyncHelper {
                 telemetryRuntimeProducer,
                 new ReconnectBackoffCounter(1, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT),
                 flagsSpec,
-                forBackgroundSync);
+                forBackgroundSync,
+                DEFAULT_PROXY_CHECK_INTERVAL_MILLIS);
     }
 
     public SplitsSyncHelper(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
@@ -88,7 +90,8 @@ public class SplitsSyncHelper {
                 telemetryRuntimeProducer,
                 backoffCounter,
                 flagsSpec,
-                false);
+                false,
+                DEFAULT_PROXY_CHECK_INTERVAL_MILLIS);
     }
 
     @VisibleForTesting
@@ -101,7 +104,8 @@ public class SplitsSyncHelper {
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @NonNull BackoffCounter backoffCounter,
                             @Nullable String flagsSpec,
-                            boolean forBackgroundSync) {
+                            boolean forBackgroundSync,
+                            long proxyCheckIntervalMillis) {
         mSplitFetcher = checkNotNull(splitFetcher);
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
@@ -110,7 +114,7 @@ public class SplitsSyncHelper {
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mBackoffCounter = checkNotNull(backoffCounter);
         String mPreviousSpec = "1.2";
-        mOutdatedSplitProxyHandler = new OutdatedSplitProxyHandler(flagsSpec, mPreviousSpec, forBackgroundSync, generalInfoStorage);
+        mOutdatedSplitProxyHandler = new OutdatedSplitProxyHandler(flagsSpec, mPreviousSpec, forBackgroundSync, generalInfoStorage, proxyCheckIntervalMillis);
     }
 
     public SplitTaskExecutionInfo sync(SinceChangeNumbers till, int onDemandFetchBackoffMaxRetries) {
