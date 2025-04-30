@@ -42,6 +42,7 @@ import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.sseclient.BackoffCounter;
+import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageImplTest;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
@@ -67,6 +68,8 @@ public class SplitsSyncHelperTest {
     private BackoffCounter mBackoffCounter;
     @Mock
     private RuleBasedSegmentStorageProducer mRuleBasedSegmentStorageProducer;
+    @Mock
+    private GeneralInfoStorage mGeneralInfoStorage;
 
     private SplitsSyncHelper mSplitsSyncHelper;
 
@@ -81,7 +84,7 @@ public class SplitsSyncHelperTest {
         mDefaultParams = getSinceParams(-1, -1);
         mSecondFetchParams = getSinceParams(1506703262916L, 262325L);
         when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(262325L);
-        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mRuleBasedSegmentChangeProcessor, mRuleBasedSegmentStorageProducer, mTelemetryRuntimeProducer, mBackoffCounter, "1.1");
+        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mRuleBasedSegmentChangeProcessor, mRuleBasedSegmentStorageProducer, mGeneralInfoStorage, mTelemetryRuntimeProducer, mBackoffCounter, "1.1");
         loadSplitChanges();
     }
 

@@ -123,8 +123,8 @@ public class SplitsSyncHelper {
 
     private SplitTaskExecutionInfo sync(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
         try {
-            OutdatedSplitProxyHandler.ProxyHandlingType proxyHandlingType = mOutdatedSplitProxyHandler.proxyCheck();
-            if (proxyHandlingType == OutdatedSplitProxyHandler.ProxyHandlingType.RECOVERY) {
+            mOutdatedSplitProxyHandler.performProxyCheck();
+            if (mOutdatedSplitProxyHandler.isRecoveryMode()) {
                 clearBeforeUpdate = true;
                 resetChangeNumber = true;
             }
@@ -150,7 +150,7 @@ public class SplitsSyncHelper {
 
             if (HttpStatus.isProxyOutdated(httpStatus)) {
                 try {
-                    mOutdatedSplitProxyHandler.handle();
+                    mOutdatedSplitProxyHandler.trackProxyError();
                 } catch (Exception e1) {
                     logError("Unexpected while handling outdated proxy " + e1.getLocalizedMessage());
                 }
@@ -164,9 +164,10 @@ public class SplitsSyncHelper {
 
         Logger.d("Feature flags have been updated");
 
-//        if (mOutdatedSplitProxyHandler.isNormalMode()) {
-//            mOutdatedSplitProxyHandler.resetProxyCheckTimestamp();
-//        }
+        if (mOutdatedSplitProxyHandler.isRecoveryMode()) {
+            Logger.i("Resetting proxy check timestamp due to successful recovery");
+            mOutdatedSplitProxyHandler.resetProxyCheckTimestamp();
+        }
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 
