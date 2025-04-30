@@ -17,7 +17,6 @@ public class OutdatedSplitProxyHandler {
 
     private final String mLatestSpec;
     private final String mPreviousSpec;
-    private final AtomicReference<String> mCurrentSpec;
     private final boolean mForBackgroundSync;
     private final long mProxyCheckIntervalMillis;
 
@@ -33,7 +32,6 @@ public class OutdatedSplitProxyHandler {
     OutdatedSplitProxyHandler(String flagSpec, String previousSpec, boolean forBackgroundSync, GeneralInfoStorage generalInfoStorage, long proxyCheckIntervalMillis) {
         mLatestSpec = flagSpec;
         mPreviousSpec = previousSpec;
-        mCurrentSpec = new AtomicReference<>(flagSpec);
         mForBackgroundSync = forBackgroundSync;
         mProxyCheckIntervalMillis = proxyCheckIntervalMillis;
         mGeneralInfoStorage = checkNotNull(generalInfoStorage);
@@ -42,11 +40,11 @@ public class OutdatedSplitProxyHandler {
     void trackProxyError() {
         if (mForBackgroundSync) {
             Logger.i("Background sync fetch; skipping proxy handling");
+            updateHandlingType(ProxyHandlingType.NONE);
         } else {
             updateLastProxyCheckTimestamp(System.currentTimeMillis());
+            updateHandlingType(ProxyHandlingType.FALLBACK);
         }
-
-        updateHandlingType(ProxyHandlingType.NONE);
     }
 
     void performProxyCheck() {
@@ -58,19 +56,12 @@ public class OutdatedSplitProxyHandler {
 
         if (lastProxyCheckTimestamp == 0L) {
             Logger.v("Never checked proxy; continuing with latest spec");
-            mCurrentSpec.set(mLatestSpec);
             updateHandlingType(ProxyHandlingType.NONE);
         } else if (System.currentTimeMillis() - lastProxyCheckTimestamp > mProxyCheckIntervalMillis) {
             Logger.i("Time since last check elapsed. Attempting recovery with latest spec: " + mLatestSpec);
-            mCurrentSpec.set(mLatestSpec);
             updateHandlingType(ProxyHandlingType.RECOVERY);
         } else {
-            Logger.v("Have used proxy fallback mode; time since last check has not elapsed");
-            if (mCurrentSpec.compareAndSet(mLatestSpec, mPreviousSpec)) {
-                Logger.i("Switching to previous spec: " + mPreviousSpec);
-            } else {
-                Logger.v("Still in proxy fallback mode");
-            }
+            Logger.v("Have used proxy fallback mode; time since last check has not elapsed. Using previous spec");
             updateHandlingType(ProxyHandlingType.FALLBACK);
         }
     }
@@ -84,7 +75,11 @@ public class OutdatedSplitProxyHandler {
     }
 
     String getCurrentSpec() {
-        return mCurrentSpec.get();
+        if (mCurrentProxyHandlingType.get() == ProxyHandlingType.FALLBACK) {
+            return mPreviousSpec;
+        }
+
+        return mLatestSpec;
     }
 
     boolean isFallbackMode() {
@@ -105,7 +100,7 @@ public class OutdatedSplitProxyHandler {
         mGeneralInfoStorage.setLastProxyUpdateTimestamp(newTimestamp);
     }
 
-    enum ProxyHandlingType {
+    private enum ProxyHandlingType {
         // no action
         NONE,
         // switch to previous spec
