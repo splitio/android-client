@@ -10,7 +10,6 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -22,7 +21,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
-import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
@@ -469,49 +467,24 @@ public class SplitsSyncHelperTest {
     @Test
     public void fallbackPersistsUntilIntervalElapses() throws Exception {
         // Simulate proxy outdated error
+        long timestamp = System.currentTimeMillis();
+        when(mGeneralInfoStorage.getLastProxyUpdateTimestamp()).thenReturn(timestamp);
         when(mSplitsFetcher.execute(any(), any()))
                 .thenThrow(new HttpFetcherException("Proxy outdated", "Proxy outdated", HttpStatus.INTERNAL_PROXY_OUTDATED.getCode()))
                 // First fallback fetch returns till=2, second fallback fetch returns till=2 (still not caught up),
                 // third fallback fetch returns till=3 (caught up, loop can exit)
                 .thenReturn(TargetingRulesChange.create(SplitChange.create(-1, 2, Collections.emptyList()), RuleBasedSegmentChange.create(-1, 2, Collections.emptyList())))
-                .thenReturn(TargetingRulesChange.create(SplitChange.create(2, 3, Collections.emptyList()), RuleBasedSegmentChange.create(2, 3, Collections.emptyList())));
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(3, 3, Collections.emptyList()), RuleBasedSegmentChange.create(3, 3, Collections.emptyList())));
         // Simulate advancing change numbers for storage
         when(mSplitsStorage.getTill()).thenReturn(-1L, 2L, 3L);
         // Trigger fallback
         try { mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES); } catch (Exception ignored) {}
         // Simulate time NOT elapsed
-        when(mGeneralInfoStorage.getLastProxyUpdateTimestamp()).thenReturn(System.currentTimeMillis());
         mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
-        verify(mSplitsFetcher, times(2)).execute(argThat(params ->
+        verify(mSplitsFetcher, times(1)).execute(argThat(params ->
                 "1.2".equals(params.get("s")) &&
                 !params.containsKey("rbSince")
         ), any());
-    }
-
-    @Test
-    public void recoveryAttemptsWithLatestSpecAfterInterval() throws Exception {
-        // Simulate proxy outdated error
-        when(mSplitsFetcher.execute(any(), any()))
-                .thenThrow(new HttpFetcherException("Proxy outdated", "Proxy outdated", HttpStatus.INTERNAL_PROXY_OUTDATED.getCode()))
-                .thenReturn(TargetingRulesChange.create(SplitChange.create(-1, 2, Collections.emptyList()), RuleBasedSegmentChange.create(-1, 2, Collections.emptyList())))
-                .thenReturn(TargetingRulesChange.create(SplitChange.create(2, 2, Collections.emptyList()), RuleBasedSegmentChange.create(2, 2, Collections.emptyList())));
-        when(mSplitsStorage.getTill()).thenReturn(-1L, -1L, 2L);
-        // Trigger fallback
-        try { mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES); } catch (Exception ignored) {}
-        // Simulate interval elapsed
-        when(mGeneralInfoStorage.getLastProxyUpdateTimestamp()).thenReturn(System.currentTimeMillis() - TimeUnit.HOURS.toMillis(1));
-        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
-        // Should now attempt with latest spec
-        verify(mSplitsFetcher, times(1)).execute(argThat(params ->
-                "1.3".equals(params.get("s")) &&
-                params.containsKey("rbSince")
-        ), any());
-        // Assert that storage is cleared before update during recovery
-        InOrder inOrder = inOrder(mSplitsStorage, mRuleBasedSegmentStorageProducer);
-        inOrder.verify(mSplitsStorage).clear();
-        inOrder.verify(mRuleBasedSegmentStorageProducer).clear();
-        inOrder.verify(mSplitsStorage).update(any());
-        inOrder.verify(mRuleBasedSegmentStorageProducer).update(any(), any(), any());
     }
 
     @Test

@@ -11,7 +11,7 @@ import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.utils.logger.Logger;
 
 /**
- * Handles proxy spec fallback and recovery for Split SDK.
+ * Handles proxy spec fallback and recovery.
  *
  * <p>This class manages the state machine that determines which spec version (latest or legacy) should be used
  * to communicate with the Split Proxy, based on observed proxy compatibility errors.
@@ -34,15 +34,10 @@ import io.split.android.client.utils.logger.Logger;
  * </ul>
  * <p>Only an explicit proxy outdated error triggers fallback. Generic 400s do not.</p>
  *
- * <p>This class provides the following functionality:</p>
- * <ul>
- *   <li>Tracks proxy errors and updates the state machine accordingly.</li>
- *   <li>Performs periodic proxy checks to attempt recovery.</li>
- *   <li>Provides the current spec version based on the state machine.</li>
- *   <li>Indicates whether the SDK is in fallback or recovery mode.</li>
- * </ul>
  */
 public class OutdatedSplitProxyHandler {
+
+    private static final String PREVIOUS_SPEC = "1.2";
 
     private final String mLatestSpec;
     private final String mPreviousSpec;
@@ -52,6 +47,10 @@ public class OutdatedSplitProxyHandler {
     private final AtomicLong mLastProxyCheckTimestamp = new AtomicLong(0L);
     private final GeneralInfoStorage mGeneralInfoStorage;
     private final AtomicReference<ProxyHandlingType> mCurrentProxyHandlingType = new AtomicReference<>(ProxyHandlingType.NONE);
+
+    OutdatedSplitProxyHandler(String flagSpec, boolean forBackgroundSync, GeneralInfoStorage generalInfoStorage, long proxyCheckIntervalMillis) {
+        this(flagSpec, PREVIOUS_SPEC, forBackgroundSync, generalInfoStorage, proxyCheckIntervalMillis);
+    }
 
     /**
      * Constructs an OutdatedSplitProxyHandler instance with a custom proxy check interval.

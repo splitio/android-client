@@ -113,8 +113,7 @@ public class SplitsSyncHelper {
         mRuleBasedSegmentStorage = checkNotNull(ruleBasedSegmentStorage);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mBackoffCounter = checkNotNull(backoffCounter);
-        String mPreviousSpec = "1.2";
-        mOutdatedSplitProxyHandler = new OutdatedSplitProxyHandler(flagsSpec, mPreviousSpec, forBackgroundSync, generalInfoStorage, proxyCheckIntervalMillis);
+        mOutdatedSplitProxyHandler = new OutdatedSplitProxyHandler(flagsSpec, forBackgroundSync, generalInfoStorage, proxyCheckIntervalMillis);
     }
 
     public SplitTaskExecutionInfo sync(SinceChangeNumbers till, int onDemandFetchBackoffMaxRetries) {
