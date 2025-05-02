@@ -79,14 +79,15 @@ public class ApplyCipherTask implements SplitTask {
         }
 
         for (RuleBasedSegmentEntity item : items) {
-            String fromName = mFromCipher.decrypt(item.getName());
+            String name = item.getName();
+            String fromName = mFromCipher.decrypt(name);
             String fromBody = mFromCipher.decrypt(item.getBody());
 
             String toName = mToCipher.encrypt(fromName);
             String toBody = mToCipher.encrypt(fromBody);
 
             if (toName != null && toBody != null) {
-                ruleBasedSegmentDao.update(fromName, toName, toBody);
+                ruleBasedSegmentDao.update(name, toName, toBody);
             }
         }
     }
