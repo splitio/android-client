@@ -54,7 +54,7 @@ public class ApplyCipherTask implements SplitTask {
                 @Override
                 public void run() {
                     updateAttributes(mSplitDatabase.attributesDao());
-                    updateSplits(mSplitDatabase.splitDao(), mSplitDatabase.generalInfoDao());
+                    updateSplits(mSplitDatabase, mSplitDatabase.generalInfoDao());
                     updateSegments(mSplitDatabase.mySegmentDao());
                     updateLargeSegments(mSplitDatabase.myLargeSegmentDao());
                     updateImpressions(mSplitDatabase.impressionDao());
@@ -88,6 +88,8 @@ public class ApplyCipherTask implements SplitTask {
 
             if (toName != null && toBody != null) {
                 ruleBasedSegmentDao.update(name, toName, toBody);
+            } else {
+                Logger.e("Error applying cipher to rule based segment storage");
             }
         }
     }
@@ -120,7 +122,7 @@ public class ApplyCipherTask implements SplitTask {
             String toUserKey = mToCipher.encrypt(fromUserKey);
             String toFeatureList = mToCipher.encrypt(fromFeatureList);
 
-            if (toFeatureList != null) {
+            if (toUserKey != null && toFeatureList != null) {
                 item.setUserKey(toUserKey);
                 item.setFeatureList(toFeatureList);
                 uniqueKeysDao.insert(item);
@@ -213,9 +215,10 @@ public class ApplyCipherTask implements SplitTask {
         }
     }
 
-    private void updateSplits(SplitDao dao, GeneralInfoDao generalInfoDao) {
+    private void updateSplits(SplitRoomDatabase splitDatabase, GeneralInfoDao generalInfoDao) {
+        SplitDao dao = splitDatabase.splitDao();
         List<SplitEntity> items = dao.getAll();
-
+        splitDatabase.getSplitQueryDao().invalidate();
         for (SplitEntity item : items) {
             String name = item.getName();
             String fromName = mFromCipher.decrypt(name);

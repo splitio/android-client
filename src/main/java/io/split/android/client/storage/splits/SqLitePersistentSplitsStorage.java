@@ -85,12 +85,14 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                     mDatabase.splitDao().delete(removedSplits);
                 }
                 if (!mTrafficTypes.isEmpty()) {
+                    String encryptedTrafficTypes = mCipher.encrypt(Json.toJson(mTrafficTypes));
                     mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP,
-                            Json.toJson(mTrafficTypes)));
+                            encryptedTrafficTypes));
                 }
                 if (!mFlagSets.isEmpty()) {
+                    String encryptedFlagSets = mCipher.encrypt(Json.toJson(mFlagSets));
                     mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP,
-                            Json.toJson(mFlagSets)));
+                            encryptedFlagSets));
                 }
                 mDatabase.generalInfoDao().update(
                         new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, splitChange.getUpdateTimestamp()));
@@ -178,10 +180,8 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     private List<Split> loadSplits() {
         Map<String, SplitEntity> allNamesAndBodies = mDatabase.getSplitQueryDao().getAllAsMap();
-        long transformStartTime = System.currentTimeMillis();
-        List<Split> splits = mEntityToSplitTransformer.transform(allNamesAndBodies);
 
-        return splits;
+        return mEntityToSplitTransformer.transform(allNamesAndBodies);
     }
 
     private List<SplitEntity> convertSplitListToEntities(List<Split> splits) {
@@ -278,12 +278,14 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             try {
                 for (Split split : mSplits) {
                     Split parsedSplit = Json.fromJson(split.json, Split.class);
-                    if (parsedSplit != null && parsedSplit.status == Status.ACTIVE) {
-                        increaseTrafficTypeCount(parsedSplit.trafficTypeName, mTrafficTypes);
-                        addOrUpdateFlagSets(parsedSplit, mFlagSets);
-                    } else {
-                        decreaseTrafficTypeCount(parsedSplit.trafficTypeName, mTrafficTypes);
-                        deleteFromFlagSetsIfNecessary(parsedSplit, mFlagSets);
+                    if (parsedSplit != null) {
+                        if (parsedSplit.status == Status.ACTIVE) {
+                            increaseTrafficTypeCount(parsedSplit.trafficTypeName, mTrafficTypes);
+                            addOrUpdateFlagSets(parsedSplit, mFlagSets);
+                        } else {
+                            decreaseTrafficTypeCount(parsedSplit.trafficTypeName, mTrafficTypes);
+                            deleteFromFlagSetsIfNecessary(parsedSplit, mFlagSets);
+                        }
                     }
                 }
 

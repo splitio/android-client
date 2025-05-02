@@ -15,8 +15,9 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
     private final SplitRoomDatabase mDatabase;
     private volatile Map<String, SplitEntity> mCachedSplitsMap;
     private final Object mLock = new Object();
-    private boolean mIsInitialized = false;
     private final Thread mInitializationThread;
+    private boolean mIsInitialized = false;
+    private boolean mIsInvalidated = false;
 
     public SplitQueryDaoImpl(SplitRoomDatabase mDatabase) {
         this.mDatabase = mDatabase;
@@ -27,7 +28,6 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
             } catch (Exception ignore) {
                 // Ignore
             }
-            long startTime = System.currentTimeMillis();
 
             Map<String, SplitEntity> result = loadSplitsMap();
             
@@ -51,13 +51,13 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
 
     public Map<String, SplitEntity> getAllAsMap() {
         // Fast path - if the map is already initialized, return it immediately
-        if (mIsInitialized && !mCachedSplitsMap.isEmpty()) {
+        if (isValid() && !mCachedSplitsMap.isEmpty()) {
             return new HashMap<>(mCachedSplitsMap);
         }
         
         // Wait for initialization to complete if it's in progress
         synchronized (mLock) {
-            if (mIsInitialized && !mCachedSplitsMap.isEmpty()) {
+            if (isValid() && !mCachedSplitsMap.isEmpty()) {
                 return new HashMap<>(mCachedSplitsMap);
             }
             
@@ -66,7 +66,7 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
                 try {
                     mLock.wait(5000); // Wait up to 5 seconds
                     
-                    if (mIsInitialized) {
+                    if (isValid()) {
                         return new HashMap<>(mCachedSplitsMap);
                     }
                 } catch (InterruptedException e) {
@@ -83,6 +83,20 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
             mIsInitialized = true;
             
             return new HashMap<>(result);
+        }
+    }
+
+    private boolean isValid() {
+        return mIsInitialized && !mIsInvalidated;
+    }
+
+    @Override
+    public void invalidate() {
+        synchronized (mLock) {
+            mCachedSplitsMap.clear();
+            mIsInvalidated = true;
+            mLock.notifyAll();
+            Logger.i("Invalidated preloaded flags");
         }
     }
     
