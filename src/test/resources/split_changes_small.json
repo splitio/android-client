@@ -132,7 +132,22 @@
             "mauro@split.io"
           ],
           "segments": [
-            "segment_test"
+            {
+              "name": "segment_test",
+              "type": "standard"
+            },
+            {
+              "name": "segment_test2",
+              "type": "large"
+            },
+            {
+              "name": "segment_test3",
+              "type": "rule-based"
+            },
+            {
+              "name": "segment_test4",
+              "type": "unsupported"
+            }
           ]
         },
         "conditions": [

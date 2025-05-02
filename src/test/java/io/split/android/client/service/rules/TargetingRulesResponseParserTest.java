@@ -8,6 +8,10 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Set;
+
+import io.split.android.client.dtos.Excluded;
+import io.split.android.client.dtos.ExcludedSegment;
 import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.service.http.HttpResponseParserException;
 import io.split.android.helpers.FileHelper;
@@ -35,6 +39,14 @@ public class TargetingRulesResponseParserTest {
         assertEquals(1506703262920L, result.getRuleBasedSegmentsChange().getSince());
         assertEquals(1506703263000L, result.getRuleBasedSegmentsChange().getTill());
         assertEquals("mauro_rule_based_segment", result.getRuleBasedSegmentsChange().getSegments().get(0).getName());
+        Excluded excluded = result.getRuleBasedSegmentsChange().getSegments().get(0).getExcluded();
+        assertEquals(1, excluded.getKeys().size());
+        Set<ExcludedSegment> excludedSegments = excluded.getSegments();
+        assertEquals(4, excludedSegments.size());
+        // check that it contains 4 excluded segments: standard, large, rule-based and unsupported
+        assertTrue(excludedSegments.contains(ExcludedSegment.standard("segment_test")));
+        assertTrue(excludedSegments.contains(ExcludedSegment.large("segment_test2")));
+        assertTrue(excludedSegments.contains(ExcludedSegment.ruleBased("segment_test3")));
     }
 
     @Test

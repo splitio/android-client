@@ -20,6 +20,7 @@ import java.util.Set;
 
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.Excluded;
+import io.split.android.client.dtos.ExcludedSegment;
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.Status;
 
@@ -46,7 +47,7 @@ public class RuleBasedSegmentParserTest {
         parsedConditions.add(mock(ParsedCondition.class));
 
         Set<String> excludedKeys = new HashSet<>(Arrays.asList("excluded1", "excluded2"));
-        Set<String> excludedSegments = new HashSet<>(Arrays.asList("segment1", "segment2"));
+        Set<ExcludedSegment> excludedSegments = new HashSet<>(Arrays.asList(ExcludedSegment.standard("segment1"), ExcludedSegment.standard("segment2")));
 
         Excluded excluded = mock(Excluded.class);
         when(excluded.getKeys()).thenReturn(excludedKeys);
