@@ -344,12 +344,20 @@ public class IntegrationHelper {
     }
 
     public static String loadSplitChanges(Context context, String fileName) {
-        FileHelper fileHelper = new FileHelper();
-        String change = fileHelper.loadFileContent(context, fileName);
+        String change = getFileContentsAsString(context, fileName);
         TargetingRulesChange targetingRulesChange = Json.fromJson(change, TargetingRulesChange.class);
         SplitChange parsedChange = targetingRulesChange.getFeatureFlagsChange();
         parsedChange.since = parsedChange.till;
         return Json.toJson(TargetingRulesChange.create(parsedChange, targetingRulesChange.getRuleBasedSegmentsChange()));
+    }
+
+    public static String loadLegacySplitChanges(Context context, String fileName) {
+        return getFileContentsAsString(context, fileName);
+    }
+
+    private static String getFileContentsAsString(Context context, String fileName) {
+        FileHelper fileHelper = new FileHelper();
+        return fileHelper.loadFileContent(context, fileName);
     }
 
     /**
@@ -437,6 +445,14 @@ public class IntegrationHelper {
     public static String getRbSinceFromUri(URI uri) {
         try {
             return parse(uri.getQuery()).get("rbSince");
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public static String getSpecFromUri(URI uri) {
+        try {
+            return parse(uri.getQuery()).get("s");
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }

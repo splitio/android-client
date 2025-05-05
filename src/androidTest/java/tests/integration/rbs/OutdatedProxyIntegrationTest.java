@@ -1,11 +1,17 @@
-package tests.integration.largesegments;
+package tests.integration.rbs;
+
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.fail;
+import static helper.IntegrationHelper.emptyTargetingRulesChanges;
+import static helper.IntegrationHelper.getSinceFromUri;
+import static helper.IntegrationHelper.getSpecFromUri;
 
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Map;
@@ -16,35 +22,32 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.TestableSplitConfigBuilder;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.dtos.SplitChange;
-import io.split.android.client.dtos.TargetingRulesChange;
+import io.split.android.client.TestingConfig;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Json;
+import io.split.android.client.utils.logger.Logger;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
 import tests.integration.shared.TestingHelper;
 
-public class LargeSegmentTestHelper {
+public class OutdatedProxyIntegrationTest {
 
-    protected final FileHelper mFileHelper = new FileHelper();
-    protected final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
+    private final Context mContext = InstrumentationRegistry.getInstrumentation().getContext();
 
-    protected MockWebServer mWebServer;
-    protected Map<String, AtomicInteger> mEndpointHits;
-    protected Map<String, CountDownLatch> mLatches;
-    protected final AtomicLong mMySegmentsDelay = new AtomicLong(0L);
-    protected final AtomicBoolean mRandomizeMyLargeSegments = new AtomicBoolean(false);
-    protected final AtomicBoolean mEmptyMyLargeSegments = new AtomicBoolean(false);
-    protected final AtomicBoolean mBrokenApi = new AtomicBoolean(false);
+    private MockWebServer mWebServer;
+    private Map<String, AtomicInteger> mEndpointHits;
+    private Map<String, CountDownLatch> mLatches;
+    private final AtomicLong mMySegmentsDelay = new AtomicLong(0L);
+    private final AtomicBoolean mRandomizeMyLargeSegments = new AtomicBoolean(false);
+    private final AtomicBoolean mEmptyMyLargeSegments = new AtomicBoolean(false);
+    private final AtomicBoolean mOutdatedProxy = new AtomicBoolean(false);
 
     @Before
     public void setUp() throws IOException {
@@ -52,7 +55,7 @@ public class LargeSegmentTestHelper {
         mMySegmentsDelay.set(0L);
         mRandomizeMyLargeSegments.set(false);
         mEmptyMyLargeSegments.set(false);
-        mBrokenApi.set(false);
+        mOutdatedProxy.set(false);
         initializeLatches();
 
         mWebServer = new MockWebServer();
@@ -61,23 +64,26 @@ public class LargeSegmentTestHelper {
             public MockResponse dispatch(RecordedRequest request) throws InterruptedException {
                 System.out.println("Receiving request to " + request.getRequestUrl().toString());
 
-                if (mBrokenApi.get()) {
-                    return new MockResponse().setResponseCode(500);
-                }
-
                 if (request.getRequestUrl().encodedPathSegments().contains(IntegrationHelper.ServicePath.SPLIT_CHANGES)) {
                     updateEndpointHit(IntegrationHelper.ServicePath.SPLIT_CHANGES);
-                    return new MockResponse().setResponseCode(200).setBody(splitChangesLargeSegments(1602796638344L, 1602796638344L));
+                    Logger.i("TEST: uri is " + request.getRequestUrl().uri());
+                    float specFromUri = Float.parseFloat(getSpecFromUri(request.getRequestUrl().uri()));
+                    if (mOutdatedProxy.get() && specFromUri > 1.2f) {
+                        Logger.i("TEST: Spec from uri is greater than 1.2");
+                        return new MockResponse().setResponseCode(400);
+                    } else if (mOutdatedProxy.get()) {
+                            String body = (getSinceFromUri(request.getRequestUrl().uri()).equals("-1")) ?
+                                    IntegrationHelper.loadLegacySplitChanges(mContext, "split_changes_legacy.json") :
+                                    emptyTargetingRulesChanges(1506703262916L, -1L);
+                        return new MockResponse().setResponseCode(200)
+                                .setBody(body);
+                    }
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.loadSplitChanges(mContext, "split_changes_rbs.json"));
                 } else if (request.getRequestUrl().encodedPathSegments().contains(IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Thread.sleep(mMySegmentsDelay.get());
                     updateEndpointHit(IntegrationHelper.ServicePath.MEMBERSHIPS);
 
-                    String body = (mEmptyMyLargeSegments.get()) ? IntegrationHelper.emptyAllSegments() : IntegrationHelper.dummyAllSegments();
-                    if (mRandomizeMyLargeSegments.get()) {
-                        body = IntegrationHelper.randomizedAllSegments();
-                    }
-
-                    return new MockResponse().setResponseCode(200).setBody(body);
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.emptyAllSegments());
                 } else {
                     return new MockResponse().setResponseCode(404);
                 }
@@ -86,9 +92,12 @@ public class LargeSegmentTestHelper {
         mWebServer.start();
     }
 
-    @After
-    public void tearDown() throws IOException {
-        mWebServer.close();
+    @Test
+    public void test() {
+        mOutdatedProxy.set(true);
+        SplitClient readyClient = getReadyClient(IntegrationHelper.dummyUserKey().matchingKey(), getFactory());
+
+        assertNotNull(readyClient);
     }
 
     private void initializeLatches() {
@@ -110,52 +119,45 @@ public class LargeSegmentTestHelper {
     }
 
     protected SplitFactory getFactory() {
-        return getFactory(null, 2500, null);
+        return getFactory(10000, null);
     }
 
-    protected SplitFactory getFactory(Integer segmentsRefreshRate,
-                                      Integer ready, SplitRoomDatabase database) {
+    protected SplitFactory getFactory(Integer ready, SplitRoomDatabase database) {
         TestableSplitConfigBuilder configBuilder = new TestableSplitConfigBuilder()
                 .enableDebug()
                 .serviceEndpoints(ServiceEndpoints.builder()
                         .apiEndpoint("http://" + mWebServer.getHostName() + ":" + mWebServer.getPort())
                         .build());
 
-        if (segmentsRefreshRate != null) {
             configBuilder.streamingEnabled(false);
-            configBuilder.segmentsRefreshRate(segmentsRefreshRate);
-        }
         if (ready != null) {
             configBuilder.ready(ready);
         }
+        TestingConfig testingConfig = new TestingConfig();
+        testingConfig.setFlagsSpec("1.3");
         return IntegrationHelper.buildFactory(
                 IntegrationHelper.dummyApiKey(),
                 IntegrationHelper.dummyUserKey(),
                 configBuilder.build(),
                 mContext,
-                null, database, null, null, null);
+                null, database, null, testingConfig, null);
     }
 
     protected SplitClient getReadyClient(String matchingKey, SplitFactory factory) {
         CountDownLatch countDownLatch = new CountDownLatch(1);
 
         SplitClient client = factory.client(matchingKey);
+        boolean await;
         client.on(SplitEvent.SDK_READY, TestingHelper.testTask(countDownLatch));
         try {
-            countDownLatch.await(5, TimeUnit.SECONDS);
+            await = countDownLatch.await(10, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
+        if (!await) {
+            fail("Client is not ready");
+        }
 
         return client;
-    }
-
-    private String splitChangesLargeSegments(long since, long till) {
-        String change = mFileHelper.loadFileContent(mContext, "split_changes_large_segments-0.json");
-        SplitChange parsedChange = IntegrationHelper.getChangeFromJsonString(change);
-        parsedChange.since = since;
-        parsedChange.till = till;
-
-        return Json.toJson(TargetingRulesChange.create(parsedChange));
     }
 }
