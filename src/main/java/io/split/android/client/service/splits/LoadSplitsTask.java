@@ -1,5 +1,7 @@
 package io.split.android.client.service.splits;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -8,8 +10,6 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.logger.Logger;
-
-import static io.split.android.client.utils.Utils.checkNotNull;
 
 /**
  * This task is responsible for loading the feature flags, saved filter & saved flags spec values
