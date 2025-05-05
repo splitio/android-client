@@ -45,6 +45,8 @@ public class SqLitePersistentSplitsStorageTest {
     @Mock
     private SplitDao mSplitDao;
     @Mock
+    private SplitQueryDao mSplitQueryDao;
+    @Mock
     private SplitCipher mCipher;
     private SqLitePersistentSplitsStorage mStorage;
     private AutoCloseable mAutoCloseable;
@@ -56,6 +58,7 @@ public class SqLitePersistentSplitsStorageTest {
         mAutoCloseable = MockitoAnnotations.openMocks(this);
         when(mDatabase.generalInfoDao()).thenReturn(mock(GeneralInfoDao.class));
         when(mDatabase.splitDao()).thenReturn(mSplitDao);
+        when(mDatabase.getSplitQueryDao()).thenReturn(mSplitQueryDao);
         doAnswer((Answer<Void>) invocation -> {
             ((Runnable) invocation.getArgument(0)).run();
             return null;
