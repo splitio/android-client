@@ -204,6 +204,7 @@ public class SqLitePersistentSplitsStorageTest {
             }
         }));
         verify(mDatabase.splitDao()).deleteAll();
+        verify(mDatabase.getSplitQueryDao()).invalidate();
     }
 
     @Test
