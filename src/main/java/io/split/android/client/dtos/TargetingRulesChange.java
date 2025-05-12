@@ -1,7 +1,5 @@
 package io.split.android.client.dtos;
 
-import androidx.annotation.VisibleForTesting;
-
 import com.google.gson.annotations.SerializedName;
 
 public class TargetingRulesChange {
@@ -19,12 +17,10 @@ public class TargetingRulesChange {
         return rbs;
     }
 
-    @VisibleForTesting
     public static TargetingRulesChange create(SplitChange splitChange) {
         return create(splitChange, RuleBasedSegmentChange.createEmpty());
     }
 
-    @VisibleForTesting
     public static TargetingRulesChange create(SplitChange splitChange, RuleBasedSegmentChange ruleBasedSegmentChange) {
         TargetingRulesChange targetingRulesChange = new TargetingRulesChange();
         targetingRulesChange.ff = splitChange;
