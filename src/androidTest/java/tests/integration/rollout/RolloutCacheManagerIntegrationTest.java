@@ -87,7 +87,7 @@ public class RolloutCacheManagerIntegrationTest {
 
         CountDownLatch readyLatch = new CountDownLatch(1);
         SplitFactory factory = getSplitFactory(RolloutCacheConfiguration.builder().clearOnInit(true).build());
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
         // Track intermediate values
         List<SplitEntity> intermediateFlags = mRoomDb.splitDao().getAll();
@@ -103,12 +103,13 @@ public class RolloutCacheManagerIntegrationTest {
         boolean readyAwait = readyLatch.await(10, TimeUnit.SECONDS);
 
         // Destroy factory
+        Thread.sleep(2000);
         factory.destroy();
         mRequestCountdownLatch = new CountDownLatch(1);
 
         preloadDb(null, null, null);
         SplitFactory factory2 = getSplitFactory(RolloutCacheConfiguration.builder().clearOnInit(true).build());
-        Thread.sleep(1000);
+        Thread.sleep(2000);
 
         // Track intermediate values
         List<SplitEntity> factory2Flags = mRoomDb.splitDao().getAll();

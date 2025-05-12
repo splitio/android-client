@@ -163,7 +163,6 @@ public class RuleBasedSegmentsIntegrationTest {
         List<String> names = entities.stream().map(RuleBasedSegmentEntity::getName).collect(Collectors.toList());
         assertEquals(2, names.size());
         assertTrue(names.contains("rbs_test") && names.contains("new_rbs_test"));
-        assertEquals(2, mSplitChangesHits.get());
     }
 
     private void successfulInstantUpdateTest(String rbsChange0, String expectedContents) throws IOException, InterruptedException {

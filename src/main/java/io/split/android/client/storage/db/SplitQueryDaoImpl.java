@@ -93,7 +93,9 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
     @Override
     public void invalidate() {
         synchronized (mLock) {
-            mCachedSplitsMap.clear();
+            if (mCachedSplitsMap != null) {
+                mCachedSplitsMap.clear();
+            }
             mIsInvalidated = true;
             mLock.notifyAll();
             Logger.i("Invalidated preloaded flags");
