@@ -88,7 +88,7 @@ public class ApplyCipherTask implements SplitTask {
 
             if (toName != null && toBody != null) {
                 ruleBasedSegmentDao.update(name, toName, toBody);
-            } else {
+            } else{
                 Logger.e("Error applying cipher to rule based segment storage");
             }
         }
