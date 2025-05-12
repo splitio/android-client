@@ -214,6 +214,7 @@ public class ParserCommons {
                 if (mRuleBasedSegmentStorage != null) {
                     delegate = new InRuleBasedSegmentMatcher(mRuleBasedSegmentStorage,
                     (matchingKey != null) ? mMySegmentsStorageContainer.getStorageForKey(matchingKey) : getEmptyMySegmentsStorage(),
+                    (matchingKey != null) ? mMyLargeSegmentsStorageContainer.getStorageForKey(matchingKey) : getEmptyMySegmentsStorage(),
                     matcher.userDefinedSegmentMatcherData.segmentName);
                 } else {
                     // shouldn't happen

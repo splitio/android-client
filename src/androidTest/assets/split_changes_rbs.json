@@ -91,7 +91,10 @@
             "key22"
           ],
           "segments": [
-            "segment_test"
+            {
+              "name": "segment_test",
+              "type": "standard"
+            }
           ]
         },
         "conditions": [

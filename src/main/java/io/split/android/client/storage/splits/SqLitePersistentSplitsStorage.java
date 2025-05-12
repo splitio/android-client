@@ -11,12 +11,15 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import com.google.gson.reflect.TypeToken;
+
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
-import io.split.android.client.SplitFactoryImpl;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactory;
@@ -27,10 +30,6 @@ import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
-
-import com.google.gson.reflect.TypeToken;
-import java.lang.reflect.Type;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 

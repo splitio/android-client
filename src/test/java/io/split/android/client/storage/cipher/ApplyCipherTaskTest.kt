@@ -390,18 +390,18 @@ class ApplyCipherTaskTest {
         verify(fromCipher).decrypt("body1")
         verify(toCipher).encrypt("decrypted_name1")
         verify(toCipher).encrypt("decrypted_body1")
-        verify(ruleBasedSegmentDao).update("decrypted_name1", "encrypted_decrypted_name1", "encrypted_decrypted_body1")
+        verify(ruleBasedSegmentDao).update("name1", "encrypted_decrypted_name1", "encrypted_decrypted_body1")
 
         verify(fromCipher).decrypt("name2")
         verify(fromCipher).decrypt("body2")
         verify(toCipher).encrypt("decrypted_name2")
         verify(toCipher).encrypt("decrypted_body2")
-        verify(ruleBasedSegmentDao).update("decrypted_name2", "encrypted_decrypted_name2", "encrypted_decrypted_body2")
+        verify(ruleBasedSegmentDao).update("name2", "encrypted_decrypted_name2", "encrypted_decrypted_body2")
 
         verify(fromCipher).decrypt("name3")
         verify(fromCipher).decrypt("body3")
         verify(toCipher).encrypt("decrypted_name3")
         verify(toCipher).encrypt("decrypted_body3")
-        verify(ruleBasedSegmentDao).update("decrypted_name3", "encrypted_decrypted_name3", "encrypted_decrypted_body3")
+        verify(ruleBasedSegmentDao).update("name3", "encrypted_decrypted_name3", "encrypted_decrypted_body3")
     }
 }

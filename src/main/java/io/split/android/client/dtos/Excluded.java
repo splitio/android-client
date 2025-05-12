@@ -11,9 +11,9 @@ public class Excluded {
     private Set<String> mKeys;
 
     @SerializedName("segments")
-    private Set<String> mSegments;
+    private Set<ExcludedSegment> mSegments;
 
-    public Set<String> getSegments() {
+    public Set<ExcludedSegment> getSegments() {
         return mSegments;
     }
 
