@@ -16,6 +16,7 @@ import io.split.android.client.storage.db.MySegmentDao
 import io.split.android.client.storage.db.MySegmentEntity
 import io.split.android.client.storage.db.SplitDao
 import io.split.android.client.storage.db.SplitEntity
+import io.split.android.client.storage.db.SplitQueryDao
 import io.split.android.client.storage.db.SplitRoomDatabase
 import io.split.android.client.storage.db.attributes.AttributesDao
 import io.split.android.client.storage.db.attributes.AttributesEntity
@@ -51,6 +52,9 @@ class ApplyCipherTaskTest {
     private lateinit var splitDao: SplitDao
 
     @Mock
+    private lateinit var splitQueryDao: SplitQueryDao
+
+    @Mock
     private lateinit var mySegmentDao: MySegmentDao
 
     @Mock
@@ -83,6 +87,7 @@ class ApplyCipherTaskTest {
     fun setup() {
         MockitoAnnotations.openMocks(this)
         `when`(splitDatabase.splitDao()).thenReturn(splitDao)
+        `when`(splitDatabase.splitQueryDao).thenReturn(splitQueryDao)
         `when`(splitDatabase.mySegmentDao()).thenReturn(mySegmentDao)
         `when`(splitDatabase.myLargeSegmentDao()).thenReturn(myLargeSegmentDao)
         `when`(splitDatabase.impressionDao()).thenReturn(impressionDao)
@@ -131,6 +136,8 @@ class ApplyCipherTaskTest {
         verify(toCipher).encrypt("decrypted_name2")
         verify(toCipher).encrypt("decrypted_body2")
         verify(splitDao).update("name2", "encrypted_decrypted_name2", "encrypted_decrypted_body2")
+
+        verify(splitQueryDao).invalidate()
     }
 
     @Test
