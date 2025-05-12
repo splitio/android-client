@@ -12,6 +12,7 @@ import java.util.Set;
 
 import io.split.android.client.dtos.Excluded;
 import io.split.android.client.dtos.ExcludedSegment;
+
 import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.service.http.HttpResponseParserException;
 import io.split.android.helpers.FileHelper;
@@ -39,6 +40,7 @@ public class TargetingRulesResponseParserTest {
         assertEquals(1506703262920L, result.getRuleBasedSegmentsChange().getSince());
         assertEquals(1506703263000L, result.getRuleBasedSegmentsChange().getTill());
         assertEquals("mauro_rule_based_segment", result.getRuleBasedSegmentsChange().getSegments().get(0).getName());
+
         Excluded excluded = result.getRuleBasedSegmentsChange().getSegments().get(0).getExcluded();
         assertEquals(1, excluded.getKeys().size());
         Set<ExcludedSegment> excludedSegments = excluded.getSegments();
