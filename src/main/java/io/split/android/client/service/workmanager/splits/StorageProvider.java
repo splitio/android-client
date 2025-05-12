@@ -4,6 +4,7 @@ import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
@@ -36,5 +37,9 @@ class StorageProvider {
         ruleBasedSegmentStorageForWorker.loadLocal(); // call loadLocal to populate storage with DB data
 
         return ruleBasedSegmentStorageForWorker;
+    }
+
+    GeneralInfoStorage provideGeneralInfoStorage() {
+        return StorageFactory.getGeneralInfoStorage(mDatabase);
     }
 }

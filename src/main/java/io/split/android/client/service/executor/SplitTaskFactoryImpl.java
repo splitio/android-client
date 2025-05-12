@@ -100,6 +100,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mSplitChangeProcessor,
                     mRuleBasedSegmentChangeProcessor,
                     ruleBasedSegmentStorageProducer,
+                    mSplitsStorageContainer.getGeneralInfoStorage(),
                     mTelemetryRuntimeProducer,
                     new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()),
                     flagsSpecFromConfig);
@@ -109,8 +110,10 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mSplitChangeProcessor,
                     mRuleBasedSegmentChangeProcessor,
                     ruleBasedSegmentStorageProducer,
+                    mSplitsStorageContainer.getGeneralInfoStorage(),
                     mTelemetryRuntimeProducer,
-                    flagsSpecFromConfig);
+                    flagsSpecFromConfig,
+                    false);
         }
 
         mFilters = (filters == null) ? new ArrayList<>() : new ArrayList<>(filters.values());

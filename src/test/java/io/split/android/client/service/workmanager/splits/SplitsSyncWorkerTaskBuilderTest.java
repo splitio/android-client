@@ -22,6 +22,7 @@ import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
+import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
@@ -37,6 +38,7 @@ public class SplitsSyncWorkerTaskBuilderTest {
     private HttpFetcher<TargetingRulesChange> mSplitsFetcher;
     private TelemetryStorage mTelemetryStorage;
     private RuleBasedSegmentStorageProducer mRuleBasedSegmentStorageProducer;
+    private GeneralInfoStorage mGeneralinfoStorage;
 
     @Before
     public void setUp() throws URISyntaxException {
@@ -49,13 +51,14 @@ public class SplitsSyncWorkerTaskBuilderTest {
         mSplitsSyncHelperProvider = mock(SyncHelperProvider.class);
         mRuleBasedSegmentStorageProducer = mock(RuleBasedSegmentStorageProducer.class);
         mRuleBasedSegmentChangeProcessor = mock(RuleBasedSegmentChangeProcessor.class);
+        mGeneralinfoStorage = mock(GeneralInfoStorage.class);
 
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn("filterQueryString");
         when(mStorageProvider.provideSplitsStorage()).thenReturn(mSplitsStorage);
         when(mStorageProvider.provideRuleBasedSegmentStorage()).thenReturn(mRuleBasedSegmentStorageProducer);
         when(mStorageProvider.provideTelemetryStorage()).thenReturn(mTelemetryStorage);
         when(mFetcherProvider.provideFetcher("filterQueryString")).thenReturn(mSplitsFetcher);
-        when(mSplitsSyncHelperProvider.provideSplitsSyncHelper(any(), any(), any(), any(), any(), any(), any())).thenReturn(mock(SplitsSyncHelper.class));
+        when(mSplitsSyncHelperProvider.provideSplitsSyncHelper(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(mock(SplitsSyncHelper.class));
     }
 
     @Test
@@ -96,6 +99,7 @@ public class SplitsSyncWorkerTaskBuilderTest {
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn("string");
         when(mStorageProvider.provideRuleBasedSegmentStorage()).thenReturn(mRuleBasedSegmentStorageProducer);
         when(mFetcherProvider.provideFetcher("string")).thenReturn(mSplitsFetcher);
+        when(mStorageProvider.provideGeneralInfoStorage()).thenReturn(mGeneralinfoStorage);
 
         SplitsSyncWorkerTaskBuilder builder = new SplitsSyncWorkerTaskBuilder(
                 mStorageProvider,
@@ -114,6 +118,7 @@ public class SplitsSyncWorkerTaskBuilderTest {
                 mSplitChangeProcessor,
                 mRuleBasedSegmentChangeProcessor,
                 mRuleBasedSegmentStorageProducer,
+                mGeneralinfoStorage,
                 mTelemetryStorage,
                 "1.5");
     }
@@ -133,7 +138,7 @@ public class SplitsSyncWorkerTaskBuilderTest {
     public void getTaskUsesSplitSyncTaskStaticMethod() {
         try (MockedStatic<SplitsSyncTask> mockedStatic = mockStatic(SplitsSyncTask.class)) {
             SplitsSyncHelper splitsSyncHelper = mock(SplitsSyncHelper.class);
-            when(mSplitsSyncHelperProvider.provideSplitsSyncHelper(any(), any(), any(), any(), any(), any(), any())).thenReturn(splitsSyncHelper);
+            when(mSplitsSyncHelperProvider.provideSplitsSyncHelper(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(splitsSyncHelper);
             when(mStorageProvider.provideRuleBasedSegmentStorage()).thenReturn(mRuleBasedSegmentStorageProducer);
 
             SplitsSyncWorkerTaskBuilder builder = getSplitsSyncWorkerTaskBuilder("2.5");

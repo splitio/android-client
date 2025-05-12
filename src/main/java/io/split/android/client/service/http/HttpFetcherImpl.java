@@ -8,6 +8,8 @@ import androidx.annotation.Nullable;
 import java.net.URI;
 import java.util.Map;
 
+import io.split.android.android_client.BuildConfig;
+import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
 import io.split.android.client.network.HttpMethod;
@@ -56,6 +58,9 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
             }
             if (!response.isSuccess()) {
                 int httpStatus = response.getHttpStatus();
+
+                checkOutdatedProxyError(httpStatus, builtUri, params);
+
                 throw new HttpFetcherException(mTarget.toString(), "http return code " + httpStatus, httpStatus);
             }
 
@@ -72,5 +77,17 @@ public class HttpFetcherImpl<T> implements HttpFetcher<T> {
             throw new HttpFetcherException(mTarget.toString(), e.getLocalizedMessage());
         }
         return responseData;
+    }
+
+    private void checkOutdatedProxyError(int httpStatus, @Nullable URI builtUri, Map<String, Object> params) throws HttpFetcherException {
+        int proxyErrorStatus = HttpStatus.BAD_REQUEST.getCode();
+        boolean sdkEndpointOverridden = builtUri != null &&
+                builtUri.getHost() != null &&
+                ServiceEndpoints.EndpointValidator.sdkEndpointIsOverridden(builtUri.getHost());
+        boolean isLatestSpec = params != null && BuildConfig.FLAGS_SPEC.equals(params.get("s"));
+
+        if (httpStatus == proxyErrorStatus && sdkEndpointOverridden && isLatestSpec) {
+            throw new HttpFetcherException(mTarget.toString(), "Proxy is outdated", HttpStatus.INTERNAL_PROXY_OUTDATED.getCode());
+        }
     }
 }
