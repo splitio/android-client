@@ -1,5 +1,7 @@
 package io.split.android.client.service.sseclient.sseclient;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.NonNull;
 
 import io.split.android.client.service.executor.SplitTask;
@@ -9,12 +11,10 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.sseclient.BackoffCounter;
 import io.split.android.client.utils.logger.Logger;
 
-import static com.google.gson.internal.$Gson$Preconditions.checkNotNull;
-
 public class BackoffCounterTimer implements SplitTaskExecutionListener {
 
-    private SplitTaskExecutor mTaskExecutor;
-    private BackoffCounter mBackoffCounter;
+    private final SplitTaskExecutor mTaskExecutor;
+    private final BackoffCounter mBackoffCounter;
     private SplitTask mTask;
     String mTaskId;
 
