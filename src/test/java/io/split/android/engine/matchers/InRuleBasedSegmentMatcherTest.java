@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.Evaluator;
+import io.split.android.client.dtos.ExcludedSegment;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.engine.experiments.ParsedCondition;
@@ -33,6 +34,7 @@ public class InRuleBasedSegmentMatcherTest {
 
     private RuleBasedSegmentStorage mRuleBasedSegmentStorage;
     private MySegmentsStorage mMySegmentsStorage;
+    private MySegmentsStorage mMyLargeSegmentsStorage;
     private InRuleBasedSegmentMatcher mMatcher;
     private Evaluator mEvaluator;
 
@@ -40,8 +42,9 @@ public class InRuleBasedSegmentMatcherTest {
     public void setUp() {
         mRuleBasedSegmentStorage = mock(RuleBasedSegmentStorage.class);
         mMySegmentsStorage = mock(MySegmentsStorage.class);
+        mMyLargeSegmentsStorage = mock(MySegmentsStorage.class);
         mEvaluator = mock(Evaluator.class);
-        mMatcher = new InRuleBasedSegmentMatcher(mRuleBasedSegmentStorage, mMySegmentsStorage, SEGMENT_NAME);
+        mMatcher = new InRuleBasedSegmentMatcher(mRuleBasedSegmentStorage, mMySegmentsStorage, mMyLargeSegmentsStorage, SEGMENT_NAME);
     }
 
     @Test
@@ -66,8 +69,8 @@ public class InRuleBasedSegmentMatcherTest {
 
     @Test
     public void matchReturnsFalseWhenInExcludedSegment() {
-        String excludedSegment = "excluded-segment";
-        Set<String> mySegments = new HashSet<>(Collections.singletonList(excludedSegment));
+        ExcludedSegment excludedSegment = ExcludedSegment.standard("excluded-segment");
+        Set<String> mySegments = new HashSet<>(Collections.singletonList("excluded-segment"));
 
         ParsedRuleBasedSegment segment = createSegment(
                 Collections.emptySet(),
@@ -79,6 +82,53 @@ public class InRuleBasedSegmentMatcherTest {
         when(mMySegmentsStorage.getAll()).thenReturn(mySegments);
 
         assertFalse(mMatcher.match(MATCHING_KEY, BUCKETING_KEY, Collections.emptyMap(), mEvaluator));
+    }
+
+    @Test
+    public void matchReturnsFalseWhenInExcludedLargeSegment() {
+        ExcludedSegment excludedSegment = ExcludedSegment.large("excluded-segment");
+        Set<String> mySegments = new HashSet<>(Collections.singletonList("excluded-segment"));
+
+        ParsedRuleBasedSegment segment = createSegment(
+                Collections.emptySet(),
+                new HashSet<>(Collections.singletonList(excludedSegment)),
+                Collections.emptyList()
+        );
+
+        when(mRuleBasedSegmentStorage.get(eq(SEGMENT_NAME), eq(MATCHING_KEY))).thenReturn(segment);
+        when(mMyLargeSegmentsStorage.getAll()).thenReturn(mySegments);
+
+        assertFalse(mMatcher.match(MATCHING_KEY, BUCKETING_KEY, Collections.emptyMap(), mEvaluator));
+    }
+
+    @Test
+    public void matchReturnsFalseWhenInExcludedRuleBasedSegment() {
+        ExcludedSegment excludedSegment = ExcludedSegment.ruleBased("excluded-segment");
+
+        ParsedRuleBasedSegment segment = createSegment(
+                Collections.emptySet(),
+                new HashSet<>(Collections.singletonList(excludedSegment)),
+                Collections.emptyList()
+        );
+        CombiningMatcher conditionMatcher = mock(CombiningMatcher.class);
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("age", 30);
+        attributes.put("country", "US");
+
+        when(conditionMatcher.match(eq(MATCHING_KEY), eq(BUCKETING_KEY), eq(attributes), eq(mEvaluator))).thenReturn(true);
+
+        ParsedCondition condition = mock(ParsedCondition.class);
+        when(condition.matcher()).thenReturn(conditionMatcher);
+
+        List<ParsedCondition> conditions = Collections.singletonList(condition);
+
+        ParsedRuleBasedSegment storedExcludedRbs
+                = createSegment(Collections.emptySet(), Collections.emptySet(), conditions);
+
+        when(mRuleBasedSegmentStorage.get(eq(SEGMENT_NAME), eq(MATCHING_KEY))).thenReturn(segment);
+        when(mRuleBasedSegmentStorage.get(eq("excluded-segment"), eq(MATCHING_KEY))).thenReturn(storedExcludedRbs);
+
+        assertFalse(mMatcher.match(MATCHING_KEY, BUCKETING_KEY, attributes, mEvaluator));
     }
 
     @Test
@@ -183,7 +233,7 @@ public class InRuleBasedSegmentMatcherTest {
         assertFalse(result);
     }
 
-    private ParsedRuleBasedSegment createSegment(Set<String> excludedKeys, Set<String> excludedSegments, List<ParsedCondition> conditions) {
+    private ParsedRuleBasedSegment createSegment(Set<String> excludedKeys, Set<ExcludedSegment> excludedSegments, List<ParsedCondition> conditions) {
         ParsedRuleBasedSegment segment = mock(ParsedRuleBasedSegment.class);
         when(segment.getExcludedKeys()).thenReturn(excludedKeys);
         when(segment.getExcludedSegments()).thenReturn(excludedSegments);
