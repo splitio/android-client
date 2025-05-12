@@ -161,6 +161,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                 mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, -1));
                 mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, ""));
                 mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, ""));
+                mDatabase.getSplitQueryDao().invalidate();
                 mDatabase.splitDao().deleteAll();
             }
         });
@@ -258,14 +259,14 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
         private synchronized void parseTrafficTypesAndSets(@Nullable GeneralInfoEntity trafficTypesEntity, @Nullable GeneralInfoEntity flagSetsEntity) {
             Logger.v("Parsing traffic types and sets");
-            if (trafficTypesEntity != null) {
+            if (trafficTypesEntity != null && !trafficTypesEntity.getStringValue().isEmpty()) {
                 Type mapType = new TypeToken<Map<String, Integer>>(){}.getType();
                 String encryptedTrafficTypes = trafficTypesEntity.getStringValue();
                 String decryptedTrafficTypes = mCipher.decrypt(encryptedTrafficTypes);
                 mTrafficTypes = Json.fromJson(decryptedTrafficTypes, mapType);
             }
 
-            if (flagSetsEntity != null) {
+            if (flagSetsEntity != null && !flagSetsEntity.getStringValue().isEmpty()) {
                 Type flagsMapType = new TypeToken<Map<String, Set<String>>>(){}.getType();
                 String encryptedFlagSets = flagSetsEntity.getStringValue();
                 String decryptedFlagSets = mCipher.decrypt(encryptedFlagSets);
@@ -290,15 +291,19 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                 }
 
                 // persist TTs
-                String decryptedTrafficTypes = Json.toJson(mTrafficTypes);
-                String encryptedTrafficTypes = mCipher.encrypt(decryptedTrafficTypes);
+                if (mTrafficTypes != null && !mTrafficTypes.isEmpty()) {
+                    String decryptedTrafficTypes = Json.toJson(mTrafficTypes);
+                    String encryptedTrafficTypes = mCipher.encrypt(decryptedTrafficTypes);
+                    mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, encryptedTrafficTypes));
+                }
 
-                // persist flag sets
-                String decryptedFlagSets = Json.toJson(mFlagSets);
-                String encryptedFlagSets = mCipher.encrypt(decryptedFlagSets);
+                if (mFlagSets != null && !mFlagSets.isEmpty()) {
+                    // persist flag sets
+                    String decryptedFlagSets = Json.toJson(mFlagSets);
+                    String encryptedFlagSets = mCipher.encrypt(decryptedFlagSets);
 
-                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, encryptedTrafficTypes));
-                mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, encryptedFlagSets));
+                    mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, encryptedFlagSets));
+                }
             } catch (Exception e) {
                 Logger.e("Failed to migrate traffic types and flag sets", e);
             }
