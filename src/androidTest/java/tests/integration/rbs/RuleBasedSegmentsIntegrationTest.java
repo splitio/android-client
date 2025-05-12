@@ -226,12 +226,11 @@ public class RuleBasedSegmentsIntegrationTest {
     private Map<String, IntegrationHelper.ResponseClosure> getStringResponseClosureMap(CountDownLatch authLatch) {
         Map<String, IntegrationHelper.ResponseClosure> responses = new HashMap<>();
         responses.put(IntegrationHelper.ServicePath.SPLIT_CHANGES, (uri, httpMethod, body) -> {
-            int currentHit = mSplitChangesHits.incrementAndGet();
             if (mCustomSplitChangesResponse.get() != null) {
                 return new HttpResponseMock(200, mCustomSplitChangesResponse.get());
             }
 
-            return new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(1, 1));
+            return new HttpResponseMock(200, IntegrationHelper.emptyTargetingRulesChanges(1, 1));
         });
         responses.put(IntegrationHelper.ServicePath.MEMBERSHIPS + "/" + "/CUSTOMER_ID", (uri, httpMethod, body) -> new HttpResponseMock(200, IntegrationHelper.emptyAllSegments()));
         responses.put("v2/auth", (uri, httpMethod, body) -> {
@@ -239,11 +238,6 @@ public class RuleBasedSegmentsIntegrationTest {
             return new HttpResponseMock(200, IntegrationHelper.streamingEnabledToken());
         });
         return responses;
-    }
-
-    @NonNull
-    private static String missingSegmentFetch(long flagSince, long segmentSince) {
-        return "{\"ff\":{\"s\":" + flagSince + ",\"t\":" + flagSince + ",\"d\":[]},\"rbs\":{\"s\":" + segmentSince + ",\"t\":" + segmentSince + ",\"d\":[{\"name\":\"new_rbs_test\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\",\"excluded\":{\"keys\":[],\"segments\":[]},\"conditions\":[{\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"WHITELIST\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"mdp\",\"tandil\",\"bsas\"]}},{\"keySelector\":{\"trafficType\":\"user\",\"attribute\":\"email\"},\"matcherType\":\"ENDS_WITH\",\"negate\":false,\"whitelistMatcherData\":{\"whitelist\":[\"@split.io\"]}}]}}]},{\"name\":\"rbs_test\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\",\"excluded\":{\"keys\":[],\"segments\":[]},\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\",\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"IN_RULE_BASED_SEGMENT\",\"negate\":false,\"userDefinedSegmentMatcherData\":{\"segmentName\":\"new_rbs_test\"}}]}}]}]}}";
     }
 
     private boolean processUpdate(SplitClient client, LinkedBlockingDeque<String> streamingData, String change, String... expectedContents) throws InterruptedException {

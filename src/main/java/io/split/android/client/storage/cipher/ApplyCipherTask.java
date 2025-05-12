@@ -235,7 +235,7 @@ public class ApplyCipherTask implements SplitTask {
         }
 
         GeneralInfoEntity trafficTypesEntity = generalInfoDao.getByName(GeneralInfoEntity.TRAFFIC_TYPES_MAP);
-        if (trafficTypesEntity != null) {
+        if (trafficTypesEntity != null && !trafficTypesEntity.getStringValue().isEmpty()) {
             String fromTrafficTypes = mFromCipher.decrypt(trafficTypesEntity.getStringValue());
             String toTrafficTypes = mToCipher.encrypt(fromTrafficTypes);
             if (toTrafficTypes != null) {
@@ -246,7 +246,7 @@ public class ApplyCipherTask implements SplitTask {
         }
 
         GeneralInfoEntity flagSetsEntity = generalInfoDao.getByName(GeneralInfoEntity.FLAG_SETS_MAP);
-        if (flagSetsEntity != null) {
+        if (flagSetsEntity != null && !flagSetsEntity.getStringValue().isEmpty()) {
             String fromFlagSets = mFromCipher.decrypt(flagSetsEntity.getStringValue());
             String toFlagSets = mToCipher.encrypt(fromFlagSets);
             if (toFlagSets != null) {

@@ -65,8 +65,8 @@ public class LargeSegmentTestHelper {
                     return new MockResponse().setResponseCode(500);
                 }
 
-                if (request.getRequestUrl().encodedPathSegments().contains("splitChanges")) {
-                    updateEndpointHit("splitChanges");
+                if (request.getRequestUrl().encodedPathSegments().contains(IntegrationHelper.ServicePath.SPLIT_CHANGES)) {
+                    updateEndpointHit(IntegrationHelper.ServicePath.SPLIT_CHANGES);
                     return new MockResponse().setResponseCode(200).setBody(splitChangesLargeSegments(1602796638344L, 1602796638344L));
                 } else if (request.getRequestUrl().encodedPathSegments().contains(IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Thread.sleep(mMySegmentsDelay.get());
@@ -93,7 +93,7 @@ public class LargeSegmentTestHelper {
 
     private void initializeLatches() {
         mLatches = new ConcurrentHashMap<>();
-        mLatches.put("splitChanges", new CountDownLatch(1));
+        mLatches.put(IntegrationHelper.ServicePath.SPLIT_CHANGES, new CountDownLatch(1));
         mLatches.put(IntegrationHelper.ServicePath.MEMBERSHIPS, new CountDownLatch(1));
     }
 

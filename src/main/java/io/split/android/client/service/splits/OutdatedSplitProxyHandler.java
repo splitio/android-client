@@ -94,7 +94,6 @@ public class OutdatedSplitProxyHandler {
         long lastProxyCheckTimestamp = getLastProxyCheckTimestamp();
 
         if (lastProxyCheckTimestamp == 0L) {
-            Logger.v("Never checked proxy; continuing with latest spec");
             updateHandlingType(ProxyHandlingType.NONE);
         } else if (System.currentTimeMillis() - lastProxyCheckTimestamp > mProxyCheckIntervalMillis) {
             Logger.i("Time since last check elapsed. Attempting recovery with latest spec: " + mLatestSpec);
