@@ -43,6 +43,11 @@ public class MySegmentsStorageContainerImpl implements MySegmentsStorageContaine
     }
 
     @Override
+    public void loadLocal() {
+        // no-op
+    }
+
+    @Override
     public void clear() {
         synchronized (lock) {
             for (MySegmentsStorage mySegmentsStorage : mStorageMap.values()) {

@@ -7,6 +7,7 @@ import helper.*
 import io.split.android.client.SplitClient
 import io.split.android.client.SplitFactory
 import io.split.android.client.dtos.SplitChange
+import io.split.android.client.dtos.TargetingRulesChange
 import io.split.android.client.events.SplitEvent
 import io.split.android.client.events.SplitEventTask
 import io.split.android.client.network.HttpMethod
@@ -240,7 +241,7 @@ class UserConsentModeNoneTest {
                     }
                     return HttpResponseMock(
                         200,
-                        IntegrationHelper.emptySplitChanges(99999999, 99999999)
+                        IntegrationHelper.emptySplitChanges(99999999)
                     )
                 } else if (uri.path.contains("/testImpressions/bulk")) {
                     HttpResponseMock(200)
@@ -274,8 +275,8 @@ class UserConsentModeNoneTest {
     private fun loadSplitChanges(): String? {
         val fileHelper = FileHelper()
         val change = fileHelper.loadFileContent(mContext, "split_changes_1.json")
-        val parsedChange = Json.fromJson(change, SplitChange::class.java)
+        val parsedChange = Json.fromJson(change, TargetingRulesChange::class.java).featureFlagsChange
         parsedChange.since = parsedChange.till
-        return Json.toJson(parsedChange)
+        return Json.toJson(TargetingRulesChange.create(parsedChange))
     }
 }

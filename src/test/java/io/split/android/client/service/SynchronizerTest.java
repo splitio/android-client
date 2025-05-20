@@ -42,7 +42,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.impressions.Impression;
@@ -163,7 +163,7 @@ public class SynchronizerTest {
 
         mTaskExecutor = taskExecutor;
         mSingleThreadedTaskExecutor = spy(new SplitTaskExecutorStub());
-        HttpFetcher<SplitChange> splitsFetcher = Mockito.mock(HttpFetcher.class);
+        HttpFetcher<TargetingRulesChange> splitsFetcher = Mockito.mock(HttpFetcher.class);
         HttpFetcher mySegmentsFetcher = Mockito.mock(HttpFetcher.class);
         HttpRecorder<List<Event>> eventsRecorder = Mockito.mock(HttpRecorder.class);
         HttpRecorder<List<KeyImpression>> impressionsRecorder = Mockito.mock(HttpRecorder.class);
@@ -704,11 +704,22 @@ public class SynchronizerTest {
     public void synchronizeSplitsWithSince() {
         setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
         SplitsUpdateTask task = mock(SplitsUpdateTask.class);
-        when(mTaskFactory.createSplitsUpdateTask(1000)).thenReturn(task);
+        when(mTaskFactory.createSplitsUpdateTask(1000L, -1L)).thenReturn(task);
 
         mSynchronizer.synchronizeSplits(1000);
 
-        verify(mFeatureFlagsSynchronizer).synchronize(1000);
+        verify(mFeatureFlagsSynchronizer).synchronize(1000L, null);
+    }
+
+    @Test
+    public void synchronizeRuleBasedSegmentsWithSince() {
+        setup(SplitClientConfig.builder().synchronizeInBackground(false).build());
+        SplitsUpdateTask task = mock(SplitsUpdateTask.class);
+        when(mTaskFactory.createSplitsUpdateTask(-1L, 1000L)).thenReturn(task);
+
+        mSynchronizer.synchronizeRuleBasedSegments(1000);
+
+        verify(mFeatureFlagsSynchronizer).synchronize(null, 1000L);
     }
 
     @Test

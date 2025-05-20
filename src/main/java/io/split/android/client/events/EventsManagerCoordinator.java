@@ -34,6 +34,7 @@ public class EventsManagerCoordinator extends BaseEventsManager implements ISpli
                 mTriggered.add(event);
                 switch (event) {
                     case SPLITS_UPDATED:
+                    case RULE_BASED_SEGMENTS_UPDATED:
                     case SPLITS_FETCHED:
                     case SPLITS_LOADED_FROM_STORAGE:
                     case SPLIT_KILLED_NOTIFICATION:

@@ -34,6 +34,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.GeneralInfoEntity;
@@ -173,7 +174,7 @@ public class SplitsSyncProcessTest {
                         mSplitsUpdateLatch.countDown();
                         return createResponse(200, getSplitChanges(mSplitChangesHitCount - 1));
                     }
-                    String data = IntegrationHelper.emptySplitChanges(CHANGE_NUMBER - 1000, CHANGE_NUMBER - 1000);
+                    String data = IntegrationHelper.emptyTargetingRulesChanges(CHANGE_NUMBER - 1000, -1);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
@@ -214,15 +215,15 @@ public class SplitsSyncProcessTest {
     }
 
     private void loadSplitChanges() {
-        mSplitChange = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        mSplitChange = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
     }
 
     private String getSplitChanges(int hit) {
         mSplitChange.splits.get(0).changeNumber = CHANGE_NUMBER;
         mSplitChange.since = CHANGE_NUMBER;
         mSplitChange.till = CHANGE_NUMBER;
-        return Json.toJson(mSplitChange);
+        return Json.toJson(TargetingRulesChange.create(mSplitChange));
     }
 
     private Split parseEntity(SplitEntity entity) {

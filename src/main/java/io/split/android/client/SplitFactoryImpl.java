@@ -254,6 +254,7 @@ public class SplitFactoryImpl implements SplitFactory {
                         mSynchronizer,
                         streamingComponents.getSplitsUpdateNotificationQueue(),
                         mStorageContainer.getSplitsStorage(),
+                        mStorageContainer.getRuleBasedSegmentStorage(),
                         compressionProvider),
                 streamingComponents.getSyncGuardian());
 
@@ -284,12 +285,15 @@ public class SplitFactoryImpl implements SplitFactory {
                 streamingComponents.getNotificationProcessor(), streamingComponents.getSseAuthenticator(),
                 mStorageContainer, mSyncManager, compressionProvider);
 
+        SplitParser splitParser = new SplitParser(mStorageContainer.getParserCommons());
+
         mClientContainer = new SplitClientContainerImpl(
                 mDefaultClientKey.matchingKey(), this, config, mSyncManager,
                 telemetrySynchronizer, mStorageContainer, mSplitTaskExecutor, splitApiFacade,
                 validationLogger, keyValidator, customerImpressionListener,
                 streamingComponents.getPushNotificationManager(), componentsRegister, workManagerWrapper,
-                mEventsTrackerProvider, flagSetsFilter);
+                mEventsTrackerProvider, flagSetsFilter, splitParser);
+
 
         mDestroyer = new Runnable() {
             public void run() {
@@ -370,10 +374,9 @@ public class SplitFactoryImpl implements SplitFactory {
 
         // Initialize default client
         client();
-        SplitParser mSplitParser = new SplitParser(mStorageContainer.getMySegmentsStorageContainer(), mStorageContainer.getMyLargeSegmentsStorageContainer());
         mManager = new SplitManagerImpl(
                 mStorageContainer.getSplitsStorage(),
-                new SplitValidatorImpl(), mSplitParser);
+                new SplitValidatorImpl(), splitParser);
     }
 
     @NonNull

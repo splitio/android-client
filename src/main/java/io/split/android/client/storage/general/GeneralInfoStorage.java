@@ -9,9 +9,13 @@ public interface GeneralInfoStorage {
 
     void setSplitsUpdateTimestamp(long timestamp);
 
-    long getChangeNumber();
+    long getFlagsChangeNumber();
 
-    void setChangeNumber(long changeNumber);
+    void setFlagsChangeNumber(long changeNumber);
+
+    long getRbsChangeNumber();
+
+    void setRbsChangeNumber(long changeNumber);
 
     @NonNull
     String getSplitsFilterQueryString();
@@ -30,4 +34,8 @@ public interface GeneralInfoStorage {
     long getRolloutCacheLastClearTimestamp();
 
     void setRolloutCacheLastClearTimestamp(long timestamp);
+
+    void setLastProxyUpdateTimestamp(long timestamp);
+
+    long getLastProxyUpdateTimestamp();
 }

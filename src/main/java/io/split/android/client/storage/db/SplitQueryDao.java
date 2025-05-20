@@ -4,4 +4,6 @@ import java.util.Map;
 
 public interface SplitQueryDao {
     Map<String, SplitEntity> getAllAsMap();
+
+    void invalidate();
 }

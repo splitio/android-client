@@ -166,8 +166,13 @@ public class EventsManagerTest {
     }
 
     @Test
-    public void sdkUpdateWithLargeSegmentsAndConfigEnabledAndWaitForLargeSegmentsFalseEmitsEvent() throws InterruptedException {
+    public void sdkUpdateWithLargeSegments() throws InterruptedException {
         sdkUpdateTest(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, false);
+    }
+
+    @Test
+    public void sdkUpdateWithRuleBasedSegments() throws InterruptedException {
+        sdkUpdateTest(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED, false);
     }
 
     @Test

@@ -3,15 +3,15 @@ package io.split.android.client.service.sseclient.sseclient;
 import java.util.concurrent.BlockingQueue;
 
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.notifications.InstantUpdateChangeNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
-import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.synchronizer.SyncGuardian;
 
 public class StreamingComponents {
 
     private PushNotificationManager mPushNotificationManager;
-    private BlockingQueue<SplitsChangeNotification> mSplitsUpdateNotificationQueue;
+    private BlockingQueue<InstantUpdateChangeNotification> mSplitsUpdateNotificationQueue;
     private PushManagerEventBroadcaster mPushManagerEventBroadcaster;
     private NotificationParser mNotificationParser;
     private NotificationProcessor mNotificationProcessor;
@@ -22,7 +22,7 @@ public class StreamingComponents {
     }
 
     public StreamingComponents(PushNotificationManager pushNotificationManager,
-                               BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue,
+                               BlockingQueue<InstantUpdateChangeNotification> splitsUpdateNotificationQueue,
                                NotificationParser notificationParser,
                                NotificationProcessor notificationProcessor,
                                SseAuthenticator sseAuthenticator,
@@ -41,7 +41,7 @@ public class StreamingComponents {
         return mPushNotificationManager;
     }
 
-    public BlockingQueue<SplitsChangeNotification> getSplitsUpdateNotificationQueue() {
+    public BlockingQueue<InstantUpdateChangeNotification> getSplitsUpdateNotificationQueue() {
         return mSplitsUpdateNotificationQueue;
     }
 

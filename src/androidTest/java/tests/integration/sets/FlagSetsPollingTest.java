@@ -34,6 +34,7 @@ import io.split.android.client.SplitFilter;
 import io.split.android.client.SyncConfig;
 import io.split.android.client.TestingConfig;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
@@ -171,7 +172,7 @@ public class FlagSetsPollingTest {
         String uri = mSplitChangesUri;
 
         assertTrue(awaitFirst);
-        assertEquals("https://sdk.split.io/api/splitChanges?s=1.1&since=-1&sets=set_2,set_3,set_ww,set_x", uri);
+        assertEquals("https://sdk.split.io/api/splitChanges?s=1.1&since=-1&rbSince=-1&sets=set_2,set_3,set_ww,set_x", uri);
     }
 
     private SplitFactory createFactory(
@@ -226,9 +227,9 @@ public class FlagSetsPollingTest {
 
     private String loadSplitChangeWithSet(int setsCount) {
         String change = fileHelper.loadFileContent(mContext, "split_changes_flag_set-" + setsCount + ".json");
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
+        SplitChange parsedChange = IntegrationHelper.getChangeFromJsonString(change);
         parsedChange.since = parsedChange.till;
 
-        return Json.toJson(parsedChange);
+        return Json.toJson(TargetingRulesChange.create(parsedChange));
     }
 }

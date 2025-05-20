@@ -35,6 +35,7 @@ import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.GeneralInfoEntity;
@@ -407,8 +408,8 @@ public class SdkUpdateStreamingTest {
     }
 
     private String getChanges(String treatment, long since, long till) {
-        SplitChange change = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        SplitChange change = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
         change.since = since;
         change.till = till;
         Split split = change.splits.get(0);
@@ -420,7 +421,7 @@ public class SdkUpdateStreamingTest {
                 partition.size = 0;
             }
         }
-        return Json.toJson(change);
+        return Json.toJson(TargetingRulesChange.create(change));
     }
 
     private void loadChanges() {

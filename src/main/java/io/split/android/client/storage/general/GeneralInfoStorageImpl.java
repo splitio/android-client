@@ -8,9 +8,11 @@ import androidx.annotation.Nullable;
 import io.split.android.client.storage.db.GeneralInfoDao;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 
-public class GeneralInfoStorageImpl implements GeneralInfoStorage{
+public class GeneralInfoStorageImpl implements GeneralInfoStorage {
 
     private static final String ROLLOUT_CACHE_LAST_CLEAR_TIMESTAMP = "rolloutCacheLastClearTimestamp";
+    private static final String RBS_CHANGE_NUMBER = "rbsChangeNumber";
+    private static final String LAST_PROXY_CHECK_TIMESTAMP = "lastProxyCheckTimestamp";
 
     private final GeneralInfoDao mGeneralInfoDao;
 
@@ -30,14 +32,25 @@ public class GeneralInfoStorageImpl implements GeneralInfoStorage{
     }
 
     @Override
-    public long getChangeNumber() {
+    public long getFlagsChangeNumber() {
         GeneralInfoEntity entity = mGeneralInfoDao.getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
         return entity != null ? entity.getLongValue() : -1L;
     }
 
     @Override
-    public void setChangeNumber(long changeNumber) {
+    public void setFlagsChangeNumber(long changeNumber) {
         mGeneralInfoDao.update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, changeNumber));
+    }
+
+    @Override
+    public long getRbsChangeNumber() {
+        GeneralInfoEntity entity = mGeneralInfoDao.getByName(RBS_CHANGE_NUMBER);
+        return entity != null ? entity.getLongValue() : -1L;
+    }
+
+    @Override
+    public void setRbsChangeNumber(long changeNumber) {
+        mGeneralInfoDao.update(new GeneralInfoEntity(RBS_CHANGE_NUMBER, changeNumber));
     }
 
     @Override
@@ -84,5 +97,16 @@ public class GeneralInfoStorageImpl implements GeneralInfoStorage{
     @Override
     public void setRolloutCacheLastClearTimestamp(long timestamp) {
         mGeneralInfoDao.update(new GeneralInfoEntity(ROLLOUT_CACHE_LAST_CLEAR_TIMESTAMP, timestamp));
+    }
+
+    @Override
+    public void setLastProxyUpdateTimestamp(long timestamp) {
+        mGeneralInfoDao.update(new GeneralInfoEntity(LAST_PROXY_CHECK_TIMESTAMP, timestamp));
+    }
+
+    @Override
+    public long getLastProxyUpdateTimestamp() {
+        GeneralInfoEntity entity = mGeneralInfoDao.getByName(LAST_PROXY_CHECK_TIMESTAMP);
+        return entity != null ? entity.getLongValue() : 0L;
     }
 }

@@ -47,6 +47,11 @@ public class SynchronizerSpyImpl implements SynchronizerSpy, MySegmentsSynchroni
     }
 
     @Override
+    public void synchronizeRuleBasedSegments(long changeNumber) {
+        mSynchronizer.synchronizeRuleBasedSegments(changeNumber);
+    }
+
+    @Override
     public void synchronizeSplits() {
         mSynchronizer.synchronizeSplits();
     }
