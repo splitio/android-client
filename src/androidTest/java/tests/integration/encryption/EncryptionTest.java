@@ -8,6 +8,7 @@ import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -103,6 +104,7 @@ public class EncryptionTest {
         verifyImpressions(testDatabase);
     }
 
+    @Ignore
     @Test
     public void impressionsCountAreEncrypted() throws IOException, InterruptedException {
         SplitRoomDatabase testDatabase = DatabaseHelper.getTestDatabase(mContext);

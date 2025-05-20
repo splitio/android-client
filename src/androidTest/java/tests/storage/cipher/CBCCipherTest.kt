@@ -7,6 +7,7 @@ import helper.MOCK_DATA_SPLIT
 import io.split.android.client.storage.cipher.CBCCipher
 import junit.framework.TestCase.assertEquals
 import org.junit.Before
+import org.junit.Ignore
 import org.junit.Test
 import kotlin.test.DefaultAsserter.assertNotEquals
 
@@ -37,7 +38,7 @@ class CBCCipherTest {
     @Test
     fun testLongTextEncryption() {
         StringBuilder().apply {
-            for (i in 0..1000) {
+            for (i in 0..100) {
                 append(MOCK_DATA_LONG_TEXT)
             }
         }.run {

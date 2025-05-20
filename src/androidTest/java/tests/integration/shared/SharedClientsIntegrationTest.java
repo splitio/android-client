@@ -271,6 +271,11 @@ public class SharedClientsIntegrationTest {
             entities.add(entity);
         }
         mRoomDb.splitDao().insert(entities);
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private static class ServerMock {
