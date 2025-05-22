@@ -8,6 +8,7 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import org.junit.Before;
@@ -18,12 +19,15 @@ import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.api.SplitView;
 import io.split.android.client.dtos.Condition;
+import io.split.android.client.dtos.Prerequisite;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
@@ -202,6 +206,49 @@ public class SplitManagerImplTest {
         SplitView featureFlag = mSplitManager.split("FeatureName");
 
         assertFalse(featureFlag.impressionsDisabled);
+    }
+
+    @Test
+    public void prerequisitesIsPresent() {
+        Split split = SplitHelper.createSplit("FeatureName", 123, true,
+                "some_treatment", Arrays.asList(getTestCondition()),
+                "traffic", 456L, 1, null);
+        Prerequisite p1 = new Prerequisite("prereq_feature", Collections.singleton("some_treatment"));
+        HashSet<String> treatments = new HashSet<>();
+        treatments.add("some_treatment_1");
+        treatments.add("some_other_treatment");
+        Prerequisite p2 = new Prerequisite("prereq_feature_2", treatments);
+        split.prerequisites = Arrays.asList(p1, p2);
+
+        when(mSplitsStorage.get("FeatureName")).thenReturn(split);
+
+        SplitView featureFlag = mSplitManager.split("FeatureName");
+
+        List<Prerequisite> prerequisites = featureFlag.prerequisites;
+        Prerequisite prereq1 = prerequisites.get(0);
+        Prerequisite prereq2 = prerequisites.get(1);
+        assertEquals(2, prerequisites.size());
+        assertEquals("prereq_feature", prereq1.getFlagName());
+        assertEquals(1, prereq1.getTreatments().size());
+        assertEquals("some_treatment", prereq1.getTreatments().iterator().next());
+        assertEquals("prereq_feature_2", prereq2.getFlagName());
+        assertEquals(2, prereq2.getTreatments().size());
+        assertTrue(prereq2.getTreatments().contains("some_treatment_1"));
+        assertTrue(prereq2.getTreatments().contains("some_other_treatment"));
+    }
+
+    @Test
+    public void nullPrerequisitesDefaultToEmptyList() {
+        Split split = SplitHelper.createSplit("FeatureName", 123, true,
+                "some_treatment", Arrays.asList(getTestCondition()),
+                "traffic", 456L, 1, null);
+        split.prerequisites = null;
+        when(mSplitsStorage.get("FeatureName")).thenReturn(split);
+
+        SplitView featureFlag = mSplitManager.split("FeatureName");
+
+        List<Prerequisite> prerequisites = featureFlag.prerequisites;
+        assertEquals(0, prerequisites.size());
     }
 
     private Condition getTestCondition() {

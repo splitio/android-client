@@ -1,5 +1,7 @@
 package io.split.android.client.dtos;
 
+import androidx.annotation.NonNull;
+
 import com.google.gson.annotations.SerializedName;
 
 import java.util.HashSet;
@@ -16,15 +18,17 @@ public class Prerequisite {
     public Prerequisite() {
     }
 
-    Prerequisite(String name, Set<String> treatments) {
+    public Prerequisite(String name, Set<String> treatments) {
         this.name = name;
         this.treatments = treatments;
     }
 
-    public String getName() {
-        return name;
+    @NonNull
+    public String getFlagName() {
+        return name == null ? "" : name;
     }
 
+    @NonNull
     public Set<String> getTreatments() {
         return treatments == null ? new HashSet<>() : treatments;
     }

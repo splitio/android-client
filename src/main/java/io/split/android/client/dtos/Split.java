@@ -56,7 +56,7 @@ public class Split {
 
     @Nullable
     @SerializedName("prerequisites")
-    private List<Prerequisite> prerequisites;
+    public List<Prerequisite> prerequisites;
 
     public String json = null;
 
