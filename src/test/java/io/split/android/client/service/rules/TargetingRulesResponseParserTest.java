@@ -77,8 +77,8 @@ public class TargetingRulesResponseParserTest {
         assertEquals("FACUNDO_TEST", firstSplit.name);
         List<Prerequisite> preReqs = firstSplit.getPrerequisites();
         assertEquals(2, preReqs.size());
-        assertEquals("flag1", preReqs.get(0).getName());
-        assertEquals("flag2", preReqs.get(1).getName());
+        assertEquals("flag1", preReqs.get(0).getFlagName());
+        assertEquals("flag2", preReqs.get(1).getFlagName());
         assertEquals(2, preReqs.get(0).getTreatments().size());
         assertEquals(1, preReqs.get(1).getTreatments().size());
         assertTrue(preReqs.get(0).getTreatments().contains("on"));

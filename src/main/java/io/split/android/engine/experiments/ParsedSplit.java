@@ -9,6 +9,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import io.split.android.client.dtos.Prerequisite;
+
 public class ParsedSplit {
 
     private final String mSplit;
@@ -24,6 +26,7 @@ public class ParsedSplit {
     private final Map<String, String> mConfigurations;
     private final Set<String> mSets;
     private final boolean mImpressionsDisabled;
+    private final List<Prerequisite> mPrerequisites;
 
     public ParsedSplit(
             String feature,
@@ -38,7 +41,8 @@ public class ParsedSplit {
             int algo,
             Map<String, String> configurations,
             Set<String> sets,
-            boolean impressionsDisabled
+            boolean impressionsDisabled,
+            List<Prerequisite> prerequisites
     ) {
         mSplit = feature;
         mSeed = seed;
@@ -57,6 +61,7 @@ public class ParsedSplit {
         mTrafficAllocation = trafficAllocation;
         mTrafficAllocationSeed = trafficAllocationSeed;
         mSets = sets;
+        mPrerequisites = prerequisites;
     }
 
     public String feature() {
@@ -111,6 +116,10 @@ public class ParsedSplit {
         return mImpressionsDisabled;
     }
 
+    public List<Prerequisite> prerequisites() {
+        return mPrerequisites;
+    }
+
     @Override
     public int hashCode() {
         int result = 17;
@@ -124,6 +133,7 @@ public class ParsedSplit {
         result = 31 * result + (mAlgo ^ (mAlgo >>> 32));
         result = 31 * result + ((mSets != null) ? mSets.hashCode() : 0);
         result = 31 * result + (mImpressionsDisabled ? 1 : 0);
+        result = 31 * result + ((mPrerequisites != null) ? mPrerequisites.hashCode() : 0);
         return result;
     }
 
@@ -144,8 +154,8 @@ public class ParsedSplit {
                 && mAlgo == other.mAlgo
                 && (Objects.equals(mConfigurations, other.mConfigurations))
                 && (Objects.equals(mSets, other.mSets)
-                && mImpressionsDisabled == other.mImpressionsDisabled);
-
+                && mImpressionsDisabled == other.mImpressionsDisabled
+                && (Objects.equals(mPrerequisites, other.mPrerequisites)));
     }
 
     @NonNull
@@ -155,7 +165,8 @@ public class ParsedSplit {
                 ", default treatment:" + mDefaultTreatment +
                 ", parsedConditions:" + mParsedCondition +
                 ", trafficTypeName:" + mTrafficTypeName + ", changeNumber:" + mChangeNumber +
-                ", algo:" + mAlgo + ", config:" + mConfigurations + ", sets:" + mSets + ", impressionsDisabled:" + mImpressionsDisabled;
+                ", algo:" + mAlgo + ", config:" + mConfigurations + ", sets:" + mSets +
+                ", impressionsDisabled:" + mImpressionsDisabled + ", prerequisites:" + mPrerequisites;
 
     }
 }
