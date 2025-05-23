@@ -21,6 +21,10 @@ public class PrerequisitesMatcher implements Matcher {
 
     @Override
     public boolean match(Object matchValue, String bucketingKey, Map<String, Object> attributes, Evaluator evaluator) {
+        if (!(matchValue instanceof String)) {
+            return false;
+        }
+
         for (Prerequisite prerequisite : mPrerequisites) {
             EvaluationResult treatment = evaluator.getTreatment((String) matchValue, bucketingKey, prerequisite.getFlagName(), attributes);
             if (treatment == null || !prerequisite.getTreatments().contains(treatment.getTreatment())) {
