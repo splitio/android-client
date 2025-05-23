@@ -18,7 +18,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
@@ -109,7 +108,7 @@ public class PrerequisitesMatcherTest {
 
     @Test
     public void shouldReturnTrueWhenSinglePrerequisiteIsMetForAlwaysOn() {
-        Set<Prerequisite> prerequisites = new HashSet<>();
+        List<Prerequisite> prerequisites = new ArrayList<>();
         prerequisites.add(new Prerequisite("always-on", new HashSet<>(Arrays.asList("not-existing", "on", "other"))));
         PrerequisitesMatcher matcher = new PrerequisitesMatcher(prerequisites);
         
@@ -118,7 +117,7 @@ public class PrerequisitesMatcherTest {
     
     @Test
     public void shouldReturnFalseWhenSinglePrerequisiteIsNotMetForAlwaysOn() {
-        Set<Prerequisite> prerequisites = new HashSet<>();
+        List<Prerequisite> prerequisites = new ArrayList<>();
         prerequisites.add(new Prerequisite("always-on", new HashSet<>(Arrays.asList("off", "v1"))));
         PrerequisitesMatcher matcher = new PrerequisitesMatcher(prerequisites);
         
@@ -127,7 +126,7 @@ public class PrerequisitesMatcherTest {
     
     @Test
     public void shouldReturnTrueWhenSinglePrerequisiteIsMetForAlwaysOff() {
-        Set<Prerequisite> prerequisites = new HashSet<>();
+        List<Prerequisite> prerequisites = new ArrayList<>();
         prerequisites.add(new Prerequisite("always-off", new HashSet<>(Arrays.asList("not-existing", "off"))));
         PrerequisitesMatcher matcher = new PrerequisitesMatcher(prerequisites);
         
@@ -136,7 +135,7 @@ public class PrerequisitesMatcherTest {
     
     @Test
     public void shouldReturnFalseWhenSinglePrerequisiteIsNotMetForAlwaysOff() {
-        Set<Prerequisite> prerequisites = new HashSet<>();
+        List<Prerequisite> prerequisites = new ArrayList<>();
         prerequisites.add(new Prerequisite("always-off", new HashSet<>(Arrays.asList("v1", "on"))));
         PrerequisitesMatcher matcher = new PrerequisitesMatcher(prerequisites);
         
@@ -145,7 +144,7 @@ public class PrerequisitesMatcherTest {
     
     @Test
     public void shouldReturnTrueWhenAllMultiplePrerequisitesAreMet() {
-        Set<Prerequisite> prerequisites = new HashSet<>();
+        List<Prerequisite> prerequisites = new ArrayList<>();
         prerequisites.add(new Prerequisite("always-on", new HashSet<>(Collections.singletonList("on"))));
         prerequisites.add(new Prerequisite("always-off", new HashSet<>(Collections.singletonList("off"))));
         PrerequisitesMatcher matcher = new PrerequisitesMatcher(prerequisites);
@@ -155,7 +154,7 @@ public class PrerequisitesMatcherTest {
     
     @Test
     public void shouldReturnFalseWhenOneOfMultiplePrerequisitesIsNotMet() {
-        Set<Prerequisite> prerequisites = new HashSet<>();
+        List<Prerequisite> prerequisites = new ArrayList<>();
         prerequisites.add(new Prerequisite("always-on", new HashSet<>(Collections.singletonList("on"))));
         prerequisites.add(new Prerequisite("always-off", new HashSet<>(Collections.singletonList("on"))));
         PrerequisitesMatcher matcher = new PrerequisitesMatcher(prerequisites);
@@ -172,14 +171,14 @@ public class PrerequisitesMatcherTest {
     
     @Test
     public void shouldReturnTrueWithEmptyPrerequisites() {
-        PrerequisitesMatcher matcher = new PrerequisitesMatcher(new HashSet<>());
+        PrerequisitesMatcher matcher = new PrerequisitesMatcher(new ArrayList<>());
         
         assertTrue(matcher.match("a-key", null, null, mEvaluator));
     }
     
     @Test
     public void shouldReturnFalseWhenFeatureFlagDoesNotExist() {
-        Set<Prerequisite> prerequisites = new HashSet<>();
+        List<Prerequisite> prerequisites = new ArrayList<>();
         prerequisites.add(new Prerequisite("not-existent-feature-flag", new HashSet<>(Arrays.asList("on", "off"))));
         PrerequisitesMatcher matcher = new PrerequisitesMatcher(prerequisites);
         
@@ -188,7 +187,7 @@ public class PrerequisitesMatcherTest {
     
     @Test
     public void shouldReturnFalseWithEmptyTreatmentsList() {
-        Set<Prerequisite> prerequisites = new HashSet<>();
+        List<Prerequisite> prerequisites = new ArrayList<>();
         prerequisites.add(new Prerequisite("always-on", new HashSet<>()));
         PrerequisitesMatcher matcher = new PrerequisitesMatcher(prerequisites);
         

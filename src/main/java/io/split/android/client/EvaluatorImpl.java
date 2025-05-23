@@ -9,6 +9,7 @@ import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.experiments.ParsedCondition;
 import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitParser;
+import io.split.android.engine.matchers.PrerequisitesMatcher;
 import io.split.android.engine.splitter.Splitter;
 import io.split.android.grammar.Treatments;
 
@@ -53,6 +54,17 @@ public class EvaluatorImpl implements Evaluator {
         try {
             if (parsedSplit.killed()) {
                 return new EvaluationResult(parsedSplit.defaultTreatment(), TreatmentLabels.KILLED, parsedSplit.changeNumber(), configForTreatment(parsedSplit, parsedSplit.defaultTreatment()), parsedSplit.impressionsDisabled());
+            }
+
+            if (!parsedSplit.prerequisites().isEmpty()) {
+                PrerequisitesMatcher matcher = new PrerequisitesMatcher(parsedSplit.prerequisites());
+                if (!matcher.match(matchingKey, bucketingKey, attributes, this)) {
+                    return new EvaluationResult(parsedSplit.defaultTreatment(),
+                            TreatmentLabels.PREREQUISITES_NOT_MET,
+                            parsedSplit.changeNumber(),
+                            configForTreatment(parsedSplit, parsedSplit.defaultTreatment()),
+                            parsedSplit.impressionsDisabled());
+                }
             }
 
             /*
