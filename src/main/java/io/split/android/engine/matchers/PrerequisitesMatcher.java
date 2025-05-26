@@ -2,9 +2,9 @@ package io.split.android.engine.matchers;
 
 import androidx.annotation.NonNull;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
@@ -13,10 +13,10 @@ import io.split.android.client.dtos.Prerequisite;
 public class PrerequisitesMatcher implements Matcher {
 
     @NonNull
-    private final Set<Prerequisite> mPrerequisites;
+    private final List<Prerequisite> mPrerequisites;
 
-    public PrerequisitesMatcher(Set<Prerequisite> prerequisites) {
-        mPrerequisites = prerequisites == null ? new HashSet<>() : prerequisites;
+    public PrerequisitesMatcher(List<Prerequisite> prerequisites) {
+        mPrerequisites = prerequisites == null ? new ArrayList<>() : prerequisites;
     }
 
     @Override

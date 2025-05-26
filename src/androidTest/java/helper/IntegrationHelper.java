@@ -504,5 +504,6 @@ public class IntegrationHelper {
         public static final String UNIQUE_KEYS = "keys/cs";
         public static final String COUNT = "testImpressions/count";
         public static final String IMPRESSIONS = "testImpressions/bulk";
+        public static final String AUTH = "v2/auth";
     }
 }
