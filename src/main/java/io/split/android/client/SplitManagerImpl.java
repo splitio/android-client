@@ -145,6 +145,7 @@ public class SplitManagerImpl implements SplitManager {
         splitView.sets = new ArrayList<>(parsedSplit.sets() == null ? new HashSet<>() : parsedSplit.sets());
         splitView.defaultTreatment = parsedSplit.defaultTreatment();
         splitView.impressionsDisabled = parsedSplit.impressionsDisabled();
+        splitView.prerequisites = parsedSplit.prerequisites();
 
         Set<String> treatments = new HashSet<>();
         for (ParsedCondition condition : parsedSplit.parsedConditions()) {

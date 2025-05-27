@@ -4,6 +4,7 @@ on:
   pull_request:
     branches:
       - 'development'
+      - '*_baseline'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

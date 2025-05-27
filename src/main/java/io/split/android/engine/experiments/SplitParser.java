@@ -4,6 +4,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
@@ -61,6 +62,7 @@ public class SplitParser implements Parser<Split, ParsedSplit> {
                 split.algo,
                 split.configurations,
                 split.sets,
-                split.impressionsDisabled);
+                split.impressionsDisabled,
+                new ArrayList<>(split.getPrerequisites()));
     }
 }

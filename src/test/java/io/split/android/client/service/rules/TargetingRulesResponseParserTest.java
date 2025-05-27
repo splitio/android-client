@@ -8,10 +8,13 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
 import java.util.Set;
 
 import io.split.android.client.dtos.Excluded;
 import io.split.android.client.dtos.ExcludedSegment;
+import io.split.android.client.dtos.Prerequisite;
+import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.service.http.HttpResponseParserException;
 import io.split.android.helpers.FileHelper;
@@ -61,6 +64,37 @@ public class TargetingRulesResponseParserTest {
         assertEquals(-1, result.getRuleBasedSegmentsChange().getSince());
         assertEquals(-1, result.getRuleBasedSegmentsChange().getTill());
         assertTrue(result.getRuleBasedSegmentsChange().getSegments().isEmpty());
+    }
+
+    @Test
+    public void parsesPrerequisites() throws HttpResponseParserException {
+        String json = fileHelper.loadFileContent("split_changes_prerequisites.json");
+        TargetingRulesChange result = parser.parse(json);
+
+        assertNotNull(result);
+        assertNotNull(result.getFeatureFlagsChange());
+        Split firstSplit = result.getFeatureFlagsChange().splits.get(0);
+        assertEquals("FACUNDO_TEST", firstSplit.name);
+        List<Prerequisite> preReqs = firstSplit.getPrerequisites();
+        assertEquals(2, preReqs.size());
+        assertEquals("flag1", preReqs.get(0).getFlagName());
+        assertEquals("flag2", preReqs.get(1).getFlagName());
+        assertEquals(2, preReqs.get(0).getTreatments().size());
+        assertEquals(1, preReqs.get(1).getTreatments().size());
+        assertTrue(preReqs.get(0).getTreatments().contains("on"));
+        assertTrue(preReqs.get(0).getTreatments().contains("v1"));
+        assertTrue(preReqs.get(1).getTreatments().contains("off"));
+    }
+
+    @Test
+    public void nonExistingPrerequisitesDefaultsToEmpty() throws HttpResponseParserException {
+        String json = fileHelper.loadFileContent("split_changes_prerequisites.json");
+        TargetingRulesChange result = parser.parse(json);
+        assertNotNull(result);
+        Split split = result.getFeatureFlagsChange().splits.get(1);
+        assertEquals("FACUNDO_TEST_2", split.name);
+        List<Prerequisite> preReqs = split.getPrerequisites();
+        assertEquals(0, preReqs.size());
     }
 
     @Test
