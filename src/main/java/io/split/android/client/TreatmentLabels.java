@@ -8,4 +8,5 @@ public class TreatmentLabels {
     public static final String KILLED = "killed";
     public static final String NOT_READY = "not ready";
     public static final String UNSUPPORTED_MATCHER_TYPE = "targeting rule type unsupported by sdk";
+    public static final String PREREQUISITES_NOT_MET = "prerequisites not met";
 }

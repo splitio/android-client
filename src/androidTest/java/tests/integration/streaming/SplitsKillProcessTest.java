@@ -35,6 +35,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.GeneralInfoEntity;
@@ -183,7 +184,7 @@ public class SplitsKillProcessTest {
                         mSplitsUpdateLatch.countDown();
                         return createResponse(200, getSplitChanges(mSplitChangesHitCount));
                     }
-                    String data = IntegrationHelper.emptySplitChanges(-1, CHANGE_NUMBER - 1000);
+                    String data = IntegrationHelper.emptyTargetingRulesChanges(CHANGE_NUMBER - 1000, -1);
                     return createResponse(200, data);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
@@ -221,13 +222,13 @@ public class SplitsKillProcessTest {
     }
 
     private void loadSplitChanges() {
-        SplitChange change = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        SplitChange change = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
 
         Split split = change.splits.get(0);
         split.name = "test_feature_1";
-        mSplitChange = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        mSplitChange = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
         mSplitChange.splits.add(split);
     }
 
@@ -244,7 +245,7 @@ public class SplitsKillProcessTest {
         split.defaultTreatment = "off";
         mSplitChange.since = CHANGE_NUMBER;
         mSplitChange.till = CHANGE_NUMBER;
-        return Json.toJson(mSplitChange);
+        return Json.toJson(TargetingRulesChange.create(mSplitChange));
     }
 
     private Split parseEntity(SplitEntity entity) {

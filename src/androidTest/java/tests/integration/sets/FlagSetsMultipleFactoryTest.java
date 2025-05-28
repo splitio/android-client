@@ -35,6 +35,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.SyncConfig;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.utils.Json;
 import tests.integration.shared.TestingHelper;
@@ -125,10 +126,10 @@ public class FlagSetsMultipleFactoryTest {
 
     private String loadSplitChangeWithSet(int setsCount) {
         String change = mFileHelper.loadFileContent(mContext, "split_changes_flag_set-" + setsCount + ".json");
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
+        SplitChange parsedChange = IntegrationHelper.getChangeFromJsonString(change);
         parsedChange.since = parsedChange.till;
 
-        return Json.toJson(parsedChange);
+        return Json.toJson(TargetingRulesChange.create(parsedChange));
     }
 
     private HttpResponseMockDispatcher getDispatcher(int setsCount) {

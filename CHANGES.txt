@@ -1,6 +1,12 @@
+5.3.0 (May 28, 2025)
+ - Added support for rule-based segments. These segments determine membership at runtime by evaluating their configured rules against the user attributes provided to the SDK.
+ - Added support for feature flag prerequisites. This allows customers to define dependency conditions between flags, which are evaluated before any allowlists or targeting rules.
+ - Added two new configuration options to control the behavior of the persisted rollout plan cache. Use `rolloutCacheConfiguration` in the config.
+
 5.2.0 (Apr 25, 2025)
 - Added a new optional argument to the client `getTreatment` methods to allow passing additional evaluation options, such as a map of properties to append to the generated impressions sent to Split backend. Read more in our docs.
 - Added improvements for SDK ready status.
+- Updated SDK_READY_FROM_CACHE event to be emitted alongside the SDK_READY event if it has not already been emitted.
 
 5.1.1 (Feb 11, 2025)
 - Fixed issue when calling destroy() before the SDK has initialized.

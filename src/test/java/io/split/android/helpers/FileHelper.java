@@ -11,26 +11,27 @@ import java.util.List;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.utils.Json;
 
 public class FileHelper {
 
-    public List<Split> loadAndParseSplitChangeFile (String name) {
+    public List<Split> loadAndParseSplitChangeFile(String name) {
         try {
             String content = loadFileContent(name);
-            SplitChange change = Json.fromJson(content, SplitChange.class);
-            return change.splits;
+            TargetingRulesChange change = Json.fromJson(content, TargetingRulesChange.class);
+            return change.getFeatureFlagsChange().splits;
         } catch (Exception e) {
             System.out.println("loadAndParseSplitChangeFile: Failed load file content" + e.getLocalizedMessage());
         }
         return null;
     }
 
-    public SplitChange loadSplitChangeFromFile (String name) {
+    public SplitChange loadSplitChangeFromFile(String name) {
         try {
             String content = loadFileContent(name);
-            SplitChange change = Json.fromJson(content, SplitChange.class);
-            return change;
+            TargetingRulesChange change = Json.fromJson(content, TargetingRulesChange.class);
+            return change.getFeatureFlagsChange();
         } catch (Exception e) {
         }
         return null;

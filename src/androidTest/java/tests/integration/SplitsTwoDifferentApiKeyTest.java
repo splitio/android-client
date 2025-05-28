@@ -34,6 +34,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.TestingConfig;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -224,15 +225,15 @@ public class SplitsTwoDifferentApiKeyTest {
     }
 
     private void loadSplitChanges() {
-        mSplitChange = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        mSplitChange = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
     }
 
     private String getSplitChanges(int factoryNumber, int hitNumber) {
         mSplitChange.splits.get(0).name = "split" + factoryNumber;
         mSplitChange.since = (hitNumber == 0 ? -1 : CHANGE_NUMBER_BASE + factoryNumber);
         mSplitChange.till = CHANGE_NUMBER_BASE + factoryNumber;
-        return Json.toJson(mSplitChange);
+        return Json.toJson(TargetingRulesChange.create(mSplitChange));
     }
 
     private void testSplitsUpdate(long changeNumber, int factoryNumber) throws InterruptedException {

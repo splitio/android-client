@@ -37,6 +37,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
@@ -228,14 +229,14 @@ public class ImpressionsCountTest {
     }
 
     private void loadSplitChanges() {
-        mSplitChange = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        mSplitChange = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
 
-        SplitChange c1 = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        SplitChange c1 = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
 
-        SplitChange c2 = Json.fromJson(
-                loadMockedData("splitchanges_int_test.json"), SplitChange.class);
+        SplitChange c2 = IntegrationHelper.getChangeFromJsonString(
+                loadMockedData("splitchanges_int_test.json"));
 
         mSplitChange.splits.get(0).name = "SPLIT_1";
         Split split = c1.splits.get(0);
@@ -249,7 +250,7 @@ public class ImpressionsCountTest {
     private String getSplitChanges() {
         mSplitChange.splits.get(0).changeNumber = CHANGE_NUMBER;
         mSplitChange.till = CHANGE_NUMBER;
-        return Json.toJson(mSplitChange);
+        return Json.toJson(TargetingRulesChange.create(mSplitChange));
     }
 
     private String loadMockedData(String fileName) {

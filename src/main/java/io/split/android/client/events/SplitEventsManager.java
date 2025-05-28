@@ -135,6 +135,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
                 case SPLITS_UPDATED:
                 case MY_SEGMENTS_UPDATED:
                 case MY_LARGE_SEGMENTS_UPDATED:
+                case RULE_BASED_SEGMENTS_UPDATED:
                     if (isTriggered(SplitEvent.SDK_READY)) {
                         trigger(SplitEvent.SDK_UPDATE);
                         return;

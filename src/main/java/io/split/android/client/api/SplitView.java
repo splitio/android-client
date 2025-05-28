@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.SplitManager;
+import io.split.android.client.dtos.Prerequisite;
 
 /**
  * A view of a feature flag, meant for consumption through {@link SplitManager} interface.
@@ -22,4 +23,5 @@ public class SplitView {
     public List<String> sets = new ArrayList<>();
     public String defaultTreatment;
     public boolean impressionsDisabled;
+    public List<Prerequisite> prerequisites = new ArrayList<>();
 }

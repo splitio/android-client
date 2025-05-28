@@ -28,6 +28,8 @@ import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
+import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
+import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity;
 import io.split.android.client.utils.logger.Logger;
 
 public class ApplyCipherTask implements SplitTask {
@@ -52,19 +54,43 @@ public class ApplyCipherTask implements SplitTask {
                 @Override
                 public void run() {
                     updateAttributes(mSplitDatabase.attributesDao());
-                    updateSplits(mSplitDatabase.splitDao(), mSplitDatabase.generalInfoDao());
+                    updateSplits(mSplitDatabase, mSplitDatabase.generalInfoDao());
                     updateSegments(mSplitDatabase.mySegmentDao());
                     updateLargeSegments(mSplitDatabase.myLargeSegmentDao());
                     updateImpressions(mSplitDatabase.impressionDao());
                     updateEvents(mSplitDatabase.eventDao());
                     updateImpressionsCount(mSplitDatabase.impressionsCountDao());
                     updateUniqueKeys(mSplitDatabase.uniqueKeysDao());
+                    updateRuleBasedSegment(mSplitDatabase.ruleBasedSegmentDao());
                 }
             });
 
             return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
         } catch (Exception e) {
             return SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK);
+        }
+    }
+
+    private void updateRuleBasedSegment(RuleBasedSegmentDao ruleBasedSegmentDao) {
+        List<RuleBasedSegmentEntity> items = ruleBasedSegmentDao.getAll();
+
+        if (items == null) {
+            return;
+        }
+
+        for (RuleBasedSegmentEntity item : items) {
+            String name = item.getName();
+            String fromName = mFromCipher.decrypt(name);
+            String fromBody = mFromCipher.decrypt(item.getBody());
+
+            String toName = mToCipher.encrypt(fromName);
+            String toBody = mToCipher.encrypt(fromBody);
+
+            if (toName != null && toBody != null) {
+                ruleBasedSegmentDao.update(name, toName, toBody);
+            } else {
+                Logger.e("Error applying cipher to rule based segment storage");
+            }
         }
     }
 
@@ -96,7 +122,7 @@ public class ApplyCipherTask implements SplitTask {
             String toUserKey = mToCipher.encrypt(fromUserKey);
             String toFeatureList = mToCipher.encrypt(fromFeatureList);
 
-            if (toFeatureList != null) {
+            if (toUserKey != null && toFeatureList != null) {
                 item.setUserKey(toUserKey);
                 item.setFeatureList(toFeatureList);
                 uniqueKeysDao.insert(item);
@@ -189,9 +215,10 @@ public class ApplyCipherTask implements SplitTask {
         }
     }
 
-    private void updateSplits(SplitDao dao, GeneralInfoDao generalInfoDao) {
+    private void updateSplits(SplitRoomDatabase splitDatabase, GeneralInfoDao generalInfoDao) {
+        SplitDao dao = splitDatabase.splitDao();
         List<SplitEntity> items = dao.getAll();
-
+        splitDatabase.getSplitQueryDao().invalidate();
         for (SplitEntity item : items) {
             String name = item.getName();
             String fromName = mFromCipher.decrypt(name);
@@ -208,7 +235,7 @@ public class ApplyCipherTask implements SplitTask {
         }
 
         GeneralInfoEntity trafficTypesEntity = generalInfoDao.getByName(GeneralInfoEntity.TRAFFIC_TYPES_MAP);
-        if (trafficTypesEntity != null) {
+        if (trafficTypesEntity != null && !trafficTypesEntity.getStringValue().isEmpty()) {
             String fromTrafficTypes = mFromCipher.decrypt(trafficTypesEntity.getStringValue());
             String toTrafficTypes = mToCipher.encrypt(fromTrafficTypes);
             if (toTrafficTypes != null) {
@@ -219,7 +246,7 @@ public class ApplyCipherTask implements SplitTask {
         }
 
         GeneralInfoEntity flagSetsEntity = generalInfoDao.getByName(GeneralInfoEntity.FLAG_SETS_MAP);
-        if (flagSetsEntity != null) {
+        if (flagSetsEntity != null && !flagSetsEntity.getStringValue().isEmpty()) {
             String fromFlagSets = mFromCipher.decrypt(flagSetsEntity.getStringValue());
             String toFlagSets = mToCipher.encrypt(fromFlagSets);
             if (toFlagSets != null) {

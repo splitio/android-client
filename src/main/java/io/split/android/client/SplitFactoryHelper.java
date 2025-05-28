@@ -45,6 +45,7 @@ import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
+import io.split.android.client.service.sseclient.notifications.InstantUpdateChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
@@ -84,7 +85,9 @@ import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.storage.events.PersistentEventsStorage;
+import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
@@ -169,6 +172,7 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistentEventsStorage(splitRoomDatabase, splitCipher);
         PersistentImpressionsStorage persistentImpressionsStorage =
                 StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase, splitCipher);
+        GeneralInfoStorage generalInfoStorage = StorageFactory.getGeneralInfoStorage(splitRoomDatabase);
         return new SplitStorageContainer(
                 splitsStorage,
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, splitCipher),
@@ -184,7 +188,8 @@ class SplitFactoryHelper {
                 StorageFactory.getPersistentAttributesStorage(splitRoomDatabase, splitCipher),
                 getTelemetryStorage(shouldRecordTelemetry, telemetryStorage),
                 StorageFactory.getImpressionsObserverCachePersistentStorage(splitRoomDatabase, observerCacheExpirationPeriod, impressionsObserverExecutor),
-                StorageFactory.getGeneralInfoStorage(splitRoomDatabase));
+                generalInfoStorage,
+                StorageFactory.getPersistentRuleBasedSegmentStorage(splitRoomDatabase, splitCipher, generalInfoStorage));
     }
 
     SplitApiFacade buildApiFacade(SplitClientConfig splitClientConfig,
@@ -350,7 +355,7 @@ class SplitFactoryHelper {
             return new StreamingComponents();
         }
 
-        BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue = new LinkedBlockingDeque<>();
+        BlockingQueue<InstantUpdateChangeNotification> splitsUpdateNotificationQueue = new LinkedBlockingDeque<>();
         NotificationParser notificationParser = new NotificationParser();
 
         NotificationProcessor notificationProcessor = new NotificationProcessor(splitTaskExecutor, splitTaskFactory,
@@ -416,13 +421,15 @@ class SplitFactoryHelper {
                                              SplitTaskExecutor splitTaskExecutor,
                                              SplitTaskFactory splitTaskFactory,
                                              Synchronizer mSynchronizer,
-                                             BlockingQueue<SplitsChangeNotification> splitsUpdateNotificationQueue,
+                                             BlockingQueue<InstantUpdateChangeNotification> splitsUpdateNotificationQueue,
                                              SplitsStorage splitsStorage,
+                                             RuleBasedSegmentStorage ruleBasedSegmentStorage,
                                              CompressionUtilProvider compressionProvider) {
         if (config.syncEnabled()) {
             return new SplitUpdatesWorker(mSynchronizer,
                     splitsUpdateNotificationQueue,
                     splitsStorage,
+                    ruleBasedSegmentStorage,
                     compressionProvider,
                     splitTaskExecutor,
                     splitTaskFactory);

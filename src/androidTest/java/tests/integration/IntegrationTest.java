@@ -303,7 +303,7 @@ public class IntegrationTest {
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 10));
 
-        SplitChange change = Json.fromJson(mJsonChanges.get(0), SplitChange.class);
+        SplitChange change = IntegrationHelper.getChangeFromJsonString(mJsonChanges.get(0));
         List<SplitEntity> entities = new ArrayList<>();
         for (Split split : change.splits) {
             String splitName = split.name;

@@ -37,7 +37,7 @@ public class NotificationParser {
             Logger.e("Error parsing notification: " + e.getLocalizedMessage());
             return null;
         } catch (Exception e) {
-            Logger.e("Unexpected error while parsing incomming notification: " + e.getLocalizedMessage());
+            Logger.e("Unexpected error while parsing incoming notification: " + e.getLocalizedMessage());
             return null;
         }
 
@@ -48,6 +48,11 @@ public class NotificationParser {
     @NonNull
     public SplitsChangeNotification parseSplitUpdate(String jsonData) throws JsonSyntaxException {
         return Json.fromJson(jsonData, SplitsChangeNotification.class);
+    }
+
+    @NonNull
+    public RuleBasedSegmentChangeNotification parseRuleBasedSegmentUpdate(String notificationJson) {
+        return Json.fromJson(notificationJson, RuleBasedSegmentChangeNotification.class);
     }
 
     @NonNull

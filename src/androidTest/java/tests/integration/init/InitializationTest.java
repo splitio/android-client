@@ -19,16 +19,13 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import helper.DatabaseHelper;
-import helper.FileHelper;
 import helper.IntegrationHelper;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
-import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
@@ -44,12 +41,14 @@ public class InitializationTest {
     private MockWebServer mWebServer;
 
     private AtomicBoolean mEventSent;
+    private CountDownLatch mEventLatch;
 
     @Before
     public void setUp() {
         setupServer();
         mRequestCountdownLatch = new CountDownLatch(1);
         mEventSent = new AtomicBoolean(false);
+        mEventLatch = new CountDownLatch(1);
     }
 
     @Test
@@ -72,8 +71,7 @@ public class InitializationTest {
         factory.client(new Key("new_key")).on(SplitEvent.SDK_READY, new TestingHelper.TestEventTask(secondReadyLatch));
         boolean awaitReady2 = secondReadyLatch.await(5, TimeUnit.SECONDS);
 
-        // Wait for events to be posted
-        Thread.sleep(500);
+        mEventLatch.await(5, TimeUnit.SECONDS);
 
         assertTrue(readyAwait);
         assertTrue(awaitReady2);
@@ -171,6 +169,7 @@ public class InitializationTest {
                     }
                 } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.EVENTS)) {
                     mEventSent.set(true);
+                    mEventLatch.countDown();
                     return new MockResponse().setResponseCode(200);
                 } else if (request.getPath().contains("/" + IntegrationHelper.ServicePath.COUNT)) {
                     return new MockResponse().setResponseCode(200);
@@ -187,10 +186,6 @@ public class InitializationTest {
     }
 
     private String loadSplitChanges() {
-        FileHelper fileHelper = new FileHelper();
-        String change = fileHelper.loadFileContent(mContext, "split_changes_1.json");
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
-        parsedChange.since = parsedChange.till;
-        return Json.toJson(parsedChange);
+        return IntegrationHelper.loadSplitChanges(mContext, "split_changes_1.json");
     }
 }

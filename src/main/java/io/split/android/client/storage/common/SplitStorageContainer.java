@@ -3,6 +3,7 @@ package io.split.android.client.storage.common;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.service.impressions.observer.PersistentImpressionsObserverCacheStorage;
 import io.split.android.client.storage.attributes.AttributesStorage;
@@ -17,9 +18,12 @@ import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.impressions.PersistentImpressionsUniqueStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
+import io.split.android.client.storage.rbs.PersistentRuleBasedSegmentStorage;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
+import io.split.android.engine.experiments.ParserCommons;
 
 public class SplitStorageContainer {
 
@@ -38,6 +42,10 @@ public class SplitStorageContainer {
     private final PersistentImpressionsUniqueStorage mPersistentImpressionsUniqueStorage;
     private final PersistentImpressionsObserverCacheStorage mPersistentImpressionsObserverCacheStorage;
     private final GeneralInfoStorage mGeneralInfoStorage;
+    @VisibleForTesting
+    final ParserCommons mParserCommons;
+    @VisibleForTesting
+    final RuleBasedSegmentStorage mRuleBasedSegmentStorage;
 
     public SplitStorageContainer(@NonNull SplitsStorage splitStorage,
                                  @NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
@@ -53,7 +61,8 @@ public class SplitStorageContainer {
                                  @NonNull PersistentAttributesStorage persistentAttributesStorage,
                                  @NonNull TelemetryStorage telemetryStorage,
                                  @NonNull PersistentImpressionsObserverCacheStorage persistentImpressionsObserverCacheStorage,
-                                 @NonNull GeneralInfoStorage generalInfoStorage) {
+                                 @NonNull GeneralInfoStorage generalInfoStorage,
+                                 @NonNull PersistentRuleBasedSegmentStorage persistentRuleBasedSegmentStorage) {
 
         mSplitStorage = checkNotNull(splitStorage);
         mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
@@ -70,6 +79,9 @@ public class SplitStorageContainer {
         mPersistentImpressionsUniqueStorage = checkNotNull(persistentImpressionsUniqueStorage);
         mPersistentImpressionsObserverCacheStorage = checkNotNull(persistentImpressionsObserverCacheStorage);
         mGeneralInfoStorage = checkNotNull(generalInfoStorage);
+        RuleBasedSegmentStorageInitializer.Result initializerResult = RuleBasedSegmentStorageInitializer.initialize(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, persistentRuleBasedSegmentStorage);
+        mParserCommons = initializerResult.getParserCommons();
+        mRuleBasedSegmentStorage = initializerResult.getRuleBasedSegmentStorage();
     }
 
     public SplitsStorage getSplitsStorage() {
@@ -142,5 +154,13 @@ public class SplitStorageContainer {
 
     public GeneralInfoStorage getGeneralInfoStorage() {
         return mGeneralInfoStorage;
+    }
+
+    public ParserCommons getParserCommons() {
+        return mParserCommons;
+    }
+
+    public RuleBasedSegmentStorage getRuleBasedSegmentStorage() {
+        return mRuleBasedSegmentStorage;
     }
 }

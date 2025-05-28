@@ -32,6 +32,7 @@ import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -175,7 +176,7 @@ public class SplitChangesServerErrorTest {
         String jsonChange = fileHelper.loadFileContent(mContext, "splitchanges_int_test.json");
         long prevChangeNumber = 0;
         for (int i = 0; i < 3; i++) {
-            SplitChange change = Json.fromJson(jsonChange, SplitChange.class);
+            SplitChange change = Json.fromJson(jsonChange, TargetingRulesChange.class).getFeatureFlagsChange();
             if (prevChangeNumber != 0) {
                 change.since = prevChangeNumber + CHANGE_INTERVAL;
                 change.till = prevChangeNumber + CHANGE_INTERVAL;
@@ -190,7 +191,7 @@ public class SplitChangesServerErrorTest {
             p1.size = (i < 2 ? 100 : 0);
             p2.treatment = "off";
             p2.size = (i < 2 ? 0 : 100);
-            mJsonChanges.add(Json.toJson(change));
+            mJsonChanges.add(Json.toJson(TargetingRulesChange.create(change)));
         }
     }
 

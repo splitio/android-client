@@ -26,18 +26,15 @@ import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
 import helper.DatabaseHelper;
-import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.TestingConfig;
-import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Json;
 import tests.integration.shared.TestingHelper;
 
 public class FlagsSpecInRequestTest {
@@ -65,7 +62,7 @@ public class FlagsSpecInRequestTest {
         testingConfig.setFlagsSpec("1.1");
         initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
-        assertEquals("s=1.1&since=-1", mQueryString.get());
+        assertEquals("s=1.1&since=-1&rbSince=-1", mQueryString.get());
     }
 
     @Test
@@ -74,7 +71,7 @@ public class FlagsSpecInRequestTest {
         testingConfig.setFlagsSpec(null);
         initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
-        assertEquals("since=-1", mQueryString.get());
+        assertEquals("since=-1&rbSince=-1", mQueryString.get());
     }
 
     @Test
@@ -95,7 +92,7 @@ public class FlagsSpecInRequestTest {
         testingConfig.setFlagsSpec("1.2");
         initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
-        assertEquals("s=1.2&since=-1", mQueryString.get());
+        assertEquals("s=1.2&since=-1&rbSince=-1", mQueryString.get());
     }
 
     @Test
@@ -122,7 +119,7 @@ public class FlagsSpecInRequestTest {
         TestingConfig testingConfig = new TestingConfig();
         initSplitFactory(new TestableSplitConfigBuilder(), mHttpClient, testingConfig);
 
-        assertEquals("s=1.2&users=CUSTOMER_ID", mAuthUrl.get().getQuery());
+        assertEquals("s=1.3&users=CUSTOMER_ID", mAuthUrl.get().getQuery());
     }
 
     @Test
@@ -197,11 +194,8 @@ public class FlagsSpecInRequestTest {
     }
 
     private String loadSplitChanges() {
-        FileHelper fileHelper = new FileHelper();
-        String change = fileHelper.loadFileContent(mContext, "split_changes_1.json");
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
-        parsedChange.since = parsedChange.till;
-        return Json.toJson(parsedChange);
+        String changes = IntegrationHelper.loadSplitChanges(mContext, "split_changes_1.json");
+        return changes;
     }
 
     private static SplitEntity newSplitEntity(String name, String trafficType, Set<String> sets) {

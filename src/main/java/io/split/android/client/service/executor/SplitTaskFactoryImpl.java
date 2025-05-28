@@ -16,6 +16,7 @@ import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.TestingConfig;
+import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.service.CleanUpDatabaseTask;
@@ -31,8 +32,11 @@ import io.split.android.client.service.impressions.SaveImpressionsCountTask;
 import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask;
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTaskConfig;
+import io.split.android.client.service.rules.LoadRuleBasedSegmentsTask;
+import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.FilterSplitsInCacheTask;
 import io.split.android.client.service.splits.LoadSplitsTask;
+import io.split.android.client.service.rules.RuleBasedSegmentInPlaceUpdateTask;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
 import io.split.android.client.service.splits.SplitKillTask;
@@ -48,6 +52,7 @@ import io.split.android.client.storage.cipher.EncryptionMigrationTask;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
 
@@ -62,6 +67,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     private final ISplitEventsManager mEventsManager;
     private final TelemetryTaskFactory mTelemetryTaskFactory;
     private final SplitChangeProcessor mSplitChangeProcessor;
+    private final RuleBasedSegmentChangeProcessor mRuleBasedSegmentChangeProcessor;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final List<SplitFilter> mFilters;
 
@@ -83,6 +89,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
         mFlagsSpecFromConfig = flagsSpecFromConfig;
         mEventsManager = eventsManager;
         mSplitChangeProcessor = new SplitChangeProcessor(filters, flagSetsFilter);
+        mRuleBasedSegmentChangeProcessor = new RuleBasedSegmentChangeProcessor();
+        RuleBasedSegmentStorageProducer ruleBasedSegmentStorageProducer = mSplitsStorageContainer.getRuleBasedSegmentStorage();
 
         TelemetryStorage telemetryStorage = mSplitsStorageContainer.getTelemetryStorage();
         mTelemetryRuntimeProducer = telemetryStorage;
@@ -90,6 +98,9 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
+                    mRuleBasedSegmentChangeProcessor,
+                    ruleBasedSegmentStorageProducer,
+                    mSplitsStorageContainer.getGeneralInfoStorage(),
                     mTelemetryRuntimeProducer,
                     new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()),
                     flagsSpecFromConfig);
@@ -97,8 +108,12 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
                     mSplitChangeProcessor,
+                    mRuleBasedSegmentChangeProcessor,
+                    ruleBasedSegmentStorageProducer,
+                    mSplitsStorageContainer.getGeneralInfoStorage(),
                     mTelemetryRuntimeProducer,
-                    flagsSpecFromConfig);
+                    flagsSpecFromConfig,
+                    false);
         }
 
         mFilters = (filters == null) ? new ArrayList<>() : new ArrayList<>(filters.values());
@@ -129,6 +144,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration) {
         return SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(),
+                mSplitsStorageContainer.getRuleBasedSegmentStorage(),
                 mSplitsFilterQueryStringFromConfig, mEventsManager, mSplitsStorageContainer.getTelemetryStorage());
     }
 
@@ -138,13 +154,18 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     }
 
     @Override
+    public LoadRuleBasedSegmentsTask createLoadRuleBasedSegmentsTask() {
+        return new LoadRuleBasedSegmentsTask(mSplitsStorageContainer.getRuleBasedSegmentStorage());
+    }
+
+    @Override
     public SplitKillTask createSplitKillTask(Split split) {
         return new SplitKillTask(mSplitsStorageContainer.getSplitsStorage(), split, mEventsManager);
     }
 
     @Override
-    public SplitsUpdateTask createSplitsUpdateTask(long since) {
-        return new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), since, mEventsManager);
+    public SplitsUpdateTask createSplitsUpdateTask(Long since, Long rbsSince) {
+        return new SplitsUpdateTask(mSplitsSyncHelper, mSplitsStorageContainer.getSplitsStorage(), mSplitsStorageContainer.getRuleBasedSegmentStorage(), since, rbsSince, mEventsManager);
     }
 
     @Override
@@ -209,6 +230,11 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
     @Override
     public EncryptionMigrationTask createEncryptionMigrationTask(String sdkKey, SplitRoomDatabase splitRoomDatabase, boolean encryptionEnabled, SplitCipher splitCipher) {
         return new EncryptionMigrationTask(sdkKey, splitRoomDatabase, encryptionEnabled, splitCipher);
+    }
+
+    @Override
+    public RuleBasedSegmentInPlaceUpdateTask createRuleBasedSegmentUpdateTask(RuleBasedSegment ruleBasedSegment, long changeNumber) {
+        return new RuleBasedSegmentInPlaceUpdateTask(mSplitsStorageContainer.getRuleBasedSegmentStorage(), mRuleBasedSegmentChangeProcessor, mEventsManager, ruleBasedSegment, changeNumber);
     }
 
     @NonNull

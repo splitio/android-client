@@ -60,7 +60,7 @@ public class CBCCipher implements SplitCipher {
 
             return new String(bytes, CHARSET);
         } catch (Exception e) {
-            Logger.e("Error decrypting data: " + e.getMessage());
+            Logger.e("Error decrypting data for source: " + data + " - " + e.getMessage());
             return null;
         } finally {
             mCipherProvider.release(cipher);

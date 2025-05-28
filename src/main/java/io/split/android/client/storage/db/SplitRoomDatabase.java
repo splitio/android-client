@@ -5,16 +5,13 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import android.content.Context;
 
-import androidx.annotation.NonNull;
 import androidx.room.Database;
 import androidx.room.Room;
 import androidx.room.RoomDatabase;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executors;
 
 import io.split.android.client.storage.db.attributes.AttributesDao;
 import io.split.android.client.storage.db.attributes.AttributesEntity;
@@ -23,15 +20,17 @@ import io.split.android.client.storage.db.impressions.observer.ImpressionsObserv
 import io.split.android.client.storage.db.impressions.unique.UniqueKeyEntity;
 import io.split.android.client.storage.db.impressions.unique.UniqueKeysDao;
 import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
+import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity;
 
 @Database(
         entities = {
                 MySegmentEntity.class, SplitEntity.class, EventEntity.class,
                 ImpressionEntity.class, GeneralInfoEntity.class, ImpressionsCountEntity.class,
                 AttributesEntity.class, UniqueKeyEntity.class, ImpressionsObserverCacheEntity.class,
-                MyLargeSegmentEntity.class
+                MyLargeSegmentEntity.class, RuleBasedSegmentEntity.class
         },
-        version = 6
+        version = 7
 )
 public abstract class SplitRoomDatabase extends RoomDatabase {
 
@@ -54,6 +53,8 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
     public abstract UniqueKeysDao uniqueKeysDao();
 
     public abstract ImpressionsObserverCacheDao impressionsObserverCacheDao();
+
+    public abstract RuleBasedSegmentDao ruleBasedSegmentDao();
 
     private volatile SplitQueryDao mSplitQueryDao;
 

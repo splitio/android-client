@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -53,6 +54,10 @@ public class Split {
     @SerializedName("impressionsDisabled")
     public boolean impressionsDisabled = false;
 
+    @Nullable
+    @SerializedName("prerequisites")
+    public List<Prerequisite> prerequisites;
+
     public String json = null;
 
     public Split() {
@@ -62,5 +67,9 @@ public class Split {
     public Split(String name, String json) {
         this.name = name;
         this.json = json;
+    }
+
+    public List<Prerequisite> getPrerequisites() {
+        return prerequisites == null ? new ArrayList<>() : prerequisites;
     }
 }

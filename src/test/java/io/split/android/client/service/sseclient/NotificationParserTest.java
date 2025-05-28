@@ -20,6 +20,7 @@ import io.split.android.client.service.sseclient.notifications.MySegmentUpdateSt
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
+import io.split.android.client.service.sseclient.notifications.RuleBasedSegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.SplitKillNotification;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.sseclient.notifications.StreamingError;
@@ -39,6 +40,7 @@ public class NotificationParserTest {
     private final static String CONTROL = "{\"id\":\"x2dE2TEiJL:0:0\",\"clientId\":\"NDEzMTY5Mzg0MA==:OTc5Nzc4NDYz\",\"timestamp\":1584647533288,\"encoding\":\"json\",\"channel\":\"control_pri\",\"data\":\"{\\\"type\\\":\\\"CONTROL\\\",\\\"controlType\\\":\\\"STREAMING_RESUMED\\\"}\"}";
 
     private static final String MY_LARGE_SEGMENTS_UPDATE = "{\"id\": \"diSrQttrC9:0:0\",\"clientId\": \"pri:MjcyNDE2NDUxMA==\",\"timestamp\": 1702507131100,\"encoding\": \"json\",\"channel\": \"NzM2MDI5Mzc0_MTc1MTYwODQxMQ==_memberships\",\"data\": \"{\\\"type\\\":\\\"MEMBERSHIPS_LS_UPDATE\\\",\\\"cn\\\":1702507130121,\\\"n\\\":[\\\"android_test\\\"],\\\"c\\\":2,\\\"u\\\":2,\\\"d\\\":\\\"eJwEwLsRwzAMA9BdWKsg+IFBraJTkRXS5rK7388+tg+KdC8+jq4eBBQLFcUnO8FAAC36gndOSEyFqJFP32Vf2+f+3wAAAP//hUQQ9A==\\\",\\\"i\\\":100,\\\"h\\\":1,\\\"s\\\":325}\"}";
+    private static final String RULE_BASED_SEGMENT_UPDATE = "{\"id\":\"1111\",\"clientId\":\"pri:ODc1NjQyNzY1\",\"timestamp\":1588254699236,\"encoding\":\"json\",\"channel\":\"xxxx_xxxx_flags\",\"data\":\"{\\\"type\\\":\\\"RB_SEGMENT_UPDATE\\\",\\\"changeNumber\\\":1684265694505,\\\"pcn\\\":111,\\\"c\\\":0,\\\"d\\\":\\\"eyJuYW1lIjoicmJzX3Rlc3QiLCJzdGF0dXMiOiJBQ1RJVkUiLCJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiZXhjbHVkZWQiOnsia2V5cyI6W10sInNlZ21lbnRzIjpbXX0sImNvbmRpdGlvbnMiOlt7Im1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX19XX0=\\\"}\"}";
 
     @Before
     public void setup() {
@@ -157,5 +159,15 @@ public class NotificationParserTest {
         assertEquals((Long) 100L, notification.getUpdateIntervalMs());
         assertEquals((Integer) 325, notification.getAlgorithmSeed());
         assertEquals(HashingAlgorithm.MURMUR3_32, notification.getHashingAlgorithm());
+    }
+
+    @Test
+    public void parseRuleBasedSegmentsNotificationData() {
+        IncomingNotification incomingNotification = mParser.parseIncoming(RULE_BASED_SEGMENT_UPDATE);
+        RuleBasedSegmentChangeNotification notification = mParser.parseRuleBasedSegmentUpdate(incomingNotification.getJsonData());
+
+        assertEquals(1684265694505L, notification.getChangeNumber());
+        assertEquals(CompressionType.NONE, notification.getCompressionType());
+        assertEquals(111, (long) notification.getPreviousChangeNumber());
     }
 }

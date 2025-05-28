@@ -23,6 +23,7 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.dtos.SplitChange;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
@@ -64,8 +65,8 @@ public class LargeSegmentTestHelper {
                     return new MockResponse().setResponseCode(500);
                 }
 
-                if (request.getRequestUrl().encodedPathSegments().contains("splitChanges")) {
-                    updateEndpointHit("splitChanges");
+                if (request.getRequestUrl().encodedPathSegments().contains(IntegrationHelper.ServicePath.SPLIT_CHANGES)) {
+                    updateEndpointHit(IntegrationHelper.ServicePath.SPLIT_CHANGES);
                     return new MockResponse().setResponseCode(200).setBody(splitChangesLargeSegments(1602796638344L, 1602796638344L));
                 } else if (request.getRequestUrl().encodedPathSegments().contains(IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     Thread.sleep(mMySegmentsDelay.get());
@@ -92,7 +93,7 @@ public class LargeSegmentTestHelper {
 
     private void initializeLatches() {
         mLatches = new ConcurrentHashMap<>();
-        mLatches.put("splitChanges", new CountDownLatch(1));
+        mLatches.put(IntegrationHelper.ServicePath.SPLIT_CHANGES, new CountDownLatch(1));
         mLatches.put(IntegrationHelper.ServicePath.MEMBERSHIPS, new CountDownLatch(1));
     }
 
@@ -151,10 +152,10 @@ public class LargeSegmentTestHelper {
 
     private String splitChangesLargeSegments(long since, long till) {
         String change = mFileHelper.loadFileContent(mContext, "split_changes_large_segments-0.json");
-        SplitChange parsedChange = Json.fromJson(change, SplitChange.class);
+        SplitChange parsedChange = IntegrationHelper.getChangeFromJsonString(change);
         parsedChange.since = since;
         parsedChange.till = till;
 
-        return Json.toJson(parsedChange);
+        return Json.toJson(TargetingRulesChange.create(parsedChange));
     }
 }

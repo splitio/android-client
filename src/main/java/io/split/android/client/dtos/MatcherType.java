@@ -60,5 +60,8 @@ public enum MatcherType {
     @SerializedName("BETWEEN_SEMVER")
     BETWEEN_SEMVER,
     @SerializedName("IN_LIST_SEMVER")
-    IN_LIST_SEMVER
+    IN_LIST_SEMVER,
+
+    @SerializedName("IN_RULE_BASED_SEGMENT")
+    IN_RULE_BASED_SEGMENT,
 }

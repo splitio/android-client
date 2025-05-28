@@ -91,7 +91,7 @@ public class SplitChangesCdnBypassTest {
         TestingHelper.delay(500);
 
         pushSplitsUpdateMessage();
-        boolean await = mBypassLatch.await(200, TimeUnit.SECONDS);
+        boolean await = mBypassLatch.await(20, TimeUnit.SECONDS);
         assertTrue(await);
 
         client.destroy();
@@ -121,12 +121,12 @@ public class SplitChangesCdnBypassTest {
 
                 } else if (uri.getPath().contains("/splitChanges")) {
                     System.out.println("URL HIT: " + uri.getPath());
-                    if (uri.getQuery().contains("till=3") && uri.getQuery().contains("since=3")) {
-                        return getSplitsMockResponse("3", "4");
-                    }
-
                     if (uri.getQuery().contains("till")) {
                         mBypassLatch.countDown();
+                    }
+
+                    if (uri.getQuery().contains("till=3") && uri.getQuery().contains("since=3")) {
+                        return getSplitsMockResponse("3", "4");
                     }
 
                     if (uri.getQuery().contains("since=-1")) {
@@ -136,7 +136,7 @@ public class SplitChangesCdnBypassTest {
                     } else if (uri.getQuery().contains("since=3")) {
                         return getSplitsMockResponse("3", "3");
                     }
-                    return new HttpResponseMock(200, "{\"splits\":[], \"since\": 4, \"till\": 4 }");
+                    return new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(4, 4));
                 } else if (uri.getPath().contains("/testImpressions/bulk")) {
                     return new HttpResponseMock(200);
                 } else if (uri.getPath().contains("/auth")) {
@@ -151,7 +151,7 @@ public class SplitChangesCdnBypassTest {
 
     @NonNull
     private HttpResponseMock getSplitsMockResponse(final String since, final String till) {
-        return new HttpResponseMock(200, "{\"splits\":[], \"since\": " + since + ", \"till\": " + till + " }");
+        return new HttpResponseMock(200, IntegrationHelper.emptySplitChanges(Long.parseLong(since), Long.parseLong(till)));
     }
 
     private HttpStreamResponseMock createStreamResponse(int status, BlockingQueue<String> streamingResponseData) throws IOException {

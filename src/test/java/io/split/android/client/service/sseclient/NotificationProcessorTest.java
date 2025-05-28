@@ -21,10 +21,12 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
+import io.split.android.client.service.sseclient.notifications.InstantUpdateChangeNotification;
 import io.split.android.client.service.sseclient.notifications.MembershipNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
+import io.split.android.client.service.sseclient.notifications.RuleBasedSegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.SplitKillNotification;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.sseclient.notifications.memberships.MembershipsNotificationProcessor;
@@ -38,7 +40,7 @@ public class NotificationProcessorTest {
     @Mock
     private NotificationParser mNotificationParser;
     @Mock
-    private BlockingQueue<SplitsChangeNotification> mSplitsChangeQueue;
+    private BlockingQueue<InstantUpdateChangeNotification> mSplitsChangeQueue;
     @Mock
     private IncomingNotification mIncomingNotification;
     private NotificationProcessor mNotificationProcessor;
@@ -103,5 +105,24 @@ public class NotificationProcessorTest {
         mNotificationProcessor.process(mIncomingNotification);
 
         verify(mySegmentsNotificationProcessor).process(mySegmentChangeNotification);
+    }
+
+    @Test
+    public void ruleBasedSegmentNotification() {
+
+        RuleBasedSegmentChangeNotification notification = mock(RuleBasedSegmentChangeNotification.class);
+        when(mIncomingNotification.getType()).thenReturn(NotificationType.RULE_BASED_SEGMENT_UPDATE);
+        when(notification.getChangeNumber()).thenReturn(200L);
+        when(notification.getType()).thenReturn(NotificationType.RULE_BASED_SEGMENT_UPDATE);
+        when(mNotificationParser.parseIncoming(anyString())).thenReturn(mIncomingNotification);
+        when(mNotificationParser.parseRuleBasedSegmentUpdate(anyString())).thenReturn(notification);
+
+        mNotificationProcessor.process(mIncomingNotification);
+
+        ArgumentCaptor<RuleBasedSegmentChangeNotification> messageCaptor =
+                ArgumentCaptor.forClass(RuleBasedSegmentChangeNotification.class);
+        verify(mSplitsChangeQueue, times(1)).offer(messageCaptor.capture());
+        Assert.assertEquals(NotificationType.RULE_BASED_SEGMENT_UPDATE, messageCaptor.getValue().getType());
+        Assert.assertEquals(200L, messageCaptor.getValue().getChangeNumber());
     }
 }

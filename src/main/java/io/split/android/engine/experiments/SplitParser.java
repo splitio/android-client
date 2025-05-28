@@ -1,73 +1,22 @@
 package io.split.android.engine.experiments;
 
-import static io.split.android.client.utils.Utils.checkArgument;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.annotation.VisibleForTesting;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import io.split.android.client.dtos.Condition;
-import io.split.android.client.dtos.Matcher;
-import io.split.android.client.dtos.MatcherGroup;
-import io.split.android.client.dtos.Partition;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
-import io.split.android.client.storage.mysegments.EmptyMySegmentsStorage;
-import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.utils.logger.Logger;
-import io.split.android.engine.matchers.AllKeysMatcher;
-import io.split.android.engine.matchers.AttributeMatcher;
-import io.split.android.engine.matchers.BetweenMatcher;
-import io.split.android.engine.matchers.BooleanMatcher;
-import io.split.android.engine.matchers.CombiningMatcher;
-import io.split.android.engine.matchers.DependencyMatcher;
-import io.split.android.engine.matchers.EqualToMatcher;
-import io.split.android.engine.matchers.GreaterThanOrEqualToMatcher;
-import io.split.android.engine.matchers.LessThanOrEqualToMatcher;
-import io.split.android.engine.matchers.MySegmentsMatcher;
-import io.split.android.engine.matchers.collections.ContainsAllOfSetMatcher;
-import io.split.android.engine.matchers.collections.ContainsAnyOfSetMatcher;
-import io.split.android.engine.matchers.collections.EqualToSetMatcher;
-import io.split.android.engine.matchers.collections.PartOfSetMatcher;
-import io.split.android.engine.matchers.semver.BetweenSemverMatcher;
-import io.split.android.engine.matchers.semver.EqualToSemverMatcher;
-import io.split.android.engine.matchers.semver.GreaterThanOrEqualToSemverMatcher;
-import io.split.android.engine.matchers.semver.InListSemverMatcher;
-import io.split.android.engine.matchers.semver.LessThanOrEqualToSemverMatcher;
-import io.split.android.engine.matchers.strings.ContainsAnyOfMatcher;
-import io.split.android.engine.matchers.strings.EndsWithAnyOfMatcher;
-import io.split.android.engine.matchers.strings.RegularExpressionMatcher;
-import io.split.android.engine.matchers.strings.StartsWithAnyOfMatcher;
-import io.split.android.engine.matchers.strings.WhitelistMatcher;
 
-public class SplitParser {
+public class SplitParser implements Parser<Split, ParsedSplit> {
 
-    public static final int CONDITIONS_UPPER_LIMIT = 50;
+    private final ParserCommons mParserCommons;
 
-    private final MySegmentsStorageContainer mMySegmentsStorageContainer;
-    private final MySegmentsStorageContainer mMyLargeSegmentsStorageContainer;
-    private final DefaultConditionsProvider mDefaultConditionsProvider;
-
-    public SplitParser(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer, @Nullable MySegmentsStorageContainer myLargeSegmentsStorageContainer) {
-        this(mySegmentsStorageContainer, myLargeSegmentsStorageContainer, new DefaultConditionsProvider());
-    }
-
-    @VisibleForTesting
-    static SplitParser get(MySegmentsStorageContainer mySegmentsStorageContainer, MySegmentsStorageContainer myLargeSegmentsStorageContainer) {
-        return new SplitParser(mySegmentsStorageContainer, myLargeSegmentsStorageContainer);
-    }
-
-    @VisibleForTesting
-    SplitParser(@NonNull MySegmentsStorageContainer mySegmentsStorageContainer,
-                @Nullable MySegmentsStorageContainer myLargeSegmentsStorageContainer,
-                @NonNull DefaultConditionsProvider defaultConditionsProvider) {
-        mMySegmentsStorageContainer = checkNotNull(mySegmentsStorageContainer);
-        mMyLargeSegmentsStorageContainer = myLargeSegmentsStorageContainer;
-        mDefaultConditionsProvider = checkNotNull(defaultConditionsProvider);
+    public SplitParser(ParserCommons parserCommons) {
+        mParserCommons = checkNotNull(parserCommons);
     }
 
     @Nullable
@@ -75,6 +24,7 @@ public class SplitParser {
         return parse(split, null);
     }
 
+    @Override
     @Nullable
     public ParsedSplit parse(@Nullable Split split, @Nullable String matchingKey) {
         try {
@@ -94,23 +44,10 @@ public class SplitParser {
             return null;
         }
 
-        if (split.conditions.size() > CONDITIONS_UPPER_LIMIT) {
-            Logger.w("Dropping feature flag name=%s due to large number of conditions(%d)",
-                    split.name, split.conditions.size());
+        List<ParsedCondition> parsedConditionList = mParserCommons.getParsedConditions(matchingKey, split.conditions,
+                "Dropping feature flag name=" + split.name + " due to large number of conditions (" + split.conditions.size() + ")");
+        if (parsedConditionList == null) {
             return null;
-        }
-
-        List<ParsedCondition> parsedConditionList = new ArrayList<>();
-
-        try {
-            for (Condition condition : split.conditions) {
-                List<Partition> partitions = condition.partitions;
-                CombiningMatcher matcher = toMatcher(condition.matcherGroup, matchingKey);
-                parsedConditionList.add(new ParsedCondition(condition.conditionType, matcher, partitions, condition.label));
-            }
-        } catch (UnsupportedMatcherException e) {
-            Logger.w(e.getMessage());
-            parsedConditionList = mDefaultConditionsProvider.getDefaultConditions();
         }
 
         return new ParsedSplit(split.name,
@@ -125,137 +62,7 @@ public class SplitParser {
                 split.algo,
                 split.configurations,
                 split.sets,
-                split.impressionsDisabled);
-    }
-
-    private CombiningMatcher toMatcher(MatcherGroup matcherGroup, String matchingKey) throws UnsupportedMatcherException {
-        List<Matcher> matchers = matcherGroup.matchers;
-        checkArgument(!matchers.isEmpty());
-
-        List<AttributeMatcher> toCombine = new ArrayList<>();
-
-        for (Matcher matcher : matchers) {
-            AttributeMatcher attributeMatcher = toMatcher(matcher, matchingKey);
-
-            toCombine.add(attributeMatcher);
-        }
-
-        return new CombiningMatcher(matcherGroup.combiner, toCombine);
-    }
-
-    private AttributeMatcher toMatcher(Matcher matcher, String matchingKey) throws UnsupportedMatcherException {
-        io.split.android.engine.matchers.Matcher delegate;
-
-        // Values not present in {@link io.split.android.client.dtos.MatcherType} are deserialized as null
-        if (matcher.matcherType == null) {
-            throw new UnsupportedMatcherException("Unable to create matcher for matcher type");
-        }
-
-        switch (matcher.matcherType) {
-            case ALL_KEYS:
-                delegate = new AllKeysMatcher();
-                break;
-            case IN_SEGMENT:
-                checkNotNull(matcher.userDefinedSegmentMatcherData);
-                delegate = new MySegmentsMatcher((matchingKey != null) ? mMySegmentsStorageContainer.getStorageForKey(matchingKey) : new EmptyMySegmentsStorage(), matcher.userDefinedSegmentMatcherData.segmentName);
-                break;
-            case IN_LARGE_SEGMENT:
-                checkNotNull(matcher.userDefinedLargeSegmentMatcherData);
-                delegate = new MySegmentsMatcher((matchingKey != null) ? mMyLargeSegmentsStorageContainer.getStorageForKey(matchingKey) : new EmptyMySegmentsStorage(), matcher.userDefinedLargeSegmentMatcherData.largeSegmentName);
-                break;
-            case WHITELIST:
-                checkNotNull(matcher.whitelistMatcherData);
-                delegate = new WhitelistMatcher(matcher.whitelistMatcherData.whitelist);
-                break;
-            case EQUAL_TO:
-                checkNotNull(matcher.unaryNumericMatcherData);
-                delegate = new EqualToMatcher(matcher.unaryNumericMatcherData.value, matcher.unaryNumericMatcherData.dataType);
-                break;
-            case GREATER_THAN_OR_EQUAL_TO:
-                checkNotNull(matcher.unaryNumericMatcherData);
-                delegate = new GreaterThanOrEqualToMatcher(matcher.unaryNumericMatcherData.value, matcher.unaryNumericMatcherData.dataType);
-                break;
-            case LESS_THAN_OR_EQUAL_TO:
-                checkNotNull(matcher.unaryNumericMatcherData);
-                delegate = new LessThanOrEqualToMatcher(matcher.unaryNumericMatcherData.value, matcher.unaryNumericMatcherData.dataType);
-                break;
-            case BETWEEN:
-                checkNotNull(matcher.betweenMatcherData);
-                delegate = new BetweenMatcher(matcher.betweenMatcherData.start, matcher.betweenMatcherData.end, matcher.betweenMatcherData.dataType);
-                break;
-            case EQUAL_TO_SET:
-                checkNotNull(matcher.whitelistMatcherData);
-                delegate = new EqualToSetMatcher(matcher.whitelistMatcherData.whitelist);
-                break;
-            case PART_OF_SET:
-                checkNotNull(matcher.whitelistMatcherData);
-                delegate = new PartOfSetMatcher(matcher.whitelistMatcherData.whitelist);
-                break;
-            case CONTAINS_ALL_OF_SET:
-                checkNotNull(matcher.whitelistMatcherData);
-                delegate = new ContainsAllOfSetMatcher(matcher.whitelistMatcherData.whitelist);
-                break;
-            case CONTAINS_ANY_OF_SET:
-                checkNotNull(matcher.whitelistMatcherData);
-                delegate = new ContainsAnyOfSetMatcher(matcher.whitelistMatcherData.whitelist);
-                break;
-            case STARTS_WITH:
-                checkNotNull(matcher.whitelistMatcherData);
-                delegate = new StartsWithAnyOfMatcher(matcher.whitelistMatcherData.whitelist);
-                break;
-            case ENDS_WITH:
-                checkNotNull(matcher.whitelistMatcherData);
-                delegate = new EndsWithAnyOfMatcher(matcher.whitelistMatcherData.whitelist);
-                break;
-            case CONTAINS_STRING:
-                checkNotNull(matcher.whitelistMatcherData);
-                delegate = new ContainsAnyOfMatcher(matcher.whitelistMatcherData.whitelist);
-                break;
-            case MATCHES_STRING:
-                checkNotNull(matcher.stringMatcherData);
-                delegate = new RegularExpressionMatcher(matcher.stringMatcherData);
-                break;
-            case IN_SPLIT_TREATMENT:
-                checkNotNull(matcher.dependencyMatcherData,
-                        "MatcherType is " + matcher.matcherType
-                                + ". matcher.dependencyMatcherData() MUST NOT BE null");
-                delegate = new DependencyMatcher(matcher.dependencyMatcherData.split, matcher.dependencyMatcherData.treatments);
-                break;
-            case EQUAL_TO_BOOLEAN:
-                checkNotNull(matcher.booleanMatcherData,
-                        "MatcherType is " + matcher.matcherType
-                                + ". matcher.booleanMatcherData() MUST NOT BE null");
-                delegate = new BooleanMatcher(matcher.booleanMatcherData);
-                break;
-            case EQUAL_TO_SEMVER:
-                delegate = new EqualToSemverMatcher(matcher.stringMatcherData);
-                break;
-            case GREATER_THAN_OR_EQUAL_TO_SEMVER:
-                delegate = new GreaterThanOrEqualToSemverMatcher(matcher.stringMatcherData);
-                break;
-            case LESS_THAN_OR_EQUAL_TO_SEMVER:
-                delegate = new LessThanOrEqualToSemverMatcher(matcher.stringMatcherData);
-                break;
-            case BETWEEN_SEMVER:
-                delegate = new BetweenSemverMatcher(matcher.betweenStringMatcherData.start, matcher.betweenStringMatcherData.end);
-                break;
-            case IN_LIST_SEMVER:
-                delegate = new InListSemverMatcher(matcher.whitelistMatcherData.whitelist);
-                break;
-            default:
-                // since values not present in {@link io.split.android.client.dtos.MatcherType}
-                // are deserialized as null, this would most likely not be reached. Adding it for completeness
-                throw new UnsupportedMatcherException("Unable to create matcher for matcher type: " + matcher.matcherType);
-        }
-
-        String attribute = null;
-        if (matcher.keySelector != null && matcher.keySelector.attribute != null) {
-            attribute = matcher.keySelector.attribute;
-        }
-
-        boolean negate = matcher.negate;
-
-
-        return new AttributeMatcher(attribute, delegate, negate);
+                split.impressionsDisabled,
+                new ArrayList<>(split.getPrerequisites()));
     }
 }
