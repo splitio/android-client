@@ -39,8 +39,16 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run unit tests with coverage (continue on error)
-        run: ./gradlew test jacocoTestReport --continue
+        run: ./gradlew test jacocoTestReport generateJacocoXmlReport --continue
         continue-on-error: true
+        
+      - name: Debug - Check for JaCoCo report files
+        run: |
+          echo "Checking for JaCoCo report files..."
+          find build -name "*.xml" | grep jacoco || echo "No XML files found"
+          find build -name "*.exec" | grep jacoco || echo "No exec files found"
+          echo "Contents of JaCoCo report directory:"
+          ls -la build/reports/jacoco/jacocoTestReport/ || echo "Directory not found"
 
       # Commented out Android instrumented test part to focus on unit test flow
       # - name: AVD cache
