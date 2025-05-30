@@ -361,6 +361,9 @@ tasks.register('jacocoTestReport', JacocoReport) {
     executionData.from(fileTree(dir: "$buildDir", includes: [
         'jacoco/testDebugUnitTest.exec'
     ]))
+    
+    // Ensure this task always runs and doesn't get skipped
+    outputs.upToDateWhen { false }
 }
 
 // Android instrumented test coverage report task
@@ -381,6 +384,9 @@ tasks.register('jacocoAndroidTestReport', JacocoReport) {
     executionData.from(fileTree(dir: "$buildDir", includes: [
         'outputs/code_coverage/debugAndroidTest/connected/*coverage.ec'
     ]))
+    
+    // Ensure this task always runs and doesn't get skipped
+    outputs.upToDateWhen { false }
 }
 
 // Combined coverage report task
@@ -402,4 +408,7 @@ tasks.register('jacocoCombinedReport', JacocoReport) {
         'jacoco/testDebugUnitTest.exec',
         'outputs/code_coverage/debugAndroidTest/connected/*coverage.ec'
     ]))
+    
+    // Ensure this task always runs and doesn't get skipped
+    outputs.upToDateWhen { false }
 }
