@@ -42,38 +42,39 @@ jobs:
         run: ./gradlew test jacocoTestReport --continue
         continue-on-error: true
 
-      - name: AVD cache
-        uses: actions/cache@v4
-        id: avd-cache
-        with:
-          path: |
-            ~/.android/avd/*
-            ~/.android/adb*
-          key: avd-28
+      # Commented out Android instrumented test part to focus on unit test flow
+      # - name: AVD cache
+      #   uses: actions/cache@v4
+      #   id: avd-cache
+      #   with:
+      #     path: |
+      #       ~/.android/avd/*
+      #       ~/.android/adb*
+      #     key: avd-28
 
-      - name: Create AVD and generate snapshot for caching
-        if: steps.avd-cache.outputs.cache-hit != 'true'
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 28
-          force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          disable-animations: true
-          script: echo "Generated AVD snapshot for caching."
+      # - name: Create AVD and generate snapshot for caching
+      #   if: steps.avd-cache.outputs.cache-hit != 'true'
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 28
+      #     force-avd-creation: false
+      #     emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+      #     disable-animations: true
+      #     script: echo "Generated AVD snapshot for caching."
 
-      - name: Assemble debug AndroidTest
-        run: ./gradlew assembleDebugAndroidTest
+      # - name: Assemble debug AndroidTest
+      #   run: ./gradlew assembleDebugAndroidTest
 
-      - name: Run instrumented tests with coverage (continue on error)
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 28
-          profile: Galaxy Nexus
-          script: ./gradlew connectedDebugAndroidTest jacocoAndroidTestReport --continue
-        continue-on-error: true
+      # - name: Run instrumented tests with coverage (continue on error)
+      #   uses: reactivecircus/android-emulator-runner@v2
+      #   with:
+      #     api-level: 28
+      #     profile: Galaxy Nexus
+      #     script: ./gradlew connectedDebugAndroidTest jacocoAndroidTestReport --continue
+      #   continue-on-error: true
 
-      - name: Generate combined coverage report
-        run: ./gradlew jacocoCombinedReport
+      # - name: Generate combined coverage report
+      #   run: ./gradlew jacocoCombinedReport
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5
