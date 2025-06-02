@@ -38,8 +38,11 @@ jobs:
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build project and run tests with coverage
-        run: ./gradlew clean assembleDebug test jacocoTestReport generateJacocoXmlReport
+      - name: Build project
+        run: ./gradlew assembleDebug --stacktrace
+        
+      - name: Run tests with coverage
+        run: ./gradlew test jacocoTestReport generateJacocoXmlReport --stacktrace
         continue-on-error: true
         
       - name: Debug - Check for JaCoCo report files and binary directories
