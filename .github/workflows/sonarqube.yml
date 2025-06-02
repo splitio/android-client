@@ -193,8 +193,12 @@ jobs:
             # Use a more direct approach to ensure coverage is enabled
             ./gradlew assembleDebugAndroidTest
             
+            # First, let's determine the correct test package name
+            TEST_PACKAGE=$(adb shell pm list instrumentation | grep split | cut -d' ' -f1 | cut -d: -f2)
+            echo "Found test instrumentation package: $TEST_PACKAGE"
+            
             # Run only a single test class with coverage explicitly enabled
-            adb shell am instrument -w -e coverage true -e class tests.database.DatabaseInitializationTest io.split.android.android_client.test/androidx.test.runner.AndroidJUnitRunner
+            adb shell am instrument -w -e coverage true -e class tests.database.DatabaseInitializationTest $TEST_PACKAGE
             TEST_RESULT=$?
             if [ $TEST_RESULT -ne 0 ]; then
               echo "Some instrumented tests failed, but continuing to check for coverage data..."
