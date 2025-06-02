@@ -349,8 +349,6 @@ tasks.withType(Test) {
     jacoco {
         includeNoLocationClasses = true
         excludes = ['jdk.internal.*']
-        // Ensure JaCoCo agent is always attached
-        append = true
     }
     finalizedBy jacocoTestReport
 }
@@ -429,23 +427,25 @@ tasks.register('jacocoTestReport', JacocoReport) {
     // Include all class files except excluded ones
     classDirectories.from = files([debugTree])
     
-    // Include all execution data files
-    executionData.from = files(fileTree(dir: "$buildDir", includes: [
+    // Include execution data files
+    executionData.from(fileTree(dir: "$buildDir", includes: [
         'jacoco/testDebugUnitTest.exec',
-        'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec',
-        '**/*.exec'
+        'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec'
     ]))
     
     // Ensure this task always runs and doesn't get skipped
     outputs.upToDateWhen { false }
     
     doFirst {
-        // Ensure we have execution data files
-        executionData.from.each { file ->
-            if (!file.exists()) {
-                logger.warn("JaCoCo execution data file not found: $file")
-            } else {
-                logger.lifecycle("Found JaCoCo execution data file: $file")
+        // Log a warning if no execution data files exist
+        def execFiles = executionData.files
+        if (execFiles.isEmpty() || !execFiles.any { it.exists() }) {
+            logger.warn("JaCoCo will not generate coverage report because no execution data files were found")
+        } else {
+            execFiles.each { file ->
+                if (file.exists()) {
+                    logger.lifecycle("Found JaCoCo execution data file: $file")
+                }
             }
         }
     }
@@ -462,7 +462,7 @@ tasks.register('jacocoAndroidTestReport', JacocoReport) {
     }
     
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-    def debugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
+    def debugTree = fileTree(dir: "${buildDir}/intermediates/runtime_library_classes_dir/debug", excludes: fileFilter)
     
     sourceDirectories.from(files(['src/main/java']))
     classDirectories.from(files([debugTree]))
@@ -472,6 +472,20 @@ tasks.register('jacocoAndroidTestReport', JacocoReport) {
     
     // Ensure this task always runs and doesn't get skipped
     outputs.upToDateWhen { false }
+    
+    doFirst {
+        // Log a warning if no execution data files exist
+        def execFiles = executionData.files
+        if (execFiles.isEmpty() || !execFiles.any { it.exists() }) {
+            logger.warn("JaCoCo will not generate coverage report because no execution data files were found")
+        } else {
+            execFiles.each { file ->
+                if (file.exists()) {
+                    logger.lifecycle("Found JaCoCo execution data file: $file")
+                }
+            }
+        }
+    }
 }
 
 // Combined coverage report task
@@ -485,7 +499,7 @@ tasks.register('jacocoCombinedReport', JacocoReport) {
     }
     
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-    def debugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
+    def debugTree = fileTree(dir: "${buildDir}/intermediates/runtime_library_classes_dir/debug", excludes: fileFilter)
     
     sourceDirectories.from(files(['src/main/java']))
     classDirectories.from(files([debugTree]))
@@ -496,4 +510,18 @@ tasks.register('jacocoCombinedReport', JacocoReport) {
     
     // Ensure this task always runs and doesn't get skipped
     outputs.upToDateWhen { false }
+    
+    doFirst {
+        // Log a warning if no execution data files exist
+        def execFiles = executionData.files
+        if (execFiles.isEmpty() || !execFiles.any { it.exists() }) {
+            logger.warn("JaCoCo will not generate coverage report because no execution data files were found")
+        } else {
+            execFiles.each { file ->
+                if (file.exists()) {
+                    logger.lifecycle("Found JaCoCo execution data file: $file")
+                }
+            }
+        }
+    }
 }
