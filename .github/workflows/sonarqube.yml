@@ -38,8 +38,8 @@ jobs:
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Run unit tests with coverage (continue on error)
-        run: ./gradlew clean test jacocoTestReport generateJacocoXmlReport --debug
+      - name: Build project and run tests with coverage
+        run: ./gradlew clean assembleDebug test jacocoTestReport generateJacocoXmlReport
         continue-on-error: true
         
       - name: Debug - Check for JaCoCo report files and binary directories
@@ -69,12 +69,11 @@ jobs:
           fi
           
           echo "\nChecking binary directories specified in sonar-project.properties:"
-          echo "build/intermediates/javac/debug/classes:"
-          ls -la build/intermediates/javac/debug/classes || echo "Directory not found"
-          echo "\nbuild/intermediates/javac/debugUnitTest/classes:"
-          ls -la build/intermediates/javac/debugUnitTest/classes || echo "Directory not found"
-          echo "\nbuild/intermediates/compile_library_classes_jar/debug/:"
-          ls -la build/intermediates/compile_library_classes_jar/debug/ || echo "Directory not found"
+          echo "build/intermediates/runtime_library_classes_dir/debug:"
+          ls -la build/intermediates/runtime_library_classes_dir/debug || echo "Directory not found"
+          
+          echo "\nChecking all available class directories:"
+          find build -path "*/build/*" -name "*.class" | head -n 5 || echo "No class files found"
 
       # Commented out Android instrumented test part to focus on unit test flow
       # - name: AVD cache
