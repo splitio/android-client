@@ -52,7 +52,15 @@ jobs:
           
           # Check if the report was generated with content
           if [ -f build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml ]; then
-            REPORT_SIZE=$(stat -f%z build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
+            # Use stat command compatible with both Linux and macOS
+            if [[ "$(uname)" == "Darwin" ]]; then
+              # macOS syntax
+              REPORT_SIZE=$(stat -f%z build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
+            else
+              # Linux syntax
+              REPORT_SIZE=$(stat -c%s build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
+            fi
+            
             if [ "$REPORT_SIZE" -lt 1000 ]; then
               echo "JaCoCo report is too small ($REPORT_SIZE bytes), likely empty. Trying to generate from test execution data..."
               # Try to generate the report directly from the exec file
@@ -63,7 +71,14 @@ jobs:
                   --xml build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
                 
                 # Check if the report was successfully generated
-                NEW_REPORT_SIZE=$(stat -f%z build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
+                if [[ "$(uname)" == "Darwin" ]]; then
+                  # macOS syntax
+                  NEW_REPORT_SIZE=$(stat -f%z build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
+                else
+                  # Linux syntax
+                  NEW_REPORT_SIZE=$(stat -c%s build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
+                fi
+                
                 if [ "$NEW_REPORT_SIZE" -lt 1000 ]; then
                   echo "ERROR: Failed to generate a valid JaCoCo report with coverage data"
                   exit 1
