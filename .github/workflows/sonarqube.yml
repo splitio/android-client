@@ -44,11 +44,13 @@ jobs:
           ./gradlew assembleDebug --stacktrace
           
           # Run tests with coverage - allow test failures
-          ./gradlew testDebugUnitTest jacocoTestReport --stacktrace || {
+          ./gradlew testDebugUnitTest jacocoTestReport --stacktrace
+          TEST_RESULT=$?
+          if [ $TEST_RESULT -ne 0 ]; then
             echo "Some tests failed, but continuing to check for coverage data..."
             # Even if tests fail, JaCoCo should generate a report with partial coverage
             # from the tests that did pass
-          }
+          fi
           
           # Check if the report was generated with content
           if [ -f build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml ]; then
@@ -192,9 +194,11 @@ jobs:
             ./gradlew assembleDebugAndroidTest
             
             # Run only a single test class with coverage explicitly enabled
-            adb shell am instrument -w -e coverage true -e class tests.database.DatabaseInitializationTest io.split.android.android_client.test/androidx.test.runner.AndroidJUnitRunner || {
+            adb shell am instrument -w -e coverage true -e class tests.database.DatabaseInitializationTest io.split.android.android_client.test/androidx.test.runner.AndroidJUnitRunner
+            TEST_RESULT=$?
+            if [ $TEST_RESULT -ne 0 ]; then
               echo "Some instrumented tests failed, but continuing to check for coverage data..."
-            }
+            fi
             
             # Create directory for coverage files
             mkdir -p build/outputs/code_coverage/debugAndroidTest/connected/
@@ -217,9 +221,11 @@ jobs:
             find build -name "*.ec" -o -name "*.exec"
             
             # Run the JaCoCo report task
-            ./gradlew jacocoAndroidTestReport || {
+            ./gradlew jacocoAndroidTestReport
+            REPORT_RESULT=$?
+            if [ $REPORT_RESULT -ne 0 ]; then
               echo "Failed to generate Android test coverage report, but continuing..."
-            }
+            fi
             
             # Check if the Android test report was generated with content
             if [ -f build/reports/jacoco/jacocoAndroidTestReport/jacocoAndroidTestReport.xml ]; then
