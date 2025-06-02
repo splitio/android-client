@@ -38,12 +38,49 @@ jobs:
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
 
-      - name: Build project
-        run: ./gradlew assembleDebug --stacktrace
-        
-      - name: Run tests with coverage
-        run: ./gradlew test jacocoTestReport generateJacocoXmlReport --stacktrace
-        continue-on-error: true
+      - name: Build project and run tests with coverage
+        run: |
+          # Build the project
+          ./gradlew assembleDebug --stacktrace
+          
+          # Run tests with coverage - allow test failures
+          ./gradlew testDebugUnitTest jacocoTestReport --stacktrace || {
+            echo "Some tests failed, but continuing to check for coverage data..."
+            # Even if tests fail, JaCoCo should generate a report with partial coverage
+            # from the tests that did pass
+          }
+          
+          # Check if the report was generated with content
+          if [ -f build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml ]; then
+            REPORT_SIZE=$(stat -f%z build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
+            if [ "$REPORT_SIZE" -lt 1000 ]; then
+              echo "JaCoCo report is too small ($REPORT_SIZE bytes), likely empty. Trying to generate from test execution data..."
+              # Try to generate the report directly from the exec file
+              if [ -f build/jacoco/testDebugUnitTest.exec ]; then
+                java -jar ~/.gradle/caches/modules-2/files-2.1/org.jacoco/org.jacoco.cli/0.8.8/*/org.jacoco.cli-0.8.8.jar report build/jacoco/testDebugUnitTest.exec \
+                  --classfiles build/intermediates/runtime_library_classes_dir/debug \
+                  --sourcefiles src/main/java \
+                  --xml build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+                
+                # Check if the report was successfully generated
+                NEW_REPORT_SIZE=$(stat -f%z build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
+                if [ "$NEW_REPORT_SIZE" -lt 1000 ]; then
+                  echo "ERROR: Failed to generate a valid JaCoCo report with coverage data"
+                  exit 1
+                else
+                  echo "JaCoCo report successfully generated with size $NEW_REPORT_SIZE bytes"
+                fi
+              else
+                echo "ERROR: No JaCoCo execution data file found. Tests may not have run correctly."
+                exit 1
+              fi
+            else
+              echo "JaCoCo report generated successfully with size $REPORT_SIZE bytes"
+            fi
+          else
+            echo "ERROR: JaCoCo report file not found. Coverage data is missing."
+            exit 1
+          fi
         
       - name: Debug - Check for JaCoCo report files and binary directories
         run: |
