@@ -42,7 +42,7 @@ jobs:
         run: ./gradlew clean test jacocoTestReport generateJacocoXmlReport --debug
         continue-on-error: true
         
-      - name: Debug - Check for JaCoCo report files
+      - name: Debug - Check for JaCoCo report files and binary directories
         run: |
           echo "Checking for JaCoCo report files..."
           find build -name "*.xml" | grep jacoco || echo "No XML files found"
@@ -67,6 +67,14 @@ jobs:
           else
             echo "JaCoCo report file not found"
           fi
+          
+          echo "\nChecking binary directories specified in sonar-project.properties:"
+          echo "build/intermediates/javac/debug/classes:"
+          ls -la build/intermediates/javac/debug/classes || echo "Directory not found"
+          echo "\nbuild/intermediates/javac/debugUnitTest/classes:"
+          ls -la build/intermediates/javac/debugUnitTest/classes || echo "Directory not found"
+          echo "\nbuild/intermediates/compile_library_classes_jar/debug/:"
+          ls -la build/intermediates/compile_library_classes_jar/debug/ || echo "Directory not found"
 
       # Commented out Android instrumented test part to focus on unit test flow
       # - name: AVD cache
