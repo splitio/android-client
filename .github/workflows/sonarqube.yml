@@ -39,7 +39,7 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Run unit tests with coverage (continue on error)
-        run: ./gradlew test jacocoTestReport generateJacocoXmlReport --continue
+        run: ./gradlew clean test jacocoTestReport generateJacocoXmlReport --debug
         continue-on-error: true
         
       - name: Debug - Check for JaCoCo report files
@@ -49,6 +49,24 @@ jobs:
           find build -name "*.exec" | grep jacoco || echo "No exec files found"
           echo "Contents of JaCoCo report directory:"
           ls -la build/reports/jacoco/jacocoTestReport/ || echo "Directory not found"
+          
+          echo "\nChecking test execution results:"
+          find build -name "TEST-*.xml" | xargs cat | grep -E 'tests|failures|errors|skipped' || echo "No test result files found"
+          
+          echo "\nChecking JaCoCo report content:"
+          if [ -f build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml ]; then
+            echo "Report file size: $(wc -c < build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml) bytes"
+            echo "First 500 chars of report:"
+            head -c 500 build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+            echo "\n\nCounting coverage elements:"
+            grep -c "<package" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No packages found"
+            grep -c "<class" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No classes found"
+            grep -c "<method" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No methods found"
+            grep -c "<line" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No lines found"
+            grep -c 'ci="1"' build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No covered lines found"
+          else
+            echo "JaCoCo report file not found"
+          fi
 
       # Commented out Android instrumented test part to focus on unit test flow
       # - name: AVD cache
