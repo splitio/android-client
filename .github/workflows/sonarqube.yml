@@ -194,23 +194,60 @@ jobs:
             ./gradlew assembleDebugAndroidTest
             
             # First, let's determine the correct test package name
+            echo "\n[DEBUG] Listing all available instrumentation packages:"
+            adb shell pm list instrumentation
+            
             TEST_PACKAGE=$(adb shell pm list instrumentation | grep split | cut -d' ' -f1 | cut -d: -f2)
-            echo "Found test instrumentation package: $TEST_PACKAGE"
+            echo "\n[DEBUG] Found test instrumentation package: $TEST_PACKAGE"
+            
+            # Check if the test APK is installed properly
+            echo "\n[DEBUG] Checking installed packages:"
+            adb shell pm list packages | grep split
+            
+            # Verify test class exists
+            echo "\n[DEBUG] Checking if test class exists:"
+            ./gradlew -q listTestClasses | grep DatabaseInitializationTest || echo "Test class not found in Gradle test classes"
             
             # Run only a single test class with coverage explicitly enabled
+            echo "\n[DEBUG] Running instrumentation with explicit coverage flag:"
             adb shell am instrument -w -e coverage true -e class tests.database.DatabaseInitializationTest $TEST_PACKAGE
             TEST_RESULT=$?
             if [ $TEST_RESULT -ne 0 ]; then
               echo "Some instrumented tests failed, but continuing to check for coverage data..."
+            else
+              echo "\n[DEBUG] Instrumentation completed successfully"
             fi
             
             # Create directory for coverage files
             mkdir -p build/outputs/code_coverage/debugAndroidTest/connected/
             
             # Try to find and pull coverage files from various possible locations
-            echo "Searching for coverage files..."
+            echo "\n[DEBUG] Searching for coverage files..."
             
-            # Check app-specific data directory
+            # Check if coverage is enabled in the app manifest
+            echo "\n[DEBUG] Checking test AndroidManifest.xml for coverage settings:"
+            adb shell pm dump $TEST_PACKAGE | grep -i coverage
+            
+            # Check for files in external storage
+            echo "\n[DEBUG] Checking external storage for coverage files:"
+            adb shell ls -la /sdcard/ | grep -i coverage || echo "No coverage files found in /sdcard/"
+            
+            # Check app-specific data directory - try both package names
+            echo "\n[DEBUG] Checking app-specific data directory for coverage files:"
+            APP_PACKAGE=$(adb shell pm list packages | grep split | cut -d: -f2 | head -1)
+            echo "\n[DEBUG] App package name: $APP_PACKAGE"
+            
+            # Try with the detected app package
+            echo "\n[DEBUG] Searching in /data/data/$APP_PACKAGE/:"
+            adb shell run-as $APP_PACKAGE find /data/data/$APP_PACKAGE -name "*.ec" | while read -r file; do
+              echo "Found coverage file: $file"
+              filename=$(basename "$file")
+              adb shell run-as $APP_PACKAGE cat "$file" > "build/outputs/code_coverage/debugAndroidTest/connected/$filename"
+              echo "Pulled coverage file to build/outputs/code_coverage/debugAndroidTest/connected/$filename"
+            done
+            
+            # Also try with the hardcoded package name as fallback
+            echo "\n[DEBUG] Searching in /data/data/io.split.android.android_client/:"
             adb shell run-as io.split.android.android_client find /data/data/io.split.android.android_client -name "*.ec" | while read -r file; do
               echo "Found coverage file: $file"
               filename=$(basename "$file")
@@ -219,16 +256,38 @@ jobs:
             done
             
             # Also check sdcard location
+            echo "\n[DEBUG] Checking /sdcard/ location:"
             adb pull /sdcard/coverage.ec build/outputs/code_coverage/debugAndroidTest/connected/ || echo "No coverage file at /sdcard/coverage.ec"
             
+            # Try alternative locations
+            echo "\n[DEBUG] Checking alternative locations for coverage files:"
+            adb pull /data/local/tmp/coverage.ec build/outputs/code_coverage/debugAndroidTest/connected/ || echo "No coverage file at /data/local/tmp/coverage.ec"
+            
             # List all coverage files to verify
+            echo "\n[DEBUG] Listing all found coverage files:"
             find build -name "*.ec" -o -name "*.exec"
             
-            # Run the JaCoCo report task
-            ./gradlew jacocoAndroidTestReport
+            # Run the JaCoCo report task with debug info
+            echo "\n[DEBUG] Running JaCoCo Android test report task with debug info:"
+            ./gradlew jacocoAndroidTestReport --debug > jacoco_debug.log
             REPORT_RESULT=$?
+            
+            # Save the important parts of the debug log
+            echo "\n[DEBUG] Extracting coverage-related info from debug log:"
+            grep -A 10 -B 2 "JaCoCo" jacoco_debug.log > jacoco_important.log || echo "No JaCoCo info found in debug log"
+            grep -A 5 -B 2 "coverage" jacoco_debug.log >> jacoco_important.log || echo "No coverage info found in debug log"
+            grep -A 3 -B 1 "exec" jacoco_debug.log >> jacoco_important.log || echo "No exec info found in debug log"
+            grep -A 3 -B 1 "ec" jacoco_debug.log >> jacoco_important.log || echo "No .ec info found in debug log"
+            
+            echo "\n[DEBUG] Important JaCoCo debug info:"
+            cat jacoco_important.log
+            
             if [ $REPORT_RESULT -ne 0 ]; then
-              echo "Failed to generate Android test coverage report, but continuing..."
+              echo "\n[DEBUG] Failed to generate Android test coverage report, but continuing..."
+              echo "\n[DEBUG] Last 20 lines of debug log:"
+              tail -20 jacoco_debug.log
+            else
+              echo "\n[DEBUG] JaCoCo Android test report generated successfully"
             fi
             
             # Check if the Android test report was generated with content
