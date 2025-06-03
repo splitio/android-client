@@ -316,7 +316,7 @@ jobs:
       - name: Generate combined coverage report
         run: |
           # Generate combined report - allow failures
-          ./gradlew jacocoCombinedReport
+          ./gradlew jacocoCodeCoverageReport
           COMBINED_RESULT=$?
           if [ $COMBINED_RESULT -ne 0 ]; then
             echo "Failed to generate combined report, but continuing..."
