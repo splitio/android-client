@@ -511,8 +511,8 @@ tasks.register('jacocoCodeCoverageReport', JacocoReport) {
     group = 'Reporting'
     description = 'Generate Jacoco coverage report for both unit and instrumented tests'
     
-    // Depend on both unit and instrumented tests
-    dependsOn 'testDebugUnitTest', 'connectedDebugAndroidTest'
+    // Only depend on unit tests - instrumented tests should be run separately
+    dependsOn 'testDebugUnitTest'
     
     reports {
         xml.required = true
