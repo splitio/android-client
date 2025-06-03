@@ -210,7 +210,7 @@ jobs:
             
             # Run only a single test class with coverage explicitly enabled
             echo "\n[DEBUG] Running instrumentation with explicit coverage flag:"
-            adb shell am instrument -w -e coverage true -e class tests.database.DatabaseInitializationTest $TEST_PACKAGE
+            adb shell "am instrument -w -e coverage true -e class tests.database.DatabaseInitializationTest $TEST_PACKAGE"
             TEST_RESULT=$?
             if [ $TEST_RESULT -ne 0 ]; then
               echo "Some instrumented tests failed, but continuing to check for coverage data..."
@@ -316,9 +316,11 @@ jobs:
       - name: Generate combined coverage report
         run: |
           # Generate combined report - allow failures
-          ./gradlew jacocoCombinedReport || {
+          ./gradlew jacocoCombinedReport
+          COMBINED_RESULT=$?
+          if [ $COMBINED_RESULT -ne 0 ]; then
             echo "Failed to generate combined report, but continuing..."
-          }
+          fi
           
           # Check if the combined report was generated with content
           if [ -f build/reports/jacoco/jacocoCombinedReport/jacocoCombinedReport.xml ]; then
