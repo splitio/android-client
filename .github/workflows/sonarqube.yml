@@ -37,6 +37,13 @@ jobs:
 
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
+        
+      - name: Configure Gradle memory settings
+        run: |
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError" >> gradle.properties
+          echo "android.enableJetifier=false" >> gradle.properties
+          echo "android.enableR8.fullMode=false" >> gradle.properties
+          cat gradle.properties
 
       - name: Build project and run tests with coverage
         run: |
