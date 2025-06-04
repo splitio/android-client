@@ -33,7 +33,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: 17
-          cache: 'gradle'
 
       - name: Gradle cache
         uses: gradle/actions/setup-gradle@v3
@@ -196,129 +195,65 @@ jobs:
           api-level: 28
           profile: Galaxy Nexus
           script: |
-            # Run instrumented tests with coverage - allow test failures
-            # Use a more direct approach to ensure coverage is enabled
-            ./gradlew assembleDebugAndroidTest
-            
-            # First, let's determine the correct test package name
-            echo "\n[DEBUG] Listing all available instrumentation packages:"
-            adb shell pm list instrumentation
-            
-            TEST_PACKAGE=$(adb shell pm list instrumentation | grep split | cut -d' ' -f1 | cut -d: -f2)
-            echo "\n[DEBUG] Found test instrumentation package: $TEST_PACKAGE"
-            
-            # Check if the test APK is installed properly
-            echo "\n[DEBUG] Checking installed packages:"
-            adb shell pm list packages | grep split
-            
-            # Verify test class exists
-            echo "\n[DEBUG] Checking if test class exists:"
-            ./gradlew -q listTestClasses | grep DatabaseInitializationTest || echo "Test class not found in Gradle test classes"
-            
-            # Run only a single test class with coverage explicitly enabled
-            echo "\n[DEBUG] Running instrumentation with explicit coverage flag:"
-            adb shell "am instrument -w -e coverage true -e class tests.database.DatabaseInitializationTest $TEST_PACKAGE"
-            TEST_RESULT=$?
-            if [ $TEST_RESULT -ne 0 ]; then
-              echo "Some instrumented tests failed, but continuing to check for coverage data..."
-            else
-              echo "\n[DEBUG] Instrumentation completed successfully"
-            fi
-            
-            # Create directory for coverage files
+            # Ensure the app and test app are built
+            ./gradlew assembleDebug assembleDebugAndroidTest --stacktrace
+
+            echo "Starting instrumented tests with coverage..."
+            # Run connectedDebugAndroidTest, explicitly telling it where to save the coverage file on the emulator.
+            # This aligns with how AGP handles coverage when this property is set.
+            ./gradlew connectedDebugAndroidTest --stacktrace -Pandroid.testInstrumentationRunnerArguments.coverage=true -Pandroid.testInstrumentationRunnerArguments.coverageFile="/sdcard/coverage.ec"
+            TEST_RUN_RESULT=$?
+            echo "Instrumented test run finished with Gradle task result: $TEST_RUN_RESULT"
+
+            # Create the target directory for the pulled coverage file
             mkdir -p build/outputs/code_coverage/debugAndroidTest/connected/
-            
-            # Try to find and pull coverage files from various possible locations
-            echo "\n[DEBUG] Searching for coverage files..."
-            
-            # Check if coverage is enabled in the app manifest
-            echo "\n[DEBUG] Checking test AndroidManifest.xml for coverage settings:"
-            adb shell pm dump $TEST_PACKAGE | grep -i coverage
-            
-            # Check for files in external storage
-            echo "\n[DEBUG] Checking external storage for coverage files:"
-            adb shell ls -la /sdcard/ | grep -i coverage || echo "No coverage files found in /sdcard/"
-            
-            # Check app-specific data directory - try both package names
-            echo "\n[DEBUG] Checking app-specific data directory for coverage files:"
-            APP_PACKAGE=$(adb shell pm list packages | grep split | cut -d: -f2 | head -1)
-            echo "\n[DEBUG] App package name: $APP_PACKAGE"
-            
-            # Try with the detected app package
-            echo "\n[DEBUG] Searching in /data/data/$APP_PACKAGE/:"
-            adb shell run-as $APP_PACKAGE find /data/data/$APP_PACKAGE -name "*.ec" | while read -r file; do
-              echo "Found coverage file: $file"
-              filename=$(basename "$file")
-              adb shell run-as $APP_PACKAGE cat "$file" > "build/outputs/code_coverage/debugAndroidTest/connected/$filename"
-              echo "Pulled coverage file to build/outputs/code_coverage/debugAndroidTest/connected/$filename"
-            done
-            
-            # Also try with the hardcoded package name as fallback
-            echo "\n[DEBUG] Searching in /data/data/io.split.android.android_client/:"
-            adb shell run-as io.split.android.android_client find /data/data/io.split.android.android_client -name "*.ec" | while read -r file; do
-              echo "Found coverage file: $file"
-              filename=$(basename "$file")
-              adb shell run-as io.split.android.android_client cat "$file" > "build/outputs/code_coverage/debugAndroidTest/connected/$filename"
-              echo "Pulled coverage file to build/outputs/code_coverage/debugAndroidTest/connected/$filename"
-            done
-            
-            # Also check sdcard location
-            echo "\n[DEBUG] Checking /sdcard/ location:"
-            adb pull /sdcard/coverage.ec build/outputs/code_coverage/debugAndroidTest/connected/ || echo "No coverage file at /sdcard/coverage.ec"
-            
-            # Try alternative locations
-            echo "\n[DEBUG] Checking alternative locations for coverage files:"
-            adb pull /data/local/tmp/coverage.ec build/outputs/code_coverage/debugAndroidTest/connected/ || echo "No coverage file at /data/local/tmp/coverage.ec"
-            
-            # List all coverage files to verify
-            echo "\n[DEBUG] Listing all found coverage files:"
-            find build -name "*.ec" -o -name "*.exec"
-            
-            # Run the JaCoCo report task with debug info
-            echo "\n[DEBUG] Running JaCoCo Android test report task with debug info:"
-            ./gradlew jacocoAndroidTestReport --debug > jacoco_debug.log
-            REPORT_RESULT=$?
-            
-            # Save the important parts of the debug log
-            echo "\n[DEBUG] Extracting coverage-related info from debug log:"
-            grep -A 10 -B 2 "JaCoCo" jacoco_debug.log > jacoco_important.log || echo "No JaCoCo info found in debug log"
-            grep -A 5 -B 2 "coverage" jacoco_debug.log >> jacoco_important.log || echo "No coverage info found in debug log"
-            grep -A 3 -B 1 "exec" jacoco_debug.log >> jacoco_important.log || echo "No exec info found in debug log"
-            grep -A 3 -B 1 "ec" jacoco_debug.log >> jacoco_important.log || echo "No .ec info found in debug log"
-            
-            echo "\n[DEBUG] Important JaCoCo debug info:"
-            cat jacoco_important.log
-            
-            if [ $REPORT_RESULT -ne 0 ]; then
-              echo "\n[DEBUG] Failed to generate Android test coverage report, but continuing..."
-              echo "\n[DEBUG] Last 20 lines of debug log:"
-              tail -20 jacoco_debug.log
-            else
-              echo "\n[DEBUG] JaCoCo Android test report generated successfully"
+
+            echo "Attempting to pull coverage file from /sdcard/coverage.ec on emulator $AVD_NAME"
+            adb pull /sdcard/coverage.ec build/outputs/code_coverage/debugAndroidTest/connected/$AVD_NAME-coverage.ec
+            PULL_RESULT=$?
+            echo "ADB pull command finished with result: $PULL_RESULT"
+
+            # Define the expected path for the pulled coverage file
+            PULLED_COVERAGE_FILE="build/outputs/code_coverage/debugAndroidTest/connected/$AVD_NAME-coverage.ec"
+
+            # Verification
+            SUCCESS=true
+            if [ $TEST_RUN_RESULT -ne 0 ]; then
+              echo "ERROR: Instrumented tests Gradle task failed (Result: $TEST_RUN_RESULT)."
+              SUCCESS=false
             fi
-            
-            # Check if the Android test report was generated with content
-            if [ -f build/reports/jacoco/jacocoAndroidTestReport/jacocoAndroidTestReport.xml ]; then
-              # Use stat command compatible with both Linux and macOS
-              if [[ "$(uname)" == "Darwin" ]]; then
-                # macOS syntax
-                REPORT_SIZE=$(stat -f%z build/reports/jacoco/jacocoAndroidTestReport/jacocoAndroidTestReport.xml)
-              else
-                # Linux syntax
-                REPORT_SIZE=$(stat -c%s build/reports/jacoco/jacocoAndroidTestReport/jacocoAndroidTestReport.xml)
-              fi
-              
-              echo "Android test JaCoCo report size: $REPORT_SIZE bytes"
-              
-              if [ "$REPORT_SIZE" -lt 1000 ]; then
-                echo "WARNING: Android test JaCoCo report is too small, likely empty"
-              else
-                echo "Android test JaCoCo report generated successfully"
-              fi
-            else
-              echo "WARNING: Android test JaCoCo report file not found"
+
+            if [ $PULL_RESULT -ne 0 ]; then
+              echo "ERROR: adb pull command failed to retrieve coverage file (Result: $PULL_RESULT)."
+              SUCCESS=false
             fi
-        continue-on-error: true
+
+            if [ ! -f "$PULLED_COVERAGE_FILE" ]; then
+              echo "ERROR: Coverage file was NOT found at $PULLED_COVERAGE_FILE after adb pull."
+              SUCCESS=false
+            else
+              echo "Coverage file found at $PULLED_COVERAGE_FILE."
+              ls -l "$PULLED_COVERAGE_FILE"
+              # Optional: Check file size (e.g., if less than a few hundred bytes, it might be empty/invalid)
+              COVERAGE_FILE_SIZE=$(stat -c%s "$PULLED_COVERAGE_FILE")
+              echo "Coverage file size: $COVERAGE_FILE_SIZE bytes."
+              if [ "$COVERAGE_FILE_SIZE" -lt 100 ]; then # Adjust threshold as needed
+                echo "WARNING: Pulled coverage file is very small, possibly empty or invalid."
+                # Depending on strictness, you might set SUCCESS=false here too
+              fi
+            fi
+
+            if [ "$SUCCESS" = false ]; then
+              echo "---------------------------------------------------------------------"
+              echo "DIAGNOSTICS: Instrumented test coverage collection failed."
+              echo "Listing /sdcard/ on emulator to check if coverage.ec was created there:"
+              adb shell ls -l /sdcard/
+              echo "---------------------------------------------------------------------"
+              echo "Exiting with error."
+              exit 1
+            else
+              echo "Instrumented test coverage collection appears successful."
+            fi
 
       - name: Generate combined coverage report
         run: |
@@ -355,7 +290,6 @@ jobs:
             mkdir -p build/reports/jacoco/jacocoCombinedReport/
             cp build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml build/reports/jacoco/jacocoCombinedReport/jacocoCombinedReport.xml
           fi
-        continue-on-error: true
         
       - name: Check combined coverage report
         run: |
