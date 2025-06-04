@@ -201,7 +201,7 @@ jobs:
             echo "Starting instrumented tests with coverage..."
             # Run connectedDebugAndroidTest, explicitly telling it where to save the coverage file on the emulator.
             # This aligns with how AGP handles coverage when this property is set.
-            ./gradlew connectedDebugAndroidTest --stacktrace -Pandroid.testInstrumentationRunnerArguments.coverage=true
+            ./gradlew connectedDebugAndroidTest --stacktrace
             TEST_RUN_RESULT=$?
             echo "Instrumented test run finished with Gradle task result: $TEST_RUN_RESULT"
 
