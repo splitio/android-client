@@ -60,8 +60,9 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
-        // Enable coverage for instrumented tests by default
+        // Ensure only one of each coverage argument:
         testInstrumentationRunnerArguments coverage: 'true'
+        testInstrumentationRunnerArguments coverageFile: "/sdcard/coverage.ec"
 
         javaCompileOptions {
             annotationProcessorOptions {
