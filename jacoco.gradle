@@ -1,0 +1,50 @@
+// Jacoco configuration extracted from build.gradle
+
+apply plugin: 'jacoco'
+
+jacoco {
+    toolVersion = '0.8.8'
+}
+
+// Unit test coverage report task
+// This task generates Jacoco coverage reports for unit tests only
+tasks.register('jacocoTestReport', JacocoReport) {
+    dependsOn 'testDebugUnitTest'
+    
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+    
+    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    def debugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
+    
+    // Make sure to include all source directories
+    sourceDirectories.from = files(['src/main/java'])
+    
+    // Include all class files except excluded ones
+    classDirectories.from = files([debugTree])
+    
+    // Include execution data files
+    executionData.from(fileTree(dir: "$buildDir", includes: [
+        'jacoco/testDebugUnitTest.exec',
+        'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec'
+    ]))
+
+    outputs.upToDateWhen { false }
+    
+    doFirst {
+        // Log a warning if no execution data files exist
+        def execFiles = executionData.files
+        if (execFiles.isEmpty() || !execFiles.any { it.exists() }) {
+            logger.warn("JaCoCo will not generate coverage report because no execution data files were found")
+        } else {
+            execFiles.each { file ->
+                if (file.exists()) {
+                    logger.lifecycle("Found JaCoCo execution data file: $file")
+                }
+            }
+        }
+    }
+}

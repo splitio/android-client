@@ -14,12 +14,9 @@ apply plugin: 'com.android.library'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
 apply plugin: 'kotlin-android'
-apply plugin: 'jacoco'
 apply from: 'spec.gradle'
+apply from: 'jacoco.gradle'
 
-jacoco {
-    toolVersion = '0.8.8'
-}
 
 ext {
     splitVersion = '5.3.0'
@@ -60,9 +57,6 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
-        // Ensure only one of each coverage argument:
-        testInstrumentationRunnerArguments coverage: 'true'
-        testInstrumentationRunnerArguments coverageFile: "/sdcard/coverage.ec"
 
         javaCompileOptions {
             annotationProcessorOptions {
@@ -72,13 +66,6 @@ android {
 
         testOptions {
             execution 'ANDROIDX_TEST_ORCHESTRATOR'
-            // Enable JaCoCo coverage for instrumented tests
-            unitTests.all {
-                jacoco {
-                    includeNoLocationClasses = true
-                    excludes = ['jdk.internal.*']
-                }
-            }
         }
     }
 
@@ -114,9 +101,6 @@ android {
         debug {
             buildConfigField("String", "SPLIT_VERSION_NAME", "\"${splitVersion}\"")
             buildConfigField("String", "FLAGS_SPEC", "\"${flagsSpec}\"")
-            
-            enableAndroidTestCoverage = true
-            enableUnitTestCoverage = true
         }
         release {
             buildConfigField("String", "SPLIT_VERSION_NAME", "\"${splitVersion}\"")
@@ -442,193 +426,3 @@ task generateJacocoXmlReport {
     }
 }
 
-// Unit test coverage report task
-tasks.register('jacocoTestReport', JacocoReport) {
-    dependsOn 'testDebugUnitTest'
-    
-    reports {
-        xml.required = true
-        html.required = true
-        csv.required = false
-    }
-    
-    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-    def debugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
-    
-    // Make sure to include all source directories
-    sourceDirectories.from = files(['src/main/java'])
-    
-    // Include all class files except excluded ones
-    classDirectories.from = files([debugTree])
-    
-    // Include execution data files
-    executionData.from(fileTree(dir: "$buildDir", includes: [
-        'jacoco/testDebugUnitTest.exec',
-        'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec'
-    ]))
-    
-    // Ensure this task always runs and doesn't get skipped
-    outputs.upToDateWhen { false }
-    
-    doFirst {
-        // Log a warning if no execution data files exist
-        def execFiles = executionData.files
-        if (execFiles.isEmpty() || !execFiles.any { it.exists() }) {
-            logger.warn("JaCoCo will not generate coverage report because no execution data files were found")
-        } else {
-            execFiles.each { file ->
-                if (file.exists()) {
-                    logger.lifecycle("Found JaCoCo execution data file: $file")
-                }
-            }
-        }
-    }
-}
-
-// Custom task for running filtered Android instrumented tests
-tasks.register('connectedFilteredAndroidTest') {
-    doLast {
-        def testClass = project.hasProperty('testClass') ? project.getProperty('testClass') : 'tests.database.DatabaseInitializationTest'
-        exec {
-            commandLine android.getAdbExecutable().toString(), 'shell', 'am', 'instrument', '-w', '-e', 'class', testClass, 
-                       '-e', 'coverage', 'true', "${android.defaultConfig.testInstrumentationRunner}/androidx.test.runner.AndroidJUnitRunner"
-        }
-        
-        // Create directory for coverage files
-        def coverageDir = new File("${buildDir}/outputs/code_coverage/debugAndroidTest/connected/")
-        coverageDir.mkdirs()
-        
-        // Pull coverage file from device
-        exec {
-            commandLine android.getAdbExecutable().toString(), 'pull', '/sdcard/coverage.ec', 
-                       "${buildDir}/outputs/code_coverage/debugAndroidTest/connected/"
-            ignoreExitValue true
-        }
-    }
-}
-
-// Comprehensive JaCoCo coverage report task
-tasks.register('jacocoCodeCoverageReport', JacocoReport) {
-    group = 'Reporting'
-    description = 'Generate Jacoco coverage report for both unit and instrumented tests'
-    
-    // Only depend on unit tests - instrumented tests should be run separately
-    dependsOn 'testDebugUnitTest'
-    
-    reports {
-        xml.required = true
-        html.required = true
-        csv.required = false
-    }
-    
-    // Use the defined exclusions
-    def debugTree = fileTree(dir: "${buildDir}/intermediates/runtime_library_classes_dir/debug", excludes: coverageExclusions)
-    def kotlinTree = fileTree(dir: "${buildDir}/tmp/kotlin-classes/debug", excludes: coverageExclusions)
-    
-    sourceDirectories.from(files(['src/main/java', 'src/main/kotlin'].findAll { new File(it).exists() }))
-    classDirectories.from(files([debugTree, kotlinTree]))
-    
-    // Include all execution data files
-    executionData.from(fileTree(dir: "$buildDir", includes: [
-        'jacoco/testDebugUnitTest.exec',
-        'outputs/code_coverage/debugAndroidTest/connected/*coverage.ec',
-        '**/*.exec',
-        '**/*.ec'
-    ]))
-    
-    // Ensure this task always runs and doesn't get skipped
-    outputs.upToDateWhen { false }
-    
-    doFirst {
-        // Log a warning if no execution data files exist
-        def execFiles = executionData.files
-        executionData = executionData.filter { it.exists() }
-        if (execFiles.isEmpty() || !execFiles.any { it.exists() }) {
-            logger.warn("JaCoCo will not generate coverage report because no execution data files were found")
-        } else {
-            execFiles.each { file ->
-                if (file.exists()) {
-                    logger.lifecycle("Found JaCoCo execution data file: $file")
-                }
-            }
-        }
-    }
-}
-
-// Keep the original tasks for backward compatibility
-tasks.register('jacocoAndroidTestReport', JacocoReport) {
-    dependsOn 'connectedDebugAndroidTest'
-    
-    reports {
-        xml.required = true
-        html.required = true
-        csv.required = false
-    }
-    
-    def debugTree = fileTree(dir: "${buildDir}/intermediates/runtime_library_classes_dir/debug", excludes: coverageExclusions)
-    
-    sourceDirectories.from(files(['src/main/java']))
-    classDirectories.from(files([debugTree]))
-    executionData.from(fileTree(dir: "$buildDir", includes: [
-        'outputs/code_coverage/debugAndroidTest/connected/*coverage.ec',
-        '**/*.exec',
-        '**/*.ec'
-    ]))
-    
-    // Ensure this task always runs and doesn't get skipped
-    outputs.upToDateWhen { false }
-    
-    doFirst {
-        // Log a warning if no execution data files exist
-        def execFiles = executionData.files
-        if (execFiles.isEmpty() || !execFiles.any { it.exists() }) {
-            logger.warn("JaCoCo will not generate coverage report because no execution data files were found")
-        } else {
-            execFiles.each { file ->
-                if (file.exists()) {
-                    logger.lifecycle("Found JaCoCo execution data file: $file")
-                }
-            }
-        }
-    }
-}
-
-// Combined coverage report task
-tasks.register('jacocoCombinedReport', JacocoReport) {
-    dependsOn 'testDebugUnitTest', 'connectedDebugAndroidTest'
-    
-    reports {
-        xml.required = true
-        html.required = true
-        csv.required = false
-    }
-    
-    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-    def debugTree = fileTree(dir: "${buildDir}/intermediates/runtime_library_classes_dir/debug", excludes: fileFilter)
-    
-    sourceDirectories.from(files(['src/main/java']))
-    classDirectories.from(files([debugTree]))
-    executionData.from(fileTree(dir: "$buildDir", includes: [
-        'jacoco/testDebugUnitTest.exec',
-        'outputs/code_coverage/debugAndroidTest/connected/*coverage.ec',
-        '**/*.exec',
-        '**/*.ec'
-    ]))
-    
-    // Ensure this task always runs and doesn't get skipped
-    outputs.upToDateWhen { false }
-    
-    doFirst {
-        // Log a warning if no execution data files exist
-        def execFiles = executionData.files
-        if (execFiles.isEmpty() || !execFiles.any { it.exists() }) {
-            logger.warn("JaCoCo will not generate coverage report because no execution data files were found")
-        } else {
-            execFiles.each { file ->
-                if (file.exists()) {
-                    logger.lifecycle("Found JaCoCo execution data file: $file")
-                }
-            }
-        }
-    }
-}
