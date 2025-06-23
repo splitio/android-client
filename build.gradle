@@ -213,9 +213,11 @@ def devRepo = {
 }
 
 mavenPublishing {
-  coordinates("io.split.client", "android-client", splitVersion)
-  signAllPublications()
-  pom(splitPOM)
+    coordinates("io.split.client", "android-client", splitVersion)
+    pom(splitPOM)
+
+    publishToMavenCentral(false)
+    signAllPublications()
 }
 
 task sourcesJar(type: Jar) {
