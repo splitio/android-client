@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import java.io.FileInputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
@@ -177,6 +178,7 @@ public class HttpClientImpl implements HttpClient {
     }
 
     public static class Builder {
+
         private SplitAuthenticator mProxyAuthenticator;
         private HttpProxy mProxy;
         private long mReadTimeout = -1;
@@ -242,7 +244,16 @@ public class HttpClientImpl implements HttpClient {
         }
 
         public HttpClient build() {
-            if (mDevelopmentSslConfig == null) {
+            // Proxy CA cert support
+            if (mProxy != null && mProxy.getAuthType() == HttpProxy.ProxyAuthType.PROXY_CACERT && mDevelopmentSslConfig == null) {
+                try (java.io.InputStream caInput = new FileInputStream(mProxy.getCaCertPath())) {
+                    ProxySslContextFactory factory = new ProxySslContextFactoryImpl();
+                    mSslSocketFactory = factory.create(caInput);
+                    Logger.v("Custom proxy CA cert loaded for proxy: " + mProxy.getHost());
+                } catch (Exception e) {
+                    Logger.e("Failed to load proxy CA cert for proxy: " + mProxy.getHost() + ", error: " + e.getMessage());
+                }
+            } else if (mDevelopmentSslConfig == null) {
                 if (LegacyTlsUpdater.couldBeOld()) {
                     LegacyTlsUpdater.update(mHostAppContext);
                     try {
