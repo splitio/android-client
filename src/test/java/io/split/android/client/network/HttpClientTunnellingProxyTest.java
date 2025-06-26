@@ -40,7 +40,6 @@ import okhttp3.tls.HeldCertificate;
 
 public class HttpClientTunnellingProxyTest {
 
-
     private UrlSanitizer mUrlSanitizerMock;
 
     @Before
@@ -58,10 +57,14 @@ public class HttpClientTunnellingProxyTest {
 
     @Test
     public void proxyCacertProxyTunnelling() throws Exception {
-        // 1. Create CA and server certs
+        // 1. Create separate CA and server certs for proxy and origin
         HeldCertificate proxyCa = new HeldCertificate.Builder()
                 .commonName("Test Proxy CA")
                 .certificateAuthority(0)
+                .build();
+        HeldCertificate proxyServerCert = new HeldCertificate.Builder()
+                .commonName("localhost")
+                .signedBy(proxyCa)
                 .build();
         HeldCertificate originCa = new HeldCertificate.Builder()
                 .commonName("Test Origin CA")
@@ -88,15 +91,15 @@ public class HttpClientTunnellingProxyTest {
         originServer.useHttps(createSslSocketFactory(originCert), false);
         originServer.start();
 
-        // 3. Start minimal tunnel proxy
-        TunnelProxy tunnelProxy = new TunnelProxy(0);
+        // 3. Start SSL tunnel proxy (server-only SSL, no client cert required)
+        TunnelProxySslServerOnly tunnelProxy = new TunnelProxySslServerOnly(0, proxyServerCert);
         tunnelProxy.start();
         while (tunnelProxy.mServerSocket == null || tunnelProxy.mServerSocket.getLocalPort() == 0) {
             Thread.sleep(10);
         }
         int assignedProxyPort = tunnelProxy.mServerSocket.getLocalPort();
 
-        // 4. Write BOTH proxy CA and origin CA certs to temp file
+        // 4. Write BOTH proxy CA and origin CA certs to temp file (for combined trust store)
         File caCertFile = File.createTempFile("proxy-ca", ".pem");
         try (FileWriter writer = new FileWriter(caCertFile)) {
             writer.write(proxyCa.certificatePem());
@@ -114,7 +117,7 @@ public class HttpClientTunnellingProxyTest {
                 .setUrlSanitizer(mUrlSanitizerMock)
                 .build();
 
-        // 7. Make a request to the origin server (should tunnel via proxy)
+        // 7. Make a request to the origin server (should tunnel via SSL proxy)
         URI uri = originServer.url("/test").uri();
         HttpRequest req = client.request(uri, HttpMethod.GET);
         HttpResponse resp = req.execute();
@@ -129,9 +132,7 @@ public class HttpClientTunnellingProxyTest {
         assertEquals("/test", methodAndPath[1]);
 
         tunnelProxy.stopProxy();
-        tunnelProxy.join();
         originServer.shutdown();
-        caCertFile.delete();
     }
 
     /**
@@ -339,6 +340,52 @@ public class HttpClientTunnellingProxyTest {
         sslContext.init(kmf.getKeyManagers(), null, null);
 
         return sslContext.getSocketFactory();
+    }
+
+    /**
+     * TunnelProxySslServerOnly is an SSL proxy that presents a server certificate but doesn't require client certificates.
+     * This is used for testing proxy_cacert functionality where the client validates the proxy's certificate.
+     */
+    private static class TunnelProxySslServerOnly extends TunnelProxy {
+        private final HeldCertificate mServerCert;
+        private final AtomicBoolean mRunning = new AtomicBoolean(true);
+
+        public TunnelProxySslServerOnly(int port, HeldCertificate serverCert) {
+            super(port);
+            this.mServerCert = serverCert;
+        }
+
+        @Override
+        public void run() {
+            try {
+                SSLContext sslContext = SSLContext.getInstance("TLS");
+                KeyStore ks = KeyStore.getInstance("PKCS12");
+                ks.load(null, null);
+                ks.setKeyEntry("key", mServerCert.keyPair().getPrivate(), "password".toCharArray(), new java.security.cert.Certificate[]{mServerCert.certificate()});
+                KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                kmf.init(ks, "password".toCharArray());
+                
+                // No client certificate validation - use default trust manager
+                sslContext.init(kmf.getKeyManagers(), null, null);
+                
+                javax.net.ssl.SSLServerSocketFactory factory = sslContext.getServerSocketFactory();
+                mServerSocket = factory.createServerSocket(mPort);
+                // Don't require client auth - this is server-only SSL
+                ((javax.net.ssl.SSLServerSocket) mServerSocket).setWantClientAuth(false);
+                ((javax.net.ssl.SSLServerSocket) mServerSocket).setNeedClientAuth(false);
+                
+                System.out.println("[TunnelProxySslServerOnly] Listening on port: " + mServerSocket.getLocalPort());
+                while (mRunning.get()) {
+                    Socket client = mServerSocket.accept();
+                    System.out.println("[TunnelProxySslServerOnly] Accepted connection from: " + client.getRemoteSocketAddress());
+                    new Thread(() -> handle(client)).start();
+                }
+            } catch (IOException e) {
+                System.out.println("[TunnelProxySslServerOnly] Server socket closed or error: " + e);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
     }
 
     /**
