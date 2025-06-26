@@ -2,7 +2,6 @@ package io.split.android.client.network;
 
 import androidx.annotation.Nullable;
 
-import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
@@ -41,5 +40,13 @@ public class ProxySslContextFactoryImpl implements ProxySslContextFactory {
                 tmf != null ? tmf.getTrustManagers() : null,
                 null);
         return sslContext.getSocketFactory();
+    }
+
+    /**
+     * Minimal mTLS API for test compilation. Not yet implemented.
+     * Accepts CA cert InputStream, client PKCS#12 InputStream, and password string.
+     */
+    public SSLSocketFactory create(@Nullable InputStream caCertInputStream, @Nullable InputStream clientPkcs12InputStream, @Nullable String password) throws Exception {
+        throw new UnsupportedOperationException("mTLS not yet implemented");
     }
 }
