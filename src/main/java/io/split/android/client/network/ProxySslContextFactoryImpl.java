@@ -8,9 +8,11 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.util.Collection;
 
+import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
 /**
@@ -24,12 +26,7 @@ public class ProxySslContextFactoryImpl implements ProxySslContextFactory {
      */
     @Override
     public SSLSocketFactory create(@Nullable InputStream caCertInputStream) throws Exception {
-        TrustManagerFactory tmf = createTrustManagerFactory(caCertInputStream);
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(null,
-                tmf != null ? tmf.getTrustManagers() : null,
-                null);
-        return sslContext.getSocketFactory();
+        return createSslSocketFactory(null, createTrustManagerFactory(caCertInputStream));
     }
 
     /**
@@ -37,26 +34,10 @@ public class ProxySslContextFactoryImpl implements ProxySslContextFactory {
      */
     @Override
     public SSLSocketFactory create(@Nullable InputStream caCertInputStream, @Nullable InputStream clientPkcs12InputStream, @Nullable String password) throws Exception {
-        TrustManagerFactory tmf = createTrustManagerFactory(caCertInputStream);
+        KeyManagerFactory keyManagerFactory = createKeyManagerFactory(clientPkcs12InputStream, password);
+        TrustManagerFactory trustManagerFactory = createTrustManagerFactory(caCertInputStream);
 
-        KeyManagerFactory kmf = null;
-        if (clientPkcs12InputStream != null && password != null) {
-            try {
-                KeyStore clientKeyStore = KeyStore.getInstance("PKCS12");
-                clientKeyStore.load(clientPkcs12InputStream, password.toCharArray());
-                kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                kmf.init(clientKeyStore, password.toCharArray());
-            } finally {
-                clientPkcs12InputStream.close();
-            }
-        }
-
-        SSLContext sslContext = SSLContext.getInstance("TLS");
-        sslContext.init(
-                kmf != null ? kmf.getKeyManagers() : null,
-                tmf != null ? tmf.getTrustManagers() : null,
-                null);
-        return sslContext.getSocketFactory();
+        return createSslSocketFactory(keyManagerFactory, trustManagerFactory);
     }
 
     /**
@@ -89,5 +70,37 @@ public class ProxySslContextFactoryImpl implements ProxySslContextFactory {
         } finally {
             caCertInputStream.close();
         }
+    }
+
+    private KeyManagerFactory createKeyManagerFactory(@Nullable InputStream clientPkcs12InputStream, @Nullable String password) throws Exception {
+        if (clientPkcs12InputStream == null) {
+            return null;
+        }
+
+        try {
+            KeyStore clientKeyStore = KeyStore.getInstance("PKCS12");
+            char[] passwordCharArray = new char[0];
+            if (password != null) {
+                passwordCharArray = password.toCharArray();
+            }
+            clientKeyStore.load(clientPkcs12InputStream, passwordCharArray);
+
+            KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+            keyManagerFactory.init(clientKeyStore, (password != null) ? passwordCharArray : new char[0]);
+
+            return keyManagerFactory;
+        } finally {
+            clientPkcs12InputStream.close();
+        }
+    }
+
+    private SSLSocketFactory createSslSocketFactory(@Nullable KeyManagerFactory keyManagerFactory, @Nullable TrustManagerFactory trustManagerFactory) throws Exception {
+        SSLContext sslContext = SSLContext.getInstance("TLS");
+        KeyManager[] keyManagers = keyManagerFactory != null ? keyManagerFactory.getKeyManagers() : null;
+        TrustManager[] trustManagers = trustManagerFactory != null ? trustManagerFactory.getTrustManagers() : null;
+
+        sslContext.init(keyManagers, trustManagers, null);
+
+        return sslContext.getSocketFactory();
     }
 }
