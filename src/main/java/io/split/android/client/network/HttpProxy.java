@@ -22,8 +22,8 @@ public class HttpProxy {
     private final @Nullable String mPassword;
     private final @NonNull ProxyAuthType mAuthType;
     private final @Nullable String mBearerToken;
-    private final @Nullable String mClientCertPath;
-    private final @Nullable String mClientKeyPath; // for MTLS
+    private final @Nullable String mClientPkcs12Path;
+    private final @Nullable String mClientPkcs12Password;
     private final @Nullable String mCaCertPath;    // for MTLS (optional)
 
 
@@ -34,8 +34,8 @@ public class HttpProxy {
         mPassword = builder.mPassword;
         mAuthType = builder.mAuthType;
         mBearerToken = builder.mBearerToken;
-        mClientCertPath = builder.mClientCertPath;
-        mClientKeyPath = builder.mClientKeyPath;
+        mClientPkcs12Path = builder.mClientPkcs12Path;
+        mClientPkcs12Password = builder.mClientPkcs12Password;
         mCaCertPath = builder.mCaCertPath;
     }
 
@@ -63,12 +63,12 @@ public class HttpProxy {
         return mBearerToken;
     }
 
-    public @Nullable String getClientCertPath() {
-        return mClientCertPath;
+    public @Nullable String getClientPkcs12Path() {
+        return mClientPkcs12Path;
     }
 
-    public @Nullable String getClientKeyPath() {
-        return mClientKeyPath;
+    public @Nullable String getClientPkcs12Password() {
+        return mClientPkcs12Password;
     }
 
     public @Nullable String getCaCertPath() {
@@ -93,8 +93,8 @@ public class HttpProxy {
         private @Nullable String mPassword;
         private @NonNull ProxyAuthType mAuthType = ProxyAuthType.NONE;
         private @Nullable String mBearerToken;
-        private @Nullable String mClientCertPath;
-        private @Nullable String mClientKeyPath;
+        private @Nullable String mClientPkcs12Path;
+        private @Nullable String mClientPkcs12Password;
         private @Nullable String mCaCertPath;
 
 
@@ -165,14 +165,14 @@ public class HttpProxy {
          * The client presents a certificate and key to the proxy, and optionally trusts a custom CA for the proxy.
          * Equivalent to curl's --proxy-cert, --proxy-key, and --proxy-cacert.
          *
-         * @param certPath Path to client certificate file (PEM or PKCS12)
-         * @param keyPath Path to client private key file (PEM, if not bundled with cert)
+         * @param pkcs12Path Path to client PKCS#12 file
+         * @param pkcs12Password Password for the PKCS#12 file
          * @param caCertPath Optional path to CA certificate for proxy trust validation
          * @return this builder
          */
-        public Builder mtlsAuth(@NonNull String certPath, @NonNull String keyPath, @Nullable String caCertPath) {
-            mClientCertPath = certPath;
-            mClientKeyPath = keyPath;
+        public Builder mtlsAuth(@NonNull String pkcs12Path, @NonNull String pkcs12Password, @Nullable String caCertPath) {
+            mClientPkcs12Path = pkcs12Path;
+            mClientPkcs12Password = pkcs12Password;
             mCaCertPath = caCertPath;
             mAuthType = ProxyAuthType.MTLS;
             return this;

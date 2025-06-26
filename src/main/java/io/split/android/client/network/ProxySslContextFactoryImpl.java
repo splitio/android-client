@@ -2,6 +2,7 @@ package io.split.android.client.network;
 
 import androidx.annotation.Nullable;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
