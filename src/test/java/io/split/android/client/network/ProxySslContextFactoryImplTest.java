@@ -2,12 +2,15 @@ package io.split.android.client.network;
 
 import static org.junit.Assert.assertNotNull;
 
+import androidx.annotation.NonNull;
+
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.security.KeyStore;
 
@@ -22,11 +25,7 @@ public class ProxySslContextFactoryImplTest {
 
     @Test
     public void creatingWithValidCaCertCreatesSocketFactory() throws Exception {
-        // OkHttp's HeldCertificate is available in test scope
-        HeldCertificate ca = new HeldCertificate.Builder()
-                .commonName("Test CA")
-                .certificateAuthority(0)
-                .build();
+        HeldCertificate ca = getCaCert();
         File caCertFile = tempFolder.newFile("held-ca.pem");
         try (FileWriter writer = new FileWriter(caCertFile)) {
             writer.write(ca.certificatePem());
@@ -51,37 +50,76 @@ public class ProxySslContextFactoryImplTest {
     }
 
     @Test
-    public void creatingWithValidMtlsParamsThrowsUntilImplemented() throws Exception {
-        // Generate CA and client cert/key
-        HeldCertificate ca = new HeldCertificate.Builder()
-                .commonName("Test CA")
-                .certificateAuthority(0)
-                .build();
-        HeldCertificate client = new HeldCertificate.Builder()
-                .commonName("Test Client")
-                .signedBy(ca)
-                .build();
-        File caCertFile = tempFolder.newFile("mtls-ca.pem");
-        File clientP12File = tempFolder.newFile("mtls-client.p12");
+    public void creatingWithValidMtlsParamsCreatesSocketFactory() throws Exception {
+        // Create CA cert and client cert & key
+        HeldCertificate ca = getCaCert();
+        File caCertFile = createCaCertFile(ca);
+        File clientP12File = createClientP12File(getClientCert(ca));
+
+        // Create socket factory
+        ProxySslContextFactoryImpl factory = new ProxySslContextFactoryImpl();
+        SSLSocketFactory sslSocketFactory = null;
+        try (FileInputStream caCert = new FileInputStream(caCertFile);
+             FileInputStream clientCertAndKey = new FileInputStream(clientP12File)) {
+            sslSocketFactory = factory.create(caCert, clientCertAndKey, "password");
+        }
+
+        assertNotNull(sslSocketFactory);
+    }
+
+    @Test(expected = Exception.class)
+    public void creatingWithInvalidMtlsParamsThrows() throws Exception {
+        // Create valid CA cert but invalid client P12
+        HeldCertificate ca = getCaCert();
+        File caCertFile = createCaCertFile(ca);
+        File invalidP12File = tempFolder.newFile("invalid-client.p12");
         
+        // Write invalid data to P12 file
+        try (FileWriter writer = new FileWriter(invalidP12File)) {
+            writer.write("invalid file");
+        }
+
+        ProxySslContextFactoryImpl factory = new ProxySslContextFactoryImpl();
+        try (FileInputStream caCert = new FileInputStream(caCertFile);
+             FileInputStream invalidClientCertAndKey = new FileInputStream(invalidP12File)) {
+            factory.create(caCert, invalidClientCertAndKey, "password");
+        }
+    }
+
+    private File createCaCertFile(HeldCertificate ca) throws Exception {
+        File caCertFile = tempFolder.newFile("mtls-ca.pem");
         try (FileWriter writer = new FileWriter(caCertFile)) {
             writer.write(ca.certificatePem());
         }
-        
-        // Create PKCS#12 keystore with client cert and key
+        return caCertFile;
+    }
+
+    private File createClientP12File(HeldCertificate client) throws Exception {
+        File clientP12File = tempFolder.newFile("mtls-client.p12");
         KeyStore p12KeyStore = KeyStore.getInstance("PKCS12");
         p12KeyStore.load(null, null);
-        p12KeyStore.setKeyEntry("client", client.keyPair().getPrivate(), "password".toCharArray(), 
+        String password = "password";
+        p12KeyStore.setKeyEntry("client", client.keyPair().getPrivate(), password.toCharArray(),
                 new java.security.cert.Certificate[]{client.certificate()});
-        try (java.io.FileOutputStream fos = new java.io.FileOutputStream(clientP12File)) {
-            p12KeyStore.store(fos, "password".toCharArray());
+        try (FileOutputStream fos = new FileOutputStream(clientP12File)) {
+            p12KeyStore.store(fos, password.toCharArray());
         }
-        
-        ProxySslContextFactoryImpl factory = new ProxySslContextFactoryImpl();
-        try (FileInputStream caFis = new FileInputStream(caCertFile);
-             FileInputStream clientP12Fis = new FileInputStream(clientP12File)) {
-            assertNotNull(factory.create(caFis, clientP12Fis, "password"));
-            factory.create(caFis, clientP12Fis, "password");
-        }
+        return clientP12File;
+    }
+
+    @NonNull
+    private static HeldCertificate getCaCert() {
+        return new HeldCertificate.Builder()
+                .commonName("Test CA")
+                .certificateAuthority(0)
+                .build();
+    }
+
+    @NonNull
+    private static HeldCertificate getClientCert(HeldCertificate ca) {
+        return new HeldCertificate.Builder()
+                .commonName("Test Client")
+                .signedBy(ca)
+                .build();
     }
 }
