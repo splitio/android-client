@@ -144,27 +144,13 @@ class HttpOverTunnelExecutor {
             @NonNull Map<String, String> headers,
             @Nullable String body) throws IOException {
         
-        System.out.println("Sending HTTP request directly through transparent tunnel");
+        Logger.v("Sending HTTP request directly through transparent tunnel");
         
         // Send HTTP request through transparent tunnel
         sendHttpRequest(tunnelSocket, targetUrl, method, headers, body);
         
-        // Add debugging for response reading
-        System.out.println("=== RESPONSE READING DEBUG ===");
-        System.out.println("About to read HTTP response from tunnel socket...");
-        System.out.println("Tunnel socket connected: " + tunnelSocket.isConnected());
-        System.out.println("Tunnel socket closed: " + tunnelSocket.isClosed());
-        System.out.println("Input stream available: " + tunnelSocket.getInputStream().available());
-        
-        // Set a socket timeout to prevent hanging
-        tunnelSocket.setSoTimeout(10000); // 10 second timeout
-        
         // Read and parse HTTP response
-        HttpResponse response = mResponseParser.parseHttpResponse(tunnelSocket.getInputStream());
-        
-        System.out.println("HTTP response received successfully!");
-        System.out.println("HTTP request completed successfully, status: " + response.getHttpStatus());
-        return response;
+        return mResponseParser.parseHttpResponse(tunnelSocket.getInputStream());
     }
     
     /**
@@ -189,11 +175,7 @@ class HttpOverTunnelExecutor {
         }
         
         String requestLine = method.name() + " " + path + " HTTP/1.1";
-        System.out.println("=== HTTP REQUEST DEBUG ===");
-        System.out.println("Target URL: " + targetUrl);
-        System.out.println("Method: " + method.name());
-        System.out.println("Path: " + path);
-        System.out.println("Sending request line: '" + requestLine + "'");
+        Logger.v("Sending request line: '" + requestLine + "'");
         writer.println(requestLine);
         
         // 2. Send Host header (required for HTTP/1.1)
@@ -208,14 +190,14 @@ class HttpOverTunnelExecutor {
             host += ":" + port;
         }
         
-        System.out.println("Sending Host header: 'Host: " + host + "'");
+        Logger.v("Sending Host header: 'Host: " + host + "'");
         writer.println("Host: " + host);
         
         // 3. Send custom headers
         for (Map.Entry<String, String> header : headers.entrySet()) {
             if (header.getKey() != null && header.getValue() != null) {
                 String headerLine = header.getKey() + ": " + header.getValue();
-                System.out.println("Sending header: '" + headerLine + "'");
+                Logger.v("Sending header: '" + headerLine + "'");
                 writer.println(headerLine);
             }
         }
@@ -223,26 +205,25 @@ class HttpOverTunnelExecutor {
         // 4. Send Content-Length header if body is present
         if (body != null) {
             String contentLengthHeader = "Content-Length: " + body.length();
-            System.out.println("Sending header: '" + contentLengthHeader + "'");
+            Logger.v("Sending header: '" + contentLengthHeader + "'");
             writer.println(contentLengthHeader);
         }
         
         // 5. Send Connection: close to ensure response completion
-        System.out.println("Sending header: 'Connection: close'");
+        Logger.v("Sending header: 'Connection: close'");
         writer.println("Connection: close");
         
         // 6. End headers with empty line
-        System.out.println("Sending empty line to end headers");
+        Logger.v("Sending empty line to end headers");
         writer.println();
         
         // 7. Send body if present
         if (body != null) {
-            System.out.println("Sending request body: '" + body + "'");
+            Logger.v("Sending request body: '" + body + "'");
             writer.print(body);
         }
         
         writer.flush();
-        System.out.println("=== HTTP REQUEST SENT ===");
         
         if (writer.checkError()) {
             throw new IOException("Failed to send HTTP request through tunnel");

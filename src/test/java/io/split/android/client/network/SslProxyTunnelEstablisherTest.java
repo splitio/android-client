@@ -125,8 +125,7 @@ public class SslProxyTunnelEstablisherTest {
             );
             fail("Should have thrown exception for untrusted certificate");
         } catch (IOException e) {
-            assertTrue("Exception should be SSL-related", 
-                       e.getMessage().contains("SSL") || e.getMessage().contains("certificate"));
+            assertTrue("Exception should be SSL-related", e.getMessage().contains("certification"));
         }
     }
 
