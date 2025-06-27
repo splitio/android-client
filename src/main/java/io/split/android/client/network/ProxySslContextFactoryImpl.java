@@ -2,12 +2,13 @@ package io.split.android.client.network;
 
 import androidx.annotation.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
 import java.util.Collection;
+import java.util.Enumeration;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -15,6 +16,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 /**
  * Implementation of ProxySslContextFactory for proxy_cacert and mTLS scenarios.
@@ -55,17 +57,51 @@ public class ProxySslContextFactoryImpl implements ProxySslContextFactory {
             CertificateFactory certificateFactory = CertificateFactory.getInstance("X.509");
             Collection<? extends Certificate> caCertificates = certificateFactory.generateCertificates(caCertInputStream);
 
-            // Load the certificates in the trust store
-            KeyStore trustStore = KeyStore.getInstance(KeyStore.getDefaultType());
-            trustStore.load(null, null);
+            // Start with the system's default trust store to include standard CA certificates
+            TrustManagerFactory defaultTrustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            defaultTrustManagerFactory.init((KeyStore) null); // Initialize with system default keystore
+            
+            // Get the default trust store
+            KeyStore defaultTrustStore = null;
+            for (TrustManager tm : defaultTrustManagerFactory.getTrustManagers()) {
+                if (tm instanceof X509TrustManager) {
+                    // Create a new keystore and populate it with system CAs
+                    defaultTrustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+                    defaultTrustStore.load(null, null);
+                    
+                    X509Certificate[] acceptedIssuers = ((X509TrustManager) tm).getAcceptedIssuers();
+                    for (int j = 0; j < acceptedIssuers.length; j++) {
+                        defaultTrustStore.setCertificateEntry("systemCA" + j, acceptedIssuers[j]);
+                    }
+                    break;
+                }
+            }
+            
+            // Create combined trust store with both system CAs and custom proxy CAs
+            KeyStore combinedTrustStore = KeyStore.getInstance(KeyStore.getDefaultType());
+            combinedTrustStore.load(null, null);
+            
+            // Add system CA certificates if we found them
+            if (defaultTrustStore != null) {
+                Enumeration<String> aliases = defaultTrustStore.aliases();
+                while (aliases.hasMoreElements()) {
+                    String alias = aliases.nextElement();
+                    Certificate cert = defaultTrustStore.getCertificate(alias);
+                    if (cert != null) {
+                        combinedTrustStore.setCertificateEntry(alias, cert);
+                    }
+                }
+            }
+            
+            // Add custom proxy CA certificates
             int i = 0;
             for (Certificate ca : caCertificates) {
-                trustStore.setCertificateEntry("proxyCA" + (i++), ca);
+                combinedTrustStore.setCertificateEntry("proxyCA" + (i++), ca);
             }
 
-            // initialize the TrustManagerFactory
+            // Initialize the TrustManagerFactory with the combined trust store
             TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
-            trustManagerFactory.init(trustStore);
+            trustManagerFactory.init(combinedTrustStore);
 
             return trustManagerFactory;
         } finally {

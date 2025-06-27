@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
-import java.io.FileInputStream;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
@@ -250,7 +250,7 @@ public class HttpClientImpl implements HttpClient {
         public HttpClient build() {
             // Proxy CA cert support
             if (mProxy != null && mProxy.getAuthType() == HttpProxy.ProxyAuthType.PROXY_CACERT && mDevelopmentSslConfig == null) {
-                try (FileInputStream caInput = new FileInputStream(mProxy.getCaCertPath())) {
+                try (InputStream caInput = mProxy.getCaCertStream()) {
                     ProxySslContextFactory factory = new ProxySslContextFactoryImpl();
                     mSslSocketFactory = factory.create(caInput);
                     Logger.v("Custom proxy CA cert loaded for proxy: " + mProxy.getHost());
@@ -258,14 +258,15 @@ public class HttpClientImpl implements HttpClient {
                     Logger.e("Failed to load proxy CA cert for proxy: " + mProxy.getHost() + ", error: " + e.getMessage());
                 }
             } else if (mProxy != null && mProxy.getAuthType() == HttpProxy.ProxyAuthType.MTLS && mDevelopmentSslConfig == null) {
-                try (java.io.InputStream caInput = new FileInputStream(mProxy.getCaCertPath());
-                     java.io.InputStream pkcs12Input = new FileInputStream(mProxy.getClientPkcs12Path())) {
-                    ProxySslContextFactory factory = new ProxySslContextFactoryImpl();
-                    mSslSocketFactory = factory.create(caInput, pkcs12Input, mProxy.getClientPkcs12Password());
-                    Logger.v("Custom proxy CA cert and client credentials loaded for proxy: " + mProxy.getHost());
-                } catch (Exception e) {
-                    Logger.e("Failed to load proxy CA cert and client credentials for proxy: " + mProxy.getHost() + ", error: " + e.getMessage());
-                }
+//                TODO uncomment
+//                try (java.io.InputStream caInput = new FileInputStream(mProxy.getCaCertPath());
+//                     java.io.InputStream pkcs12Input = new FileInputStream(mProxy.getClientPkcs12Path())) {
+//                    ProxySslContextFactory factory = new ProxySslContextFactoryImpl();
+//                    mSslSocketFactory = factory.create(caInput, pkcs12Input, mProxy.getClientPkcs12Password());
+//                    Logger.v("Custom proxy CA cert and client credentials loaded for proxy: " + mProxy.getHost());
+//                } catch (Exception e) {
+//                    Logger.e("Failed to load proxy CA cert and client credentials for proxy: " + mProxy.getHost() + ", error: " + e.getMessage());
+//                }
             } else if (mDevelopmentSslConfig == null) {
                 if (LegacyTlsUpdater.couldBeOld()) {
                     LegacyTlsUpdater.update(mHostAppContext);

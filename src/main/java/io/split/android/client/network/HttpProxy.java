@@ -4,6 +4,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import java.io.InputStream;
 
 public class HttpProxy {
 
@@ -22,9 +23,9 @@ public class HttpProxy {
     private final @Nullable String mPassword;
     private final @NonNull ProxyAuthType mAuthType;
     private final @Nullable String mBearerToken;
-    private final @Nullable String mClientPkcs12Path;
     private final @Nullable String mClientPkcs12Password;
-    private final @Nullable String mCaCertPath;    // for MTLS (optional)
+    private final @Nullable InputStream mClientPkcs12Stream;
+    private final @Nullable InputStream mCaCertStream;
 
 
     private HttpProxy(Builder builder) {
@@ -34,9 +35,9 @@ public class HttpProxy {
         mPassword = builder.mPassword;
         mAuthType = builder.mAuthType;
         mBearerToken = builder.mBearerToken;
-        mClientPkcs12Path = builder.mClientPkcs12Path;
         mClientPkcs12Password = builder.mClientPkcs12Password;
-        mCaCertPath = builder.mCaCertPath;
+        mClientPkcs12Stream = builder.mClientPkcs12Stream;
+        mCaCertStream = builder.mCaCertStream;
     }
 
     public @NonNull String getHost() {
@@ -63,16 +64,16 @@ public class HttpProxy {
         return mBearerToken;
     }
 
-    public @Nullable String getClientPkcs12Path() {
-        return mClientPkcs12Path;
-    }
-
     public @Nullable String getClientPkcs12Password() {
         return mClientPkcs12Password;
     }
 
-    public @Nullable String getCaCertPath() {
-        return mCaCertPath;
+    public @Nullable InputStream getClientPkcs12Stream() {
+        return mClientPkcs12Stream;
+    }
+
+    public @Nullable InputStream getCaCertStream() {
+        return mCaCertStream;
     }
 
     /**
@@ -93,9 +94,9 @@ public class HttpProxy {
         private @Nullable String mPassword;
         private @NonNull ProxyAuthType mAuthType = ProxyAuthType.NONE;
         private @Nullable String mBearerToken;
-        private @Nullable String mClientPkcs12Path;
         private @Nullable String mClientPkcs12Password;
-        private @Nullable String mCaCertPath;
+        private @Nullable InputStream mClientPkcs12Stream;
+        private @Nullable InputStream mCaCertStream;
 
 
         private Builder(@NonNull String host, int port) {
@@ -151,11 +152,11 @@ public class HttpProxy {
          * Configure HTTPS proxy with a custom CA certificate for proxy trust validation.
          * Equivalent to curl's --proxy-cacert.
          *
-         * @param caCertPath Path to CA certificate file (PEM or DER)
+         * @param caCertStream InputStream to CA certificate data (PEM or DER)
          * @return this builder
          */
-        public Builder proxyCacert(@NonNull String caCertPath) {
-            mCaCertPath = caCertPath;
+        public Builder proxyCacert(@NonNull InputStream caCertStream) {
+            mCaCertStream = caCertStream;
             mAuthType = ProxyAuthType.PROXY_CACERT;
             return this;
         }
@@ -165,15 +166,15 @@ public class HttpProxy {
          * The client presents a certificate and key to the proxy, and optionally trusts a custom CA for the proxy.
          * Equivalent to curl's --proxy-cert, --proxy-key, and --proxy-cacert.
          *
-         * @param pkcs12Path Path to client PKCS#12 file
+         * @param pkcs12Stream InputStream to client PKCS#12 data
          * @param pkcs12Password Password for the PKCS#12 file
-         * @param caCertPath Optional path to CA certificate for proxy trust validation
+         * @param caCertStream Optional InputStream to CA certificate for proxy trust validation
          * @return this builder
          */
-        public Builder mtlsAuth(@NonNull String pkcs12Path, @NonNull String pkcs12Password, @Nullable String caCertPath) {
-            mClientPkcs12Path = pkcs12Path;
+        public Builder mtlsAuth(@NonNull InputStream pkcs12Stream, @NonNull String pkcs12Password, @Nullable InputStream caCertStream) {
+            mClientPkcs12Stream = pkcs12Stream;
             mClientPkcs12Password = pkcs12Password;
-            mCaCertPath = caCertPath;
+            mCaCertStream = caCertStream;
             mAuthType = ProxyAuthType.MTLS;
             return this;
         }

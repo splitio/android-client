@@ -4,10 +4,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.io.IOException;
+import java.net.Socket;
 import java.net.URL;
 import java.util.Map;
 
-import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import io.split.android.client.utils.logger.Logger;
@@ -26,18 +26,14 @@ import io.split.android.client.utils.logger.Logger;
  */
 class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
 
-    private final SslProxyTunnelEstablisher mTunnelEstablisher;
     private final HttpOverTunnelExecutor mTunnelExecutor;
 
     public ProxyCacertConnectionHandler() {
-        mTunnelEstablisher = new SslProxyTunnelEstablisher();
         mTunnelExecutor = new HttpOverTunnelExecutor();
     }
 
     // For testing - allow injection of dependencies
-    ProxyCacertConnectionHandler(SslProxyTunnelEstablisher tunnelEstablisher, 
-                                HttpOverTunnelExecutor tunnelExecutor) {
-        mTunnelEstablisher = tunnelEstablisher;
+    ProxyCacertConnectionHandler(HttpOverTunnelExecutor tunnelExecutor) {
         mTunnelExecutor = tunnelExecutor;
     }
 
@@ -55,44 +51,82 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
                                      @Nullable String body,
                                      @NonNull SSLSocketFactory sslSocketFactory) throws IOException {
         
-        Logger.v("Executing request through PROXY_CACERT SSL proxy: " + 
-                 httpProxy.getHost() + ":" + httpProxy.getPort());
+        Logger.v("PROXY_CACERT: Executing request to: " + targetUrl);
         
-        SSLSocket tunnelSocket = null;
         try {
-            // Step 1: Establish SSL tunnel through proxy with CA certificate validation
-            tunnelSocket = mTunnelEstablisher.establishTunnel(
+            // PROXY_CACERT requires SSL authentication with proxy using CA certificate
+            // Use the provided sslSocketFactory which contains the proxy CA certificate
+            
+            // Establish SSL tunnel through proxy with CA certificate authentication
+            SslProxyTunnelEstablisher tunnelEstablisher = new SslProxyTunnelEstablisher();
+            Socket tunnelSocket = tunnelEstablisher.establishTunnel(
                 httpProxy.getHost(),
                 httpProxy.getPort(),
                 targetUrl.getHost(),
                 getTargetPort(targetUrl),
-                sslSocketFactory
+                sslSocketFactory  // Use the SSL socket factory with proxy CA certificate
             );
             
-            Logger.v("SSL tunnel established successfully - connection maintained");
+            Logger.v("SSL tunnel established successfully");
             
-            // Step 2: Execute HTTP request through SSL tunnel socket
+            Socket finalSocket = tunnelSocket;
+            // If the origin is HTTPS, wrap the tunnel socket with a new SSLSocket (system CA)
+            if ("https".equalsIgnoreCase(targetUrl.getProtocol())) {
+                Logger.v("Wrapping tunnel socket with new SSLSocket for origin server handshake");
+                try {
+                    // Get system default SSL context
+                    javax.net.ssl.SSLContext systemSslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+                    systemSslContext.init(null, null, null); // null = system default trust managers
+                    javax.net.ssl.SSLSocketFactory systemSslSocketFactory = systemSslContext.getSocketFactory();
+
+                    // Create SSLSocket layered over tunnel
+                    finalSocket = systemSslSocketFactory.createSocket(
+                        tunnelSocket,
+                        targetUrl.getHost(),
+                        getTargetPort(targetUrl),
+                        true // autoClose
+                    );
+                    if (finalSocket instanceof javax.net.ssl.SSLSocket) {
+                        javax.net.ssl.SSLSocket originSslSocket = (javax.net.ssl.SSLSocket) finalSocket;
+                        originSslSocket.setUseClientMode(true);
+                        originSslSocket.startHandshake();
+                        try {
+                            java.security.cert.Certificate[] peerCerts = originSslSocket.getSession().getPeerCertificates();
+                            for (java.security.cert.Certificate cert : peerCerts) {
+                                if (cert instanceof java.security.cert.X509Certificate) {
+                                    java.security.cert.X509Certificate x509 = (java.security.cert.X509Certificate) cert;
+                                    Logger.v("Origin SSL handshake: Peer cert subject=" + x509.getSubjectX500Principal() + ", issuer=" + x509.getIssuerX500Principal());
+                                }
+                            }
+                        } catch (Exception certEx) {
+                            Logger.e("Could not log origin server certificates: " + certEx.getMessage());
+                        }
+                    } else {
+                        throw new IOException("Failed to create SSLSocket to origin");
+                    }
+                    Logger.v("SSL handshake with origin server completed");
+                } catch (Exception sslEx) {
+                    Logger.e("Failed to establish SSL connection to origin: " + sslEx.getMessage());
+                    throw new IOException("Failed to establish SSL connection to origin server", sslEx);
+                }
+            }
+
+            // Execute request through the (possibly wrapped) socket
             HttpResponse response = mTunnelExecutor.executeRequest(
-                tunnelSocket,
+                finalSocket,
                 targetUrl,
                 method,
                 headers,
-                body,
-                sslSocketFactory  // Pass the combined SSL socket factory for HTTPS origins
+                body
             );
-            
+
             Logger.v("PROXY_CACERT request completed successfully, status: " + response.getHttpStatus());
             return response;
             
-        } finally {
-            // Clean up tunnel socket
-            if (tunnelSocket != null) {
-                try {
-                    tunnelSocket.close();
-                } catch (IOException e) {
-                    Logger.w("Failed to close tunnel socket: " + e.getMessage());
-                }
-            }
+        } catch (Exception e) {
+            Logger.e("PROXY_CACERT request failed: " + e.getMessage());
+            e.printStackTrace();
+            throw new IOException("Failed to execute request through custom tunnel", e);
         }
     }
     

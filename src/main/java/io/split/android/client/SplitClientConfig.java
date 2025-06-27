@@ -5,6 +5,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
 
@@ -571,6 +572,7 @@ public class SplitClientConfig {
         private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
 
         private RolloutCacheConfiguration mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();
+        private InputStream mProxyCacert;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -807,12 +809,13 @@ public class SplitClientConfig {
          * @param proxyHost proxy URI
          * @return this builder
          */
-        public Builder proxyHost(String proxyHost) {
+        public Builder proxyHost(String proxyHost, InputStream proxyCacert) {
             if (proxyHost != null && proxyHost.endsWith("/")) {
                 mProxyHost = proxyHost.substring(0, proxyHost.length() - 1);
             } else {
                 mProxyHost = proxyHost;
             }
+            mProxyCacert = proxyCacert;
             return this;
         }
 
@@ -1279,7 +1282,8 @@ public class SplitClientConfig {
                         }
                     }
                     String host = String.format("%s%s", uri.getHost(), uri.getPath());
-                    return HttpProxy.newBuilder(host, port).basicAuth(username, password).build();
+                    return HttpProxy.newBuilder(host, port).proxyCacert(mProxyCacert).build();
+//                    return HttpProxy.newBuilder(host, port).basicAuth(username, password).build(); TODO
                 } catch (IllegalArgumentException e) {
                     Logger.e("Proxy URI not valid: " + e.getLocalizedMessage());
                     throw new IllegalArgumentException();

@@ -26,37 +26,40 @@ import io.split.android.client.utils.logger.Logger;
 class SslProxyTunnelEstablisher {
 
     /**
-     * Establishes an SSL tunnel to the specified target through an SSL proxy.
+     * Establishes an SSL tunnel through the proxy using the CONNECT method.
+     * After successful tunnel establishment, extracts the underlying raw socket
+     * for direct use with origin server SSL connections.
      * 
-     * @param proxyHost The SSL proxy hostname
-     * @param proxyPort The SSL proxy port
+     * @param proxyHost The proxy server hostname
+     * @param proxyPort The proxy server port
      * @param targetHost The target server hostname
      * @param targetPort The target server port
      * @param sslSocketFactory SSL socket factory for proxy authentication
-     * @return SSL socket with tunnel established (connection maintained)
+     * @return Raw socket with tunnel established (connection maintained)
      * @throws IOException if tunnel establishment fails
      */
     @NonNull
-    public SSLSocket establishTunnel(@NonNull String proxyHost,
-                                     int proxyPort,
-                                     @NonNull String targetHost,
-                                     int targetPort,
-                                     @NonNull SSLSocketFactory sslSocketFactory) throws IOException {
+    public Socket establishTunnel(@NonNull String proxyHost,
+                                      int proxyPort,
+                                      @NonNull String targetHost,
+                                      int targetPort,
+                                      @NonNull SSLSocketFactory sslSocketFactory) throws IOException {
         
-        Logger.v("Establishing SSL tunnel to " + targetHost + ":" + targetPort + 
-                 " through SSL proxy " + proxyHost + ":" + proxyPort);
+        Logger.v("Establishing SSL tunnel through proxy: " + proxyHost + ":" + proxyPort + 
+                 " to target: " + targetHost + ":" + targetPort);
         
         Socket rawSocket = null;
         SSLSocket sslSocket = null;
         
         try {
-            // Step 1: Create raw socket connection to proxy
+            // Step 1: Create raw TCP connection to proxy
+            Logger.v("Creating raw TCP connection to proxy");
             rawSocket = new Socket(proxyHost, proxyPort);
             rawSocket.setSoTimeout(10000); // 10 second timeout
             
-            // Step 2: Create SSL socket for proxy authentication using custom CA certificates
+            // Step 2: Establish SSL connection to proxy for mTLS authentication
+            Logger.v("Establishing SSL connection to proxy for mTLS authentication");
             
-            // We need to use the provided SSLSocketFactory which contains the custom CA certificates
             // Create a temporary SSL socket to establish the SSL session with proper trust validation
             sslSocket = (SSLSocket) sslSocketFactory.createSocket(rawSocket, proxyHost, proxyPort, false);
             sslSocket.setUseClientMode(true);
@@ -74,8 +77,11 @@ class SslProxyTunnelEstablisher {
             validateConnectResponse(sslSocket, targetHost, targetPort);
             Logger.v("SSL tunnel established successfully");
             
-            // Return SSL socket for transparent tunnel communication
+            // Step 5: Return SSL socket for tunnel communication
+            // The SSL socket has the CONNECT tunnel established and can be used directly
+            Logger.v("SSL tunnel established successfully - returning SSL socket");
             return sslSocket;
+            
         } catch (Exception e) {
             Logger.e("SSL tunnel establishment failed: " + e.getMessage());
             e.printStackTrace();
