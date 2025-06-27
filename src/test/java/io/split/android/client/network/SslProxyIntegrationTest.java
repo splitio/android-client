@@ -16,8 +16,11 @@ import org.junit.rules.TemporaryFolder;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileWriter;
+import java.io.IOException;
+import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.security.KeyStore;
 import java.security.cert.Certificate;
 import java.util.HashMap;
@@ -25,7 +28,6 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import okhttp3.mockwebserver.Dispatcher;
@@ -163,7 +165,7 @@ public class SslProxyIntegrationTest {
             SSLSocketFactory sslSocketFactory = sslContextFactory.create(caCertStream);
             
             // Step 1: Establish SSL tunnel to proxy (First TLS handshake)
-            SSLSocket tunnelSocket = tunnelEstablisher.establishTunnel(
+            Socket tunnelSocket = tunnelEstablisher.establishTunnel(
                 "localhost",
                 sslProxy.mPort,
                 "localhost", 
@@ -187,8 +189,7 @@ public class SslProxyIntegrationTest {
                     httpsUrl,
                     HttpMethod.GET,
                     headers,
-                    null,
-                    sslSocketFactory  // Pass the combined SSL socket factory
+                    null
                 );
                 
                 // Validate response
@@ -220,7 +221,7 @@ public class SslProxyIntegrationTest {
         
         // Create HttpProxy with PROXY_CACERT
         HttpProxy httpProxy = HttpProxy.newBuilder("localhost", sslProxy.mPort)
-                .proxyCacert(caCertFile.getAbsolutePath())
+                .proxyCacert(Files.newInputStream(caCertFile.toPath()))
                 .build();
 
         // Create a mock UrlSanitizer that returns the URL we need
@@ -257,12 +258,12 @@ public class SslProxyIntegrationTest {
      * Tests that our SslProxyConnectionManager correctly identifies and routes SSL proxy requests.
      */
     @Test
-    public void sslProxyConnectionManager_correctlyIdentifiesProxyTypes() {
+    public void sslProxyConnectionManager_correctlyIdentifiesProxyTypes() throws IOException {
         SslProxyConnectionManager manager = new SslProxyConnectionManager();
         
         // Test PROXY_CACERT detection
         HttpProxy proxyCacertProxy = HttpProxy.newBuilder("localhost", 8080)
-                .proxyCacert("/path/to/ca.pem")
+                .proxyCacert(Files.newInputStream(caCertFile.toPath()))
                 .build();
         assertTrue("Manager should detect PROXY_CACERT as requiring custom SSL handling", 
                    manager.requiresCustomSslHandling(proxyCacertProxy));

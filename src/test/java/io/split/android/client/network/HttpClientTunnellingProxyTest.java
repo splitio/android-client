@@ -24,6 +24,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
 import java.security.KeyStore;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -108,7 +109,7 @@ public class HttpClientTunnellingProxyTest {
 
         // 5. Configure HttpProxy with PROXY_CACERT
         HttpProxy proxy = HttpProxy.newBuilder("localhost", assignedProxyPort)
-                .proxyCacert(caCertFile.getAbsolutePath())
+                .proxyCacert(Files.newInputStream(caCertFile.toPath()))
                 .build();
 
         // 6. Build client (let builder/factory handle trust)
@@ -189,7 +190,7 @@ public class HttpClientTunnellingProxyTest {
 
         // 4. Configure HttpProxy WITHOUT client cert (should be rejected)
         HttpProxy proxy = HttpProxy.newBuilder("localhost", assignedProxyPort)
-                .proxyCacert(proxyCaFile.getAbsolutePath()) // only trust, no client auth
+                .proxyCacert(Files.newInputStream(proxyCaFile.toPath())) // only trust, no client auth
                 .build();
 
         // 5. Build client (let builder/factory handle trust)
@@ -295,7 +296,7 @@ public class HttpClientTunnellingProxyTest {
 
         // 4. Configure HttpProxy with mTLS (client cert, key, and CA)
         HttpProxy proxy = HttpProxy.newBuilder("localhost", assignedProxyPort)
-                .mtlsAuth(clientP12File.getAbsolutePath(), "password", proxyCaFile.getAbsolutePath())
+                .mtlsAuth(Files.newInputStream(clientP12File.toPath()), "password", Files.newInputStream(proxyCaFile.toPath()))
                 .build();
 
         // 5. Build client (let builder/factory handle trust)
