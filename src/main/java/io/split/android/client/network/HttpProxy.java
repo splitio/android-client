@@ -27,7 +27,6 @@ public class HttpProxy {
     private final @Nullable InputStream mClientPkcs12Stream;
     private final @Nullable InputStream mCaCertStream;
 
-
     private HttpProxy(Builder builder) {
         mHost = builder.mHost;
         mPort = builder.mPort;

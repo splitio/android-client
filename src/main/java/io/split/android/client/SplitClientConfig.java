@@ -437,7 +437,9 @@ public class SplitClientConfig {
         return mIsPersistentAttributesEnabled;
     }
 
-    public int offlineRefreshRate() { return mOfflineRefreshRate; }
+    public int offlineRefreshRate() {
+        return mOfflineRefreshRate;
+    }
 
     public boolean shouldRecordTelemetry() {
         return mShouldRecordTelemetry;
@@ -447,7 +449,9 @@ public class SplitClientConfig {
         return mTelemetryRefreshRate;
     }
 
-    public boolean syncEnabled() { return mSyncEnabled; }
+    public boolean syncEnabled() {
+        return mSyncEnabled;
+    }
 
     public int mtkPerPush() {
         return mMtkPerPush;
@@ -477,7 +481,9 @@ public class SplitClientConfig {
         return mSSEDisconnectionDelayInSecs;
     }
 
-    private void enableTelemetry() { mShouldRecordTelemetry = true; }
+    private void enableTelemetry() {
+        mShouldRecordTelemetry = true;
+    }
 
     public long observerCacheExpirationPeriod() {
         return Math.max(mImpressionsDedupeTimeInterval, mObserverCacheExpirationPeriod);
@@ -573,6 +579,8 @@ public class SplitClientConfig {
 
         private RolloutCacheConfiguration mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();
         private InputStream mProxyCacert;
+        private InputStream mClientPkcs12Stream;
+        private String mClientPkcs12Password;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -809,13 +817,23 @@ public class SplitClientConfig {
          * @param proxyHost proxy URI
          * @return this builder
          */
-        public Builder proxyHost(String proxyHost, InputStream proxyCacert) {
+        public Builder proxyHost(String proxyHost) {
             if (proxyHost != null && proxyHost.endsWith("/")) {
                 mProxyHost = proxyHost.substring(0, proxyHost.length() - 1);
             } else {
                 mProxyHost = proxyHost;
             }
-            mProxyCacert = proxyCacert;
+            return this;
+        }
+
+        public Builder proxyCacert(InputStream caCertStream) {
+            mProxyCacert = caCertStream;
+            return this;
+        }
+
+        public Builder proxyClientPkcs12(InputStream pkcs12Stream, String pkcs12Password) {
+            mClientPkcs12Stream = pkcs12Stream;
+            mClientPkcs12Password = pkcs12Password;
             return this;
         }
 
@@ -1033,6 +1051,7 @@ public class SplitClientConfig {
          * <p>
          * This is an ADVANCED parameter
          * </p>
+         *
          * @param telemetryRefreshRate Rate in seconds for telemetry refresh.
          * @return This builder
          * @default 3600 seconds
@@ -1104,10 +1123,9 @@ public class SplitClientConfig {
         /**
          * This configuration is used to control the size of the impressions deduplication window.
          *
+         * @param impressionsDedupeTimeInterval The time interval in milliseconds.
          * @Experimental This method is experimental and may change or be removed in future versions.
          * To be used upon Split team recommendation.
-         *
-         * @param impressionsDedupeTimeInterval The time interval in milliseconds.
          */
         @Deprecated
         public Builder impressionsDedupeTimeInterval(long impressionsDedupeTimeInterval) {
@@ -1274,16 +1292,26 @@ public class SplitClientConfig {
                     URI uri = URI.create(proxyUri);
                     int port = uri.getPort() != -1 ? uri.getPort() : PROXY_PORT_DEFAULT;
                     String userInfo = uri.getUserInfo();
-                    if(!Utils.isNullOrEmpty(userInfo)) {
+                    if (!Utils.isNullOrEmpty(userInfo)) {
                         String[] userInfoComponents = userInfo.split(":");
-                        if(userInfoComponents.length > 1) {
+                        if (userInfoComponents.length > 1) {
                             username = userInfoComponents[0];
                             password = userInfoComponents[1];
                         }
                     }
                     String host = String.format("%s%s", uri.getHost(), uri.getPath());
-                    return HttpProxy.newBuilder(host, port).proxyCacert(mProxyCacert).build();
-//                    return HttpProxy.newBuilder(host, port).basicAuth(username, password).build(); TODO
+
+                    if (mClientPkcs12Stream != null && mClientPkcs12Password != null) {
+                        return HttpProxy.newBuilder(host, port)
+                                .mtlsAuth(mClientPkcs12Stream, mClientPkcs12Password, mProxyCacert)
+                                .build();
+                    } else if (mProxyCacert != null) {
+                        return HttpProxy.newBuilder(host, port)
+                                .proxyCacert(mProxyCacert)
+                                .build();
+                    } else {
+                        return HttpProxy.newBuilder(host, port).basicAuth(username, password).build();
+                    }
                 } catch (IllegalArgumentException e) {
                     Logger.e("Proxy URI not valid: " + e.getLocalizedMessage());
                     throw new IllegalArgumentException();
