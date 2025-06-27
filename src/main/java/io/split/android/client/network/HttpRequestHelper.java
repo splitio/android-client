@@ -19,12 +19,50 @@ import io.split.android.client.utils.logger.Logger;
 
 class HttpRequestHelper {
 
+    private static final SslProxyConnectionManager sSslProxyManager = new SslProxyConnectionManager();
+
+    /**
+     * Executes HTTP requests using custom SSL proxy handling when needed.
+     * This method only handles SSL proxy scenarios (PROXY_CACERT, MTLS).
+     * For standard HTTP proxies, use the openConnection method instead.
+     */
+    static HttpResponse executeRequest(@Nullable HttpProxy httpProxy,
+                                     @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                                     @NonNull URL url,
+                                     @NonNull HttpMethod method,
+                                     @NonNull Map<String, String> headers,
+                                     @Nullable String body,
+                                     boolean useProxyAuthentication,
+                                     @Nullable SSLSocketFactory sslSocketFactory) throws IOException {
+        
+        // Check if we need custom SSL proxy handling
+        if (httpProxy != null && sslSocketFactory != null && 
+            sSslProxyManager.requiresCustomSslHandling(httpProxy)) {
+            
+            Logger.v("Using custom SSL proxy handling for auth type: " + httpProxy.getAuthType());
+            return sSslProxyManager.executeRequest(httpProxy, url, method, headers, body, sslSocketFactory);
+        }
+        
+        // For non-SSL proxy scenarios, throw UnsupportedOperationException to indicate 
+        // that standard HttpURLConnection handling should be used instead
+        throw new UnsupportedOperationException("Standard proxy handling should use openConnection method instead");
+    }
+
     static HttpURLConnection openConnection(@Nullable Proxy proxy,
+                                            @Nullable HttpProxy httpProxy,
                                             @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
                                             @NonNull URL url,
                                             @NonNull HttpMethod method,
                                             @NonNull Map<String, String> headers,
                                             boolean useProxyAuthentication) throws IOException {
+        
+        // Check if we need custom SSL proxy handling
+        if (httpProxy != null && sSslProxyManager.requiresCustomSslHandling(httpProxy)) {
+            Logger.v("SSL proxy detected, but openConnection cannot handle it directly");
+            throw new IOException("SSL proxy scenarios require custom handling - use executeRequest method instead");
+        }
+        
+        // Standard HttpURLConnection proxy handling
         HttpURLConnection connection;
         if (proxy != null) {
             connection = (HttpURLConnection) url.openConnection(proxy);

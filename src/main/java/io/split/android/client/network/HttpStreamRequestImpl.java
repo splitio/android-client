@@ -139,7 +139,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
             throw new IOException("Error parsing URL");
         }
 
-        HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, useProxyAuthenticator);
+        HttpURLConnection connection = openConnection(mProxy, null, /*TODO*/mProxyAuthenticator, url, mHttpMethod, mHeaders, useProxyAuthenticator);
         applyTimeouts(HttpStreamRequestImpl.STREAMING_READ_TIMEOUT_IN_MILLISECONDS, mConnectionTimeout, connection);
         applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
         connection.connect();

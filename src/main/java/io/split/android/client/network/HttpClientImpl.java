@@ -29,6 +29,8 @@ public class HttpClientImpl implements HttpClient {
     @Nullable
     private final Proxy mProxy;
     @Nullable
+    private final HttpProxy mHttpProxy;
+    @Nullable
     private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
     private final long mReadTimeout;
     private final long mConnectionTimeout;
@@ -49,6 +51,7 @@ public class HttpClientImpl implements HttpClient {
                    @Nullable SSLSocketFactory sslSocketFactory,
                    @NonNull UrlSanitizer urlSanitizer,
                    @Nullable CertificateChecker certificateChecker) {
+        mHttpProxy = proxy; // Store original HttpProxy
         mProxy = initializeProxy(proxy);
         mProxyAuthenticator = initializeProxyAuthenticator(proxy, proxyAuthenticator);
         mReadTimeout = readTimeout;
@@ -74,6 +77,7 @@ public class HttpClientImpl implements HttpClient {
                 body,
                 newHeaders,
                 mProxy,
+                mHttpProxy, // Pass original HttpProxy
                 mProxyAuthenticator,
                 mReadTimeout,
                 mConnectionTimeout,

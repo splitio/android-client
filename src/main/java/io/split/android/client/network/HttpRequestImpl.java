@@ -5,6 +5,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 import static io.split.android.client.network.HttpRequestHelper.applySslConfig;
 import static io.split.android.client.network.HttpRequestHelper.applyTimeouts;
 import static io.split.android.client.network.HttpRequestHelper.openConnection;
+import static io.split.android.client.network.HttpRequestHelper.executeRequest;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,6 +44,8 @@ public class HttpRequestImpl implements HttpRequest {
     @Nullable
     private final Proxy mProxy;
     @Nullable
+    private final HttpProxy mHttpProxy;
+    @Nullable
     private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
     private final long mReadTimeout;
     private final long mConnectionTimeout;
@@ -58,6 +61,7 @@ public class HttpRequestImpl implements HttpRequest {
                     @Nullable String body,
                     @NonNull Map<String, String> headers,
                     @Nullable Proxy proxy,
+                    @Nullable HttpProxy httpProxy,
                     @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
                     long readTimeout,
                     long connectionTimeout,
@@ -71,6 +75,7 @@ public class HttpRequestImpl implements HttpRequest {
         mUrlSanitizer = checkNotNull(urlSanitizer);
         mHeaders = new HashMap<>(checkNotNull(headers));
         mProxy = proxy;
+        mHttpProxy = httpProxy;
         mProxyAuthenticator = proxyAuthenticator;
         mReadTimeout = readTimeout;
         mConnectionTimeout = connectionTimeout;
@@ -178,7 +183,31 @@ public class HttpRequestImpl implements HttpRequest {
             throw new IOException("Error parsing URL");
         }
 
-        HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, authenticate);
+        // Check if we need custom SSL proxy handling
+        if (mHttpProxy != null && mSslSocketFactory != null) {
+            try {
+                HttpResponse response = executeRequest(
+                    mHttpProxy, 
+                    mProxyAuthenticator, 
+                    url, 
+                    mHttpMethod, 
+                    mHeaders, 
+                    mBody, 
+                    authenticate, 
+                    mSslSocketFactory
+                );
+                
+                // For SSL proxy scenarios, we get the response directly
+                // Use the bridge class to convert HttpResponse to HttpURLConnection
+                return new HttpResponseConnectionAdapter(url, response);
+                
+            } catch (UnsupportedOperationException e) {
+                // Fall through to standard handling
+            }
+        }
+
+        // Standard HttpURLConnection handling
+        HttpURLConnection connection = openConnection(mProxy, mHttpProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, authenticate);
         applyTimeouts(mReadTimeout, mConnectionTimeout, connection);
         applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
 
