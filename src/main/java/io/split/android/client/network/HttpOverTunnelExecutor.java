@@ -23,15 +23,14 @@ import io.split.android.client.utils.logger.Logger;
  */
 class HttpOverTunnelExecutor {
 
+    public static final int HTTP_PORT = 80;
+    public static final int HTTPS_PORT = 443;
+    public static final int UNSET_PORT = -1;
+
     private final HttpResponseParser mResponseParser;
 
     public HttpOverTunnelExecutor() {
         mResponseParser = new HttpResponseParser();
-    }
-
-    // For testing - allow injection of custom parser
-    HttpOverTunnelExecutor(HttpResponseParser responseParser) {
-        mResponseParser = responseParser;
     }
 
     /**
@@ -63,7 +62,6 @@ class HttpOverTunnelExecutor {
             
         } catch (Exception e) {
             Logger.e("Failed to execute request through tunnel: " + e.getMessage());
-            e.printStackTrace();
             throw new IOException("Failed to execute HTTP request through tunnel to " + targetUrl, e);
         }
     }
@@ -91,7 +89,6 @@ class HttpOverTunnelExecutor {
             
         } catch (Exception e) {
             Logger.e("Failed to execute HTTP request through SSL tunnel: " + e.getMessage());
-            e.printStackTrace();
             throw new IOException("HTTP request through SSL tunnel failed", e);
         }
     }
@@ -126,8 +123,8 @@ class HttpOverTunnelExecutor {
         int port = getTargetPort(targetUrl);
         
         // Add port to Host header if it's not the default port for the protocol
-        boolean isDefaultPort = ("http".equalsIgnoreCase(targetUrl.getProtocol()) && port == 80) ||
-                               ("https".equalsIgnoreCase(targetUrl.getProtocol()) && port == 443);
+        boolean isDefaultPort = ("http".equalsIgnoreCase(targetUrl.getProtocol()) && port == HTTP_PORT) ||
+                               ("https".equalsIgnoreCase(targetUrl.getProtocol()) && port == HTTPS_PORT);
         
         if (!isDefaultPort) {
             host += ":" + port;
@@ -185,11 +182,11 @@ class HttpOverTunnelExecutor {
      */
     private int getTargetPort(@NonNull URL targetUrl) {
         int port = targetUrl.getPort();
-        if (port == -1) {
+        if (port == UNSET_PORT) {
             if ("https".equalsIgnoreCase(targetUrl.getProtocol())) {
-                return 443;
+                return HTTPS_PORT;
             } else if ("http".equalsIgnoreCase(targetUrl.getProtocol())) {
-                return 80;
+                return HTTP_PORT;
             }
         }
         return port;

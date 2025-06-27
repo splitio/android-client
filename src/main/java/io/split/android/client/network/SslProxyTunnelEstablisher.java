@@ -84,8 +84,7 @@ class SslProxyTunnelEstablisher {
             
         } catch (Exception e) {
             Logger.e("SSL tunnel establishment failed: " + e.getMessage());
-            e.printStackTrace();
-            
+
             // Clean up resources on error
             if (sslSocket != null) {
                 try {

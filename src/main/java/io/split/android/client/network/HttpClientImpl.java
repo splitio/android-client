@@ -251,8 +251,7 @@ public class HttpClientImpl implements HttpClient {
             // Proxy CA cert support
             if (mProxy != null && mProxy.getAuthType() == HttpProxy.ProxyAuthType.PROXY_CACERT && mDevelopmentSslConfig == null) {
                 try (InputStream caInput = mProxy.getCaCertStream()) {
-                    ProxySslContextFactory factory = new ProxySslContextFactoryImpl();
-                    mSslSocketFactory = factory.create(caInput);
+                    mSslSocketFactory = new ProxySslContextFactoryImpl().create(caInput);
                     Logger.v("Custom proxy CA cert loaded for proxy: " + mProxy.getHost());
                 } catch (Exception e) {
                     Logger.e("Failed to load proxy CA cert for proxy: " + mProxy.getHost() + ", error: " + e.getMessage());
@@ -260,8 +259,7 @@ public class HttpClientImpl implements HttpClient {
             } else if (mProxy != null && mProxy.getAuthType() == HttpProxy.ProxyAuthType.MTLS && mDevelopmentSslConfig == null) {
                 try (InputStream caInput = mProxy.getCaCertStream();
                      InputStream pkcs12Input = mProxy.getClientPkcs12Stream()) {
-                    ProxySslContextFactory factory = new ProxySslContextFactoryImpl();
-                    mSslSocketFactory = factory.create(caInput, pkcs12Input, mProxy.getClientPkcs12Password());
+                    mSslSocketFactory = new ProxySslContextFactoryImpl().create(caInput, pkcs12Input, mProxy.getClientPkcs12Password());
                     Logger.v("Custom proxy CA cert and client credentials loaded for proxy: " + mProxy.getHost());
                 } catch (Exception e) {
                     Logger.e("Failed to load proxy CA cert and client credentials for proxy: " + mProxy.getHost() + ", error: " + e.getMessage());
