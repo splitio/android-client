@@ -9,6 +9,7 @@ import java.net.URL;
 import java.util.Map;
 
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 
 import io.split.android.client.utils.logger.Logger;
 
@@ -42,6 +43,7 @@ class HttpOverTunnelExecutor {
      * @param method HTTP method for the request
      * @param headers Headers to include in the request
      * @param body Request body (null for GET requests)
+     * @param combinedSslSocketFactory The combined SSL socket factory to use for HTTPS origins
      * @return HttpResponse containing the server's response
      * @throws IOException if the request execution fails
      */
@@ -51,21 +53,22 @@ class HttpOverTunnelExecutor {
             @NonNull URL targetUrl,
             @NonNull HttpMethod method,
             @NonNull Map<String, String> headers,
-            @Nullable String body) throws IOException {
+            @Nullable String body,
+            @NonNull SSLSocketFactory combinedSslSocketFactory) throws IOException {
         
-        Logger.v("Executing " + method + " request to " + targetUrl + " through SSL tunnel");
+        Logger.v("Executing request through SSL tunnel to: " + targetUrl);
         
         try {
             if ("https".equalsIgnoreCase(targetUrl.getProtocol())) {
                 // For HTTPS origins, we still need to establish SSL connection to origin
-                // through the tunnel
-                return executeHttpsRequest(tunnelSocket, targetUrl, method, headers, body);
+                // through the tunnel using the combined SSL socket factory
+                return executeHttpsRequest(tunnelSocket, targetUrl, method, headers, body, combinedSslSocketFactory);
             } else {
                 // For HTTP origins, send request directly through tunnel
                 return executeHttpRequest(tunnelSocket, targetUrl, method, headers, body);
             }
-            
-        } catch (IOException e) {
+        } catch (Exception e) {
+            Logger.e("Failed to execute request through tunnel: " + e.getMessage());
             e.printStackTrace();
             throw new IOException("Failed to execute HTTP request through tunnel to " + targetUrl, e);
         }
@@ -80,39 +83,45 @@ class HttpOverTunnelExecutor {
             @NonNull URL targetUrl,
             @NonNull HttpMethod method,
             @NonNull Map<String, String> headers,
-            @Nullable String body) throws IOException {
+            @Nullable String body,
+            @NonNull SSLSocketFactory combinedSslSocketFactory) throws IOException {
         
         Logger.v("Establishing SSL connection to HTTPS origin through tunnel");
         
-        // The tunnel is established and working (we're past the SSL protocol errors).
-        // The issue now is that we're sending HTTP requests to an HTTPS origin.
-        // We need to perform SSL handshake with the origin server through the tunnel.
+        // After CONNECT, the tunnel is transparent and we need to establish
+        // a new SSL connection to the origin server through the tunnel.
+        // This implements the "onion layering" architecture:
+        // - Outer layer: SSL connection to proxy (already established)
+        // - Inner layer: SSL connection to origin (through tunnel)
         
         try {
-            // Create SSL context and engine for manual SSL handling
-            javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-            sslContext.init(null, null, null);
+            // Use the same combined SSL socket factory that was used for the tunnel
+            // This factory contains both proxy CA and origin CA certificates
+            // so it can validate both proxy and origin server certificates
             
-            javax.net.ssl.SSLEngine sslEngine = sslContext.createSSLEngine(targetUrl.getHost(), getTargetPort(targetUrl));
-            sslEngine.setUseClientMode(true);
+            // Create SSL socket to origin server using tunnel socket as the underlying transport
+            // This uses the correct SSLSocketFactory.createSocket(Socket, String, int, boolean) method
+            javax.net.ssl.SSLSocket originSslSocket = (javax.net.ssl.SSLSocket) 
+                combinedSslSocketFactory.createSocket(
+                    tunnelSocket,           // Use tunnel socket as underlying transport
+                    targetUrl.getHost(),    // Origin server hostname
+                    getTargetPort(targetUrl), // Origin server port
+                    false                   // Don't auto-close underlying socket
+                );
             
-            // Begin SSL handshake
-            sslEngine.beginHandshake();
+            // Configure SSL socket for client mode
+            originSslSocket.setUseClientMode(true);
             
-            // Get the tunnel socket's streams
-            java.io.InputStream tunnelInput = tunnelSocket.getInputStream();
-            java.io.OutputStream tunnelOutput = tunnelSocket.getOutputStream();
+            // Perform SSL handshake with origin server through tunnel
+            Logger.v("Performing SSL handshake with origin server through tunnel");
+            originSslSocket.startHandshake();
+            Logger.v("SSL handshake with origin server completed successfully");
             
-            // Perform SSL handshake using the tunnel streams
-            performSslHandshake(sslEngine, tunnelInput, tunnelOutput);
+            // Now send HTTP request through the SSL connection to origin
+            sendHttpRequest(originSslSocket, targetUrl, method, headers, body);
             
-            Logger.v("SSL handshake with origin server completed through tunnel");
-            
-            // Now we can send HTTP requests through the SSL engine
-            sendHttpRequestThroughSsl(sslEngine, tunnelInput, tunnelOutput, targetUrl, method, headers, body);
-            
-            // Read and parse HTTP response through SSL engine
-            HttpResponse response = readHttpResponseThroughSsl(sslEngine, tunnelInput, tunnelOutput);
+            // Read and parse HTTP response from origin
+            HttpResponse response = mResponseParser.parseHttpResponse(originSslSocket.getInputStream());
             
             Logger.v("HTTPS request completed successfully, status: " + response.getHttpStatus());
             return response;

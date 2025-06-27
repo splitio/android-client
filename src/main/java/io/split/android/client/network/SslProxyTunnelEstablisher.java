@@ -54,18 +54,22 @@ class SslProxyTunnelEstablisher {
             // Step 1: Create raw socket connection to proxy
             System.out.println("Step 1: Creating raw socket connection to proxy...");
             rawSocket = new Socket(proxyHost, proxyPort);
+            rawSocket.setSoTimeout(10000); // 10 second timeout
             System.out.println("Raw socket connected to proxy: " + proxyHost + ":" + proxyPort);
             
             // Step 2: Create SSL engine for proxy authentication using custom CA certificates
-            System.out.println("Step 2: Creating SSL engine for proxy authentication...");
+            System.out.println("Step 2: Creating SSL socket for proxy authentication...");
             
             // We need to use the provided SSLSocketFactory which contains the custom CA certificates
             // Create a temporary SSL socket to establish the SSL session with proper trust validation
             sslSocket = (SSLSocket) sslSocketFactory.createSocket(rawSocket, proxyHost, proxyPort, false);
             sslSocket.setUseClientMode(true);
+            sslSocket.setSoTimeout(10000); // 10 second timeout
+            System.out.println("SSL socket created successfully");
             
             // Perform SSL handshake using the SSL socket with custom CA certificates
             System.out.println("Performing SSL handshake with custom CA certificates...");
+            System.out.println("About to call sslSocket.startHandshake()...");
             sslSocket.startHandshake();
             System.out.println("SSL handshake completed successfully with custom CA validation");
             

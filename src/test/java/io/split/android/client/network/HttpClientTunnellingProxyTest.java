@@ -370,6 +370,8 @@ public class HttpClientTunnellingProxyTest {
                 
                 javax.net.ssl.SSLServerSocketFactory factory = sslContext.getServerSocketFactory();
                 mServerSocket = factory.createServerSocket(mPort);
+                mPort = mServerSocket.getLocalPort(); // Update mPort with the actual assigned port
+                
                 // Don't require client auth - this is server-only SSL
                 ((javax.net.ssl.SSLServerSocket) mServerSocket).setWantClientAuth(false);
                 ((javax.net.ssl.SSLServerSocket) mServerSocket).setNeedClientAuth(false);
@@ -444,7 +446,7 @@ public class HttpClientTunnellingProxyTest {
         // Latch to signal that a CONNECT tunnel was established
         private final CountDownLatch mTunnelLatch = new CountDownLatch(1);
         // Port to listen on (0 = auto-assign)
-        protected final int mPort;
+        protected int mPort;
         // The server socket for accepting connections
         public ServerSocket mServerSocket;
         // Flag to control proxy shutdown

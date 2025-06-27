@@ -77,7 +77,8 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
                 targetUrl,
                 method,
                 headers,
-                body
+                body,
+                sslSocketFactory  // Pass the combined SSL socket factory for HTTPS origins
             );
             
             Logger.v("PROXY_CACERT request completed successfully, status: " + response.getHttpStatus());
