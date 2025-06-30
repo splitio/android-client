@@ -1,11 +1,18 @@
 package io.split.android.client.network;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import io.split.android.client.utils.logger.Logger;
 
@@ -21,70 +28,92 @@ class HttpResponseParser {
      * Parses a raw HTTP response from an input stream.
      * 
      * @param inputStream The input stream containing the raw HTTP response
-     * @return HttpResponse containing the parsed status code and response data
+     * @return HttpResponse containing the parsed status code, headers, and response data
      * @throws IOException if parsing fails or the response is malformed
      */
     @NonNull
     public HttpResponse parseHttpResponse(@NonNull InputStream inputStream) throws IOException {
-        
-        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-        
-        // 1. Read and parse status line
-        String statusLine = reader.readLine();
-        if (statusLine == null) {
-            throw new IOException("No HTTP response received from server");
+        // Use UTF-8 for initial header parsing (headers are ASCII anyway)
+        try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            
+            // 1. Read and parse status line
+            String statusLine = reader.readLine();
+            if (statusLine == null) {
+                throw new IOException("No HTTP response received from server");
+            }
+            
+            Logger.v("Parsing HTTP status line: " + statusLine);
+            int statusCode = parseStatusCode(statusLine);
+            
+            // 2. Read and parse response headers
+            ParsedResponseHeaders responseHeaders = getParsedResponseHeaders(reader);
+
+            // 3. Determine charset from Content-Type header
+            Charset bodyCharset = extractCharsetFromContentType(responseHeaders.mContentType);
+
+            // 4. Read response body based on encoding type
+            String responseBody = readResponseBody(inputStream, responseHeaders.mIsChunked, bodyCharset, responseHeaders.mContentLength, responseHeaders.mConnectionClose);
+
+            Logger.v("Parsed HTTP response: status=" + statusCode +
+                     ", bodyLength=" + (responseBody != null ? responseBody.length() : 0) +
+                     ", charset=" + bodyCharset.name());
+
+            // 5. Create and return HttpResponse
+            if (responseBody != null && !responseBody.trim().isEmpty()) {
+                return new HttpResponseImpl(statusCode, responseBody);
+            } else {
+                return new HttpResponseImpl(statusCode);
+            }
         }
-        
-        Logger.v("Parsing HTTP status line: " + statusLine);
-        int statusCode = parseStatusCode(statusLine);
-        
-        // 2. Read and parse response headers
+    }
+
+    @NonNull
+    private static ParsedResponseHeaders getParsedResponseHeaders(BufferedReader reader) throws IOException {
         int contentLength = 0;
         boolean isChunked = false;
         boolean connectionClose = false;
+        String contentType = null;
         String headerLine;
-        
+
         while ((headerLine = reader.readLine()) != null && !headerLine.trim().isEmpty()) {
             Logger.v("Parsing HTTP header: " + headerLine);
-            
-            String lowerHeader = headerLine.toLowerCase();
-            if (lowerHeader.startsWith("content-length:")) {
-                String lengthStr = headerLine.substring("content-length:".length()).trim();
-                try {
-                    contentLength = Integer.parseInt(lengthStr);
-                } catch (NumberFormatException e) {
-                    Logger.w("Invalid Content-Length header: " + headerLine);
+            int colonIndex = headerLine.indexOf(':');
+            if (colonIndex > 0) {
+                String headerName = headerLine.substring(0, colonIndex).trim();
+                String headerValue = headerLine.substring(colonIndex + 1).trim();
+
+                String lowerHeaderName = headerName.toLowerCase(Locale.US);
+                if ("content-length".equals(lowerHeaderName)) {
+                    try {
+                        contentLength = Integer.parseInt(headerValue);
+                    } catch (NumberFormatException e) {
+                        Logger.w("Invalid Content-Length header: " + headerLine);
+                    }
+                } else if ("transfer-encoding".equals(lowerHeaderName) && headerValue.toLowerCase(Locale.US).contains("chunked")) {
+                    isChunked = true;
+                } else if ("connection".equals(lowerHeaderName) && headerValue.toLowerCase(Locale.US).contains("close")) {
+                    connectionClose = true;
+                } else if ("content-type".equals(lowerHeaderName)) {
+                    contentType = headerValue;
                 }
-            } else if (lowerHeader.startsWith("transfer-encoding:") && 
-                       lowerHeader.contains("chunked")) {
-                isChunked = true;
-            } else if (lowerHeader.startsWith("connection:") && 
-                       lowerHeader.contains("close")) {
-                connectionClose = true;
             }
         }
-        
-        // 3. Read response body based on encoding type
+        return new ParsedResponseHeaders(contentLength, isChunked, connectionClose, contentType);
+    }
+
+    @Nullable
+    private String readResponseBody(@NonNull InputStream inputStream, boolean isChunked, Charset bodyCharset, int contentLength, boolean connectionClose) throws IOException {
         String responseBody = null;
         if (isChunked) {
-            responseBody = readChunkedBody(reader);
+            responseBody = readChunkedBodyWithCharset(inputStream, bodyCharset);
         } else if (contentLength > 0) {
-            responseBody = readFixedLengthBody(reader, contentLength);
+            responseBody = readFixedLengthBodyWithCharset(inputStream, contentLength, bodyCharset);
         } else if (connectionClose) {
-            responseBody = readUntilClose(reader);
+            responseBody = readUntilCloseWithCharset(inputStream, bodyCharset);
         }
-        
-        Logger.v("Parsed HTTP response: status=" + statusCode + 
-                 ", bodyLength=" + (responseBody != null ? responseBody.length() : 0));
-        
-        // 4. Create and return HttpResponse
-        if (responseBody != null && !responseBody.trim().isEmpty()) {
-            return new HttpResponseImpl(statusCode, responseBody);
-        } else {
-            return new HttpResponseImpl(statusCode);
-        }
+        return responseBody;
     }
-    
+
     /**
      * Parses the HTTP status code from the status line.
      */
@@ -101,93 +130,167 @@ class HttpResponseParser {
             throw new IOException("Invalid HTTP status code in line: " + statusLine, e);
         }
     }
+
+    /**
+     * Extracts charset from Content-Type header, defaulting to UTF-8.
+     */
+    private Charset extractCharsetFromContentType(String contentType) {
+        if (contentType == null) {
+            return StandardCharsets.UTF_8;
+        }
+        
+        // Pattern to match charset=value in Content-Type header
+        Pattern charsetPattern = Pattern.compile("charset\\s*=\\s*([^\\s;]+)", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = charsetPattern.matcher(contentType);
+        
+        if (matcher.find()) {
+            String charsetName = matcher.group(1).replaceAll("[\"']", ""); // Remove quotes
+            try {
+                return Charset.forName(charsetName);
+            } catch (Exception e) {
+                Logger.w("Unsupported charset: " + charsetName + ", using UTF-8");
+            }
+        }
+        
+        return StandardCharsets.UTF_8;
+    }
     
     /**
-     * Reads a fixed-length response body based on Content-Length header.
+     * Reads chunked body using byte-based reading with proper charset handling.
      */
-    @NonNull
-    private String readFixedLengthBody(@NonNull BufferedReader reader, int contentLength) throws IOException {
-        char[] bodyChars = new char[contentLength];
+    private String readChunkedBodyWithCharset(InputStream inputStream, Charset charset) throws IOException {
+        ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
+        
+        while (true) {
+            // Read chunk size line
+            String chunkSizeLine = readLineFromStream(inputStream);
+            if (chunkSizeLine == null) {
+                throw new IOException("Unexpected EOF while reading chunk size");
+            }
+            
+            // Parse chunk size (ignore extensions after semicolon)
+            int semicolonIndex = chunkSizeLine.indexOf(';');
+            String sizeStr = semicolonIndex >= 0 ? chunkSizeLine.substring(0, semicolonIndex).trim() : chunkSizeLine.trim();
+            
+            int chunkSize;
+            try {
+                chunkSize = Integer.parseInt(sizeStr, 16);
+            } catch (NumberFormatException e) {
+                throw new IOException("Invalid chunk size: " + chunkSizeLine, e);
+            }
+            
+            if (chunkSize < 0) {
+                throw new IOException("Negative chunk size: " + chunkSize);
+            }
+            
+            // If chunk size is 0, we've reached the end
+            if (chunkSize == 0) {
+                // Read trailing headers until empty line
+                String trailerLine;
+                while ((trailerLine = readLineFromStream(inputStream)) != null && !trailerLine.trim().isEmpty()) {
+                    Logger.v("Chunked trailer: " + trailerLine);
+                }
+                break;
+            }
+            
+            // Read chunk data (exact byte count)
+            byte[] chunkData = new byte[chunkSize];
+            int totalRead = 0;
+            while (totalRead < chunkSize) {
+                int read = inputStream.read(chunkData, totalRead, chunkSize - totalRead);
+                if (read == -1) {
+                    throw new IOException("Unexpected EOF while reading chunk data");
+                }
+                totalRead += read;
+            }
+            
+            bodyBytes.write(chunkData);
+            
+            // Read trailing CRLF after chunk data
+            int c1 = inputStream.read();
+            int c2 = inputStream.read();
+            if (c1 != '\r' || c2 != '\n') {
+                throw new IOException("Expected CRLF after chunk data, got: " + (char)c1 + (char)c2);
+            }
+        }
+        
+        return new String(bodyBytes.toByteArray(), charset);
+    }
+    
+    /**
+     * Reads fixed-length body with proper charset handling.
+     */
+    private String readFixedLengthBodyWithCharset(InputStream inputStream, int contentLength, Charset charset) throws IOException {
+        byte[] bodyBytes = new byte[contentLength];
         int totalRead = 0;
         
         while (totalRead < contentLength) {
-            int read = reader.read(bodyChars, totalRead, contentLength - totalRead);
+            int read = inputStream.read(bodyBytes, totalRead, contentLength - totalRead);
             if (read == -1) {
-                break; // End of stream
+                throw new IOException("Unexpected EOF while reading fixed-length body");
             }
             totalRead += read;
         }
         
-        return new String(bodyChars, 0, totalRead);
+        return new String(bodyBytes, charset);
     }
     
     /**
-     * Reads response body until connection closes (for Connection: close).
+     * Reads until connection close with proper charset handling.
      */
-    @NonNull
-    private String readUntilClose(@NonNull BufferedReader reader) throws IOException {
-        StringBuilder bodyBuilder = new StringBuilder();
-        String line;
-        boolean firstLine = true;
+    private String readUntilCloseWithCharset(InputStream inputStream, Charset charset) throws IOException {
+        ByteArrayOutputStream bodyBytes = new ByteArrayOutputStream();
+        byte[] buffer = new byte[8192];
+        int bytesRead;
         
-        while ((line = reader.readLine()) != null) {
-            if (!firstLine) {
-                bodyBuilder.append("\n");
-            }
-            bodyBuilder.append(line);
-            firstLine = false;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+            bodyBytes.write(buffer, 0, bytesRead);
         }
         
-        return bodyBuilder.toString();
+        return new String(bodyBytes.toByteArray(), charset);
     }
     
     /**
-     * Reads chunked response body (simplified implementation).
-     * Note: This is a basic implementation that may not handle all chunked encoding edge cases.
+     * Reads a line from InputStream (for chunk size lines and trailers).
      */
-    @NonNull
-    private String readChunkedBody(@NonNull BufferedReader reader) throws IOException {
-        StringBuilder bodyBuilder = new StringBuilder();
+    private String readLineFromStream(InputStream inputStream) throws IOException {
+        ByteArrayOutputStream lineBytes = new ByteArrayOutputStream();
+        int b;
+        boolean foundCR = false;
         
-        try {
-            String chunkSizeLine;
-            while ((chunkSizeLine = reader.readLine()) != null) {
-                // Parse chunk size (hex format)
-                int chunkSize;
-                try {
-                    chunkSize = Integer.parseInt(chunkSizeLine.trim(), 16);
-                } catch (NumberFormatException e) {
-                    Logger.w("Invalid chunk size: " + chunkSizeLine);
-                    break;
-                }
-                
-                // If chunk size is 0, we've reached the end
-                if (chunkSize == 0) {
-                    // Read final CRLF and any trailing headers
-                    reader.readLine();
-                    break;
-                }
-                
-                // Read chunk data
-                char[] chunkData = new char[chunkSize];
-                int totalRead = 0;
-                while (totalRead < chunkSize) {
-                    int read = reader.read(chunkData, totalRead, chunkSize - totalRead);
-                    if (read == -1) {
-                        break;
-                    }
-                    totalRead += read;
-                }
-                
-                bodyBuilder.append(chunkData, 0, totalRead);
-                
-                // Read trailing CRLF after chunk data
-                reader.readLine();
+        while ((b = inputStream.read()) != -1) {
+            if (b == '\r') {
+                foundCR = true;
+            } else if (b == '\n' && foundCR) {
+                break;
+            } else if (foundCR) {
+                // CR not followed by LF, add the CR to output
+                lineBytes.write('\r');
+                lineBytes.write(b);
+                foundCR = false;
+            } else {
+                lineBytes.write(b);
             }
-        } catch (IOException e) {
-            Logger.w("Error reading chunked body, returning partial data: " + e.getMessage());
         }
         
-        return bodyBuilder.toString();
+        if (b == -1 && lineBytes.size() == 0) {
+            return null; // EOF
+        }
+        
+        return new String(lineBytes.toByteArray(), StandardCharsets.UTF_8);
+    }
+
+    private static class ParsedResponseHeaders {
+        final int mContentLength;
+        final boolean mIsChunked;
+        final boolean mConnectionClose;
+        final String mContentType;
+
+        ParsedResponseHeaders(int contentLength, boolean isChunked, boolean connectionClose, String contentType) {
+            mContentLength = contentLength;
+            mIsChunked = isChunked;
+            mConnectionClose = connectionClose;
+            mContentType = contentType;
+        }
     }
 }
