@@ -2,8 +2,13 @@ package io.split.android.client.network;
 
 import androidx.annotation.NonNull;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
@@ -24,6 +29,8 @@ import io.split.android.client.utils.logger.Logger;
  * and the connection switches to "tunnel mode" with transparent TCP stream relay.
  */
 class SslProxyTunnelEstablisher {
+    
+    private static final String CRLF = "\r\n";
 
     /**
      * Establishes an SSL tunnel through the proxy using the CONNECT method.
@@ -113,44 +120,51 @@ class SslProxyTunnelEstablisher {
      */
     private void sendConnectRequest(@NonNull SSLSocket sslSocket, 
                                    @NonNull String targetHost, 
-                                   int targetPort) throws Exception {
-        
-        // Build CONNECT request
-        String connectRequest = "CONNECT " + targetHost + ":" + targetPort + " HTTP/1.1\r\n" +
-                               "Host: " + targetHost + ":" + targetPort + "\r\n" +
-                               "\r\n";
+                                   int targetPort) throws IOException {
         
         Logger.v("Sending CONNECT request through SSL: CONNECT " + targetHost + ":" + targetPort + " HTTP/1.1");
         
-        // Encrypt and send CONNECT request
-        byte[] requestBytes = connectRequest.getBytes("UTF-8");
-        sslSocket.getOutputStream().write(requestBytes);
-        sslSocket.getOutputStream().flush();
+        // Create PrintWriter without try-with-resources to avoid closing the socket
+        PrintWriter writer = new PrintWriter(new OutputStreamWriter(sslSocket.getOutputStream(), StandardCharsets.UTF_8), false);
+        
+        // Send CONNECT request line
+        writer.write("CONNECT " + targetHost + ":" + targetPort + " HTTP/1.1" + CRLF);
+        
+        // Send Host header
+        writer.write("Host: " + targetHost + ":" + targetPort + CRLF);
+        
+        // Send empty line to end headers
+        writer.write(CRLF);
+        
+        writer.flush();
+        // Note: Don't close the writer as it would close the underlying socket
         
         Logger.v("CONNECT request sent through SSL connection");
     }
     
     /**
      * Validates CONNECT response through SSL connection.
+     * Only reads status line and headers, leaving the stream open for tunneling.
      */
     private void validateConnectResponse(@NonNull SSLSocket sslSocket,
                                        @NonNull String targetHost,
-                                       int targetPort) throws Exception {
+                                       int targetPort) throws IOException {
         
-        // Read encrypted response and decrypt it
-        byte[] responseBytes = new byte[1024];
-        int bytesRead = sslSocket.getInputStream().read(responseBytes);
-        if (bytesRead > 0) {
-            String response = new String(responseBytes, 0, bytesRead, "UTF-8");
-            Logger.v("Received CONNECT response through SSL: " + response.trim());
+        Logger.v("Reading CONNECT response through SSL connection");
+        
+        try {
+            // Create BufferedReader but don't close it to keep socket open
+            BufferedReader reader = new BufferedReader(new InputStreamReader(sslSocket.getInputStream(), StandardCharsets.UTF_8));
             
-            // Parse status line
-            String[] lines = response.split("\r\n");
-            if (lines.length == 0) {
+            // Read status line
+            String statusLine = reader.readLine();
+            if (statusLine == null) {
                 throw new IOException("No CONNECT response received from proxy");
             }
             
-            String statusLine = lines[0];
+            Logger.v("Received CONNECT response through SSL: " + statusLine.trim());
+            
+            // Parse status code
             String[] statusParts = statusLine.split(" ");
             if (statusParts.length < 2) {
                 throw new IOException("Invalid CONNECT response status line: " + statusLine);
@@ -163,13 +177,23 @@ class SslProxyTunnelEstablisher {
                 throw new IOException("Invalid CONNECT response status code: " + statusLine, e);
             }
             
+            // Read headers until empty line (but don't process them for CONNECT)
+            String headerLine;
+            while ((headerLine = reader.readLine()) != null && !headerLine.trim().isEmpty()) {
+                Logger.v("CONNECT response header: " + headerLine);
+            }
+            
+            // Check status code
             if (statusCode != 200) {
                 throw new IOException("CONNECT request failed with status " + statusCode + ": " + statusLine);
             }
             
             Logger.v("CONNECT request successful - proxy switched to tunnel mode");
-        } else {
-            throw new IOException("No CONNECT response received from proxy");
+            // Note: Don't close the reader as it would close the underlying socket stream
+            
+        } catch (IOException e) {
+            Logger.e("Failed to parse CONNECT response: " + e.getMessage());
+            throw new IOException("Failed to validate CONNECT response from proxy: " + e.getMessage(), e);
         }
     }
 }
