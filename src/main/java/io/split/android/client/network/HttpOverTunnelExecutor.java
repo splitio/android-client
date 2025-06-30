@@ -53,46 +53,17 @@ class HttpOverTunnelExecutor {
             @Nullable String body) throws IOException {
         
         Logger.v("Executing request through tunnel to: " + targetUrl);
-        Logger.v("Socket type: " + tunnelSocket.getClass().getSimpleName());
         
         try {
-            // The socket type (plain or SSL) is already determined by the tunnel establisher
-            // based on the origin protocol, so we can handle both uniformly
-            return executeHttpRequestThroughTunnel(tunnelSocket, targetUrl, method, headers, body);
-            
+            sendHttpRequest(tunnelSocket, targetUrl, method, headers, body);
+
+            return readHttpResponse(tunnelSocket);
         } catch (Exception e) {
             Logger.e("Failed to execute request through tunnel: " + e.getMessage());
             throw new IOException("Failed to execute HTTP request through tunnel to " + targetUrl, e);
         }
     }
-    
-    /**
-     * Executes HTTP request through the tunnel socket.
-     * Handles both plain sockets (HTTP origins) and SSL sockets (HTTPS origins).
-     */
-    @NonNull
-    private HttpResponse executeHttpRequestThroughTunnel(
-            @NonNull Socket tunnelSocket,
-            @NonNull URL targetUrl,
-            @NonNull HttpMethod method,
-            @NonNull Map<String, String> headers,
-            @Nullable String body) throws IOException {
-        
-        Logger.v("Sending HTTP request through tunnel socket");
-        
-        try {
-            // Send HTTP request through the tunnel
-            sendHttpRequest(tunnelSocket, targetUrl, method, headers, body);
-            
-            // Read HTTP response
-            return readHttpResponse(tunnelSocket);
-            
-        } catch (Exception e) {
-            Logger.e("Failed to execute HTTP request through SSL tunnel: " + e.getMessage());
-            throw new IOException("HTTP request through SSL tunnel failed", e);
-        }
-    }
-    
+
     /**
      * Sends the HTTP request through the tunnel socket.
      */

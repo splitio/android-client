@@ -6,8 +6,12 @@ import androidx.annotation.Nullable;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.URL;
+import java.security.cert.Certificate;
+import java.security.cert.X509Certificate;
 import java.util.Map;
 
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
 import io.split.android.client.utils.logger.Logger;
@@ -26,6 +30,10 @@ import io.split.android.client.utils.logger.Logger;
  */
 class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
 
+    public static final String HTTPS = "https";
+    public static final String HTTP = "http";
+    public static final int PORT_HTTPS = 443;
+    public static final int HTTP_PORT = 80;
     private final HttpOverTunnelExecutor mTunnelExecutor;
 
     public ProxyCacertConnectionHandler() {
@@ -75,9 +83,9 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
                 Logger.v("Wrapping tunnel socket with new SSLSocket for origin server handshake");
                 try {
                     // Get system default SSL context
-                    javax.net.ssl.SSLContext systemSslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+                    SSLContext systemSslContext = SSLContext.getInstance("TLS");
                     systemSslContext.init(null, null, null); // null = system default trust managers
-                    javax.net.ssl.SSLSocketFactory systemSslSocketFactory = systemSslContext.getSocketFactory();
+                    SSLSocketFactory systemSslSocketFactory = systemSslContext.getSocketFactory();
 
                     // Create SSLSocket layered over tunnel
                     finalSocket = systemSslSocketFactory.createSocket(
@@ -86,21 +94,11 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
                         getTargetPort(targetUrl),
                         true // autoClose
                     );
-                    if (finalSocket instanceof javax.net.ssl.SSLSocket) {
-                        javax.net.ssl.SSLSocket originSslSocket = (javax.net.ssl.SSLSocket) finalSocket;
+                    if (finalSocket instanceof SSLSocket) {
+                        SSLSocket originSslSocket = (SSLSocket) finalSocket;
                         originSslSocket.setUseClientMode(true);
                         originSslSocket.startHandshake();
-                        try {
-                            java.security.cert.Certificate[] peerCerts = originSslSocket.getSession().getPeerCertificates();
-                            for (java.security.cert.Certificate cert : peerCerts) {
-                                if (cert instanceof java.security.cert.X509Certificate) {
-                                    java.security.cert.X509Certificate x509 = (java.security.cert.X509Certificate) cert;
-                                    Logger.v("Origin SSL handshake: Peer cert subject=" + x509.getSubjectX500Principal() + ", issuer=" + x509.getIssuerX500Principal());
-                                }
-                            }
-                        } catch (Exception certEx) {
-                            Logger.e("Could not log origin server certificates: " + certEx.getMessage());
-                        }
+                        logOriginCerts(originSslSocket);
                     } else {
                         throw new IOException("Failed to create SSLSocket to origin");
                     }
@@ -124,22 +122,32 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
             return response;
             
         } catch (Exception e) {
-            Logger.e("PROXY_CACERT request failed: " + e.getMessage());
-            e.printStackTrace();
             throw new IOException("Failed to execute request through custom tunnel", e);
         }
     }
-    
-    /**
-     * Gets the target port from URL, defaulting based on protocol.
-     */
-    private int getTargetPort(@NonNull URL targetUrl) {
+
+    // Log origin server certificates for debugging
+    private static void logOriginCerts(SSLSocket originSslSocket) {
+        try {
+            Certificate[] peerCerts = originSslSocket.getSession().getPeerCertificates();
+            for (Certificate cert : peerCerts) {
+                if (cert instanceof X509Certificate) {
+                    X509Certificate x509 = (X509Certificate) cert;
+                    Logger.v("Origin SSL handshake: Peer cert subject=" + x509.getSubjectX500Principal() + ", issuer=" + x509.getIssuerX500Principal());
+                }
+            }
+        } catch (Exception certEx) {
+            Logger.e("Could not log origin server certificates: " + certEx.getMessage());
+        }
+    }
+
+    private static int getTargetPort(@NonNull URL targetUrl) {
         int port = targetUrl.getPort();
         if (port == -1) {
-            if ("https".equalsIgnoreCase(targetUrl.getProtocol())) {
-                return 443;
-            } else if ("http".equalsIgnoreCase(targetUrl.getProtocol())) {
-                return 80;
+            if (HTTPS.equalsIgnoreCase(targetUrl.getProtocol())) {
+                return PORT_HTTPS;
+            } else if (HTTP.equalsIgnoreCase(targetUrl.getProtocol())) {
+                return HTTP_PORT;
             }
         }
         return port;
