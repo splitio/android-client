@@ -26,6 +26,7 @@ class HttpOverTunnelExecutor {
     public static final int HTTP_PORT = 80;
     public static final int HTTPS_PORT = 443;
     public static final int UNSET_PORT = -1;
+    private static final String CRLF = "\r\n";
 
     private final HttpResponseParser mResponseParser;
 
@@ -87,51 +88,47 @@ class HttpOverTunnelExecutor {
         
         String requestLine = method.name() + " " + path + " HTTP/1.1";
         Logger.v("Sending request line: '" + requestLine + "'");
-        writer.println(requestLine);
+        writer.write(requestLine + CRLF);
         
         // 2. Send Host header (required for HTTP/1.1)
         String host = targetUrl.getHost();
         int port = getTargetPort(targetUrl);
         
         // Add port to Host header if it's not the default port for the protocol
-        boolean isDefaultPort = ("http".equalsIgnoreCase(targetUrl.getProtocol()) && port == HTTP_PORT) ||
-                               ("https".equalsIgnoreCase(targetUrl.getProtocol()) && port == HTTPS_PORT);
-        
-        if (!isDefaultPort) {
+        if (!isIsDefaultPort(targetUrl, port)) {
             host += ":" + port;
         }
-        
+
         Logger.v("Sending Host header: 'Host: " + host + "'");
-        writer.println("Host: " + host);
-        
-        // 3. Send custom headers
+        writer.write("Host: " + host + CRLF);
+
+        // 3. Send custom headers (excluding Host and Content-Length)
         for (Map.Entry<String, String> header : headers.entrySet()) {
-            if (header.getKey() != null && header.getValue() != null) {
+            if (header.getKey() != null && header.getValue() != null &&
+                !"content-length".equalsIgnoreCase(header.getKey()) &&
+                !"host".equalsIgnoreCase(header.getKey())) {
                 String headerLine = header.getKey() + ": " + header.getValue();
                 Logger.v("Sending header: '" + headerLine + "'");
-                writer.println(headerLine);
+                writer.write(headerLine + CRLF);
             }
         }
-        
+
         // 4. Send Content-Length header if body is present
         if (body != null) {
-            String contentLengthHeader = "Content-Length: " + body.length();
-            Logger.v("Sending header: '" + contentLengthHeader + "'");
-            writer.println(contentLengthHeader);
+            String contentLengthHeader = "Content-Length: " + body.getBytes("UTF-8").length;
+            writer.write(contentLengthHeader + CRLF);
         }
         
         // 5. Send Connection: close to ensure response completion
-        Logger.v("Sending header: 'Connection: close'");
-        writer.println("Connection: close");
+        writer.write("Connection: close" + CRLF);
         
         // 6. End headers with empty line
-        Logger.v("Sending empty line to end headers");
-        writer.println();
+        writer.write(CRLF);
         
         // 7. Send body if present
         if (body != null) {
             Logger.v("Sending request body: '" + body + "'");
-            writer.print(body);
+            writer.write(body);
         }
         
         writer.flush();
@@ -140,7 +137,12 @@ class HttpOverTunnelExecutor {
             throw new IOException("Failed to send HTTP request through tunnel");
         }
     }
-    
+
+    private static boolean isIsDefaultPort(@NonNull URL targetUrl, int port) {
+        return ("http".equalsIgnoreCase(targetUrl.getProtocol()) && port == HTTP_PORT) ||
+                ("https".equalsIgnoreCase(targetUrl.getProtocol()) && port == HTTPS_PORT);
+    }
+
     /**
      * Reads HTTP response from the tunnel socket.
      */
