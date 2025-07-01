@@ -10,6 +10,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.Certificate;
 import java.util.Locale;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -26,13 +27,14 @@ class HttpResponseParser {
 
     /**
      * Parses a raw HTTP response from an input stream.
-     * 
-     * @param inputStream The input stream containing the raw HTTP response
+     *
+     * @param inputStream        The input stream containing the raw HTTP response
+     * @param serverCertificates The server certificates to include in the response
      * @return HttpResponse containing the parsed status code, headers, and response data
      * @throws IOException if parsing fails or the response is malformed
      */
     @NonNull
-    public HttpResponse parseHttpResponse(@NonNull InputStream inputStream) throws IOException {
+    public HttpResponse parseHttpResponse(@NonNull InputStream inputStream, Certificate[] serverCertificates) throws IOException {
         // Use UTF-8 for initial header parsing (headers are ASCII anyway)
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             
@@ -60,9 +62,9 @@ class HttpResponseParser {
 
             // 5. Create and return HttpResponse
             if (responseBody != null && !responseBody.trim().isEmpty()) {
-                return new HttpResponseImpl(statusCode, responseBody);
+                return new HttpResponseImpl(statusCode, responseBody, serverCertificates);
             } else {
-                return new HttpResponseImpl(statusCode);
+                return new HttpResponseImpl(statusCode, serverCertificates);
             }
         }
     }

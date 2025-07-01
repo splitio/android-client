@@ -78,6 +78,8 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
             Logger.v("SSL tunnel established successfully");
             
             Socket finalSocket = tunnelSocket;
+            Certificate[] serverCertificates = null;
+            
             // If the origin is HTTPS, wrap the tunnel socket with a new SSLSocket (system CA)
             if ("https".equalsIgnoreCase(targetUrl.getProtocol())) {
                 Logger.v("Wrapping tunnel socket with new SSLSocket for origin server handshake");
@@ -98,6 +100,15 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
                         SSLSocket originSslSocket = (SSLSocket) finalSocket;
                         originSslSocket.setUseClientMode(true);
                         originSslSocket.startHandshake();
+                        
+                        // Capture server certificates after successful handshake
+                        try {
+                            serverCertificates = originSslSocket.getSession().getPeerCertificates();
+                            Logger.v("Captured " + (serverCertificates != null ? serverCertificates.length : 0) + " certificates from origin server");
+                        } catch (Exception certEx) {
+                            Logger.w("Could not capture origin server certificates: " + certEx.getMessage());
+                        }
+                        
                         logOriginCerts(originSslSocket);
                     } else {
                         throw new IOException("Failed to create SSLSocket to origin");
@@ -109,13 +120,14 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
                 }
             }
 
-            // Execute request through the (possibly wrapped) socket
+            // Execute request through the (possibly wrapped) socket, passing the certificates
             HttpResponse response = mTunnelExecutor.executeRequest(
                 finalSocket,
                 targetUrl,
                 method,
                 headers,
-                body
+                body,
+                serverCertificates
             );
 
             Logger.v("PROXY_CACERT request completed successfully, status: " + response.getHttpStatus());

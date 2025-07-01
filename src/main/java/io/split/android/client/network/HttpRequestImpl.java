@@ -199,8 +199,8 @@ public class HttpRequestImpl implements HttpRequest {
                 
                 // For SSL proxy scenarios, we get the response directly
                 // Use the bridge class to convert HttpResponse to HttpURLConnection
-                return new HttpResponseConnectionAdapter(url, response);
-                
+                // Pass server certificates from the response to the adapter
+                return new HttpResponseConnectionAdapter(url, response, response.getServerCertificates());
             } catch (UnsupportedOperationException e) {
                 // Fall through to standard handling
             }

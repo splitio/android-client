@@ -28,7 +28,7 @@ public class HttpResponseParserTest {
         HttpResponseParser parser = new HttpResponseParser();
 
         // Act
-        HttpResponse response = parser.parseHttpResponse(inputStream);
+        HttpResponse response = parser.parseHttpResponse(inputStream, serverCertificates);
 
         // Assert
         assertNotNull("Response should not be null", response);
@@ -51,7 +51,7 @@ public class HttpResponseParserTest {
         HttpResponseParser parser = new HttpResponseParser();
 
         // Act
-        HttpResponse response = parser.parseHttpResponse(inputStream);
+        HttpResponse response = parser.parseHttpResponse(inputStream, serverCertificates);
 
         // Assert
         assertNotNull("Response should not be null", response);
@@ -76,7 +76,7 @@ public class HttpResponseParserTest {
         HttpResponseParser parser = new HttpResponseParser();
 
         // Act
-        HttpResponse response = parser.parseHttpResponse(inputStream);
+        HttpResponse response = parser.parseHttpResponse(inputStream, serverCertificates);
 
         // Assert
         assertNotNull("Response should not be null", response);
@@ -100,7 +100,7 @@ public class HttpResponseParserTest {
         HttpResponseParser parser = new HttpResponseParser();
 
         // Act
-        HttpResponse response = parser.parseHttpResponse(inputStream);
+        HttpResponse response = parser.parseHttpResponse(inputStream, serverCertificates);
 
         // Assert
         assertNotNull("Response should not be null", response);
@@ -119,7 +119,7 @@ public class HttpResponseParserTest {
 
         // Act & Assert
         try {
-            parser.parseHttpResponse(inputStream);
+            parser.parseHttpResponse(inputStream, serverCertificates);
             fail("Should have thrown exception for invalid status line");
         } catch (IOException e) {
             assertTrue("Exception should mention invalid status", 
@@ -135,7 +135,7 @@ public class HttpResponseParserTest {
 
         // Act & Assert
         try {
-            parser.parseHttpResponse(inputStream);
+            parser.parseHttpResponse(inputStream, serverCertificates);
             fail("Should have thrown exception for empty stream");
         } catch (IOException e) {
             assertTrue("Exception should mention no response", 
@@ -160,7 +160,7 @@ public class HttpResponseParserTest {
         HttpResponseParser parser = new HttpResponseParser();
 
         // Act
-        HttpResponse response = parser.parseHttpResponse(inputStream);
+        HttpResponse response = parser.parseHttpResponse(inputStream, serverCertificates);
 
         // Assert
         assertNotNull("Response should not be null", response);
