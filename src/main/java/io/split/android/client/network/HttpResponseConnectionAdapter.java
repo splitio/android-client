@@ -6,11 +6,11 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.HttpURLConnection;
 import java.net.ProtocolException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.Permission;
+import java.security.cert.Certificate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -33,11 +33,22 @@ class HttpResponseConnectionAdapter extends HttpsURLConnection {
     private final HttpResponse mResponse;
     private final URL mUrl;
     private boolean mConnected = false;
-
-    public HttpResponseConnectionAdapter(@NonNull URL url, @NonNull HttpResponse response) {
+    private final Certificate[] mServerCertificates;
+    
+    /**
+     * Creates an adapter that wraps an HttpResponse as an HttpURLConnection with server certificates.
+     * 
+     * @param url The URL of the request
+     * @param response The HTTP response from the SSL proxy
+     * @param serverCertificates The server certificates from the SSL connection
+     */
+    public HttpResponseConnectionAdapter(@NonNull URL url, 
+                                        @NonNull HttpResponse response,
+                                        Certificate[] serverCertificates) {
         super(url);
         mUrl = url;
         mResponse = response;
+        mServerCertificates = serverCertificates;
         mConnected = true; // SSL proxy request already executed
     }
 
@@ -109,16 +120,15 @@ class HttpResponseConnectionAdapter extends HttpsURLConnection {
     }
 
     @Override
-    public java.security.cert.Certificate[] getLocalCertificates() {
+    public Certificate[] getLocalCertificates() {
         // Local certificates are not available in the response adapter context
         return null;
     }
 
     @Override
-    public java.security.cert.Certificate[] getServerCertificates() {
-        // Server certificates are not available in the response adapter context
-        // The actual SSL handshake was handled by the proxy tunnel
-        return null;
+    public Certificate[] getServerCertificates() {
+        // Return the server certificates from the SSL connection
+        return mServerCertificates;
     }
 
     // Minimal implementations for other required methods
