@@ -23,8 +23,8 @@ public class HttpProxy {
     private final @Nullable String mPassword;
     private final @NonNull ProxyAuthType mAuthType;
     private final @Nullable String mBearerToken;
-    private final @Nullable String mClientPkcs12Password;
-    private final @Nullable InputStream mClientPkcs12Stream;
+    private final @Nullable InputStream mClientCertStream;
+    private final @Nullable InputStream mClientKeyStream;
     private final @Nullable InputStream mCaCertStream;
 
     private HttpProxy(Builder builder) {
@@ -34,8 +34,8 @@ public class HttpProxy {
         mPassword = builder.mPassword;
         mAuthType = builder.mAuthType;
         mBearerToken = builder.mBearerToken;
-        mClientPkcs12Password = builder.mClientPkcs12Password;
-        mClientPkcs12Stream = builder.mClientPkcs12Stream;
+        mClientCertStream = builder.mClientCertStream;
+        mClientKeyStream = builder.mClientKeyStream;
         mCaCertStream = builder.mCaCertStream;
     }
 
@@ -63,12 +63,12 @@ public class HttpProxy {
         return mBearerToken;
     }
 
-    public @Nullable String getClientPkcs12Password() {
-        return mClientPkcs12Password;
+    public @Nullable InputStream getClientCertStream() {
+        return mClientCertStream;
     }
 
-    public @Nullable InputStream getClientPkcs12Stream() {
-        return mClientPkcs12Stream;
+    public @Nullable InputStream getClientKeyStream() {
+        return mClientKeyStream;
     }
 
     public @Nullable InputStream getCaCertStream() {
@@ -95,8 +95,9 @@ public class HttpProxy {
         private @Nullable String mBearerToken;
         private @Nullable String mClientPkcs12Password;
         private @Nullable InputStream mClientPkcs12Stream;
+        private @Nullable InputStream mClientCertStream;
+        private @Nullable InputStream mClientKeyStream;
         private @Nullable InputStream mCaCertStream;
-
 
         private Builder(@NonNull String host, int port) {
             checkNotNull(host);
@@ -161,18 +162,17 @@ public class HttpProxy {
         }
 
         /**
-         * Configure HTTPS proxy with mutual TLS (mTLS).
+         * Configure HTTPS proxy with mutual TLS (mTLS) using separate certificate and key files.
          * The client presents a certificate and key to the proxy, and optionally trusts a custom CA for the proxy.
-         * Equivalent to curl's --proxy-cert, --proxy-key, and --proxy-cacert.
          *
-         * @param pkcs12Stream InputStream to client PKCS#12 data
-         * @param pkcs12Password Password for the PKCS#12 file
-         * @param caCertStream Optional InputStream to CA certificate for proxy trust validation
+         * @param certStream InputStream to client certificate data (PEM or DER)
+         * @param keyStream InputStream to client private key data (PEM format)
+         * @param caCertStream InputStream to CA certificate for proxy trust validation
          * @return this builder
          */
-        public Builder mtlsAuth(@NonNull InputStream pkcs12Stream, @NonNull String pkcs12Password, @Nullable InputStream caCertStream) {
-            mClientPkcs12Stream = pkcs12Stream;
-            mClientPkcs12Password = pkcs12Password;
+        public Builder mtlsAuth(@NonNull InputStream certStream, @NonNull InputStream keyStream, @NonNull InputStream caCertStream) {
+            mClientCertStream = certStream;
+            mClientKeyStream = keyStream;
             mCaCertStream = caCertStream;
             mAuthType = ProxyAuthType.MTLS;
             return this;

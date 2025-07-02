@@ -47,7 +47,7 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
 
     @Override
     public boolean canHandle(@NonNull HttpProxy httpProxy) {
-        return httpProxy.getAuthType() == HttpProxy.ProxyAuthType.PROXY_CACERT;
+        return httpProxy.getAuthType() == HttpProxy.ProxyAuthType.PROXY_CACERT || httpProxy.getAuthType() == HttpProxy.ProxyAuthType.MTLS;
     }
 
     @Override

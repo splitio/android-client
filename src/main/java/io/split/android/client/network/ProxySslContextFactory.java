@@ -20,16 +20,16 @@ interface ProxySslContextFactory {
      * @throws Exception if there is an error loading certificates or creating the context
      */
     SSLSocketFactory create(@Nullable InputStream caCertInputStream) throws Exception;
-
+    
     /**
-     * Create an SSLSocketFactory for proxy connections using CA cert and client PKCS#12 InputStream.
+     * Create an SSLSocketFactory for proxy connections using CA cert and separate client certificate and key files.
      * All InputStreams will be closed after use.
      *
      * @param caCertInputStream InputStream containing one or more CA certificates (PEM or DER).
-     * @param clientPkcs12InputStream InputStream containing client PKCS#12 (e.g. .p12 or .pfx file).
-     * @param password password for the client PKCS#12
+     * @param clientCertInputStream InputStream containing client certificate (PEM or DER).
+     * @param clientKeyInputStream InputStream containing client private key (PEM format, PKCS#8 or PKCS#1).
      * @return SSLSocketFactory configured for mTLS proxy authentication
      * @throws Exception if there is an error loading certificates/keys or creating the context
      */
-    SSLSocketFactory create(@Nullable InputStream caCertInputStream, @Nullable InputStream clientPkcs12InputStream, String password) throws Exception;
+    SSLSocketFactory create(@Nullable InputStream caCertInputStream, @Nullable InputStream clientCertInputStream, @Nullable InputStream clientKeyInputStream) throws Exception;
 }

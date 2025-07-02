@@ -579,8 +579,8 @@ public class SplitClientConfig {
 
         private RolloutCacheConfiguration mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();
         private InputStream mProxyCacert;
-        private InputStream mClientPkcs12Stream;
-        private String mClientPkcs12Password;
+        private InputStream mClientCertStream;
+        private InputStream mClientKeyStream;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -831,9 +831,16 @@ public class SplitClientConfig {
             return this;
         }
 
-        public Builder proxyClientPkcs12(InputStream pkcs12Stream, String pkcs12Password) {
-            mClientPkcs12Stream = pkcs12Stream;
-            mClientPkcs12Password = pkcs12Password;
+        /**
+         * Sets the client certificate and key files for mTLS proxy authentication.
+         *
+         * @param certStream InputStream containing the client certificate (PEM or DER format)
+         * @param keyStream InputStream containing the client private key (PEM format)
+         * @return this builder
+         */
+        public Builder proxyClientCertAndKey(InputStream certStream, InputStream keyStream) {
+            mClientCertStream = certStream;
+            mClientKeyStream = keyStream;
             return this;
         }
 
@@ -1301,9 +1308,9 @@ public class SplitClientConfig {
                     }
                     String host = String.format("%s%s", uri.getHost(), uri.getPath());
 
-                    if (mClientPkcs12Stream != null && mClientPkcs12Password != null) {
+                    if (mProxyCacert != null && mClientCertStream != null && mClientKeyStream != null) {
                         return HttpProxy.newBuilder(host, port)
-                                .mtlsAuth(mClientPkcs12Stream, mClientPkcs12Password, mProxyCacert)
+                                .mtlsAuth(mClientCertStream, mClientKeyStream, mProxyCacert)
                                 .build();
                     } else if (mProxyCacert != null) {
                         return HttpProxy.newBuilder(host, port)

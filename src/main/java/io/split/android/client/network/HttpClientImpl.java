@@ -258,11 +258,12 @@ public class HttpClientImpl implements HttpClient {
                 }
             } else if (mProxy != null && mProxy.getAuthType() == HttpProxy.ProxyAuthType.MTLS && mDevelopmentSslConfig == null) {
                 try (InputStream caInput = mProxy.getCaCertStream();
-                     InputStream pkcs12Input = mProxy.getClientPkcs12Stream()) {
-                    mSslSocketFactory = new ProxySslContextFactoryImpl().create(caInput, pkcs12Input, mProxy.getClientPkcs12Password());
-                    Logger.v("Custom proxy CA cert and client credentials loaded for proxy: " + mProxy.getHost());
+                     InputStream certInput = mProxy.getClientCertStream();
+                     InputStream keyInput = mProxy.getClientKeyStream()) {
+                    mSslSocketFactory = new ProxySslContextFactoryImpl().create(caInput, certInput, keyInput);
+                    Logger.v("Custom proxy CA cert and client cert/key loaded for proxy: " + mProxy.getHost());
                 } catch (Exception e) {
-                    Logger.e("Failed to load proxy CA cert and client credentials for proxy: " + mProxy.getHost() + ", error: " + e.getMessage());
+                    Logger.e("Failed to load proxy CA cert and client cert/key for proxy: " + mProxy.getHost() + ", error: " + e.getMessage());
                 }
             } else if (mDevelopmentSslConfig == null) {
                 if (LegacyTlsUpdater.couldBeOld()) {
