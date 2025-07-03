@@ -173,8 +173,8 @@ public class SslProxyIntegrationTest {
                 sslProxy.mPort,
                 "localhost", 
                 originServer.getPort(),
-                sslSocketFactory
-            );
+                sslSocketFactory,
+                    proxyAuthenticator);
             
             // Set socket timeout to prevent hanging
             tunnelSocket.setSoTimeout(10000); // 10 second timeout

@@ -185,6 +185,9 @@ public class SplitFactoryImpl implements SplitFactory {
             if (config.certificatePinningConfiguration() != null) {
                 builder.setCertificatePinningConfiguration(config.certificatePinningConfiguration());
             }
+            if (config.proxyCredentialsProvider() != null) {
+                builder.setProxyCredentialsProvider(config.proxyCredentialsProvider());
+            }
 
             defaultHttpClient = builder.build();
         } else {

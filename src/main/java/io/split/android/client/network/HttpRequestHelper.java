@@ -27,12 +27,11 @@ class HttpRequestHelper {
      * For standard HTTP proxies, use the openConnection method instead.
      */
     static HttpResponse executeRequest(@Nullable HttpProxy httpProxy,
-                                     @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                                     @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
                                      @NonNull URL url,
                                      @NonNull HttpMethod method,
                                      @NonNull Map<String, String> headers,
                                      @Nullable String body,
-                                     boolean useProxyAuthentication,
                                      @Nullable SSLSocketFactory sslSocketFactory) throws IOException {
         
         // Check if we need custom SSL proxy handling
@@ -40,7 +39,7 @@ class HttpRequestHelper {
             sSslProxyManager.requiresCustomSslHandling(httpProxy)) {
             
             Logger.v("Using custom SSL proxy handling for auth type: " + httpProxy.getAuthType());
-            return sSslProxyManager.executeRequest(httpProxy, url, method, headers, body, sslSocketFactory);
+            return sSslProxyManager.executeRequest(httpProxy, url, method, headers, body, sslSocketFactory, proxyCredentialsProvider);
         }
         
         // For non-SSL proxy scenarios, throw UnsupportedOperationException to indicate 

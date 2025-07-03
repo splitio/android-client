@@ -11,7 +11,6 @@ public class HttpProxy {
     public enum ProxyAuthType {
         NONE,
         BASIC,
-        DIGEST,
         BEARER,
         PROXY_CACERT, // --proxy-cacert
         MTLS
@@ -117,21 +116,6 @@ public class HttpProxy {
             mUsername = username;
             mPassword = password;
             mAuthType = ProxyAuthType.BASIC;
-            return this;
-        }
-
-        /**
-         * Configure HTTP or HTTPS proxy with Digest authentication (username and password).
-         * Equivalent to curl's --proxy-digest and --proxy-user.
-         *
-         * @param username Proxy username
-         * @param password Proxy password
-         * @return this builder
-         */
-        public Builder digestAuth(@NonNull String username, @NonNull String password) {
-            mUsername = username;
-            mPassword = password;
-            mAuthType = ProxyAuthType.DIGEST;
             return this;
         }
 

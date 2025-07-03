@@ -4,6 +4,7 @@ package io.split.android.client;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -18,6 +19,7 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.network.HttpProxy;
+import io.split.android.client.network.ProxyCredentialsProvider;
 import io.split.android.client.network.SplitAuthenticator;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsMode;
@@ -133,6 +135,8 @@ public class SplitClientConfig {
     private final long mImpressionsDedupeTimeInterval;
     @NonNull
     private final RolloutCacheConfiguration mRolloutCacheConfiguration;
+    @Nullable
+    private ProxyCredentialsProvider mProxyCredentialsProvider;
 
     public static Builder builder() {
         return new Builder();
@@ -188,7 +192,8 @@ public class SplitClientConfig {
                               long observerCacheExpirationPeriod,
                               CertificatePinningConfiguration certificatePinningConfiguration,
                               long impressionsDedupeTimeInterval,
-                              RolloutCacheConfiguration rolloutCacheConfiguration) {
+                              @NonNull RolloutCacheConfiguration rolloutCacheConfiguration,
+                              @Nullable ProxyCredentialsProvider proxyCredentialsProvider) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -247,6 +252,7 @@ public class SplitClientConfig {
         mCertificatePinningConfiguration = certificatePinningConfiguration;
         mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
         mRolloutCacheConfiguration = rolloutCacheConfiguration;
+        mProxyCredentialsProvider = proxyCredentialsProvider;
     }
 
     public String trafficType() {
@@ -501,6 +507,10 @@ public class SplitClientConfig {
         return mRolloutCacheConfiguration;
     }
 
+    public ProxyCredentialsProvider proxyCredentialsProvider() {
+        return mProxyCredentialsProvider;
+    }
+
     public static final class Builder {
 
         static final int PROXY_PORT_DEFAULT = 80;
@@ -581,6 +591,7 @@ public class SplitClientConfig {
         private InputStream mProxyCacert;
         private InputStream mClientCertStream;
         private InputStream mClientKeyStream;
+        private ProxyCredentialsProvider mProxyCredentialsProvider;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -835,12 +846,23 @@ public class SplitClientConfig {
          * Sets the client certificate and key files for mTLS proxy authentication.
          *
          * @param certStream InputStream containing the client certificate (PEM or DER format)
-         * @param keyStream InputStream containing the client private key (PEM format)
+         * @param keyStream  InputStream containing the client private key (PEM format)
          * @return this builder
          */
         public Builder proxyClientCertAndKey(InputStream certStream, InputStream keyStream) {
             mClientCertStream = certStream;
             mClientKeyStream = keyStream;
+            return this;
+        }
+
+        /**
+         * Sets the Proxy credentials provider.
+         *
+         * @param proxyCredentialsProvider Implementation of ProxyCredentialsProvider interface.
+         * @return this builder
+         */
+        public Builder proxyCredentialsProvider(ProxyCredentialsProvider proxyCredentialsProvider) {
+            mProxyCredentialsProvider = proxyCredentialsProvider;
             return this;
         }
 
@@ -1288,7 +1310,8 @@ public class SplitClientConfig {
                     mObserverCacheExpirationPeriod,
                     mCertificatePinningConfiguration,
                     mImpressionsDedupeTimeInterval,
-                    mRolloutCacheConfiguration);
+                    mRolloutCacheConfiguration,
+                    mProxyCredentialsProvider);
         }
 
         private HttpProxy parseProxyHost(String proxyUri) {

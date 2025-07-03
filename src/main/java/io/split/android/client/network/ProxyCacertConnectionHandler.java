@@ -4,10 +4,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.io.IOException;
+import java.net.HttpRetryException;
 import java.net.Socket;
 import java.net.URL;
 import java.security.cert.Certificate;
-import java.security.cert.X509Certificate;
 import java.util.Map;
 
 import javax.net.ssl.SSLContext;
@@ -53,11 +53,12 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
     @Override
     @NonNull
     public HttpResponse executeRequest(@NonNull HttpProxy httpProxy,
-                                     @NonNull URL targetUrl,
-                                     @NonNull HttpMethod method,
-                                     @NonNull Map<String, String> headers,
-                                     @Nullable String body,
-                                     @NonNull SSLSocketFactory sslSocketFactory) throws IOException {
+                                       @NonNull URL targetUrl,
+                                       @NonNull HttpMethod method,
+                                       @NonNull Map<String, String> headers,
+                                       @Nullable String body,
+                                       @NonNull SSLSocketFactory sslSocketFactory,
+                                       @Nullable ProxyCredentialsProvider proxyCredentialsProvider) throws IOException {
         
         Logger.v("PROXY_CACERT: Executing request to: " + targetUrl);
         
@@ -72,7 +73,8 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
                 httpProxy.getPort(),
                 targetUrl.getHost(),
                 getTargetPort(targetUrl),
-                sslSocketFactory  // Use the SSL socket factory with proxy CA certificate
+                sslSocketFactory,  // Use the SSL socket factory with proxy CA certificate,
+                proxyCredentialsProvider
             );
             
             Logger.v("SSL tunnel established successfully");
@@ -108,8 +110,6 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
                         } catch (Exception certEx) {
                             Logger.w("Could not capture origin server certificates: " + certEx.getMessage());
                         }
-                        
-                        logOriginCerts(originSslSocket);
                     } else {
                         throw new IOException("Failed to create SSLSocket to origin");
                     }
@@ -134,22 +134,10 @@ class ProxyCacertConnectionHandler implements SslProxyConnectionHandler {
             return response;
             
         } catch (Exception e) {
-            throw new IOException("Failed to execute request through custom tunnel", e);
-        }
-    }
-
-    // Log origin server certificates for debugging
-    private static void logOriginCerts(SSLSocket originSslSocket) {
-        try {
-            Certificate[] peerCerts = originSslSocket.getSession().getPeerCertificates();
-            for (Certificate cert : peerCerts) {
-                if (cert instanceof X509Certificate) {
-                    X509Certificate x509 = (X509Certificate) cert;
-                    Logger.v("Origin SSL handshake: Peer cert subject=" + x509.getSubjectX500Principal() + ", issuer=" + x509.getIssuerX500Principal());
-                }
+            if (e instanceof HttpRetryException) {
+                throw (HttpRetryException) e;
             }
-        } catch (Exception certEx) {
-            Logger.e("Could not log origin server certificates: " + certEx.getMessage());
+            throw new IOException("Failed to execute request through custom tunnel", e);
         }
     }
 

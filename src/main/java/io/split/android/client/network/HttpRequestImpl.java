@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -47,6 +48,8 @@ public class HttpRequestImpl implements HttpRequest {
     private final HttpProxy mHttpProxy;
     @Nullable
     private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
+    @Nullable
+    private final ProxyCredentialsProvider mProxyCredentialsProvider;
     private final long mReadTimeout;
     private final long mConnectionTimeout;
     @Nullable
@@ -63,6 +66,7 @@ public class HttpRequestImpl implements HttpRequest {
                     @Nullable Proxy proxy,
                     @Nullable HttpProxy httpProxy,
                     @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                    @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
                     long readTimeout,
                     long connectionTimeout,
                     @Nullable DevelopmentSslConfig developmentSslConfig,
@@ -77,6 +81,7 @@ public class HttpRequestImpl implements HttpRequest {
         mProxy = proxy;
         mHttpProxy = httpProxy;
         mProxyAuthenticator = proxyAuthenticator;
+        mProxyCredentialsProvider = proxyCredentialsProvider;
         mReadTimeout = readTimeout;
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
@@ -187,20 +192,23 @@ public class HttpRequestImpl implements HttpRequest {
         if (mHttpProxy != null && mSslSocketFactory != null) {
             try {
                 HttpResponse response = executeRequest(
-                    mHttpProxy, 
-                    mProxyAuthenticator, 
-                    url, 
-                    mHttpMethod, 
-                    mHeaders, 
-                    mBody, 
-                    authenticate, 
-                    mSslSocketFactory
+                        mHttpProxy,
+                        mProxyCredentialsProvider,
+                        url,
+                        mHttpMethod,
+                        mHeaders,
+                        mBody,
+                        mSslSocketFactory
                 );
-                
+
                 // For SSL proxy scenarios, we get the response directly
                 // Use the bridge class to convert HttpResponse to HttpURLConnection
                 // Pass server certificates from the response to the adapter
                 return new HttpResponseConnectionAdapter(url, response, response.getServerCertificates());
+            } catch (HttpRetryException e) {
+                if (mProxyAuthenticator == null) {
+                    throw e; // Pending reactive approach
+                }
             } catch (UnsupportedOperationException e) {
                 // Fall through to standard handling
             }

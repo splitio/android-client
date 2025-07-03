@@ -62,6 +62,7 @@ class SslProxyConnectionManager {
      * @param headers Headers to include in the request
      * @param body Request body (null for GET requests)
      * @param sslSocketFactory SSL socket factory configured for proxy authentication
+     * @param proxyCredentialsProvider Credentials provider for proxy authentication
      * @return HttpResponse containing the server's response
      * @throws IOException if no handler can handle the proxy or if request execution fails
      */
@@ -72,15 +73,15 @@ class SslProxyConnectionManager {
             @NonNull HttpMethod method,
             @NonNull Map<String, String> headers,
             @Nullable String body,
-            @NonNull SSLSocketFactory sslSocketFactory) throws IOException {
-        
+            @NonNull SSLSocketFactory sslSocketFactory,
+            @Nullable ProxyCredentialsProvider proxyCredentialsProvider) throws IOException {
+
         Logger.v("Looking for SSL proxy handler for auth type: " + proxy.getAuthType());
         
         // Find appropriate handler
         for (SslProxyConnectionHandler handler : mHandlers) {
             if (handler.canHandle(proxy)) {
-                Logger.v("Using handler: " + handler.getClass().getSimpleName());
-                return handler.executeRequest(proxy, targetUrl, method, headers, body, sslSocketFactory);
+                return handler.executeRequest(proxy, targetUrl, method, headers, body, sslSocketFactory, proxyCredentialsProvider);
             }
         }
         

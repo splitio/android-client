@@ -9,6 +9,7 @@ import io.split.android.client.SyncConfig;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.network.DevelopmentSslConfig;
+import io.split.android.client.network.ProxyCredentialsProvider;
 import io.split.android.client.network.SplitAuthenticator;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsMode;
@@ -66,6 +67,7 @@ public class TestableSplitConfigBuilder {
     private CertificatePinningConfiguration mCertificatePinningConfiguration;
     private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
     private RolloutCacheConfiguration mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();
+    private ProxyCredentialsProvider mProxyCredentialsProvider = null;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -281,6 +283,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder proxyCredentialsProvider(ProxyCredentialsProvider proxyCredentialsProvider) {
+        this.mProxyCredentialsProvider = proxyCredentialsProvider;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -337,7 +344,8 @@ public class TestableSplitConfigBuilder {
                     mObserverCacheExpirationPeriod,
                     mCertificatePinningConfiguration,
                     mImpressionsDedupeTimeInterval,
-                    mRolloutCacheConfiguration);
+                    mRolloutCacheConfiguration,
+                    mProxyCredentialsProvider);
 
             Logger.instance().setLevel(mLogLevel);
             return config;

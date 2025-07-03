@@ -32,6 +32,8 @@ public class HttpClientImpl implements HttpClient {
     private final HttpProxy mHttpProxy;
     @Nullable
     private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
+    @Nullable
+    private final ProxyCredentialsProvider mProxyCredentialsProvider;
     private final long mReadTimeout;
     private final long mConnectionTimeout;
     @Nullable
@@ -45,6 +47,7 @@ public class HttpClientImpl implements HttpClient {
 
     HttpClientImpl(@Nullable HttpProxy proxy,
                    @Nullable SplitAuthenticator proxyAuthenticator,
+                   @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
                    long readTimeout,
                    long connectionTimeout,
                    @Nullable DevelopmentSslConfig developmentSslConfig,
@@ -54,6 +57,7 @@ public class HttpClientImpl implements HttpClient {
         mHttpProxy = proxy; // Store original HttpProxy
         mProxy = initializeProxy(proxy);
         mProxyAuthenticator = initializeProxyAuthenticator(proxy, proxyAuthenticator);
+        mProxyCredentialsProvider = proxyCredentialsProvider;
         mReadTimeout = readTimeout;
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
@@ -79,6 +83,7 @@ public class HttpClientImpl implements HttpClient {
                 mProxy,
                 mHttpProxy, // Pass original HttpProxy
                 mProxyAuthenticator,
+                mProxyCredentialsProvider,
                 mReadTimeout,
                 mConnectionTimeout,
                 mDevelopmentSslConfig,
@@ -184,6 +189,7 @@ public class HttpClientImpl implements HttpClient {
     public static class Builder {
 
         private SplitAuthenticator mProxyAuthenticator;
+        private ProxyCredentialsProvider mProxyCredentialsProvider;
         private HttpProxy mProxy;
         private long mReadTimeout = -1;
         private long mConnectionTimeout = -1;
@@ -241,6 +247,11 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
+        public Builder setProxyCredentialsProvider(@NonNull ProxyCredentialsProvider proxyCredentialsProvider) {
+            mProxyCredentialsProvider = proxyCredentialsProvider;
+            return this;
+        }
+
         @VisibleForTesting
         Builder setCertificateChecker(CertificateChecker certificateChecker) {
             mCertificateChecker = certificateChecker;
@@ -294,6 +305,7 @@ public class HttpClientImpl implements HttpClient {
             return new HttpClientImpl(
                     mProxy,
                     mProxyAuthenticator,
+                    mProxyCredentialsProvider,
                     mReadTimeout,
                     mConnectionTimeout,
                     mDevelopmentSslConfig,

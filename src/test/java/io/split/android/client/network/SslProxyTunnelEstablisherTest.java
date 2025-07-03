@@ -89,8 +89,8 @@ public class SslProxyTunnelEstablisherTest {
             testProxy.getPort(),
             targetHost,
             targetPort,
-            clientSslSocketFactory
-        );
+            clientSslSocketFactory,
+                proxyAuthenticator);
 
         // Assert
         assertNotNull("Tunnel socket should not be null", tunnelSocket);
@@ -121,8 +121,8 @@ public class SslProxyTunnelEstablisherTest {
                 testProxy.getPort(),
                 "example.com",
                 443,
-                untrustedSocketFactory
-            );
+                untrustedSocketFactory,
+                    proxyAuthenticator);
             fail("Should have thrown exception for untrusted certificate");
         } catch (IOException e) {
             assertTrue("Exception should be SSL-related", e.getMessage().contains("certification"));
@@ -142,8 +142,8 @@ public class SslProxyTunnelEstablisherTest {
                 nonExistentPort,
                 "example.com",
                 443,
-                clientSslSocketFactory
-            );
+                clientSslSocketFactory,
+                    proxyAuthenticator);
             fail("Should have thrown exception for connection failure");
         } catch (IOException e) {
             // The implementation wraps the original exception with a descriptive message
