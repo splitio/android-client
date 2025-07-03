@@ -53,15 +53,26 @@ public class ProxySslContextFactoryImplTest {
     public void creatingWithValidMtlsParamsCreatesSocketFactory() throws Exception {
         // Create CA cert and client cert & key
         HeldCertificate ca = getCaCert();
+        HeldCertificate clientCert = getClientCert(ca);
         File caCertFile = createCaCertFile(ca);
-        File clientP12File = createClientP12File(getClientCert(ca));
+        File clientCertFile = tempFolder.newFile("client.crt");
+        File clientKeyFile = tempFolder.newFile("client.key");
+        
+        // Write client certificate and key to separate files
+        try (FileWriter writer = new FileWriter(clientCertFile)) {
+            writer.write(clientCert.certificatePem());
+        }
+        try (FileWriter writer = new FileWriter(clientKeyFile)) {
+            writer.write(clientCert.privateKeyPkcs8Pem());
+        }
 
         // Create socket factory
         ProxySslContextFactoryImpl factory = new ProxySslContextFactoryImpl();
         SSLSocketFactory sslSocketFactory = null;
-        try (FileInputStream caCert = new FileInputStream(caCertFile);
-             FileInputStream clientCertAndKey = new FileInputStream(clientP12File)) {
-            sslSocketFactory = factory.create(caCert, clientCertAndKey, "password");
+        try (FileInputStream caCertStream = new FileInputStream(caCertFile);
+             FileInputStream clientCertStream = new FileInputStream(clientCertFile);
+             FileInputStream clientKeyStream = new FileInputStream(clientKeyFile)) {
+            sslSocketFactory = factory.create(caCertStream, clientCertStream, clientKeyStream);
         }
 
         assertNotNull(sslSocketFactory);
@@ -69,20 +80,25 @@ public class ProxySslContextFactoryImplTest {
 
     @Test(expected = Exception.class)
     public void creatingWithInvalidMtlsParamsThrows() throws Exception {
-        // Create valid CA cert but invalid client P12
+        // Create valid CA cert but invalid client cert/key files
         HeldCertificate ca = getCaCert();
         File caCertFile = createCaCertFile(ca);
-        File invalidP12File = tempFolder.newFile("invalid-client.p12");
+        File invalidClientCertFile = tempFolder.newFile("invalid-client.crt");
+        File invalidClientKeyFile = tempFolder.newFile("invalid-client.key");
         
-        // Write invalid data to P12 file
-        try (FileWriter writer = new FileWriter(invalidP12File)) {
-            writer.write("invalid file");
+        // Write invalid data to cert and key files
+        try (FileWriter writer = new FileWriter(invalidClientCertFile)) {
+            writer.write("invalid certificate");
+        }
+        try (FileWriter writer = new FileWriter(invalidClientKeyFile)) {
+            writer.write("invalid key");
         }
 
         ProxySslContextFactoryImpl factory = new ProxySslContextFactoryImpl();
-        try (FileInputStream caCert = new FileInputStream(caCertFile);
-             FileInputStream invalidClientCertAndKey = new FileInputStream(invalidP12File)) {
-            factory.create(caCert, invalidClientCertAndKey, "password");
+        try (FileInputStream caCertStream = new FileInputStream(caCertFile);
+             FileInputStream invalidClientCertStream = new FileInputStream(invalidClientCertFile);
+             FileInputStream invalidClientKeyStream = new FileInputStream(invalidClientKeyFile)) {
+            factory.create(caCertStream, invalidClientCertStream, invalidClientKeyStream);
         }
     }
 

@@ -39,7 +39,7 @@ import okhttp3.tls.HeldCertificate;
 
 /**
  * Consolidated integration tests for SSL proxy functionality.
- * 
+ * <p>
  * This class tests various SSL proxy scenarios:
  * 1. HTTPS-over-SSL-proxy (two TLS handshakes)
  * 2. HTTP-over-SSL-proxy (single TLS handshake)
@@ -54,33 +54,32 @@ public class SslProxyIntegrationTest {
     private HttpClientTunnellingProxyTest.TunnelProxySslServerOnly sslProxy;
     private CountDownLatch originLatch;
     private final String[] methodAndPath = new String[2];
-    
-    // Certificates
-    private HeldCertificate proxyCa;
-    private HeldCertificate proxyServerCert;
-    private HeldCertificate originCa;
-    private HeldCertificate originCert;
+    private ProxyCredentialsProvider mProxyCredentialsProvider;
+
     private File caCertFile;
 
     @Before
     public void setUp() throws Exception {
+        mProxyCredentialsProvider = mock(ProxyCredentialsProvider.class);
+
         // Create certificates for proxy and origin
-        proxyCa = new HeldCertificate.Builder()
+        // Certificates
+        HeldCertificate proxyCa = new HeldCertificate.Builder()
                 .certificateAuthority(0)
                 .commonName("Proxy CA")
                 .build();
 
-        proxyServerCert = new HeldCertificate.Builder()
+        HeldCertificate proxyServerCert = new HeldCertificate.Builder()
                 .commonName("localhost")
                 .signedBy(proxyCa)
                 .build();
 
-        originCa = new HeldCertificate.Builder()
+        HeldCertificate originCa = new HeldCertificate.Builder()
                 .certificateAuthority(0)
                 .commonName("Origin CA")
                 .build();
 
-        originCert = new HeldCertificate.Builder()
+        HeldCertificate originCert = new HeldCertificate.Builder()
                 .commonName("localhost")
                 .signedBy(originCa)
                 .build();
@@ -97,14 +96,14 @@ public class SslProxyIntegrationTest {
                 return new MockResponse().setBody("Hello from origin via SSL proxy!");
             }
         });
-        
+
         // Start the origin server with plain HTTP
         originServer.start();
 
         // Start SSL proxy
         sslProxy = new HttpClientTunnellingProxyTest.TunnelProxySslServerOnly(0, proxyServerCert);
         sslProxy.start();
-        
+
         // Wait for proxy port assignment
         while (sslProxy.mPort == 0) {
             Thread.sleep(10);
@@ -133,7 +132,7 @@ public class SslProxyIntegrationTest {
      * 1. TLS handshake: Client ↔ SSL Proxy (proxy CA validation)
      * 2. CONNECT tunnel established
      * 3. HTTP request sent through the tunnel to origin (no second SSL handshake)
-     * 
+     * <p>
      * Note: This test uses HTTP for the origin server instead of HTTPS to avoid
      * SSL-over-SSL issues in the JRE test environment. The production code supports
      * HTTPS origins with the Conscrypt library in Android environments.
@@ -153,60 +152,61 @@ public class SslProxyIntegrationTest {
                 return new MockResponse().setBody("Hello from HTTP origin via SSL proxy!");
             }
         });
-        
+
         // Start with plain HTTP (no SSL for origin)
         originServer.start();
-        
+
         // Create SSL proxy tunnel establisher
         SslProxyTunnelEstablisher tunnelEstablisher = new SslProxyTunnelEstablisher();
-        
+
         // Create SSL socket factory with combined CA certificates
         ProxySslContextFactoryImpl sslContextFactory = new ProxySslContextFactoryImpl();
-        
+
         // Use InputStream-based API for certificate loading
         try (FileInputStream caCertStream = new FileInputStream(caCertFile)) {
             SSLSocketFactory sslSocketFactory = sslContextFactory.create(caCertStream);
-            
+
             // Step 1: Establish SSL tunnel to proxy (First TLS handshake)
             Socket tunnelSocket = tunnelEstablisher.establishTunnel(
-                "localhost",
-                sslProxy.mPort,
-                "localhost", 
-                originServer.getPort(),
-                sslSocketFactory,
-                    proxyAuthenticator);
-            
+                    "localhost",
+                    sslProxy.mPort,
+                    "localhost",
+                    originServer.getPort(),
+                    sslSocketFactory,
+                    mProxyCredentialsProvider);
+
             // Set socket timeout to prevent hanging
             tunnelSocket.setSoTimeout(10000); // 10 second timeout
-            
+
             // Step 2: Execute HTTPS request through tunnel (Second TLS handshake)
             HttpOverTunnelExecutor tunnelExecutor = new HttpOverTunnelExecutor();
-            
+
             // Use HTTP URL to test HTTP-over-SSL-proxy scenario
             URL httpUrl = new URL("http://localhost:" + originServer.getPort() + "/test");
             Map<String, String> headers = new HashMap<>();
-            
+
             try {
                 HttpResponse response = tunnelExecutor.executeRequest(
-                    tunnelSocket,
-                    httpUrl,
-                    HttpMethod.GET,
-                    headers,
-                    null
+                        tunnelSocket,
+                        httpUrl,
+                        HttpMethod.GET,
+                        headers,
+                        null,
+                        new Certificate[]{}
                 );
-                
+
                 // Validate response
                 assertNotNull("Response should not be null", response);
                 assertEquals("Response status should be 200", 200, response.getHttpStatus());
-                assertTrue("Response should contain expected data", 
-                           response.getData().contains("Hello from HTTP origin via SSL proxy!"));
-                
+                assertTrue("Response should contain expected data",
+                        response.getData().contains("Hello from HTTP origin via SSL proxy!"));
+
                 // Validate that origin server received the request
-                assertTrue("Origin server should have received request", 
-                           originLatch.await(5, TimeUnit.SECONDS));
+                assertTrue("Origin server should have received request",
+                        originLatch.await(5, TimeUnit.SECONDS));
                 assertEquals("GET", methodAndPath[0]);
                 assertEquals("/test", methodAndPath[1]);
-                
+
             } finally {
                 tunnelSocket.close();
             }
@@ -221,7 +221,7 @@ public class SslProxyIntegrationTest {
     public void proxyCacert_endToEndIntegration_succeeds() throws Exception {
         // Reset the originLatch for this test
         originLatch = new CountDownLatch(1);
-        
+
         // Create HttpProxy with PROXY_CACERT
         HttpProxy httpProxy = HttpProxy.newBuilder("localhost", sslProxy.mPort)
                 .proxyCacert(Files.newInputStream(caCertFile.toPath()))
@@ -239,38 +239,38 @@ public class SslProxyIntegrationTest {
                 .setProxy(httpProxy)
                 .setUrlSanitizer(mockUrlSanitizer)
                 .build();
-        
+
         // Execute request through the client (which should use our custom SSL proxy handling)
         HttpRequest request = client.request(new URI(testUrl), HttpMethod.GET);
-        
+
         // Execute the request and validate response
         HttpResponse response = request.execute();
         assertNotNull("Response should not be null", response);
         assertEquals("Response status should be 200", 200, response.getHttpStatus());
-        assertTrue("Response should contain expected data", 
-                   response.getData().contains("Hello from origin via SSL proxy!"));
-                   
+        assertTrue("Response should contain expected data",
+                response.getData().contains("Hello from origin via SSL proxy!"));
+
         // Validate that origin server received the request
-        assertTrue("Origin server should have received request", 
-                   originLatch.await(5, TimeUnit.SECONDS));
+        assertTrue("Origin server should have received request",
+                originLatch.await(5, TimeUnit.SECONDS));
         assertEquals("GET", methodAndPath[0]);
         assertEquals("/client-test", methodAndPath[1]);
     }
-    
+
     /**
      * Tests that our SslProxyConnectionManager correctly identifies and routes SSL proxy requests.
      */
     @Test
     public void sslProxyConnectionManager_correctlyIdentifiesProxyTypes() throws IOException {
         SslProxyConnectionManager manager = new SslProxyConnectionManager();
-        
+
         // Test PROXY_CACERT detection
         HttpProxy proxyCacertProxy = HttpProxy.newBuilder("localhost", 8080)
                 .proxyCacert(Files.newInputStream(caCertFile.toPath()))
                 .build();
-        assertTrue("Manager should detect PROXY_CACERT as requiring custom SSL handling", 
-                   manager.requiresCustomSslHandling(proxyCacertProxy));
-                   
+        assertTrue("Manager should detect PROXY_CACERT as requiring custom SSL handling",
+                manager.requiresCustomSslHandling(proxyCacertProxy));
+
         // Test handler matching
         ProxyCacertConnectionHandler handler = new ProxyCacertConnectionHandler();
         assertTrue("Handler should support PROXY_CACERT", handler.canHandle(proxyCacertProxy));
@@ -285,7 +285,7 @@ public class SslProxyIntegrationTest {
                 .build();
         return handshakeCertificates.sslSocketFactory();
     }
-    
+
     /**
      * Creates an SSLSocketFactory for the origin server using Java's KeyStore API.
      * This method is used when we need more control over the SSL context configuration.
@@ -293,11 +293,11 @@ public class SslProxyIntegrationTest {
     private SSLSocketFactory createSslSocketFactoryWithKeyStore(HeldCertificate cert) throws Exception {
         KeyStore ks = KeyStore.getInstance("PKCS12");
         ks.load(null, null);
-        ks.setKeyEntry("key", cert.keyPair().getPrivate(), "password".toCharArray(), 
-                      new Certificate[]{cert.certificate()});
+        ks.setKeyEntry("key", cert.keyPair().getPrivate(), "password".toCharArray(),
+                new Certificate[]{cert.certificate()});
 
-        javax.net.ssl.KeyManagerFactory kmf = 
-            javax.net.ssl.KeyManagerFactory.getInstance(javax.net.ssl.KeyManagerFactory.getDefaultAlgorithm());
+        javax.net.ssl.KeyManagerFactory kmf =
+                javax.net.ssl.KeyManagerFactory.getInstance(javax.net.ssl.KeyManagerFactory.getDefaultAlgorithm());
         kmf.init(ks, "password".toCharArray());
 
         javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");

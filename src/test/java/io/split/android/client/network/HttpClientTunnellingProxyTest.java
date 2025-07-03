@@ -14,7 +14,6 @@ import org.mockito.stubbing.Answer;
 
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
@@ -261,13 +260,14 @@ public class HttpClientTunnellingProxyTest {
             writer.write(proxyCa.certificatePem());
         }
 
-        // Create a PKCS#12 file containing the client certificate and private key
-        File clientP12File = File.createTempFile("client", ".p12");
-        KeyStore ks = KeyStore.getInstance("PKCS12");
-        ks.load(null, null);
-        ks.setKeyEntry("key", clientCert.keyPair().getPrivate(), "password".toCharArray(), new java.security.cert.Certificate[]{clientCert.certificate()});
-        try (FileOutputStream fos = new FileOutputStream(clientP12File)) {
-            ks.store(fos, "password".toCharArray());
+        // Write client certificate and key to separate files (PEM format)
+        File clientCertFile = File.createTempFile("client", ".crt");
+        File clientKeyFile = File.createTempFile("client", ".key");
+        try (FileWriter writer = new FileWriter(clientCertFile)) {
+            writer.write(clientCert.certificatePem());
+        }
+        try (FileWriter writer = new FileWriter(clientKeyFile)) {
+            writer.write(clientCert.privateKeyPkcs8Pem());
         }
 
         // 2. Start HTTP origin server (not HTTPS to avoid SSL layering issues)
@@ -296,7 +296,11 @@ public class HttpClientTunnellingProxyTest {
 
         // 4. Configure HttpProxy with mTLS (client cert, key, and CA)
         HttpProxy proxy = HttpProxy.newBuilder("localhost", assignedProxyPort)
-                .mtlsAuth(Files.newInputStream(clientP12File.toPath()), "password", Files.newInputStream(proxyCaFile.toPath()))
+                .mtlsAuth(
+                    Files.newInputStream(clientCertFile.toPath()),
+                    Files.newInputStream(clientKeyFile.toPath()),
+                    Files.newInputStream(proxyCaFile.toPath())
+                )
                 .build();
 
         // 5. Build client (let builder/factory handle trust)
@@ -325,7 +329,6 @@ public class HttpClientTunnellingProxyTest {
         proxyCertFile.delete();
         proxyKeyFile.delete();
         proxyCaFile.delete();
-        clientP12File.delete();
     }
 
     // Helper to create SSLSocketFactory from HeldCertificate

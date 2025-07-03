@@ -11,8 +11,11 @@ import org.junit.Test;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.security.cert.Certificate;
 
 public class HttpResponseParserTest {
+
+    private final Certificate[] mServerCertificates = new Certificate[]{};
 
     @Test
     public void parseHttpResponse_withValidResponse_succeeds() throws Exception {
@@ -28,7 +31,7 @@ public class HttpResponseParserTest {
         HttpResponseParser parser = new HttpResponseParser();
 
         // Act
-        HttpResponse response = parser.parseHttpResponse(inputStream, serverCertificates);
+        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates);
 
         // Assert
         assertNotNull("Response should not be null", response);
@@ -51,7 +54,7 @@ public class HttpResponseParserTest {
         HttpResponseParser parser = new HttpResponseParser();
 
         // Act
-        HttpResponse response = parser.parseHttpResponse(inputStream, serverCertificates);
+        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates);
 
         // Assert
         assertNotNull("Response should not be null", response);
@@ -76,7 +79,7 @@ public class HttpResponseParserTest {
         HttpResponseParser parser = new HttpResponseParser();
 
         // Act
-        HttpResponse response = parser.parseHttpResponse(inputStream, serverCertificates);
+        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates);
 
         // Assert
         assertNotNull("Response should not be null", response);
@@ -100,7 +103,7 @@ public class HttpResponseParserTest {
         HttpResponseParser parser = new HttpResponseParser();
 
         // Act
-        HttpResponse response = parser.parseHttpResponse(inputStream, serverCertificates);
+        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates);
 
         // Assert
         assertNotNull("Response should not be null", response);
@@ -119,7 +122,7 @@ public class HttpResponseParserTest {
 
         // Act & Assert
         try {
-            parser.parseHttpResponse(inputStream, serverCertificates);
+            parser.parseHttpResponse(inputStream, mServerCertificates);
             fail("Should have thrown exception for invalid status line");
         } catch (IOException e) {
             assertTrue("Exception should mention invalid status", 
@@ -135,7 +138,7 @@ public class HttpResponseParserTest {
 
         // Act & Assert
         try {
-            parser.parseHttpResponse(inputStream, serverCertificates);
+            parser.parseHttpResponse(inputStream, mServerCertificates);
             fail("Should have thrown exception for empty stream");
         } catch (IOException e) {
             assertTrue("Exception should mention no response", 
@@ -160,7 +163,7 @@ public class HttpResponseParserTest {
         HttpResponseParser parser = new HttpResponseParser();
 
         // Act
-        HttpResponse response = parser.parseHttpResponse(inputStream, serverCertificates);
+        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates);
 
         // Assert
         assertNotNull("Response should not be null", response);
