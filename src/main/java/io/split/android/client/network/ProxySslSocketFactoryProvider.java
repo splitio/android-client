@@ -6,7 +6,7 @@ import java.io.InputStream;
 
 import javax.net.ssl.SSLSocketFactory;
 
-interface ProxySslSocketFactory {
+interface ProxySslSocketFactoryProvider {
 
     /**
      * Create an SSLSocketFactory for proxy connections using a CA certificate from an InputStream.

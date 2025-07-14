@@ -17,7 +17,7 @@ import javax.net.ssl.SSLSocketFactory;
 
 import okhttp3.tls.HeldCertificate;
 
-public class ProxySslSocketFactoryImplTest {
+public class ProxySslSocketFactoryProviderImplTest {
 
     @Rule
     public TemporaryFolder tempFolder = new TemporaryFolder();
@@ -36,9 +36,9 @@ public class ProxySslSocketFactoryImplTest {
         try (FileWriter writer = new FileWriter(caCertFile)) {
             writer.write(ca.certificatePem());
         }
-        ProxySslSocketFactoryImpl factory = getProxySslContextFactory();
+        ProxySslSocketFactoryProviderImpl provider = getProvider();
         try (FileInputStream fis = new FileInputStream(caCertFile)) {
-            SSLSocketFactory socketFactory = factory.create(fis);
+            SSLSocketFactory socketFactory = provider.create(fis);
             assertNotNull(socketFactory);
         }
     }
@@ -49,9 +49,9 @@ public class ProxySslSocketFactoryImplTest {
         try (FileWriter writer = new FileWriter(caCertFile)) {
             writer.write("not a cert");
         }
-        ProxySslSocketFactoryImpl factory = getProxySslContextFactory();
+        ProxySslSocketFactoryProviderImpl provider = getProvider();
         try (FileInputStream fis = new FileInputStream(caCertFile)) {
-            factory.create(fis);
+            provider.create(fis);
         }
     }
 
@@ -73,7 +73,7 @@ public class ProxySslSocketFactoryImplTest {
         }
 
         // Create socket factory
-        ProxySslSocketFactoryImpl factory = new ProxySslSocketFactoryImpl(mBase64Decoder);
+        ProxySslSocketFactoryProviderImpl factory = new ProxySslSocketFactoryProviderImpl(mBase64Decoder);
         SSLSocketFactory sslSocketFactory;
         try (FileInputStream caCertStream = new FileInputStream(caCertFile);
              FileInputStream clientCertStream = new FileInputStream(clientCertFile);
@@ -100,11 +100,11 @@ public class ProxySslSocketFactoryImplTest {
             writer.write("invalid key");
         }
 
-        ProxySslSocketFactoryImpl factory = getProxySslContextFactory();
+        ProxySslSocketFactoryProviderImpl provider = getProvider();
         try (FileInputStream caCertStream = new FileInputStream(caCertFile);
              FileInputStream invalidClientCertStream = new FileInputStream(invalidClientCertFile);
              FileInputStream invalidClientKeyStream = new FileInputStream(invalidClientKeyFile)) {
-            factory.create(caCertStream, invalidClientCertStream, invalidClientKeyStream);
+            provider.create(caCertStream, invalidClientCertStream, invalidClientKeyStream);
         }
     }
 
@@ -133,7 +133,7 @@ public class ProxySslSocketFactoryImplTest {
     }
 
     @NonNull
-    private ProxySslSocketFactoryImpl getProxySslContextFactory() {
-        return new ProxySslSocketFactoryImpl(mBase64Decoder);
+    private ProxySslSocketFactoryProviderImpl getProvider() {
+        return new ProxySslSocketFactoryProviderImpl(mBase64Decoder);
     }
 }

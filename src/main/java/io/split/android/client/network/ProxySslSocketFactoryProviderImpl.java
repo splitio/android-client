@@ -34,15 +34,15 @@ import javax.net.ssl.X509TrustManager;
 
 import io.split.android.client.utils.logger.Logger;
 
-class ProxySslSocketFactoryImpl implements ProxySslSocketFactory {
+class ProxySslSocketFactoryProviderImpl implements ProxySslSocketFactoryProvider {
 
     private final Base64Decoder mBase64Decoder;
 
-    ProxySslSocketFactoryImpl() {
+    ProxySslSocketFactoryProviderImpl() {
         this(new DefaultBase64Decoder());
     }
 
-    ProxySslSocketFactoryImpl(@NonNull Base64Decoder base64Decoder) {
+    ProxySslSocketFactoryProviderImpl(@NonNull Base64Decoder base64Decoder) {
         mBase64Decoder = checkNotNull(base64Decoder);
     }
 
