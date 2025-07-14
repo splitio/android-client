@@ -27,7 +27,7 @@ interface ProxySslContextFactory {
      *
      * @param caCertInputStream InputStream containing one or more CA certificates (PEM or DER).
      * @param clientCertInputStream InputStream containing client certificate (PEM or DER).
-     * @param clientKeyInputStream InputStream containing client private key (PEM format, PKCS#8 or PKCS#1).
+     * @param clientKeyInputStream InputStream containing client private key (PEM format, PKCS#8).
      * @return SSLSocketFactory configured for mTLS proxy authentication
      * @throws Exception if there is an error loading certificates/keys or creating the context
      */
