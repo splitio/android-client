@@ -34,14 +34,11 @@ import javax.net.ssl.X509TrustManager;
 
 import io.split.android.client.utils.logger.Logger;
 
-/**
- * Implementation of ProxySslContextFactory for proxy_cacert and mTLS scenarios.
- */
-public class ProxySslContextFactoryImpl implements ProxySslContextFactory {
+class ProxySslContextFactoryImpl implements ProxySslContextFactory {
 
     private final Base64Decoder mBase64Decoder;
 
-    public ProxySslContextFactoryImpl() {
+    ProxySslContextFactoryImpl() {
         this(new DefaultBase64Decoder());
     }
 
@@ -49,20 +46,12 @@ public class ProxySslContextFactoryImpl implements ProxySslContextFactory {
         mBase64Decoder = checkNotNull(base64Decoder);
     }
 
-    /**
-     * Create an SSLSocketFactory for proxy connections using a CA certificate from an InputStream.
-     * The InputStream will be closed after use.
-     */
     @Override
     public SSLSocketFactory create(@Nullable InputStream caCertInputStream) throws Exception {
         // The TrustManagerFactory is necessary because of the CA cert
         return createSslSocketFactory(null, createTrustManagerFactory(caCertInputStream));
     }
-    
-    /**
-     * Accepts CA cert(s) InputStream, client certificate InputStream, and client key InputStream.
-     * The InputStreams will be closed after use.
-     */
+
     @Override
     public SSLSocketFactory create(@Nullable InputStream caCertInputStream, @Nullable InputStream clientCertInputStream, @Nullable InputStream clientKeyInputStream) throws Exception {
         // The KeyManagerFactory is necessary because of the client certificate and key files
