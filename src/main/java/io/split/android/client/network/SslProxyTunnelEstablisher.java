@@ -127,7 +127,6 @@ class SslProxyTunnelEstablisher {
         // Send empty line to end headers
         writer.write(CRLF);
         writer.flush();
-        // Note: Don't close the writer as it would close the underlying socket
 
         Logger.v("CONNECT request sent through SSL connection");
     }
