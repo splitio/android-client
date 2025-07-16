@@ -17,10 +17,6 @@ import io.split.android.client.utils.logger.Logger;
  * <p>
  * This class is responsible for executing HTTP requests through tunnel sockets that have been
  * created by the SSL tunnel establisher using the custom tunneling approach.
- * <p>
- * The socket type is determined by the tunnel establisher based on the origin protocol:
- * - HTTP origins: plain socket after CONNECT
- * - HTTPS origins: SSL socket wrapped after CONNECT
  */
 class HttpOverTunnelExecutor {
 
@@ -90,7 +86,6 @@ class HttpOverTunnelExecutor {
         }
 
         String requestLine = method.name() + " " + path + " HTTP/1.1";
-        Logger.v("Sending request line: '" + requestLine + "'");
         writer.write(requestLine + CRLF);
 
         // 2. Send Host header (required for HTTP/1.1)
@@ -111,7 +106,6 @@ class HttpOverTunnelExecutor {
                     !"content-length".equalsIgnoreCase(header.getKey()) &&
                     !"host".equalsIgnoreCase(header.getKey())) {
                 String headerLine = header.getKey() + ": " + header.getValue();
-                Logger.v("Sending header: '" + headerLine + "'");
                 writer.write(headerLine + CRLF);
             }
         }
