@@ -2,6 +2,7 @@ package io.split.android.client.network;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
@@ -18,6 +19,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.HttpRetryException;
 import java.net.Socket;
 import java.security.KeyStore;
 import java.util.concurrent.CountDownLatch;
@@ -39,11 +41,9 @@ public class SslProxyTunnelEstablisherTest {
 
     private TestSslProxy testProxy;
     private SSLSocketFactory clientSslSocketFactory;
-    private ProxyCredentialsProvider mProxyCredentialsProvider;
 
     @Before
     public void setUp() throws Exception {
-        mProxyCredentialsProvider = mock(ProxyCredentialsProvider.class);
         // Create test certificates
         HeldCertificate proxyCa = new HeldCertificate.Builder()
                 .commonName("Test Proxy CA")
@@ -87,6 +87,7 @@ public class SslProxyTunnelEstablisherTest {
         SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
         String targetHost = "example.com";
         int targetPort = 443;
+        ProxyCredentialsProvider proxyCredentialsProvider = mock(ProxyCredentialsProvider.class);
 
         Socket tunnelSocket = establisher.establishTunnel(
                 "localhost",
@@ -94,7 +95,7 @@ public class SslProxyTunnelEstablisherTest {
                 targetHost,
                 targetPort,
                 clientSslSocketFactory,
-                mProxyCredentialsProvider);
+                proxyCredentialsProvider);
 
         assertNotNull("Tunnel socket should not be null", tunnelSocket);
         assertTrue("Tunnel socket should be connected", tunnelSocket.isConnected());
@@ -112,6 +113,7 @@ public class SslProxyTunnelEstablisherTest {
         SSLContext untrustedContext = SSLContext.getInstance("TLS");
         untrustedContext.init(null, null, null);
         SSLSocketFactory untrustedSocketFactory = untrustedContext.getSocketFactory();
+        ProxyCredentialsProvider proxyCredentialsProvider = mock(ProxyCredentialsProvider.class);
 
         SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
 
@@ -122,7 +124,7 @@ public class SslProxyTunnelEstablisherTest {
                     "example.com",
                     443,
                     untrustedSocketFactory,
-                    mProxyCredentialsProvider);
+                    proxyCredentialsProvider);
             fail("Should have thrown exception for untrusted certificate");
         } catch (IOException e) {
             assertTrue("Exception should be SSL-related", e.getMessage().contains("certification"));
@@ -132,6 +134,7 @@ public class SslProxyTunnelEstablisherTest {
     @Test
     public void establishTunnelWithFailingProxyConnectionThrows() {
         SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
+        ProxyCredentialsProvider proxyCredentialsProvider = mock(ProxyCredentialsProvider.class);
 
         try {
             establisher.establishTunnel(
@@ -140,7 +143,7 @@ public class SslProxyTunnelEstablisherTest {
                     "example.com",
                     443,
                     clientSslSocketFactory,
-                    mProxyCredentialsProvider);
+                    proxyCredentialsProvider);
             fail("Should have thrown exception for connection failure");
         } catch (IOException e) {
             // The implementation wraps the original exception with a descriptive message
@@ -149,26 +152,130 @@ public class SslProxyTunnelEstablisherTest {
     }
 
     @Test
-    public void bearerTokenIsPassedWhenSet() {
+    public void bearerTokenIsPassedWhenSet() throws IOException, InterruptedException {
         SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
-        try {
-            establisher.establishTunnel(
-                    "localhost",
-                    testProxy.getPort(),
-                    "example.com",
-                    443,
-                    clientSslSocketFactory,
-                    new ProxyCredentialsProvider() {
-                        @Override
-                        public String getBearerToken() {
-                            return "token";
-                        }
-                    });
-            boolean await = testProxy.getAuthorizationHeaderReceived().await(5, TimeUnit.SECONDS);
-            assertTrue("Proxy should have received authorization header", await);
-        } catch (IOException | InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        establisher.establishTunnel(
+                "localhost",
+                testProxy.getPort(),
+                "example.com",
+                443,
+                clientSslSocketFactory,
+                new ProxyCredentialsProvider() {
+                    @Override
+                    public String getBearerToken() {
+                        return "token";
+                    }
+                });
+        boolean await = testProxy.getAuthorizationHeaderReceived().await(5, TimeUnit.SECONDS);
+        assertTrue("Proxy should have received authorization header", await);
+    }
+
+    @Test
+    public void establishTunnelWithNullCredentialsProviderDoesNotAddAuthHeader() throws Exception {
+        SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
+
+        Socket tunnelSocket = establisher.establishTunnel(
+                "localhost",
+                testProxy.getPort(),
+                "example.com",
+                443,
+                clientSslSocketFactory,
+                null);
+
+        assertNotNull(tunnelSocket);
+        assertTrue(testProxy.getConnectRequestReceived().await(5, TimeUnit.SECONDS));
+
+        assertEquals(1, testProxy.getAuthorizationHeaderReceived().getCount());
+
+        tunnelSocket.close();
+    }
+
+    @Test
+    public void establishTunnelWithNullBearerTokenDoesNotAddAuthHeader() throws Exception {
+        SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
+
+        Socket tunnelSocket = establisher.establishTunnel(
+                "localhost",
+                testProxy.getPort(),
+                "example.com",
+                443,
+                clientSslSocketFactory,
+                () -> null);
+
+        assertNotNull(tunnelSocket);
+        assertTrue(testProxy.getConnectRequestReceived().await(5, TimeUnit.SECONDS));
+
+        assertEquals(1, testProxy.getAuthorizationHeaderReceived().getCount());
+
+        tunnelSocket.close();
+    }
+
+    @Test
+    public void establishTunnelWithEmptyBearerTokenDoesNotAddAuthHeader() throws Exception {
+        SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
+
+        Socket tunnelSocket = establisher.establishTunnel(
+                "localhost",
+                testProxy.getPort(),
+                "example.com",
+                443,
+                clientSslSocketFactory,
+                () -> " ");
+
+        assertNotNull(tunnelSocket);
+        assertTrue(testProxy.getConnectRequestReceived().await(5, TimeUnit.SECONDS));
+
+        assertEquals(1, testProxy.getAuthorizationHeaderReceived().getCount());
+
+        tunnelSocket.close();
+    }
+
+    @Test
+    public void establishTunnelWithNullStatusLineThrowsIOException() {
+        testProxy.setConnectResponse(null);
+        SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
+
+        IOException exception = assertThrows(IOException.class, () -> establisher.establishTunnel(
+                "localhost",
+                testProxy.getPort(),
+                "example.com",
+                443,
+                clientSslSocketFactory,
+                null));
+
+        assertNotNull(exception);
+    }
+
+    @Test
+    public void establishTunnelWithMalformedStatusLineThrowsIOException() {
+        testProxy.setConnectResponse("HTTP/1.1"); // Malformed, missing status code
+        SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
+
+        IOException exception = assertThrows(IOException.class, () -> establisher.establishTunnel(
+                "localhost",
+                testProxy.getPort(),
+                "example.com",
+                443,
+                clientSslSocketFactory,
+                null));
+
+        assertNotNull(exception);
+    }
+
+    @Test
+    public void establishTunnelWithProxyAuthRequiredThrowsHttpRetryException() {
+        testProxy.setConnectResponse("HTTP/1.1 407 Proxy Authentication Required");
+        SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
+
+        HttpRetryException exception = assertThrows(HttpRetryException.class, () -> establisher.establishTunnel(
+                "localhost",
+                testProxy.getPort(),
+                "example.com",
+                443,
+                clientSslSocketFactory,
+                null));
+
+        assertEquals(407, exception.responseCode());
     }
 
     /**
@@ -182,6 +289,7 @@ public class SslProxyTunnelEstablisherTest {
         private final CountDownLatch mConnectRequestReceived = new CountDownLatch(1);
         private final CountDownLatch mAuthorizationHeaderReceived = new CountDownLatch(1);
         private final AtomicReference<String> mReceivedConnectLine = new AtomicReference<>();
+        private final AtomicReference<String> mConnectResponse = new AtomicReference<>("HTTP/1.1 200 Connection established");
 
         public TestSslProxy(int port, HeldCertificate serverCert) {
             mPort = port;
@@ -237,10 +345,13 @@ public class SslProxyTunnelEstablisherTest {
                         }
                     }
 
-                    // Send successful CONNECT response
-                    writer.println("HTTP/1.1 200 Connection established");
-                    writer.println();
-                    writer.flush();
+                    // Send configured CONNECT response
+                    String response = mConnectResponse.get();
+                    if (response != null) {
+                        writer.println(response);
+                        writer.println();
+                        writer.flush();
+                    }
 
                     // Keep connection open for tunnel
                     Thread.sleep(100);
@@ -270,6 +381,10 @@ public class SslProxyTunnelEstablisherTest {
 
         public String getReceivedConnectLine() {
             return mReceivedConnectLine.get();
+        }
+
+        public void setConnectResponse(String connectResponse) {
+            mConnectResponse.set(connectResponse);
         }
     }
 }
