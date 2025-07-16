@@ -6,7 +6,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.io.IOException;
-import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
@@ -22,16 +21,16 @@ class HttpRequestHelper {
 
     private static final ProxyCacertConnectionHandler mConnectionHandler = new ProxyCacertConnectionHandler();
 
-    static HttpURLConnection openConnection(@NonNull URL url,
-                                            @Nullable Proxy proxy,
-                                            @Nullable HttpProxy httpProxy,
-                                            @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
-                                            @NonNull HttpMethod method,
-                                            @NonNull Map<String, String> headers,
-                                            boolean useProxyAuthentication,
-                                            @Nullable SSLSocketFactory sslSocketFactory,
-                                            @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
-                                            @Nullable String body) throws IOException {
+    static HttpURLConnection createConnection(@NonNull URL url,
+                                              @Nullable Proxy proxy,
+                                              @Nullable HttpProxy httpProxy,
+                                              @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                                              @NonNull HttpMethod method,
+                                              @NonNull Map<String, String> headers,
+                                              boolean useProxyAuthentication,
+                                              @Nullable SSLSocketFactory sslSocketFactory,
+                                              @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
+                                              @Nullable String body) throws IOException {
 
         if (httpProxy != null && sslSocketFactory != null && isTlsProxy(httpProxy)) {
             try {
@@ -46,8 +45,6 @@ class HttpRequestHelper {
                 );
 
                 return new HttpResponseConnectionAdapter(url, response, response.getServerCertificates());
-            } catch (HttpRetryException e) {
-                throw e;
             } catch (UnsupportedOperationException e) {
                 // Fall through to standard handling
             }
@@ -56,13 +53,13 @@ class HttpRequestHelper {
         return openConnection(proxy, httpProxy, proxyAuthenticator, url, method, headers, useProxyAuthentication);
     }
 
-    static HttpURLConnection openConnection(@Nullable Proxy proxy,
-                                            @Nullable HttpProxy httpProxy,
-                                            @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
-                                            @NonNull URL url,
-                                            @NonNull HttpMethod method,
-                                            @NonNull Map<String, String> headers,
-                                            boolean useProxyAuthentication) throws IOException {
+    private static HttpURLConnection openConnection(@Nullable Proxy proxy,
+                                                    @Nullable HttpProxy httpProxy,
+                                                    @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                                                    @NonNull URL url,
+                                                    @NonNull HttpMethod method,
+                                                    @NonNull Map<String, String> headers,
+                                                    boolean useProxyAuthentication) throws IOException {
         
         // Check if we need custom SSL proxy handling
         if (httpProxy != null && isTlsProxy(httpProxy)) {

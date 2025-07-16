@@ -4,7 +4,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import static io.split.android.client.network.HttpRequestHelper.applySslConfig;
 import static io.split.android.client.network.HttpRequestHelper.applyTimeouts;
-import static io.split.android.client.network.HttpRequestHelper.openConnection;
+import static io.split.android.client.network.HttpRequestHelper.createConnection;
 
 
 import androidx.annotation.NonNull;
@@ -190,7 +190,7 @@ public class HttpRequestImpl implements HttpRequest {
 
         HttpURLConnection connection;
         try {
-            connection = openConnection(
+            connection = createConnection(
                     url,
                     mProxy,
                     mHttpProxy,
@@ -206,7 +206,7 @@ public class HttpRequestImpl implements HttpRequest {
             if (mProxyAuthenticator == null) {
                 throw e;
             }
-            connection = openConnection(mProxy, mHttpProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, authenticate);
+            connection = createConnection(url, mProxy, mHttpProxy, mProxyAuthenticator, mHttpMethod, mHeaders, authenticate, null, null, null);
         }
         applyTimeouts(mReadTimeout, mConnectionTimeout, connection);
         applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);

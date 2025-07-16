@@ -147,7 +147,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
             throw new IOException("Error parsing URL");
         }
 
-        HttpURLConnection connection = openConnection(
+        HttpURLConnection connection = createConnection(
                 url,
                 mProxy,
                 mHttpProxy,
