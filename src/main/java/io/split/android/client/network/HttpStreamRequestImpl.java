@@ -1,11 +1,11 @@
 package io.split.android.client.network;
 
 import static io.split.android.client.network.HttpRequestHelper.checkPins;
+import static io.split.android.client.network.HttpRequestHelper.createConnection;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import static io.split.android.client.network.HttpRequestHelper.applySslConfig;
 import static io.split.android.client.network.HttpRequestHelper.applyTimeouts;
-import static io.split.android.client.network.HttpRequestHelper.openConnection;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;

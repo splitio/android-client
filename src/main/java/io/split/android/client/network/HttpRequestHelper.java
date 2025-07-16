@@ -32,7 +32,7 @@ class HttpRequestHelper {
                                               @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
                                               @Nullable String body) throws IOException {
 
-        if (httpProxy != null && sslSocketFactory != null && isTlsProxy(httpProxy)) {
+        if (httpProxy != null && sslSocketFactory != null && (httpProxy.getCaCertStream() != null || httpProxy.getClientCertStream() != null)) {
             try {
                 HttpResponse response = mConnectionHandler.executeRequest(
                         httpProxy,
@@ -62,7 +62,7 @@ class HttpRequestHelper {
                                                     boolean useProxyAuthentication) throws IOException {
         
         // Check if we need custom SSL proxy handling
-        if (httpProxy != null && isTlsProxy(httpProxy)) {
+        if (httpProxy != null && (httpProxy.getCaCertStream() != null || httpProxy.getClientCertStream() != null)) {
             throw new IOException("SSL proxy scenarios require custom handling - use executeRequest method instead");
         }
         
@@ -132,9 +132,5 @@ class HttpRequestHelper {
 
             request.addRequestProperty(entry.getKey(), entry.getValue());
         }
-    }
-
-    private static boolean isTlsProxy(@NonNull HttpProxy httpProxy) {
-        return httpProxy.getAuthType() == HttpProxy.ProxyAuthType.MTLS || httpProxy.getAuthType() == HttpProxy.ProxyAuthType.PROXY_CACERT;
     }
 }

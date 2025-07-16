@@ -4,44 +4,95 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import java.io.InputStream;
 
 public class HttpProxy {
 
-    final private String host;
-    final private int port;
-    final private String username;
-    final private String password;
+    private final @NonNull String mHost;
+    private final int mPort;
+    private final @Nullable String mUsername;
+    private final @Nullable String mPassword;
+    private final @Nullable InputStream mClientCertStream;
+    private final @Nullable InputStream mClientKeyStream;
+    private final @Nullable InputStream mCaCertStream;
 
-    public HttpProxy(@NonNull String host, int port) {
-        this(host, port, null, null);
+    private HttpProxy(Builder builder) {
+        mHost = builder.mHost;
+        mPort = builder.mPort;
+        mUsername = builder.mUsername;
+        mPassword = builder.mPassword;
+        mClientCertStream = builder.mClientCertStream;
+        mClientKeyStream = builder.mClientKeyStream;
+        mCaCertStream = builder.mCaCertStream;
     }
 
-    public HttpProxy(@NonNull String host, int port, @Nullable String username, @Nullable String password) {
-        checkNotNull(host);
-
-        this.host = host;
-        this.port = port;
-        this.username = username;
-        this.password = password;
-    }
-
-    public String getHost() {
-        return host;
+    public @NonNull String getHost() {
+        return mHost;
     }
 
     public int getPort() {
-        return port;
+        return mPort;
     }
 
-    public String getUsername() {
-        return username;
+    public @Nullable String getUsername() {
+        return mUsername;
     }
 
-    public String getPassword() {
-        return password;
+    public @Nullable String getPassword() {
+        return mPassword;
     }
 
-    public boolean usesCredentials() {
-        return username == null;
+    public @Nullable InputStream getClientCertStream() {
+        return mClientCertStream;
+    }
+
+    public @Nullable InputStream getClientKeyStream() {
+        return mClientKeyStream;
+    }
+
+    public @Nullable InputStream getCaCertStream() {
+        return mCaCertStream;
+    }
+
+    public static Builder newBuilder(@NonNull String host, int port) {
+        return new Builder(host, port);
+    }
+
+    public static class Builder {
+        private final @NonNull String mHost;
+        private final int mPort;
+        private @Nullable String mUsername;
+        private @Nullable String mPassword;
+        private @Nullable InputStream mClientCertStream;
+        private @Nullable InputStream mClientKeyStream;
+        private @Nullable InputStream mCaCertStream;
+
+        private Builder(@NonNull String host, int port) {
+            checkNotNull(host);
+            mHost = host;
+            mPort = port;
+        }
+
+        public Builder basicAuth(@NonNull String username, @NonNull String password) {
+            mUsername = username;
+            mPassword = password;
+            return this;
+        }
+
+        public Builder proxyCacert(@NonNull InputStream caCertStream) {
+            mCaCertStream = caCertStream;
+            return this;
+        }
+
+        public Builder mtlsAuth(@NonNull InputStream certStream, @NonNull InputStream keyStream, @NonNull InputStream caCertStream) {
+            mClientCertStream = certStream;
+            mClientKeyStream = keyStream;
+            mCaCertStream = caCertStream;
+            return this;
+        }
+
+        public HttpProxy build() {
+            return new HttpProxy(this);
+        }
     }
 }

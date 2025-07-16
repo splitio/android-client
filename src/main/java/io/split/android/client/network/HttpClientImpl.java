@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
@@ -28,7 +29,11 @@ public class HttpClientImpl implements HttpClient {
     @Nullable
     private final Proxy mProxy;
     @Nullable
+    private final HttpProxy mHttpProxy;
+    @Nullable
     private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
+    @Nullable
+    private final ProxyCredentialsProvider mProxyCredentialsProvider;
     private final long mReadTimeout;
     private final long mConnectionTimeout;
     @Nullable
@@ -42,14 +47,17 @@ public class HttpClientImpl implements HttpClient {
 
     HttpClientImpl(@Nullable HttpProxy proxy,
                    @Nullable SplitAuthenticator proxyAuthenticator,
+                   @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
                    long readTimeout,
                    long connectionTimeout,
                    @Nullable DevelopmentSslConfig developmentSslConfig,
                    @Nullable SSLSocketFactory sslSocketFactory,
                    @NonNull UrlSanitizer urlSanitizer,
                    @Nullable CertificateChecker certificateChecker) {
+        mHttpProxy = proxy;
         mProxy = initializeProxy(proxy);
         mProxyAuthenticator = initializeProxyAuthenticator(proxy, proxyAuthenticator);
+        mProxyCredentialsProvider = proxyCredentialsProvider;
         mReadTimeout = readTimeout;
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
@@ -73,7 +81,9 @@ public class HttpClientImpl implements HttpClient {
                 body,
                 newHeaders,
                 mProxy,
+                mHttpProxy,
                 mProxyAuthenticator,
+                mProxyCredentialsProvider,
                 mReadTimeout,
                 mConnectionTimeout,
                 mDevelopmentSslConfig,
@@ -101,7 +111,9 @@ public class HttpClientImpl implements HttpClient {
                 mDevelopmentSslConfig,
                 mSslSocketFactory,
                 mUrlSanitizer,
-                mCertificateChecker);
+                mCertificateChecker,
+                mHttpProxy,
+                mProxyCredentialsProvider);
     }
 
     @Override
@@ -177,7 +189,9 @@ public class HttpClientImpl implements HttpClient {
     }
 
     public static class Builder {
+
         private SplitAuthenticator mProxyAuthenticator;
+        private ProxyCredentialsProvider mProxyCredentialsProvider;
         private HttpProxy mProxy;
         private long mReadTimeout = -1;
         private long mConnectionTimeout = -1;
@@ -187,6 +201,7 @@ public class HttpClientImpl implements HttpClient {
         private UrlSanitizer mUrlSanitizer;
         private CertificatePinningConfiguration mCertificatePinningConfiguration;
         private CertificateChecker mCertificateChecker;
+        private Base64Decoder mBase64Decoder = new DefaultBase64Decoder();
 
         public Builder setContext(Context context) {
             mHostAppContext = context;
@@ -235,9 +250,20 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
+        public Builder setProxyCredentialsProvider(@NonNull ProxyCredentialsProvider proxyCredentialsProvider) {
+            mProxyCredentialsProvider = proxyCredentialsProvider;
+            return this;
+        }
+
         @VisibleForTesting
         Builder setCertificateChecker(CertificateChecker certificateChecker) {
             mCertificateChecker = certificateChecker;
+            return this;
+        }
+
+        @VisibleForTesting
+        Builder setBase64Decoder(Base64Decoder base64Decoder) {
+            mBase64Decoder = base64Decoder;
             return this;
         }
 
@@ -245,6 +271,11 @@ public class HttpClientImpl implements HttpClient {
             if (mDevelopmentSslConfig == null) {
                 if (LegacyTlsUpdater.couldBeOld()) {
                     LegacyTlsUpdater.update(mHostAppContext);
+                }
+
+                if (mProxy != null) {
+                    mSslSocketFactory = createSslSocketFactoryFromProxy();
+                } else {
                     try {
                         mSslSocketFactory = new Tls12OnlySocketFactory();
                     } catch (NoSuchAlgorithmException | KeyManagementException e) {
@@ -271,12 +302,34 @@ public class HttpClientImpl implements HttpClient {
             return new HttpClientImpl(
                     mProxy,
                     mProxyAuthenticator,
+                    mProxyCredentialsProvider,
                     mReadTimeout,
                     mConnectionTimeout,
                     mDevelopmentSslConfig,
                     mSslSocketFactory,
                     (mUrlSanitizer == null) ? new UrlSanitizerImpl() : mUrlSanitizer,
                     certificateChecker);
+        }
+
+        private SSLSocketFactory createSslSocketFactoryFromProxy() {
+            ProxySslSocketFactoryProviderImpl factoryProvider = new ProxySslSocketFactoryProviderImpl(mBase64Decoder);
+            try {
+                if (mProxy.getClientCertStream() != null && mProxy.getClientKeyStream() != null) {
+                    try (InputStream caInput = mProxy.getCaCertStream();
+                         InputStream certInput = mProxy.getClientCertStream();
+                         InputStream keyInput = mProxy.getClientKeyStream()) {
+                        Logger.v("Custom proxy CA cert and client cert/key loaded for proxy: " + mProxy.getHost());
+                        return factoryProvider.create(caInput, certInput, keyInput);
+                    }
+                } else if (mProxy.getCaCertStream() != null) {
+                    try (InputStream caInput = mProxy.getCaCertStream()) {
+                        return factoryProvider.create(caInput);
+                    }
+                }
+            } catch (Exception e) {
+                Logger.e("Failed to create SSLSocketFactory for proxy: " + mProxy.getHost() + ", error: " + e.getMessage());
+            }
+            return null;
         }
     }
 }
