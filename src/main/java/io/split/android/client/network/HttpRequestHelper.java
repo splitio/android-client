@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.io.IOException;
+import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.Proxy;
 import java.net.URL;
@@ -19,12 +20,56 @@ import io.split.android.client.utils.logger.Logger;
 
 class HttpRequestHelper {
 
+    private static final ProxyCacertConnectionHandler mConnectionHandler = new ProxyCacertConnectionHandler();
+
+    static HttpURLConnection openConnection(@NonNull URL url,
+                                            @Nullable Proxy proxy,
+                                            @Nullable HttpProxy httpProxy,
+                                            @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                                            @NonNull HttpMethod method,
+                                            @NonNull Map<String, String> headers,
+                                            boolean useProxyAuthentication,
+                                            @Nullable SSLSocketFactory sslSocketFactory,
+                                            @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
+                                            @Nullable String body) throws IOException {
+
+        if (httpProxy != null && sslSocketFactory != null && isTlsProxy(httpProxy)) {
+            try {
+                HttpResponse response = mConnectionHandler.executeRequest(
+                        httpProxy,
+                        url,
+                        method,
+                        headers,
+                        body,
+                        sslSocketFactory,
+                        proxyCredentialsProvider
+                );
+
+                return new HttpResponseConnectionAdapter(url, response, response.getServerCertificates());
+            } catch (HttpRetryException e) {
+                throw e;
+            } catch (UnsupportedOperationException e) {
+                // Fall through to standard handling
+            }
+        }
+
+        return openConnection(proxy, httpProxy, proxyAuthenticator, url, method, headers, useProxyAuthentication);
+    }
+
     static HttpURLConnection openConnection(@Nullable Proxy proxy,
+                                            @Nullable HttpProxy httpProxy,
                                             @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
                                             @NonNull URL url,
                                             @NonNull HttpMethod method,
                                             @NonNull Map<String, String> headers,
                                             boolean useProxyAuthentication) throws IOException {
+        
+        // Check if we need custom SSL proxy handling
+        if (httpProxy != null && isTlsProxy(httpProxy)) {
+            throw new IOException("SSL proxy scenarios require custom handling - use executeRequest method instead");
+        }
+        
+        // Standard HttpURLConnection proxy handling
         HttpURLConnection connection;
         if (proxy != null) {
             connection = (HttpURLConnection) url.openConnection(proxy);
@@ -90,5 +135,9 @@ class HttpRequestHelper {
 
             request.addRequestProperty(entry.getKey(), entry.getValue());
         }
+    }
+
+    private static boolean isTlsProxy(@NonNull HttpProxy httpProxy) {
+        return httpProxy.getAuthType() == HttpProxy.ProxyAuthType.MTLS || httpProxy.getAuthType() == HttpProxy.ProxyAuthType.PROXY_CACERT;
     }
 }

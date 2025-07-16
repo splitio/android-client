@@ -52,6 +52,10 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     @Nullable
     private final CertificateChecker mCertificateChecker;
     private final AtomicBoolean mWasRetried = new AtomicBoolean(false);
+    @Nullable
+    private final HttpProxy mHttpProxy;
+    @Nullable
+    private final ProxyCredentialsProvider mProxyCredentialsProvider;
 
     HttpStreamRequestImpl(@NonNull URI uri,
                           @NonNull Map<String, String> headers,
@@ -61,7 +65,9 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                           @Nullable DevelopmentSslConfig developmentSslConfig,
                           @Nullable SSLSocketFactory sslSocketFactory,
                           @NonNull UrlSanitizer urlSanitizer,
-                          @Nullable CertificateChecker certificateChecker) {
+                          @Nullable CertificateChecker certificateChecker,
+                          @Nullable HttpProxy httpProxy,
+                          @Nullable ProxyCredentialsProvider proxyCredentialsProvider) {
         mUri = checkNotNull(uri);
         mHttpMethod = HttpMethod.GET;
         mProxy = proxy;
@@ -72,6 +78,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         mDevelopmentSslConfig = developmentSslConfig;
         mSslSocketFactory = sslSocketFactory;
         mCertificateChecker = certificateChecker;
+        mHttpProxy = httpProxy;
+        mProxyCredentialsProvider = proxyCredentialsProvider;
     }
 
     @Override
@@ -139,7 +147,18 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
             throw new IOException("Error parsing URL");
         }
 
-        HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, useProxyAuthenticator);
+        HttpURLConnection connection = openConnection(
+                url,
+                mProxy,
+                mHttpProxy,
+                mProxyAuthenticator,
+                mHttpMethod,
+                mHeaders,
+                useProxyAuthenticator,
+                mSslSocketFactory,
+                mProxyCredentialsProvider,
+                null
+        );
         applyTimeouts(HttpStreamRequestImpl.STREAMING_READ_TIMEOUT_IN_MILLISECONDS, mConnectionTimeout, connection);
         applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
         connection.connect();
