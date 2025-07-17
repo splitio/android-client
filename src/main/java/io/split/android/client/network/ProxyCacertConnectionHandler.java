@@ -103,9 +103,7 @@ class ProxyCacertConnectionHandler {
                         serverCertificates
                 );
             } finally {
-                // Note: We don't close finalSocket here if it's different from tunnelSocket
-                // because when autoClose=true in createSocket, the tunnelSocket will be closed
-                // when finalSocket is closed. If we close both, we'd get "socket closed" errors.
+                // If we have are tunelling, finalSocket is the tunnel socket
                 if (finalSocket != null && finalSocket != tunnelSocket) {
                     try {
                         finalSocket.close();

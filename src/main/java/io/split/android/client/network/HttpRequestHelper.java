@@ -126,7 +126,7 @@ class HttpRequestHelper {
 
     private static void addHeaders(HttpURLConnection request, Map<String, String> headers) {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-            if (entry == null) {
+            if (entry == null || entry.getKey() == null) {
                 continue;
             }
 
