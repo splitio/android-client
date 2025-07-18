@@ -1,7 +1,5 @@
 package io.split.android.client.network;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -66,7 +64,7 @@ public class HttpProxy {
     }
 
     public static class Builder {
-        private final @NonNull String mHost;
+        private final @Nullable String mHost;
         private final int mPort;
         private @Nullable String mUsername;
         private @Nullable String mPassword;
@@ -77,7 +75,6 @@ public class HttpProxy {
         private ProxyCredentialsProvider mCredentialsProvider;
 
         private Builder(@Nullable String host, int port) {
-            checkNotNull(host);
             mHost = host;
             mPort = port;
         }
