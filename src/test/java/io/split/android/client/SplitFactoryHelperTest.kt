@@ -195,7 +195,7 @@ class SplitFactoryHelperTest {
             SplitFactoryBuilder.build("sdk_key", Key("user"), SplitClientConfig.builder().proxyConfiguration(
                 ProxyConfiguration.builder().build()).build(), context)
         } catch (splitInstantiationException: SplitInstantiationException) {
-            exceptionThrown = splitInstantiationException.message!!.contains("When configured, proxy host cannot be null")
+            exceptionThrown = splitInstantiationException.cause!!.message!!.contains("When configured, proxy host cannot be null")
         }
 
         assertTrue(exceptionThrown)

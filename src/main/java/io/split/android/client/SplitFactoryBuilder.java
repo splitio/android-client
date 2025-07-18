@@ -67,6 +67,9 @@ public class SplitFactoryBuilder {
                 return new SplitFactoryImpl(sdkKey, key, config, context);
             }
         } catch (Exception ex) {
+            if (ex instanceof SplitInstantiationException) {
+                throw (SplitInstantiationException) ex;
+            }
             throw new SplitInstantiationException("Could not instantiate SplitFactory", ex);
         }
     }
