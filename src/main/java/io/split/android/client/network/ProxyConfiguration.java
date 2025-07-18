@@ -32,23 +32,23 @@ public class ProxyConfiguration {
         mCaCert = caCert;
     }
 
-    URI getUrl() {
+    public URI getUrl() {
         return mUrl;
     }
 
-    ProxyCredentialsProvider getCredentialsProvider() {
+    public ProxyCredentialsProvider getCredentialsProvider() {
         return mCredentialsProvider;
     }
 
-    InputStream getClientCert() {
+    public InputStream getClientCert() {
         return mClientCert;
     }
 
-    InputStream getClientPk() {
+    public InputStream getClientPk() {
         return mClientPk;
     }
 
-    InputStream getCaCert() {
+    public InputStream getCaCert() {
         return mCaCert;
     }
 
