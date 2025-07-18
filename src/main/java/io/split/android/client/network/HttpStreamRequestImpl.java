@@ -157,7 +157,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                 useProxyAuthenticator,
                 mSslSocketFactory,
                 mProxyCredentialsProvider,
-                null
+                null,
+                true
         );
         applyTimeouts(HttpStreamRequestImpl.STREAMING_READ_TIMEOUT_IN_MILLISECONDS, mConnectionTimeout, connection);
         applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);

@@ -29,6 +29,9 @@ class SslProxyTunnelEstablisher {
     // Default timeout for regular connections (10 seconds)
     private static final int DEFAULT_SOCKET_TIMEOUT = 10000;
 
+    // Timeout for streaming connections (80 seconds to match HttpStreamRequestImpl)
+    private static final int STREAMING_SOCKET_TIMEOUT = 80000;
+
     /**
      * Establishes an SSL tunnel through the proxy using the CONNECT method.
      * After successful tunnel establishment, extracts the underlying socket
@@ -54,6 +57,7 @@ class SslProxyTunnelEstablisher {
      * @param targetPort               The target server port
      * @param sslSocketFactory         SSL socket factory for proxy authentication
      * @param proxyCredentialsProvider Credentials provider for proxy authentication
+     * @param isStreaming              Whether this connection is for streaming (uses longer timeout)
      * @return Raw socket with tunnel established (connection maintained)
      * @throws IOException if tunnel establishment fails
      */
@@ -63,14 +67,15 @@ class SslProxyTunnelEstablisher {
                                   @NonNull String targetHost,
                                   int targetPort,
                                   @NonNull SSLSocketFactory sslSocketFactory,
-                                  @Nullable ProxyCredentialsProvider proxyCredentialsProvider) throws IOException {
+                                  @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
+                                  boolean isStreaming) throws IOException {
 
         Socket rawSocket = null;
         SSLSocket sslSocket = null;
 
         try {
             // Determine which timeout to use based on connection type
-            int timeout = DEFAULT_SOCKET_TIMEOUT;
+            int timeout = isStreaming ? STREAMING_SOCKET_TIMEOUT : DEFAULT_SOCKET_TIMEOUT;
             
             // Step 1: Create raw TCP connection to proxy
             rawSocket = new Socket(proxyHost, proxyPort);

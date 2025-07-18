@@ -33,14 +33,29 @@ class ProxyCacertConnectionHandler {
         mTunnelExecutor = new HttpOverTunnelExecutor();
     }
 
+    /**
+     * Executes an HTTP request through an SSL proxy tunnel.
+     *
+     * @param httpProxy                The proxy configuration
+     * @param targetUrl                The target URL to connect to
+     * @param method                   The HTTP method to use
+     * @param headers                  The HTTP headers to include
+     * @param body                     The request body (if any)
+     * @param sslSocketFactory         The SSL socket factory for proxy and origin connections
+     * @param proxyCredentialsProvider Credentials provider for proxy authentication
+     * @param isStreaming              Whether this connection is for streaming (uses longer timeout)
+     * @return The HTTP response
+     * @throws IOException if the request fails
+     */
     @NonNull
-    public HttpResponse executeRequest(@NonNull HttpProxy httpProxy,
+    HttpResponse executeRequest(@NonNull HttpProxy httpProxy,
                                        @NonNull URL targetUrl,
                                        @NonNull HttpMethod method,
                                        @NonNull Map<String, String> headers,
                                        @Nullable String body,
                                        @NonNull SSLSocketFactory sslSocketFactory,
-                                       @Nullable ProxyCredentialsProvider proxyCredentialsProvider) throws IOException {
+                                       @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
+                                       boolean isStreaming) throws IOException {
 
         try {
             SslProxyTunnelEstablisher tunnelEstablisher = new SslProxyTunnelEstablisher();
@@ -55,7 +70,8 @@ class ProxyCacertConnectionHandler {
                         targetUrl.getHost(),
                         getTargetPort(targetUrl),
                         sslSocketFactory,
-                        proxyCredentialsProvider
+                        proxyCredentialsProvider,
+                        isStreaming
                 );
 
                 Logger.v("SSL tunnel established successfully");

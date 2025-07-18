@@ -30,7 +30,8 @@ class HttpRequestHelper {
                                               boolean useProxyAuthentication,
                                               @Nullable SSLSocketFactory sslSocketFactory,
                                               @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
-                                              @Nullable String body) throws IOException {
+                                              @Nullable String body,
+                                              boolean isStreaming) throws IOException {
 
         if (httpProxy != null && sslSocketFactory != null && (httpProxy.getCaCertStream() != null || httpProxy.getClientCertStream() != null)) {
             try {
@@ -41,7 +42,8 @@ class HttpRequestHelper {
                         headers,
                         body,
                         sslSocketFactory,
-                        proxyCredentialsProvider
+                        proxyCredentialsProvider,
+                        isStreaming
                 );
 
                 return new HttpResponseConnectionAdapter(url, response, response.getServerCertificates());
