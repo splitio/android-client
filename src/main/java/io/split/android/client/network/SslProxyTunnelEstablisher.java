@@ -58,7 +58,7 @@ class SslProxyTunnelEstablisher {
      * @throws IOException if tunnel establishment fails
      */
     @NonNull
-    public Socket establishTunnel(@NonNull String proxyHost,
+    Socket establishTunnel(@NonNull String proxyHost,
                                   int proxyPort,
                                   @NonNull String targetHost,
                                   int targetPort,
@@ -128,7 +128,7 @@ class SslProxyTunnelEstablisher {
     private void sendConnectRequest(@NonNull SSLSocket sslSocket,
                                     @NonNull String targetHost,
                                     int targetPort,
-                                    @Nullable BearerCredentialsProvider proxyCredentialsProvider) throws IOException {
+                                    @Nullable ProxyCredentialsProvider proxyCredentialsProvider) throws IOException {
 
         Logger.v("Sending CONNECT request through SSL: CONNECT " + targetHost + ":" + targetPort + " HTTP/1.1");
 
@@ -137,10 +137,12 @@ class SslProxyTunnelEstablisher {
         writer.write("Host: " + targetHost + ":" + targetPort + CRLF);
 
         if (proxyCredentialsProvider != null) {
-            // Send Proxy-Authorization header if credentials are set
-            String bearerToken = proxyCredentialsProvider.getToken();
-            if (bearerToken != null && !bearerToken.trim().isEmpty()) {
-                writer.write(PROXY_AUTHORIZATION_HEADER + ": Bearer " + bearerToken + CRLF);
+            if (proxyCredentialsProvider instanceof BearerCredentialsProvider) {
+                // Send Proxy-Authorization header if credentials are set
+                String bearerToken = ((BearerCredentialsProvider) proxyCredentialsProvider).getToken();
+                if (bearerToken != null && !bearerToken.trim().isEmpty()) {
+                    writer.write(PROXY_AUTHORIZATION_HEADER + ": Bearer " + bearerToken + CRLF);
+                }
             }
         }
 
