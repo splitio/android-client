@@ -4,6 +4,7 @@ package io.split.android.client;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import java.net.URI;
 import java.util.concurrent.TimeUnit;
@@ -17,6 +18,7 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.network.HttpProxy;
+import io.split.android.client.network.ProxyConfiguration;
 import io.split.android.client.network.SplitAuthenticator;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsMode;
@@ -132,6 +134,8 @@ public class SplitClientConfig {
     private final long mImpressionsDedupeTimeInterval;
     @NonNull
     private final RolloutCacheConfiguration mRolloutCacheConfiguration;
+    @Nullable
+    private final ProxyConfiguration mProxyConfiguration;
 
     public static Builder builder() {
         return new Builder();
@@ -187,7 +191,8 @@ public class SplitClientConfig {
                               long observerCacheExpirationPeriod,
                               CertificatePinningConfiguration certificatePinningConfiguration,
                               long impressionsDedupeTimeInterval,
-                              RolloutCacheConfiguration rolloutCacheConfiguration) {
+                              @NonNull RolloutCacheConfiguration rolloutCacheConfiguration,
+                              @Nullable ProxyConfiguration proxyConfiguration) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -246,6 +251,7 @@ public class SplitClientConfig {
         mCertificatePinningConfiguration = certificatePinningConfiguration;
         mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
         mRolloutCacheConfiguration = rolloutCacheConfiguration;
+        mProxyConfiguration = proxyConfiguration;
     }
 
     public String trafficType() {
@@ -436,7 +442,9 @@ public class SplitClientConfig {
         return mIsPersistentAttributesEnabled;
     }
 
-    public int offlineRefreshRate() { return mOfflineRefreshRate; }
+    public int offlineRefreshRate() {
+        return mOfflineRefreshRate;
+    }
 
     public boolean shouldRecordTelemetry() {
         return mShouldRecordTelemetry;
@@ -446,7 +454,9 @@ public class SplitClientConfig {
         return mTelemetryRefreshRate;
     }
 
-    public boolean syncEnabled() { return mSyncEnabled; }
+    public boolean syncEnabled() {
+        return mSyncEnabled;
+    }
 
     public int mtkPerPush() {
         return mMtkPerPush;
@@ -476,7 +486,9 @@ public class SplitClientConfig {
         return mSSEDisconnectionDelayInSecs;
     }
 
-    private void enableTelemetry() { mShouldRecordTelemetry = true; }
+    private void enableTelemetry() {
+        mShouldRecordTelemetry = true;
+    }
 
     public long observerCacheExpirationPeriod() {
         return Math.max(mImpressionsDedupeTimeInterval, mObserverCacheExpirationPeriod);
@@ -571,6 +583,8 @@ public class SplitClientConfig {
         private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
 
         private RolloutCacheConfiguration mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();
+
+        private ProxyConfiguration mProxyConfiguration = null;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -806,7 +820,9 @@ public class SplitClientConfig {
          *
          * @param proxyHost proxy URI
          * @return this builder
+         * @deprecated use {@link #proxyConfiguration(ProxyConfiguration)}
          */
+        @Deprecated
         public Builder proxyHost(String proxyHost) {
             if (proxyHost != null && proxyHost.endsWith("/")) {
                 mProxyHost = proxyHost.substring(0, proxyHost.length() - 1);
@@ -823,6 +839,7 @@ public class SplitClientConfig {
          * @param proxyAuthenticator
          * @return this builder
          */
+        @Deprecated
         public Builder proxyAuthenticator(SplitAuthenticator proxyAuthenticator) {
             mProxyAuthenticator = proxyAuthenticator;
             return this;
@@ -1030,6 +1047,7 @@ public class SplitClientConfig {
          * <p>
          * This is an ADVANCED parameter
          * </p>
+         *
          * @param telemetryRefreshRate Rate in seconds for telemetry refresh.
          * @return This builder
          * @default 3600 seconds
@@ -1101,10 +1119,9 @@ public class SplitClientConfig {
         /**
          * This configuration is used to control the size of the impressions deduplication window.
          *
+         * @param impressionsDedupeTimeInterval The time interval in milliseconds.
          * @Experimental This method is experimental and may change or be removed in future versions.
          * To be used upon Split team recommendation.
-         *
-         * @param impressionsDedupeTimeInterval The time interval in milliseconds.
          */
         @Deprecated
         public Builder impressionsDedupeTimeInterval(long impressionsDedupeTimeInterval) {
@@ -1125,6 +1142,17 @@ public class SplitClientConfig {
             } else {
                 mRolloutCacheConfiguration = rolloutCacheConfiguration;
             }
+            return this;
+        }
+
+        /**
+         * Sets the proxy configuration
+         *
+         * @param proxyConfiguration
+         * @return this builder
+         */
+        public Builder proxyConfiguration(ProxyConfiguration proxyConfiguration) {
+            mProxyConfiguration = proxyConfiguration;
             return this;
         }
 
@@ -1207,7 +1235,7 @@ public class SplitClientConfig {
                 mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
             }
 
-            HttpProxy proxy = parseProxyHost(mProxyHost);
+            HttpProxy proxy = parseProxyHost(mProxyHost, mProxyConfiguration);
 
             return new SplitClientConfig(
                     mServiceEndpoints.getSdkEndpoint(),
@@ -1260,10 +1288,29 @@ public class SplitClientConfig {
                     mObserverCacheExpirationPeriod,
                     mCertificatePinningConfiguration,
                     mImpressionsDedupeTimeInterval,
-                    mRolloutCacheConfiguration);
+                    mRolloutCacheConfiguration,
+                    mProxyConfiguration);
         }
 
-        private HttpProxy parseProxyHost(String proxyUri) {
+        private HttpProxy parseProxyHost(String proxyUri, ProxyConfiguration proxyConfiguration) {
+            // Use legacy proxy behavior if proxyConfiguration is null
+            if (proxyConfiguration == null) {
+                return legacyProxyBehavior(proxyUri);
+            }
+
+            // Initialize internal config with null url. This will be verified when building the factory.
+            HttpProxy.Builder builder = HttpProxy.newBuilder(null, -1);
+            if (proxyConfiguration.getUrl() != null) {
+                builder = HttpProxy.newBuilder(proxyConfiguration.getUrl().getHost(), proxyConfiguration.getUrl().getPort())
+                        .mtlsAuth(proxyConfiguration.getClientCert(), proxyConfiguration.getClientPk())
+                        .proxyCacert(proxyConfiguration.getCaCert())
+                        .credentialsProvider(proxyConfiguration.getCredentialsProvider());
+            }
+            return builder.build();
+        }
+
+        @Nullable
+        private HttpProxy legacyProxyBehavior(String proxyUri) {
             if (!Utils.isNullOrEmpty(proxyUri)) {
                 try {
                     String username = null;
@@ -1271,17 +1318,19 @@ public class SplitClientConfig {
                     URI uri = URI.create(proxyUri);
                     int port = uri.getPort() != -1 ? uri.getPort() : PROXY_PORT_DEFAULT;
                     String userInfo = uri.getUserInfo();
-                    if(!Utils.isNullOrEmpty(userInfo)) {
+                    if (!Utils.isNullOrEmpty(userInfo)) {
                         String[] userInfoComponents = userInfo.split(":");
-                        if(userInfoComponents.length > 1) {
+                        if (userInfoComponents.length > 1) {
                             username = userInfoComponents[0];
                             password = userInfoComponents[1];
                         }
                     }
                     String host = String.format("%s%s", uri.getHost(), uri.getPath());
-                    return HttpProxy.newBuilder(host, port)
-                            .basicAuth(username, password)
-                            .build();
+                    if (username != null && password != null) {
+                        return HttpProxy.newBuilder(host, port).basicAuth(username, password).build();
+                    } else {
+                        return HttpProxy.newBuilder(host, port).build();
+                    }
                 } catch (IllegalArgumentException e) {
                     Logger.e("Proxy URI not valid: " + e.getLocalizedMessage());
                     throw new IllegalArgumentException();

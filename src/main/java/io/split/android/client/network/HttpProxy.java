@@ -4,6 +4,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+
 import java.io.InputStream;
 
 public class HttpProxy {
@@ -15,6 +16,7 @@ public class HttpProxy {
     private final @Nullable InputStream mClientCertStream;
     private final @Nullable InputStream mClientKeyStream;
     private final @Nullable InputStream mCaCertStream;
+    private final @Nullable ProxyCredentialsProvider mCredentialsProvider;
 
     private HttpProxy(Builder builder) {
         mHost = builder.mHost;
@@ -24,9 +26,10 @@ public class HttpProxy {
         mClientCertStream = builder.mClientCertStream;
         mClientKeyStream = builder.mClientKeyStream;
         mCaCertStream = builder.mCaCertStream;
+        mCredentialsProvider = builder.mCredentialsProvider;
     }
 
-    public @NonNull String getHost() {
+    public @Nullable String getHost() {
         return mHost;
     }
 
@@ -54,7 +57,11 @@ public class HttpProxy {
         return mCaCertStream;
     }
 
-    public static Builder newBuilder(@NonNull String host, int port) {
+    public @Nullable ProxyCredentialsProvider getCredentialsProvider() {
+        return mCredentialsProvider;
+    }
+
+    public static Builder newBuilder(@Nullable String host, int port) {
         return new Builder(host, port);
     }
 
@@ -66,8 +73,10 @@ public class HttpProxy {
         private @Nullable InputStream mClientCertStream;
         private @Nullable InputStream mClientKeyStream;
         private @Nullable InputStream mCaCertStream;
+        @Nullable
+        private ProxyCredentialsProvider mCredentialsProvider;
 
-        private Builder(@NonNull String host, int port) {
+        private Builder(@Nullable String host, int port) {
             checkNotNull(host);
             mHost = host;
             mPort = port;
@@ -84,10 +93,14 @@ public class HttpProxy {
             return this;
         }
 
-        public Builder mtlsAuth(@NonNull InputStream certStream, @NonNull InputStream keyStream, @NonNull InputStream caCertStream) {
-            mClientCertStream = certStream;
+        public Builder mtlsAuth(@NonNull InputStream clientCertStream, @NonNull InputStream keyStream) {
+            mClientCertStream = clientCertStream;
             mClientKeyStream = keyStream;
-            mCaCertStream = caCertStream;
+            return this;
+        }
+
+        public Builder credentialsProvider(@NonNull ProxyCredentialsProvider credentialsProvider) {
+            mCredentialsProvider = credentialsProvider;
             return this;
         }
 

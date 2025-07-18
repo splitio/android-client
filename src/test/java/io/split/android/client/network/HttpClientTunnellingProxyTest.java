@@ -390,9 +390,9 @@ public class HttpClientTunnellingProxyTest {
         HttpProxy proxy = HttpProxy.newBuilder("localhost", assignedProxyPort)
                 .mtlsAuth(
                     Files.newInputStream(clientCertFile.toPath()),
-                    Files.newInputStream(clientKeyFile.toPath()),
-                    Files.newInputStream(proxyCaFile.toPath())
+                    Files.newInputStream(clientKeyFile.toPath())
                 )
+                .proxyCacert(Files.newInputStream(proxyCaFile.toPath()))
                 .build();
 
         // 5. Build client (let builder/factory handle trust)

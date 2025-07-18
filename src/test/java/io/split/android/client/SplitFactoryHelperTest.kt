@@ -2,10 +2,12 @@ package io.split.android.client
 
 import android.content.Context
 import io.split.android.client.SplitFactoryHelper.Initializer.Listener
+import io.split.android.client.api.Key
 import io.split.android.client.events.EventsManagerCoordinator
 import io.split.android.client.events.SplitInternalEvent
+import io.split.android.client.exceptions.SplitInstantiationException
 import io.split.android.client.lifecycle.SplitLifecycleManager
-import io.split.android.client.service.CleanUpDatabaseTask
+import io.split.android.client.network.ProxyConfiguration
 import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor
 import io.split.android.client.service.executor.SplitTaskExecutionInfo
 import io.split.android.client.service.executor.SplitTaskExecutionListener
@@ -14,6 +16,8 @@ import io.split.android.client.service.executor.SplitTaskType
 import io.split.android.client.service.synchronizer.RolloutCacheManager
 import io.split.android.client.service.synchronizer.SyncManager
 import junit.framework.TestCase.assertEquals
+import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertTrue
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -25,7 +29,6 @@ import org.mockito.Mockito.verify
 import org.mockito.Mockito.`when`
 import org.mockito.MockitoAnnotations
 import java.io.File
-import java.lang.IllegalArgumentException
 import java.util.concurrent.locks.ReentrantLock
 
 class SplitFactoryHelperTest {
@@ -183,5 +186,31 @@ class SplitFactoryHelperTest {
         verify(syncManager).start()
         verify(lifecycleManager).register(syncManager)
         verify(initLock).unlock()
+    }
+
+    @Test
+    fun `initializing with proxy config with null url throws`() {
+        var exceptionThrown = false
+        try {
+            SplitFactoryBuilder.build("sdk_key", Key("user"), SplitClientConfig.builder().proxyConfiguration(
+                ProxyConfiguration.builder().build()).build(), context)
+        } catch (splitInstantiationException: SplitInstantiationException) {
+            exceptionThrown = splitInstantiationException.message!!.contains("When configured, proxy host cannot be null")
+        }
+
+        assertTrue(exceptionThrown)
+    }
+
+    @Test
+    fun `initializing with proxy config with valid url does not throw`() {
+        var exceptionThrown = false
+        try {
+            SplitFactoryBuilder.build("sdk_key", Key("user"), SplitClientConfig.builder().proxyConfiguration(
+                ProxyConfiguration.builder().url("http://localhost:8080").build()).build(), context)
+        } catch (splitInstantiationException: SplitInstantiationException) {
+            exceptionThrown = splitInstantiationException.message!!.contains("When configured, proxy host cannot be null")
+        }
+
+        assertFalse(exceptionThrown)
     }
 }
