@@ -25,7 +25,24 @@ class SslProxyTunnelEstablisher {
 
     private static final String CRLF = "\r\n";
     private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
+    
+    // Default timeout for regular connections (10 seconds)
+    private static final int DEFAULT_SOCKET_TIMEOUT = 10000;
 
+    /**
+     * Establishes an SSL tunnel through the proxy using the CONNECT method.
+     * After successful tunnel establishment, extracts the underlying socket
+     * for use with origin server SSL connections.
+     *
+     * @param proxyHost                The proxy server hostname
+     * @param proxyPort                The proxy server port
+     * @param targetHost               The target server hostname
+     * @param targetPort               The target server port
+     * @param sslSocketFactory         SSL socket factory for proxy authentication
+     * @param proxyCredentialsProvider Credentials provider for proxy authentication
+     * @return Raw socket with tunnel established (connection maintained)
+     * @throws IOException if tunnel establishment fails
+     */
     /**
      * Establishes an SSL tunnel through the proxy using the CONNECT method.
      * After successful tunnel establishment, extracts the underlying socket
@@ -52,14 +69,17 @@ class SslProxyTunnelEstablisher {
         SSLSocket sslSocket = null;
 
         try {
+            // Determine which timeout to use based on connection type
+            int timeout = DEFAULT_SOCKET_TIMEOUT;
+            
             // Step 1: Create raw TCP connection to proxy
             rawSocket = new Socket(proxyHost, proxyPort);
-            rawSocket.setSoTimeout(10000); // 10 second timeout
+            rawSocket.setSoTimeout(timeout);
 
             // Create a temporary SSL socket to establish the SSL session with proper trust validation
             sslSocket = (SSLSocket) sslSocketFactory.createSocket(rawSocket, proxyHost, proxyPort, false);
             sslSocket.setUseClientMode(true);
-            sslSocket.setSoTimeout(10000); // 10 second timeout
+            sslSocket.setSoTimeout(timeout);
 
             // Perform SSL handshake using the SSL socket with custom CA certificates
             sslSocket.startHandshake();
@@ -108,7 +128,7 @@ class SslProxyTunnelEstablisher {
     private void sendConnectRequest(@NonNull SSLSocket sslSocket,
                                     @NonNull String targetHost,
                                     int targetPort,
-                                    @Nullable ProxyCredentialsProvider proxyCredentialsProvider) throws IOException {
+                                    @Nullable BearerCredentialsProvider proxyCredentialsProvider) throws IOException {
 
         Logger.v("Sending CONNECT request through SSL: CONNECT " + targetHost + ":" + targetPort + " HTTP/1.1");
 
@@ -118,7 +138,7 @@ class SslProxyTunnelEstablisher {
 
         if (proxyCredentialsProvider != null) {
             // Send Proxy-Authorization header if credentials are set
-            String bearerToken = proxyCredentialsProvider.getBearerToken();
+            String bearerToken = proxyCredentialsProvider.getToken();
             if (bearerToken != null && !bearerToken.trim().isEmpty()) {
                 writer.write(PROXY_AUTHORIZATION_HEADER + ": Bearer " + bearerToken + CRLF);
             }
