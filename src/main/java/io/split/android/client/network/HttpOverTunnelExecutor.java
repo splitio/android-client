@@ -6,6 +6,7 @@ import androidx.annotation.Nullable;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.URL;
 import java.security.cert.Certificate;
 import java.util.Map;
@@ -58,7 +59,12 @@ class HttpOverTunnelExecutor {
             sendHttpRequest(tunnelSocket, targetUrl, method, headers, body);
 
             return readHttpResponse(tunnelSocket, serverCertificates);
+        } catch (SocketException e) {
+            // Let socket-related IOExceptions pass through unwrapped
+            // This ensures consistent behavior with non-proxy flows
+            throw e;
         } catch (Exception e) {
+            // Wrap other exceptions in IOException
             Logger.e("Failed to execute request through tunnel: " + e.getMessage());
             throw new IOException("Failed to execute HTTP request through tunnel to " + targetUrl, e);
         }

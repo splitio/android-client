@@ -18,6 +18,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
@@ -83,7 +84,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     }
 
     @Override
-    public HttpStreamResponse execute() throws HttpException {
+    public HttpStreamResponse execute() throws HttpException, IOException {
         return getRequest();
     }
 
@@ -115,7 +116,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         }
     }
 
-    private HttpStreamResponse getRequest() throws HttpException {
+    private HttpStreamResponse getRequest() throws HttpException, IOException {
         HttpStreamResponse response;
         try {
             mConnection = setUpConnection(false);
@@ -133,6 +134,11 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         } catch (SSLPeerUnverifiedException e) {
             disconnect();
             throw new HttpException("SSL peer not verified: " + e.getLocalizedMessage(), HttpStatus.INTERNAL_NON_RETRYABLE.getCode());
+        } catch (SocketException e) {
+            disconnect();
+            // Let socket-related IOExceptions pass through unwrapped for consistent error handling
+            // This ensures socket closures are treated the same in both direct and proxy flows
+            throw e;
         } catch (IOException e) {
             disconnect();
             throw new HttpException("Something happened while retrieving data: " + e.getLocalizedMessage());
