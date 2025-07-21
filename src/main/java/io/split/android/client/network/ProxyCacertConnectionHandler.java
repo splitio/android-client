@@ -4,7 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.io.IOException;
-import java.net.HttpRetryException;
 import java.net.Socket;
 import java.net.SocketException;
 import java.net.URL;
@@ -140,12 +139,7 @@ class ProxyCacertConnectionHandler {
         } catch (SocketException e) {
             // Let socket-related IOExceptions pass through unwrapped for consistent error handling
             throw e;
-        } catch (IOException e) {
-            throw new IOException("Failed to execute request through custom tunnel", e);
         } catch (Exception e) {
-            if (e instanceof HttpRetryException) {
-                throw (HttpRetryException) e;
-            }
             throw new IOException("Failed to execute request through custom tunnel", e);
         }
     }
