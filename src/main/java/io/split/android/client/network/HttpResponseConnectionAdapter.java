@@ -1,8 +1,11 @@
 package io.split.android.client.network;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -22,13 +25,17 @@ import javax.net.ssl.SSLSocketFactory;
 /**
  * Adapter that wraps an HttpResponse as an HttpURLConnection.
  * <p>
- * This is only used to adapt the response from the CONNECT method.
+ * This is only used to adapt the response from request through the TLS tunnel.
  */
 class HttpResponseConnectionAdapter extends HttpsURLConnection {
 
     private final HttpResponse mResponse;
     private final URL mUrl;
     private final Certificate[] mServerCertificates;
+    private OutputStream mOutputStream;
+    private InputStream mInputStream;
+    private InputStream mErrorStream;
+    private boolean mDoOutput = false;
 
     /**
      * Creates an adapter that wraps an HttpResponse as an HttpURLConnection.
@@ -38,12 +45,33 @@ class HttpResponseConnectionAdapter extends HttpsURLConnection {
      * @param serverCertificates The server certificates from the SSL connection
      */
     HttpResponseConnectionAdapter(@NonNull URL url,
-                                         @NonNull HttpResponse response,
-                                         Certificate[] serverCertificates) {
+                                  @NonNull HttpResponse response,
+                                  Certificate[] serverCertificates) {
+        this(url, response, serverCertificates, new ByteArrayOutputStream());
+    }
+
+    @VisibleForTesting
+    HttpResponseConnectionAdapter(@NonNull URL url,
+                                  @NonNull HttpResponse response,
+                                  Certificate[] serverCertificates,
+                                  @NonNull OutputStream outputStream) {
+        this(url, response, serverCertificates, outputStream, null, null);
+    }
+    
+    @VisibleForTesting
+    HttpResponseConnectionAdapter(@NonNull URL url,
+                                  @NonNull HttpResponse response,
+                                  Certificate[] serverCertificates,
+                                  @NonNull OutputStream outputStream,
+                                  @Nullable InputStream inputStream,
+                                  @Nullable InputStream errorStream) {
         super(url);
         mUrl = url;
         mResponse = response;
         mServerCertificates = serverCertificates;
+        mOutputStream = outputStream;
+        mInputStream = inputStream;
+        mErrorStream = errorStream;
     }
 
     @Override
@@ -77,21 +105,27 @@ class HttpResponseConnectionAdapter extends HttpsURLConnection {
         if (mResponse.getHttpStatus() >= 400) {
             throw new IOException("HTTP " + mResponse.getHttpStatus());
         }
-        String data = mResponse.getData();
-        if (data == null) {
-            data = "";
+        if (mInputStream == null) {
+            String data = mResponse.getData();
+            if (data == null) {
+                data = "";
+            }
+            mInputStream = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
         }
-        return new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+        return mInputStream;
     }
 
     @Override
     public InputStream getErrorStream() {
         if (mResponse.getHttpStatus() >= 400) {
-            String data = mResponse.getData();
-            if (data == null) {
-                data = "";
+            if (mErrorStream == null) {
+                String data = mResponse.getData();
+                if (data == null) {
+                    data = "";
+                }
+                mErrorStream = new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
             }
-            return new ByteArrayInputStream(data.getBytes(StandardCharsets.UTF_8));
+            return mErrorStream;
         }
         return null;
     }
@@ -108,6 +142,32 @@ class HttpResponseConnectionAdapter extends HttpsURLConnection {
 
     @Override
     public void disconnect() {
+        // Close output stream if it exists
+        try {
+            if (mOutputStream != null) {
+                mOutputStream.close();
+            }
+        } catch (IOException e) {
+            // Ignore exception during disconnect
+        }
+        
+        // Close input stream if it exists
+        try {
+            if (mInputStream != null) {
+                mInputStream.close();
+            }
+        } catch (IOException e) {
+            // Ignore exception during disconnect
+        }
+        
+        // Close error stream if it exists
+        try {
+            if (mErrorStream != null) {
+                mErrorStream.close();
+            }
+        } catch (IOException e) {
+            // Ignore exception during disconnect
+        }
     }
 
     // Required abstract method implementations for HTTPS connection
@@ -148,11 +208,12 @@ class HttpResponseConnectionAdapter extends HttpsURLConnection {
 
     @Override
     public void setDoOutput(boolean doOutput) {
+        mDoOutput = doOutput;
     }
 
     @Override
     public boolean getDoOutput() {
-        return false;
+        return mDoOutput;
     }
 
     @Override
@@ -350,7 +411,10 @@ class HttpResponseConnectionAdapter extends HttpsURLConnection {
 
     @Override
     public OutputStream getOutputStream() throws IOException {
-        throw new IOException("Output not supported for SSL proxy responses");
+        if (!mDoOutput) {
+            throw new IOException("Output not enabled for this connection. Call setDoOutput(true) first.");
+        }
+        return mOutputStream;
     }
 
     @Override

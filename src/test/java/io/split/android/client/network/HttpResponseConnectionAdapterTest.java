@@ -1,6 +1,7 @@
 package io.split.android.client.network;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -12,6 +13,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
@@ -367,8 +370,159 @@ public class HttpResponseConnectionAdapterTest {
     }
 
     @Test(expected = IOException.class)
-    public void getOutputStreamThrows() throws IOException {
+    public void getOutputStreamThrowsWhenNotEnabled() throws IOException {
         mAdapter = new HttpResponseConnectionAdapter(mTestUrl, mMockResponse, mTestCertificates);
+        // Should throw exception since doOutput is not enabled
         mAdapter.getOutputStream();
+    }
+
+    @Test
+    public void setDoOutputEnablesOutput() {
+        mAdapter = new HttpResponseConnectionAdapter(mTestUrl, mMockResponse, mTestCertificates);
+        
+        // Initially doOutput should be false
+        assertEquals(false, mAdapter.getDoOutput());
+        
+        // After setting doOutput to true, getDoOutput should return true
+        mAdapter.setDoOutput(true);
+        assertEquals(true, mAdapter.getDoOutput());
+    }
+
+    @Test
+    public void getOutputStreamAfterEnablingOutput() throws IOException {
+        mAdapter = new HttpResponseConnectionAdapter(mTestUrl, mMockResponse, mTestCertificates);
+        mAdapter.setDoOutput(true);
+        
+        assertNotNull("Output stream should not be null when doOutput is enabled", mAdapter.getOutputStream());
+    }
+
+    @Test
+    public void writeToOutputStream() throws IOException {
+        // Create a ByteArrayOutputStream to capture the written data
+        ByteArrayOutputStream testOutputStream = new ByteArrayOutputStream();
+        
+        // Use the constructor that accepts a custom OutputStream
+        mAdapter = new HttpResponseConnectionAdapter(mTestUrl, mMockResponse, mTestCertificates, testOutputStream);
+        mAdapter.setDoOutput(true);
+        
+        // Write test data to the output stream
+        String testData = "Test output data";
+        mAdapter.getOutputStream().write(testData.getBytes(StandardCharsets.UTF_8));
+        
+        // Verify that the data was written correctly
+        assertEquals("Written data should match the input", testData, testOutputStream.toString(StandardCharsets.UTF_8.name()));
+    }
+
+    @Test
+    public void disconnectClosesOutputStream() throws IOException {
+        // Create a custom OutputStream that tracks if it's been closed
+        TestOutputStream testOutputStream = new TestOutputStream();
+
+        mAdapter = new HttpResponseConnectionAdapter(mTestUrl, mMockResponse, mTestCertificates, testOutputStream);
+        mAdapter.setDoOutput(true);
+
+        // Get the output stream and write some data
+        mAdapter.getOutputStream().write("Test".getBytes(StandardCharsets.UTF_8));
+        
+        // Verify the stream is not closed yet
+        assertFalse("Output stream should not be closed before disconnect", testOutputStream.isClosed());
+        
+        // Disconnect should close the output stream
+        mAdapter.disconnect();
+        
+        // Verify the stream was closed
+        assertTrue("Output stream should be closed after disconnect", testOutputStream.isClosed());
+    }
+    
+    @Test
+    public void disconnectClosesInputStream() throws IOException {
+        // Create a custom InputStream that tracks if it's been closed
+        TestInputStream testInputStream = new TestInputStream("Test response data".getBytes(StandardCharsets.UTF_8));
+        TestOutputStream testOutputStream = new TestOutputStream();
+        
+        // Create adapter with injected test input stream
+        when(mMockResponse.getHttpStatus()).thenReturn(200);
+        mAdapter = new HttpResponseConnectionAdapter(
+                mTestUrl, 
+                mMockResponse, 
+                mTestCertificates, 
+                testOutputStream,
+                testInputStream,
+                null);
+        
+        // Get the input stream and read some data to simulate usage
+        InputStream stream = mAdapter.getInputStream();
+        byte[] buffer = new byte[10];
+        stream.read(buffer);
+        
+        // Verify the stream is not closed yet
+        assertFalse("Input stream should not be closed before disconnect", testInputStream.isClosed());
+        
+        // Disconnect should close the input stream
+        mAdapter.disconnect();
+        
+        // Verify the stream was closed
+        assertTrue("Input stream should be closed after disconnect", testInputStream.isClosed());
+    }
+
+    /**
+     * Custom OutputStream implementation for testing that tracks if it's been closed.
+     */
+    private static class TestOutputStream extends ByteArrayOutputStream {
+        private boolean mClosed = false;
+        
+        @Override
+        public void close() throws IOException {
+            super.close();
+            mClosed = true;
+        }
+        
+        public boolean isClosed() {
+            return mClosed;
+        }
+    }
+
+    private static class TestInputStream extends ByteArrayInputStream {
+        private boolean mClosed = false;
+        
+        public TestInputStream(byte[] data) {
+            super(data);
+        }
+        
+        @Override
+        public void close() throws IOException {
+            super.close();
+            mClosed = true;
+        }
+        
+        public boolean isClosed() {
+            return mClosed;
+        }
+    }
+    
+    @Test
+    public void disconnectClosesErrorStream() throws IOException {
+        TestInputStream testErrorStream = new TestInputStream("Error data".getBytes(StandardCharsets.UTF_8));
+        TestOutputStream testOutputStream = new TestOutputStream();
+        
+        when(mMockResponse.getHttpStatus()).thenReturn(404); // Error status
+        mAdapter = new HttpResponseConnectionAdapter(
+                mTestUrl, 
+                mMockResponse, 
+                mTestCertificates, 
+                testOutputStream,
+                null,
+                testErrorStream);
+        
+        // Get the error stream and read some data to simulate usage
+        InputStream stream = mAdapter.getErrorStream();
+        byte[] buffer = new byte[10];
+        stream.read(buffer);
+        
+        assertFalse("Error stream should not be closed before disconnect", testErrorStream.isClosed());
+        
+        mAdapter.disconnect();
+        
+        assertTrue("Error stream should be closed after disconnect", testErrorStream.isClosed());
     }
 }
