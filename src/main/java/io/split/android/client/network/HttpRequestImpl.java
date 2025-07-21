@@ -4,7 +4,8 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import static io.split.android.client.network.HttpRequestHelper.applySslConfig;
 import static io.split.android.client.network.HttpRequestHelper.applyTimeouts;
-import static io.split.android.client.network.HttpRequestHelper.openConnection;
+import static io.split.android.client.network.HttpRequestHelper.createConnection;
+
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,6 +15,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
@@ -43,7 +45,11 @@ public class HttpRequestImpl implements HttpRequest {
     @Nullable
     private final Proxy mProxy;
     @Nullable
+    private final HttpProxy mHttpProxy;
+    @Nullable
     private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
+    @Nullable
+    private final ProxyCredentialsProvider mProxyCredentialsProvider;
     private final long mReadTimeout;
     private final long mConnectionTimeout;
     @Nullable
@@ -58,7 +64,9 @@ public class HttpRequestImpl implements HttpRequest {
                     @Nullable String body,
                     @NonNull Map<String, String> headers,
                     @Nullable Proxy proxy,
+                    @Nullable HttpProxy httpProxy,
                     @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                    @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
                     long readTimeout,
                     long connectionTimeout,
                     @Nullable DevelopmentSslConfig developmentSslConfig,
@@ -71,7 +79,9 @@ public class HttpRequestImpl implements HttpRequest {
         mUrlSanitizer = checkNotNull(urlSanitizer);
         mHeaders = new HashMap<>(checkNotNull(headers));
         mProxy = proxy;
+        mHttpProxy = httpProxy;
         mProxyAuthenticator = proxyAuthenticator;
+        mProxyCredentialsProvider = proxyCredentialsProvider;
         mReadTimeout = readTimeout;
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
@@ -178,7 +188,26 @@ public class HttpRequestImpl implements HttpRequest {
             throw new IOException("Error parsing URL");
         }
 
-        HttpURLConnection connection = openConnection(mProxy, mProxyAuthenticator, url, mHttpMethod, mHeaders, authenticate);
+        HttpURLConnection connection;
+        try {
+            connection = createConnection(
+                    url,
+                    mProxy,
+                    mHttpProxy,
+                    mProxyAuthenticator,
+                    mHttpMethod,
+                    mHeaders,
+                    authenticate,
+                    mSslSocketFactory,
+                    mProxyCredentialsProvider,
+                    mBody
+            );
+        } catch (HttpRetryException e) {
+            if (mProxyAuthenticator == null) {
+                throw e;
+            }
+            connection = createConnection(url, mProxy, mHttpProxy, mProxyAuthenticator, mHttpMethod, mHeaders, authenticate, null, null, null);
+        }
         applyTimeouts(mReadTimeout, mConnectionTimeout, connection);
         applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
 

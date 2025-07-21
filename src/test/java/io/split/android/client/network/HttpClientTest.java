@@ -52,12 +52,12 @@ public class HttpClientTest {
     private MockWebServer mWebServer;
     private MockWebServer mProxyServer;
     private HttpClient client;
-    private UrlSanitizer mUrlSanitizer;
+    private UrlSanitizer mUrlSanitizerMock;
 
     @Before
     public void setup() throws IOException {
-        mUrlSanitizer = mock(UrlSanitizer.class);
-        when(mUrlSanitizer.getUrl(any())).thenAnswer(new Answer<URL>() {
+        mUrlSanitizerMock = mock(UrlSanitizer.class);
+        when(mUrlSanitizerMock.getUrl(any())).thenAnswer(new Answer<URL>() {
             @Override
             public URL answer(InvocationOnMock invocation) throws Throwable {
                 URI argument = invocation.getArgument(0);
@@ -277,8 +277,8 @@ public class HttpClientTest {
 
         HttpClient client = new HttpClientImpl.Builder()
                 .setContext(mock(Context.class))
-                .setUrlSanitizer(mUrlSanitizer)
-                .setProxy(new HttpProxy(mProxyServer.getHostName(), mProxyServer.getPort()))
+                .setUrlSanitizer(mUrlSanitizerMock)
+                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).build())
                 .build();
 
         HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.GET);
@@ -312,7 +312,7 @@ public class HttpClientTest {
 
         HttpClient client = new HttpClientImpl.Builder()
                 .setContext(mock(Context.class))
-                .setUrlSanitizer(mUrlSanitizer)
+                .setUrlSanitizer(mUrlSanitizerMock)
                 .setProxyAuthenticator(new SplitAuthenticator() {
                     @Override
                     public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
@@ -322,7 +322,7 @@ public class HttpClientTest {
                         return request;
                     }
                 })
-                .setProxy(new HttpProxy(mProxyServer.getHostName(), mProxyServer.getPort()))
+                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).build())
                 .build();
 
         HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.GET);
@@ -367,7 +367,7 @@ public class HttpClientTest {
 
         HttpClient client = new HttpClientImpl.Builder()
                 .setContext(mock(Context.class))
-                .setUrlSanitizer(mUrlSanitizer)
+                .setUrlSanitizer(mUrlSanitizerMock)
                 .setProxyAuthenticator(new SplitAuthenticator() {
                     @Override
                     public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
@@ -377,7 +377,7 @@ public class HttpClientTest {
                         return request;
                     }
                 })
-                .setProxy(new HttpProxy(mProxyServer.getHostName(), mProxyServer.getPort()))
+                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).build())
                 .build();
 
         HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.POST, "{}");
@@ -456,7 +456,7 @@ public class HttpClientTest {
         mWebServer.start();
 
         client = new HttpClientImpl.Builder()
-                .setUrlSanitizer(mUrlSanitizer)
+                .setUrlSanitizer(mUrlSanitizerMock)
                 .build();
     }
 
