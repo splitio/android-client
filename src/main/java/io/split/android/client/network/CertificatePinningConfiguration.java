@@ -209,12 +209,5 @@ public class CertificatePinningConfiguration {
             }
             return pins;
         }
-
-        private static class DefaultBase64Decoder implements Base64Decoder {
-            @Override
-            public byte[] decode(String base64) {
-                return Base64Util.bytesDecode(base64);
-            }
-        }
     }
 }
