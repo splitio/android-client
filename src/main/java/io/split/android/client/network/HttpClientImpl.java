@@ -44,6 +44,8 @@ public class HttpClientImpl implements HttpClient {
     private final UrlSanitizer mUrlSanitizer;
     @Nullable
     private final CertificateChecker mCertificateChecker;
+    @Nullable
+    private ProxyCacertConnectionHandler mConnectionHandler;
 
     HttpClientImpl(@Nullable HttpProxy proxy,
                    @Nullable SplitAuthenticator proxyAuthenticator,
@@ -66,6 +68,7 @@ public class HttpClientImpl implements HttpClient {
         mSslSocketFactory = sslSocketFactory;
         mUrlSanitizer = urlSanitizer;
         mCertificateChecker = certificateChecker;
+        mConnectionHandler = mHttpProxy != null && mSslSocketFactory != null && (mHttpProxy.getCaCertStream() != null || mHttpProxy.getClientCertStream() != null) ? new ProxyCacertConnectionHandler() : null;
     }
 
     @Override
@@ -113,7 +116,8 @@ public class HttpClientImpl implements HttpClient {
                 mUrlSanitizer,
                 mCertificateChecker,
                 mHttpProxy,
-                mProxyCredentialsProvider);
+                mProxyCredentialsProvider,
+                mConnectionHandler);
     }
 
     @Override

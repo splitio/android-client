@@ -35,8 +35,6 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
 
     private static final int STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
 
-    private static final ProxyCacertConnectionHandler mConnectionHandler = new ProxyCacertConnectionHandler(); // TODO lazy
-
     private final URI mUri;
     private final HttpMethod mHttpMethod;
     private final Map<String, String> mHeaders;
@@ -59,6 +57,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private final HttpProxy mHttpProxy;
     @Nullable
     private final ProxyCredentialsProvider mProxyCredentialsProvider;
+    @Nullable
+    private  final ProxyCacertConnectionHandler mConnectionHandler;
 
     HttpStreamRequestImpl(@NonNull URI uri,
                           @NonNull Map<String, String> headers,
@@ -70,7 +70,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                           @NonNull UrlSanitizer urlSanitizer,
                           @Nullable CertificateChecker certificateChecker,
                           @Nullable HttpProxy httpProxy,
-                          @Nullable ProxyCredentialsProvider proxyCredentialsProvider) {
+                          @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
+                          @Nullable ProxyCacertConnectionHandler proxyCacertConnectionHandler) {
         mUri = checkNotNull(uri);
         mHttpMethod = HttpMethod.GET;
         mProxy = proxy;
@@ -83,6 +84,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         mCertificateChecker = certificateChecker;
         mHttpProxy = httpProxy;
         mProxyCredentialsProvider = proxyCredentialsProvider;
+        mConnectionHandler = proxyCacertConnectionHandler;
     }
 
     @Override
@@ -122,7 +124,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         HttpStreamResponse response;
         try {
             if (mHttpProxy != null && mSslSocketFactory != null && (mHttpProxy.getCaCertStream() != null || mHttpProxy.getClientCertStream() != null)) {
-                response = mConnectionHandler.executeStreamRequest(mHttpProxy, mUrlSanitizer.getUrl(mUri), mHttpMethod, mHeaders, mSslSocketFactory, mProxyCredentialsProvider);
+                response = mConnectionHandler.executeStreamRequest(mHttpProxy, getUrl(), mHttpMethod, mHeaders, mSslSocketFactory, mProxyCredentialsProvider);
             } else {
                 mConnection = setUpConnection(false);
                 response = buildResponse(mConnection);
@@ -154,10 +156,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     }
 
     private HttpURLConnection setUpConnection(boolean useProxyAuthenticator) throws IOException {
-        URL url = mUrlSanitizer.getUrl(mUri);
-        if (url == null) {
-            throw new IOException("Error parsing URL");
-        }
+        URL url = getUrl();
 
         HttpURLConnection connection = createConnection(
                 url,
@@ -177,6 +176,15 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         checkPins(connection, mCertificateChecker);
 
         return connection;
+    }
+
+    @NonNull
+    private URL getUrl() throws IOException {
+        URL url = mUrlSanitizer.getUrl(mUri);
+        if (url == null) {
+            throw new IOException("Error parsing URL");
+        }
+        return url;
     }
 
     private HttpStreamResponse handleAuthentication(HttpStreamResponse response) throws HttpException {

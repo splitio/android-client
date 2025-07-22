@@ -32,18 +32,6 @@ class HttpOverTunnelExecutor {
         mResponseParser = new RawHttpResponseParser();
     }
 
-    /**
-     * Executes an HTTP request through the established tunnel socket.
-     *
-     * @param tunnelSocket       The SSL Socket with tunnel established (connection maintained)
-     * @param targetUrl          The final destination URL (HTTP or HTTPS)
-     * @param method             HTTP method for the request
-     * @param headers            Headers to include in the request
-     * @param body               Request body (null for GET requests)
-     * @param serverCertificates The server certificates from the SSL connection (null if not available)
-     * @return HttpResponse containing the server's response
-     * @throws IOException if the request execution fails
-     */
     @NonNull
     HttpResponse executeRequest(
             @NonNull Socket tunnelSocket,
@@ -53,21 +41,7 @@ class HttpOverTunnelExecutor {
             @Nullable String body,
             @Nullable Certificate[] serverCertificates) throws IOException {
 
-        Logger.v("Executing request through tunnel to: " + targetUrl);
-
-        try {
-            sendHttpRequest(tunnelSocket, targetUrl, method, headers, body);
-
-            return readHttpResponse(tunnelSocket, serverCertificates);
-        } catch (SocketException e) {
-            // Let socket-related IOExceptions pass through unwrapped
-            // This ensures consistent behavior with non-proxy flows
-            throw e;
-        } catch (Exception e) {
-            // Wrap other exceptions in IOException
-            Logger.e("Failed to execute request through tunnel: " + e.getMessage());
-            throw new IOException("Failed to execute HTTP request through tunnel to " + targetUrl, e);
-        }
+        return (HttpResponse) executeRequest(tunnelSocket, targetUrl, method, headers, body, serverCertificates, false);
     }
 
     @NonNull
@@ -76,12 +50,29 @@ class HttpOverTunnelExecutor {
                                             @NonNull HttpMethod method,
                                             @NonNull Map<String, String> headers,
                                             @Nullable Certificate[] serverCertificates) throws IOException {
+        return (HttpStreamResponse) executeRequest(tunnelSocket, targetUrl, method, headers, null, serverCertificates, true);
+    }
+
+    @NonNull
+    private BaseHttpResponse executeRequest(
+            @NonNull Socket tunnelSocket,
+            @NonNull URL targetUrl,
+            @NonNull HttpMethod method,
+            @NonNull Map<String, String> headers,
+            @Nullable String body,
+            @Nullable Certificate[] serverCertificates,
+            boolean isStreaming) throws IOException {
+
         Logger.v("Executing request through tunnel to: " + targetUrl);
 
         try {
-            sendHttpRequest(tunnelSocket, targetUrl, method, headers, null);
+            sendHttpRequest(tunnelSocket, targetUrl, method, headers, body);
 
-            return readHttpStreamResponse(tunnelSocket, serverCertificates);
+            if (isStreaming) {
+                return readHttpStreamResponse(tunnelSocket, serverCertificates);
+            }
+
+            return readHttpResponse(tunnelSocket, serverCertificates);
         } catch (SocketException e) {
             // Let socket-related IOExceptions pass through unwrapped
             // This ensures consistent behavior with non-proxy flows

@@ -43,7 +43,6 @@ class ProxyCacertConnectionHandler {
      * @param body                     The request body (if any)
      * @param sslSocketFactory         The SSL socket factory for proxy and origin connections
      * @param proxyCredentialsProvider Credentials provider for proxy authentication
-     * @param isStreaming              Whether this connection is for streaming (uses longer timeout)
      * @return The HTTP response
      * @throws IOException if the request fails
      */
