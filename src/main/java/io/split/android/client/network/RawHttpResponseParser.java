@@ -3,9 +3,11 @@ package io.split.android.client.network;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
@@ -30,7 +32,7 @@ class RawHttpResponseParser {
      * @throws IOException if parsing fails or the response is malformed
      */
     @NonNull
-    public HttpResponse parseHttpResponse(@NonNull InputStream inputStream, Certificate[] serverCertificates) throws IOException {
+    HttpResponse parseHttpResponse(@NonNull InputStream inputStream, Certificate[] serverCertificates) throws IOException {
         // 1. Read and parse status line
         String statusLine = readLineFromStream(inputStream);
         if (statusLine == null) {
@@ -45,7 +47,7 @@ class RawHttpResponseParser {
         
         // 3. Determine charset from Content-Type header
         Charset bodyCharset = extractCharsetFromContentType(responseHeaders.mContentType);
-        
+
         // 4. Read response body using the same InputStream
         String responseBody = readResponseBody(inputStream, responseHeaders.mIsChunked, bodyCharset, responseHeaders.mContentLength, responseHeaders.mConnectionClose);
         
@@ -55,6 +57,26 @@ class RawHttpResponseParser {
         } else {
             return new HttpResponseImpl(statusCode, serverCertificates);
         }
+    }
+
+    @NonNull
+    HttpStreamResponse parseHttpStreamResponse(@NonNull InputStream inputStream, Certificate[] serverCertificates) throws IOException {
+        // 1. Read and parse status line
+        String statusLine = readLineFromStream(inputStream);
+        if (statusLine == null) {
+            throw new IOException("No HTTP response received from server");
+        }
+
+        Logger.v("Parsing HTTP status line: " + statusLine);
+        int statusCode = parseStatusCode(statusLine);
+
+        // 2. Read and parse response headers directly
+        ParsedResponseHeaders responseHeaders = parseHeadersDirectly(inputStream);
+
+        // 3. Determine charset from Content-Type header
+        Charset bodyCharset = extractCharsetFromContentType(responseHeaders.mContentType);
+
+        return new HttpStreamResponseImpl(statusCode, new BufferedReader(new InputStreamReader(inputStream, bodyCharset)), serverCertificates);
     }
 
     @NonNull

@@ -45,7 +45,7 @@ class HttpOverTunnelExecutor {
      * @throws IOException if the request execution fails
      */
     @NonNull
-    public HttpResponse executeRequest(
+    HttpResponse executeRequest(
             @NonNull Socket tunnelSocket,
             @NonNull URL targetUrl,
             @NonNull HttpMethod method,
@@ -59,6 +59,29 @@ class HttpOverTunnelExecutor {
             sendHttpRequest(tunnelSocket, targetUrl, method, headers, body);
 
             return readHttpResponse(tunnelSocket, serverCertificates);
+        } catch (SocketException e) {
+            // Let socket-related IOExceptions pass through unwrapped
+            // This ensures consistent behavior with non-proxy flows
+            throw e;
+        } catch (Exception e) {
+            // Wrap other exceptions in IOException
+            Logger.e("Failed to execute request through tunnel: " + e.getMessage());
+            throw new IOException("Failed to execute HTTP request through tunnel to " + targetUrl, e);
+        }
+    }
+
+    @NonNull
+    HttpStreamResponse executeStreamRequest(@NonNull Socket tunnelSocket,
+                                            @NonNull URL targetUrl,
+                                            @NonNull HttpMethod method,
+                                            @NonNull Map<String, String> headers,
+                                            @Nullable Certificate[] serverCertificates) throws IOException {
+        Logger.v("Executing request through tunnel to: " + targetUrl);
+
+        try {
+            sendHttpRequest(tunnelSocket, targetUrl, method, headers, null);
+
+            return readHttpStreamResponse(tunnelSocket, serverCertificates);
         } catch (SocketException e) {
             // Let socket-related IOExceptions pass through unwrapped
             // This ensures consistent behavior with non-proxy flows
@@ -155,6 +178,10 @@ class HttpOverTunnelExecutor {
      */
     private HttpResponse readHttpResponse(@NonNull Socket tunnelSocket, @Nullable Certificate[] serverCertificates) throws IOException {
         return mResponseParser.parseHttpResponse(tunnelSocket.getInputStream(), serverCertificates);
+    }
+
+    private HttpStreamResponse readHttpStreamResponse(@NonNull Socket tunnelSocket, @Nullable Certificate[] serverCertificates) throws IOException {
+        return mResponseParser.parseHttpStreamResponse(tunnelSocket.getInputStream(), serverCertificates);
     }
 
     /**

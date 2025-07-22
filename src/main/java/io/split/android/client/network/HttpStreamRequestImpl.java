@@ -35,6 +35,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
 
     private static final int STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
 
+    private static final ProxyCacertConnectionHandler mConnectionHandler = new ProxyCacertConnectionHandler(); // TODO lazy
+
     private final URI mUri;
     private final HttpMethod mHttpMethod;
     private final Map<String, String> mHeaders;
@@ -119,11 +121,15 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private HttpStreamResponse getRequest() throws HttpException, IOException {
         HttpStreamResponse response;
         try {
-            mConnection = setUpConnection(false);
-            response = buildResponse(mConnection);
+            if (mHttpProxy != null && mSslSocketFactory != null && (mHttpProxy.getCaCertStream() != null || mHttpProxy.getClientCertStream() != null)) {
+                response = mConnectionHandler.executeStreamRequest(mHttpProxy, mUrlSanitizer.getUrl(mUri), mHttpMethod, mHeaders, mSslSocketFactory, mProxyCredentialsProvider);
+            } else {
+                mConnection = setUpConnection(false);
+                response = buildResponse(mConnection);
 
-            if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
-                response = handleAuthentication(response);
+                if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
+                    response = handleAuthentication(response);
+                }
             }
         } catch (MalformedURLException e) {
             disconnect();
@@ -163,8 +169,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                 useProxyAuthenticator,
                 mSslSocketFactory,
                 mProxyCredentialsProvider,
-                null,
-                true
+                null
         );
         applyTimeouts(HttpStreamRequestImpl.STREAMING_READ_TIMEOUT_IN_MILLISECONDS, mConnectionTimeout, connection);
         applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);

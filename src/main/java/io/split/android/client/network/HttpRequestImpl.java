@@ -227,8 +227,7 @@ public class HttpRequestImpl implements HttpRequest {
                 authenticate,
                 mSslSocketFactory,
                 mProxyCredentialsProvider,
-                mBody,
-                false);
+                mBody);
     }
 
     private static HttpResponse buildResponse(HttpURLConnection connection) throws IOException {

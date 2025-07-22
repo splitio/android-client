@@ -50,7 +50,7 @@ public class HttpOverTunnelExecutorTest {
         java.util.Map<String, String> headers = new java.util.HashMap<>();
         headers.put("Custom-Header", "CustomValue");
 
-        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.POST, headers, body, null);
+        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.POST, headers, body, null, isStreaming);
 
         String expectedRequest = "POST /path HTTP/1.1" + CRLF
                 + "Host: test.com" + CRLF
@@ -69,7 +69,7 @@ public class HttpOverTunnelExecutorTest {
     public void getRequestWithQuery() throws IOException {
         URL url = new URL("http://test.com/path?q=1&v=2");
 
-        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.GET, Collections.emptyMap(), null, null);
+        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.GET, Collections.emptyMap(), null, null, isStreaming);
 
         String expectedRequest = "GET /path?q=1&v=2 HTTP/1.1" + CRLF
                 + "Host: test.com" + CRLF
@@ -85,7 +85,7 @@ public class HttpOverTunnelExecutorTest {
     public void getRequestWithNonDefaultPort() throws IOException {
         URL url = new URL("http://test.com:8080/path");
 
-        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.GET, Collections.emptyMap(), null, null);
+        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.GET, Collections.emptyMap(), null, null, isStreaming);
 
         String expectedRequest = "GET /path HTTP/1.1" + CRLF
                 + "Host: test.com:8080" + CRLF
@@ -101,7 +101,7 @@ public class HttpOverTunnelExecutorTest {
     public void getRequestWithEmptyPath() throws IOException {
         URL url = new URL("http://test.com");
 
-        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.GET, Collections.emptyMap(), null, null);
+        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.GET, Collections.emptyMap(), null, null, isStreaming);
 
         String expectedRequest = "GET / HTTP/1.1" + CRLF
                 + "Host: test.com" + CRLF
@@ -118,14 +118,14 @@ public class HttpOverTunnelExecutorTest {
         URL url = new URL("http://test.com/path");
         when(mSocket.getOutputStream()).thenThrow(new IOException("Socket error"));
 
-        mExecutor.executeRequest(mSocket, url, HttpMethod.GET, Collections.emptyMap(), null, null);
+        mExecutor.executeRequest(mSocket, url, HttpMethod.GET, Collections.emptyMap(), null, null, isStreaming);
     }
 
     @Test
     public void getRequest() throws IOException {
         URL url = new URL("http://test.com/path");
 
-        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.GET, Collections.emptyMap(), null, null);
+        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.GET, Collections.emptyMap(), null, null, isStreaming);
 
         String expectedRequest = "GET /path HTTP/1.1" + CRLF
                 + "Host: test.com" + CRLF

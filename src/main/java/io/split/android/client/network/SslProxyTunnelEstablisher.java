@@ -27,7 +27,7 @@ class SslProxyTunnelEstablisher {
     private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
     
     // Default timeout for regular connections (10 seconds)
-    private static final int DEFAULT_SOCKET_TIMEOUT = 10000;
+    private static final int DEFAULT_SOCKET_TIMEOUT = 20000;
 
     // Timeout for streaming connections (80 seconds to match HttpStreamRequestImpl)
     private static final int STREAMING_SOCKET_TIMEOUT = 80000;
@@ -84,7 +84,9 @@ class SslProxyTunnelEstablisher {
             // Create a temporary SSL socket to establish the SSL session with proper trust validation
             sslSocket = (SSLSocket) sslSocketFactory.createSocket(rawSocket, proxyHost, proxyPort, false);
             sslSocket.setUseClientMode(true);
-            sslSocket.setSoTimeout(timeout);
+            if (isStreaming) {
+                sslSocket.setSoTimeout(timeout); // no timeout for streaming
+            }
 
             // Perform SSL handshake using the SSL socket with custom CA certificates
             sslSocket.startHandshake();
@@ -100,7 +102,7 @@ class SslProxyTunnelEstablisher {
             return sslSocket;
 
         } catch (Exception e) {
-            Logger.e("SSL tunnel establishment failed: " + e.getMessage());
+            Logger.e("SSL tunnel establishment failed for " + targetHost + ":" + targetPort + " being Streaming: " + isStreaming + " - " + e.getMessage());
 
             // Clean up resources on error
             if (sslSocket != null) {
