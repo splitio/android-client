@@ -45,7 +45,7 @@ public class HttpClientImpl implements HttpClient {
     @Nullable
     private final CertificateChecker mCertificateChecker;
     @Nullable
-    private ProxyCacertConnectionHandler mConnectionHandler;
+    private final ProxyCacertConnectionHandler mConnectionHandler;
 
     HttpClientImpl(@Nullable HttpProxy proxy,
                    @Nullable SplitAuthenticator proxyAuthenticator,
@@ -68,7 +68,9 @@ public class HttpClientImpl implements HttpClient {
         mSslSocketFactory = sslSocketFactory;
         mUrlSanitizer = urlSanitizer;
         mCertificateChecker = certificateChecker;
-        mConnectionHandler = mHttpProxy != null && mSslSocketFactory != null && (mHttpProxy.getCaCertStream() != null || mHttpProxy.getClientCertStream() != null) ? new ProxyCacertConnectionHandler() : null;
+        mConnectionHandler = mHttpProxy != null && mSslSocketFactory != null &&
+                (mHttpProxy.getCaCertStream() != null || mHttpProxy.getClientCertStream() != null) ?
+                    new ProxyCacertConnectionHandler() : null;
     }
 
     @Override
@@ -278,7 +280,7 @@ public class HttpClientImpl implements HttpClient {
                 }
 
                 if (mProxy != null) {
-                    mSslSocketFactory = createSslSocketFactoryFromProxy();
+                    mSslSocketFactory = createSslSocketFactoryFromProxy(mProxy);
                 } else {
                     try {
                         mSslSocketFactory = new Tls12OnlySocketFactory();
@@ -315,23 +317,23 @@ public class HttpClientImpl implements HttpClient {
                     certificateChecker);
         }
 
-        private SSLSocketFactory createSslSocketFactoryFromProxy() {
+        private SSLSocketFactory createSslSocketFactoryFromProxy(HttpProxy proxyParams) {
             ProxySslSocketFactoryProviderImpl factoryProvider = new ProxySslSocketFactoryProviderImpl(mBase64Decoder);
             try {
-                if (mProxy.getClientCertStream() != null && mProxy.getClientKeyStream() != null) {
-                    try (InputStream caInput = mProxy.getCaCertStream();
-                         InputStream certInput = mProxy.getClientCertStream();
-                         InputStream keyInput = mProxy.getClientKeyStream()) {
-                        Logger.v("Custom proxy CA cert and client cert/key loaded for proxy: " + mProxy.getHost());
+                if (proxyParams.getClientCertStream() != null && proxyParams.getClientKeyStream() != null) {
+                    try (InputStream caInput = proxyParams.getCaCertStream();
+                         InputStream certInput = proxyParams.getClientCertStream();
+                         InputStream keyInput = proxyParams.getClientKeyStream()) {
+                        Logger.v("Custom proxy CA cert and client cert/key loaded for proxy: " + proxyParams.getHost());
                         return factoryProvider.create(caInput, certInput, keyInput);
                     }
-                } else if (mProxy.getCaCertStream() != null) {
-                    try (InputStream caInput = mProxy.getCaCertStream()) {
+                } else if (proxyParams.getCaCertStream() != null) {
+                    try (InputStream caInput = proxyParams.getCaCertStream()) {
                         return factoryProvider.create(caInput);
                     }
                 }
             } catch (Exception e) {
-                Logger.e("Failed to create SSLSocketFactory for proxy: " + mProxy.getHost() + ", error: " + e.getMessage());
+                Logger.e("Failed to create SSLSocketFactory for proxy: " + proxyParams.getHost() + ", error: " + e.getMessage());
             }
             return null;
         }

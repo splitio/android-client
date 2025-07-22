@@ -8,6 +8,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.Socket;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
@@ -60,14 +61,15 @@ class RawHttpResponseParser {
     }
 
     @NonNull
-    HttpStreamResponse parseHttpStreamResponse(@NonNull InputStream inputStream, Certificate[] serverCertificates) throws IOException {
+    HttpStreamResponse parseHttpStreamResponse(@NonNull InputStream inputStream, 
+                                              @Nullable Socket tunnelSocket, 
+                                              @Nullable Socket originSocket) throws IOException {
         // 1. Read and parse status line
         String statusLine = readLineFromStream(inputStream);
         if (statusLine == null) {
             throw new IOException("No HTTP response received from server");
         }
 
-        Logger.v("Parsing HTTP status line: " + statusLine);
         int statusCode = parseStatusCode(statusLine);
 
         // 2. Read and parse response headers directly
@@ -76,7 +78,10 @@ class RawHttpResponseParser {
         // 3. Determine charset from Content-Type header
         Charset bodyCharset = extractCharsetFromContentType(responseHeaders.mContentType);
 
-        return new HttpStreamResponseImpl(statusCode, new BufferedReader(new InputStreamReader(inputStream, bodyCharset)), serverCertificates);
+        return HttpStreamResponseImpl.createFromTunnelSocket(statusCode,
+                new BufferedReader(new InputStreamReader(inputStream, bodyCharset)),
+                tunnelSocket,
+                originSocket);
     }
 
     @NonNull

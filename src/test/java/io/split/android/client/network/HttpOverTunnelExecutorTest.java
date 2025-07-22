@@ -50,7 +50,7 @@ public class HttpOverTunnelExecutorTest {
         java.util.Map<String, String> headers = new java.util.HashMap<>();
         headers.put("Custom-Header", "CustomValue");
 
-        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.POST, headers, body, null, isStreaming);
+        HttpResponse response = mExecutor.executeRequest(mSocket, url, HttpMethod.POST, headers, body, null);
 
         String expectedRequest = "POST /path HTTP/1.1" + CRLF
                 + "Host: test.com" + CRLF

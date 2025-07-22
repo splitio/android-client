@@ -58,7 +58,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     @Nullable
     private final ProxyCredentialsProvider mProxyCredentialsProvider;
     @Nullable
-    private  final ProxyCacertConnectionHandler mConnectionHandler;
+    private final ProxyCacertConnectionHandler mConnectionHandler;
 
     HttpStreamRequestImpl(@NonNull URI uri,
                           @NonNull Map<String, String> headers,
@@ -123,7 +123,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private HttpStreamResponse getRequest() throws HttpException, IOException {
         HttpStreamResponse response;
         try {
-            if (mHttpProxy != null && mSslSocketFactory != null && (mHttpProxy.getCaCertStream() != null || mHttpProxy.getClientCertStream() != null)) {
+            if (mConnectionHandler != null && mHttpProxy != null && mSslSocketFactory != null && (mHttpProxy.getCaCertStream() != null || mHttpProxy.getClientCertStream() != null)) {
                 response = mConnectionHandler.executeStreamRequest(mHttpProxy, getUrl(), mHttpMethod, mHeaders, mSslSocketFactory, mProxyCredentialsProvider);
             } else {
                 mConnection = setUpConnection(false);
@@ -210,11 +210,11 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                 }
                 mBufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
-                return new HttpStreamResponseImpl(responseCode, mBufferedReader);
+                return HttpStreamResponseImpl.createFromHttpUrlConnection(responseCode, mBufferedReader);
             }
         }
 
-        return new HttpStreamResponseImpl(responseCode);
+        return HttpStreamResponseImpl.createFromHttpUrlConnection(responseCode, null);
     }
 
     private void disconnect() {

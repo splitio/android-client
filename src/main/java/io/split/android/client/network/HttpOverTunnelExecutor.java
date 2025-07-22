@@ -41,36 +41,10 @@ class HttpOverTunnelExecutor {
             @Nullable String body,
             @Nullable Certificate[] serverCertificates) throws IOException {
 
-        return (HttpResponse) executeRequest(tunnelSocket, targetUrl, method, headers, body, serverCertificates, false);
-    }
-
-    @NonNull
-    HttpStreamResponse executeStreamRequest(@NonNull Socket tunnelSocket,
-                                            @NonNull URL targetUrl,
-                                            @NonNull HttpMethod method,
-                                            @NonNull Map<String, String> headers,
-                                            @Nullable Certificate[] serverCertificates) throws IOException {
-        return (HttpStreamResponse) executeRequest(tunnelSocket, targetUrl, method, headers, null, serverCertificates, true);
-    }
-
-    @NonNull
-    private BaseHttpResponse executeRequest(
-            @NonNull Socket tunnelSocket,
-            @NonNull URL targetUrl,
-            @NonNull HttpMethod method,
-            @NonNull Map<String, String> headers,
-            @Nullable String body,
-            @Nullable Certificate[] serverCertificates,
-            boolean isStreaming) throws IOException {
-
         Logger.v("Executing request through tunnel to: " + targetUrl);
 
         try {
             sendHttpRequest(tunnelSocket, targetUrl, method, headers, body);
-
-            if (isStreaming) {
-                return readHttpStreamResponse(tunnelSocket, serverCertificates);
-            }
 
             return readHttpResponse(tunnelSocket, serverCertificates);
         } catch (SocketException e) {
@@ -81,6 +55,30 @@ class HttpOverTunnelExecutor {
             // Wrap other exceptions in IOException
             Logger.e("Failed to execute request through tunnel: " + e.getMessage());
             throw new IOException("Failed to execute HTTP request through tunnel to " + targetUrl, e);
+        }
+    }
+
+    @NonNull
+    HttpStreamResponse executeStreamRequest(@NonNull Socket finalSocket,
+                                            @Nullable Socket tunnelSocket,
+                                            @Nullable Socket originSocket,
+                                            @NonNull URL targetUrl,
+                                            @NonNull HttpMethod method,
+                                            @NonNull Map<String, String> headers,
+                                            @Nullable Certificate[] serverCertificates) throws IOException {
+        Logger.v("Executing stream request through tunnel to: " + targetUrl);
+
+        try {
+            sendHttpRequest(finalSocket, targetUrl, method, headers, null);
+            return readHttpStreamResponse(finalSocket, originSocket);
+        } catch (SocketException e) {
+            // Let socket-related IOExceptions pass through unwrapped
+            // This ensures consistent behavior with non-proxy flows
+            throw e;
+        } catch (Exception e) {
+            // Wrap other exceptions in IOException
+            Logger.e("Failed to execute stream request through tunnel: " + e.getMessage());
+            throw new IOException("Failed to execute HTTP stream request through tunnel to " + targetUrl, e);
         }
     }
 
@@ -171,8 +169,12 @@ class HttpOverTunnelExecutor {
         return mResponseParser.parseHttpResponse(tunnelSocket.getInputStream(), serverCertificates);
     }
 
-    private HttpStreamResponse readHttpStreamResponse(@NonNull Socket tunnelSocket, @Nullable Certificate[] serverCertificates) throws IOException {
-        return mResponseParser.parseHttpStreamResponse(tunnelSocket.getInputStream(), serverCertificates);
+    private HttpStreamResponse readHttpStreamResponse(@NonNull Socket tunnelSocket) throws IOException {
+        return readHttpStreamResponse(tunnelSocket, null);
+    }
+
+    private HttpStreamResponse readHttpStreamResponse(@NonNull Socket tunnelSocket, @Nullable Socket originSocket) throws IOException {
+        return mResponseParser.parseHttpStreamResponse(tunnelSocket.getInputStream(), tunnelSocket, originSocket);
     }
 
     /**

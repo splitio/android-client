@@ -29,23 +29,6 @@ class SslProxyTunnelEstablisher {
     // Default timeout for regular connections (10 seconds)
     private static final int DEFAULT_SOCKET_TIMEOUT = 20000;
 
-    // Timeout for streaming connections (80 seconds to match HttpStreamRequestImpl)
-    private static final int STREAMING_SOCKET_TIMEOUT = 80000;
-
-    /**
-     * Establishes an SSL tunnel through the proxy using the CONNECT method.
-     * After successful tunnel establishment, extracts the underlying socket
-     * for use with origin server SSL connections.
-     *
-     * @param proxyHost                The proxy server hostname
-     * @param proxyPort                The proxy server port
-     * @param targetHost               The target server hostname
-     * @param targetPort               The target server port
-     * @param sslSocketFactory         SSL socket factory for proxy authentication
-     * @param proxyCredentialsProvider Credentials provider for proxy authentication
-     * @return Raw socket with tunnel established (connection maintained)
-     * @throws IOException if tunnel establishment fails
-     */
     /**
      * Establishes an SSL tunnel through the proxy using the CONNECT method.
      * After successful tunnel establishment, extracts the underlying socket
@@ -74,9 +57,7 @@ class SslProxyTunnelEstablisher {
         SSLSocket sslSocket = null;
 
         try {
-            // Determine which timeout to use based on connection type
-            int timeout = isStreaming ? STREAMING_SOCKET_TIMEOUT : DEFAULT_SOCKET_TIMEOUT;
-            
+            int timeout = DEFAULT_SOCKET_TIMEOUT;
             // Step 1: Create raw TCP connection to proxy
             rawSocket = new Socket(proxyHost, proxyPort);
             rawSocket.setSoTimeout(timeout);
@@ -96,7 +77,6 @@ class SslProxyTunnelEstablisher {
 
             // Step 4: Validate CONNECT response through SSL connection
             validateConnectResponse(sslSocket);
-            Logger.v("SSL tunnel established successfully");
 
             // Step 5: Return SSL socket for tunnel communication
             return sslSocket;
@@ -149,6 +129,12 @@ class SslProxyTunnelEstablisher {
                 String bearerToken = ((BearerCredentialsProvider) proxyCredentialsProvider).getToken();
                 if (bearerToken != null && !bearerToken.trim().isEmpty()) {
                     writer.write(PROXY_AUTHORIZATION_HEADER + ": Bearer " + bearerToken + CRLF);
+                }
+            } else if (proxyCredentialsProvider instanceof BasicCredentialsProvider) {
+                String userName = ((BasicCredentialsProvider) proxyCredentialsProvider).getUserName();
+                String password = ((BasicCredentialsProvider) proxyCredentialsProvider).getPassword();
+                if (userName != null && !userName.trim().isEmpty() && password != null && !password.trim().isEmpty()) {
+                    writer.write(PROXY_AUTHORIZATION_HEADER + ": Basic " + Base64.encodeToString((userName + ":" + password).getBytes(StandardCharsets.UTF_8), Base64.DEFAULT) + CRLF);
                 }
             }
         }

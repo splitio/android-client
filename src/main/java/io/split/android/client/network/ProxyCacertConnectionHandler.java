@@ -72,8 +72,6 @@ class ProxyCacertConnectionHandler {
                         false
                 );
 
-                Logger.v("SSL tunnel established successfully");
-
                 finalSocket = tunnelSocket;
 
                 // If the origin is HTTPS, wrap the tunnel socket with a new SSLSocket (system CA)
@@ -114,10 +112,9 @@ class ProxyCacertConnectionHandler {
                         method,
                         headers,
                         body,
-                        serverCertificates
-                );
+                        serverCertificates);
             } finally {
-                // If we have are tunelling, finalSocket is the tunnel socket
+                // If we have are tunnelling, finalSocket is the tunnel socket
                 if (finalSocket != null && finalSocket != tunnelSocket) {
                     try {
                         finalSocket.close();
@@ -167,8 +164,6 @@ class ProxyCacertConnectionHandler {
                         true
                 );
 
-                Logger.v("SSL tunnel established successfully");
-
                 finalSocket = tunnelSocket;
 
                 // If the origin is HTTPS, wrap the tunnel socket with a new SSLSocket (system CA)
@@ -203,32 +198,19 @@ class ProxyCacertConnectionHandler {
                     }
                 }
 
+                // For streaming requests, pass socket references to the response for later cleanup
+                Socket originSocket = (finalSocket != tunnelSocket) ? finalSocket : null;
                 return mTunnelExecutor.executeStreamRequest(
                         finalSocket,
+                        tunnelSocket,
+                        originSocket,
                         targetUrl,
                         method,
                         headers,
-                        serverCertificates
-                );
+                        serverCertificates);
             } finally {
-//                // If we have are tunelling, finalSocket is the tunnel socket
-//                if (finalSocket != null && finalSocket != tunnelSocket) {
-//                    try {
-//                        Logger.i("Closing origin SSL socket");
-//                        finalSocket.close();
-//                    } catch (IOException e) {
-//                        Logger.w("Failed to close origin SSL socket: " + e.getMessage());
-//                    }
-//                }
-//
-//                if (tunnelSocket != null) {
-//                    try {
-//                        Logger.i("Closing tunnel socket");
-//                        tunnelSocket.close();
-//                    } catch (IOException e) {
-//                        Logger.w("Failed to close tunnel socket: " + e.getMessage());
-//                    }
-//                }
+                // For streaming requests, sockets are NOT closed here
+                // They will be closed when the HttpStreamResponse.close() is called
             }
         } catch (SocketException e) {
             // Let socket-related IOExceptions pass through unwrapped for consistent error handling
