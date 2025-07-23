@@ -30,7 +30,7 @@ public class RawHttpResponseParserTest {
         InputStream inputStream = new ByteArrayInputStream(rawHttpResponse.getBytes("UTF-8"));
         RawHttpResponseParser parser = new RawHttpResponseParser();
 
-        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates, isStreaming);
+        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates);
 
         assertNotNull("Response should not be null", response);
         assertEquals("Status code should be 200", 200, response.getHttpStatus());
@@ -50,7 +50,7 @@ public class RawHttpResponseParserTest {
         InputStream inputStream = new ByteArrayInputStream(rawHttpResponse.getBytes("UTF-8"));
         RawHttpResponseParser parser = new RawHttpResponseParser();
 
-        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates, isStreaming);
+        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates);
 
         assertNotNull("Response should not be null", response);
         assertEquals("Status code should be 500", 500, response.getHttpStatus());
@@ -72,7 +72,7 @@ public class RawHttpResponseParserTest {
         InputStream inputStream = new ByteArrayInputStream(rawHttpResponse.getBytes("UTF-8"));
         RawHttpResponseParser parser = new RawHttpResponseParser();
 
-        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates, isStreaming);
+        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates);
 
         assertNotNull("Response should not be null", response);
         assertEquals("Status code should be 200", 200, response.getHttpStatus());
@@ -93,7 +93,7 @@ public class RawHttpResponseParserTest {
         InputStream inputStream = new ByteArrayInputStream(rawHttpResponse.getBytes("UTF-8"));
         RawHttpResponseParser parser = new RawHttpResponseParser();
 
-        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates, isStreaming);
+        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates);
 
         assertNotNull("Response should not be null", response);
         assertEquals("Status code should be 204", 204, response.getHttpStatus());
@@ -108,7 +108,7 @@ public class RawHttpResponseParserTest {
         RawHttpResponseParser parser = new RawHttpResponseParser();
 
         try {
-            parser.parseHttpResponse(inputStream, mServerCertificates, isStreaming);
+            parser.parseHttpResponse(inputStream, mServerCertificates);
             fail("Should have thrown exception for invalid status line");
         } catch (IOException e) {
             assertTrue("Exception should mention invalid status", 
@@ -122,7 +122,7 @@ public class RawHttpResponseParserTest {
         RawHttpResponseParser parser = new RawHttpResponseParser();
 
         try {
-            parser.parseHttpResponse(inputStream, mServerCertificates, isStreaming);
+            parser.parseHttpResponse(inputStream, mServerCertificates);
             fail("Should have thrown exception for empty stream");
         } catch (IOException e) {
             assertTrue("Exception should mention no response", 
@@ -150,7 +150,7 @@ public class RawHttpResponseParserTest {
         InputStream inputStream = new ByteArrayInputStream(rawHttpResponse.getBytes("UTF-8"));
         RawHttpResponseParser parser = new RawHttpResponseParser();
 
-        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates, isStreaming);
+        HttpResponse response = parser.parseHttpResponse(inputStream, mServerCertificates);
 
         assertNotNull("Response should not be null", response);
         assertEquals("Status code should be 200", 200, response.getHttpStatus());

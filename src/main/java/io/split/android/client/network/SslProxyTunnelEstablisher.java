@@ -13,6 +13,9 @@ import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -25,7 +28,8 @@ class SslProxyTunnelEstablisher {
 
     private static final String CRLF = "\r\n";
     private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
-    
+    private final Base64Encoder mBase64Encoder = new DefaultBase64Encoder();
+
     // Default timeout for regular connections (10 seconds)
     private static final int DEFAULT_SOCKET_TIMEOUT = 20000;
 
@@ -46,12 +50,12 @@ class SslProxyTunnelEstablisher {
      */
     @NonNull
     Socket establishTunnel(@NonNull String proxyHost,
-                                  int proxyPort,
-                                  @NonNull String targetHost,
-                                  int targetPort,
-                                  @NonNull SSLSocketFactory sslSocketFactory,
-                                  @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
-                                  boolean isStreaming) throws IOException {
+                           int proxyPort,
+                           @NonNull String targetHost,
+                           int targetPort,
+                           @NonNull SSLSocketFactory sslSocketFactory,
+                           @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
+                           boolean isStreaming) throws IOException {
 
         Socket rawSocket = null;
         SSLSocket sslSocket = null;
@@ -63,7 +67,7 @@ class SslProxyTunnelEstablisher {
             rawSocket.setSoTimeout(timeout);
 
             // Create a temporary SSL socket to establish the SSL session with proper trust validation
-            sslSocket = (SSLSocket) sslSocketFactory.createSocket(rawSocket, proxyHost, proxyPort, false);
+            sslSocket = (SSLSocket) sslSocketFactory.createSocket(rawSocket, proxyHost, proxyPort, true);
             sslSocket.setUseClientMode(true);
             if (isStreaming) {
                 sslSocket.setSoTimeout(timeout); // no timeout for streaming
@@ -71,6 +75,12 @@ class SslProxyTunnelEstablisher {
 
             // Perform SSL handshake using the SSL socket with custom CA certificates
             sslSocket.startHandshake();
+
+            // Validate the proxy hostname
+            HostnameVerifier verifier = HttpsURLConnection.getDefaultHostnameVerifier();
+            if (!verifier.verify(proxyHost, sslSocket.getSession())) {
+                throw new SSLHandshakeException("Proxy hostname verification failed");
+            }
 
             // Step 3: Send CONNECT request through SSL connection
             sendConnectRequest(sslSocket, targetHost, targetPort, proxyCredentialsProvider);
@@ -124,19 +134,7 @@ class SslProxyTunnelEstablisher {
         writer.write("Host: " + targetHost + ":" + targetPort + CRLF);
 
         if (proxyCredentialsProvider != null) {
-            if (proxyCredentialsProvider instanceof BearerCredentialsProvider) {
-                // Send Proxy-Authorization header if credentials are set
-                String bearerToken = ((BearerCredentialsProvider) proxyCredentialsProvider).getToken();
-                if (bearerToken != null && !bearerToken.trim().isEmpty()) {
-                    writer.write(PROXY_AUTHORIZATION_HEADER + ": Bearer " + bearerToken + CRLF);
-                }
-            } else if (proxyCredentialsProvider instanceof BasicCredentialsProvider) {
-                String userName = ((BasicCredentialsProvider) proxyCredentialsProvider).getUserName();
-                String password = ((BasicCredentialsProvider) proxyCredentialsProvider).getPassword();
-                if (userName != null && !userName.trim().isEmpty() && password != null && !password.trim().isEmpty()) {
-                    writer.write(PROXY_AUTHORIZATION_HEADER + ": Basic " + Base64.encodeToString((userName + ":" + password).getBytes(StandardCharsets.UTF_8), Base64.DEFAULT) + CRLF);
-                }
-            }
+            addProxyAuthHeader(proxyCredentialsProvider, writer);
         }
 
         // Send empty line to end headers
@@ -144,6 +142,23 @@ class SslProxyTunnelEstablisher {
         writer.flush();
 
         Logger.v("CONNECT request sent through SSL connection");
+    }
+
+    private void addProxyAuthHeader(@NonNull ProxyCredentialsProvider proxyCredentialsProvider, PrintWriter writer) {
+        if (proxyCredentialsProvider instanceof BearerCredentialsProvider) {
+            // Send Proxy-Authorization header if credentials are set
+            String bearerToken = ((BearerCredentialsProvider) proxyCredentialsProvider).getToken();
+            if (bearerToken != null && !bearerToken.trim().isEmpty()) {
+                writer.write(PROXY_AUTHORIZATION_HEADER + ": Bearer " + bearerToken + CRLF);
+            }
+        } else if (proxyCredentialsProvider instanceof BasicCredentialsProvider) {
+            BasicCredentialsProvider basicCredentialsProvider = (BasicCredentialsProvider) proxyCredentialsProvider;
+            String userName = basicCredentialsProvider.getUserName();
+            String password = basicCredentialsProvider.getPassword();
+            if (userName != null && !userName.trim().isEmpty() && password != null && !password.trim().isEmpty()) {
+                writer.write(PROXY_AUTHORIZATION_HEADER + ": Basic " + mBase64Encoder.encode((userName + ":" + password) + CRLF));
+            }
+        }
     }
 
     /**

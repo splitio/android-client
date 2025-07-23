@@ -219,7 +219,7 @@ public class HttpClientTest {
     }
 
     @Test
-    public void addStreamingHeaders() throws InterruptedException, URISyntaxException, HttpException {
+    public void addStreamingHeaders() throws InterruptedException, HttpException, IOException {
         client.addStreamingHeaders(Collections.singletonMap("my_header", "my_header_value"));
 
         HttpUrl url = mWebServer.url("/test1/");

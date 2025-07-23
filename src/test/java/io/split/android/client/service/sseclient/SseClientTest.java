@@ -1,5 +1,13 @@
 package io.split.android.client.service.sseclient;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -28,14 +36,6 @@ import io.split.android.client.service.sseclient.sseclient.SseClient;
 import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
 import io.split.sharedtest.fake.HttpStreamResponseMock;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class SseClientTest {
 
@@ -66,7 +66,7 @@ public class SseClientTest {
     }
 
     @Test
-    public void onConnect() throws InterruptedException, HttpException {
+    public void onConnect() throws InterruptedException, HttpException, IOException {
         CountDownLatch onOpenLatch = new CountDownLatch(1);
 
         TestConnListener connListener = spy(new TestConnListener(onOpenLatch));
@@ -87,7 +87,7 @@ public class SseClientTest {
     }
 
     @Test
-    public void onConnectNotConfirmed() throws InterruptedException, HttpException {
+    public void onConnectNotConfirmed() throws InterruptedException, HttpException, IOException {
         CountDownLatch onOpenLatch = new CountDownLatch(1);
 
         TestConnListener connListener = spy(new TestConnListener(onOpenLatch));
@@ -268,7 +268,7 @@ public class SseClientTest {
     }
 
     @Test
-    public void nonRetryableErrorWhenRequestFailsWithHttpExceptionWith9009Code() throws HttpException {
+    public void nonRetryableErrorWhenRequestFailsWithHttpExceptionWith9009Code() throws HttpException, IOException {
         CountDownLatch onOpenLatch = new CountDownLatch(1);
 
         BufferedReader reader = Mockito.mock(BufferedReader.class);
@@ -286,7 +286,7 @@ public class SseClientTest {
     }
 
     @Test
-    public void retryableErrorWhenRequestFailsWithHttpExceptionWithNullCode() throws HttpException {
+    public void retryableErrorWhenRequestFailsWithHttpExceptionWithNullCode() throws HttpException, IOException {
         CountDownLatch onOpenLatch = new CountDownLatch(1);
 
         BufferedReader reader = Mockito.mock(BufferedReader.class);
