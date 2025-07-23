@@ -40,7 +40,6 @@ class RawHttpResponseParser {
             throw new IOException("No HTTP response received from server");
         }
         
-        Logger.v("Parsing HTTP status line: " + statusLine);
         int statusCode = parseStatusCode(statusLine);
         
         // 2. Read and parse response headers directly
@@ -201,7 +200,7 @@ class RawHttpResponseParser {
                 // Read trailing headers until empty line
                 String trailerLine;
                 while ((trailerLine = readLineFromStream(inputStream)) != null && !trailerLine.trim().isEmpty()) {
-                    Logger.v("Chunked trailer: " + trailerLine);
+                    // no-op
                 }
                 break;
             }

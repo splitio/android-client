@@ -76,7 +76,6 @@ class ProxyCacertConnectionHandler {
 
                 // If the origin is HTTPS, wrap the tunnel socket with a new SSLSocket (system CA)
                 if (HTTPS.equalsIgnoreCase(targetUrl.getProtocol())) {
-                    Logger.v("Wrapping tunnel socket with new SSLSocket for origin server handshake");
                     try {
                         // Use the provided SSLSocketFactory, which is configured to trust the origin's CA
                         finalSocket = sslSocketFactory.createSocket(
@@ -99,7 +98,6 @@ class ProxyCacertConnectionHandler {
                         } else {
                             throw new IOException("Failed to create SSLSocket to origin");
                         }
-                        Logger.v("SSL handshake with origin server completed");
                     } catch (Exception sslEx) {
                         Logger.e("Failed to establish SSL connection to origin: " + sslEx.getMessage());
                         throw new IOException("Failed to establish SSL connection to origin server", sslEx);
@@ -135,6 +133,7 @@ class ProxyCacertConnectionHandler {
             // Let socket-related IOExceptions pass through unwrapped for consistent error handling
             throw e;
         } catch (Exception e) {
+            Logger.e("Failed to execute request through custom tunnel: " + e.getMessage());
             throw new IOException("Failed to execute request through custom tunnel", e);
         }
     }
@@ -168,7 +167,6 @@ class ProxyCacertConnectionHandler {
 
                 // If the origin is HTTPS, wrap the tunnel socket with a new SSLSocket (system CA)
                 if (HTTPS.equalsIgnoreCase(targetUrl.getProtocol())) {
-                    Logger.v("Wrapping tunnel socket with new SSLSocket for origin server handshake");
                     try {
                         // Use the provided SSLSocketFactory, which is configured to trust the origin's CA
                         finalSocket = sslSocketFactory.createSocket(
@@ -191,7 +189,6 @@ class ProxyCacertConnectionHandler {
                         } else {
                             throw new IOException("Failed to create SSLSocket to origin");
                         }
-                        Logger.v("SSL handshake with origin server completed");
                     } catch (Exception sslEx) {
                         Logger.e("Failed to establish SSL connection to origin: " + sslEx.getMessage());
                         throw new IOException("Failed to establish SSL connection to origin server", sslEx);

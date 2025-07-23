@@ -19,8 +19,6 @@ import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
-import io.split.android.client.utils.logger.Logger;
-
 /**
  * Establishes SSL tunnels to SSL proxies using CONNECT protocol.
  */
@@ -127,8 +125,6 @@ class SslProxyTunnelEstablisher {
                                     int targetPort,
                                     @Nullable ProxyCredentialsProvider proxyCredentialsProvider) throws IOException {
 
-        Logger.v("Sending CONNECT request through SSL: CONNECT " + targetHost + ":" + targetPort + " HTTP/1.1");
-
         PrintWriter writer = new PrintWriter(new OutputStreamWriter(sslSocket.getOutputStream(), StandardCharsets.UTF_8), false);
         writer.write("CONNECT " + targetHost + ":" + targetPort + " HTTP/1.1" + CRLF);
         writer.write("Host: " + targetHost + ":" + targetPort + CRLF);
@@ -140,8 +136,6 @@ class SslProxyTunnelEstablisher {
         // Send empty line to end headers
         writer.write(CRLF);
         writer.flush();
-
-        Logger.v("CONNECT request sent through SSL connection");
     }
 
     private void addProxyAuthHeader(@NonNull ProxyCredentialsProvider proxyCredentialsProvider, PrintWriter writer) {
@@ -167,8 +161,6 @@ class SslProxyTunnelEstablisher {
      */
     private void validateConnectResponse(@NonNull SSLSocket sslSocket) throws IOException {
 
-        Logger.v("Reading CONNECT response through SSL connection");
-
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(sslSocket.getInputStream(), StandardCharsets.UTF_8));
 
@@ -176,8 +168,6 @@ class SslProxyTunnelEstablisher {
             if (statusLine == null) {
                 throw new IOException("No CONNECT response received from proxy");
             }
-
-            Logger.v("Received CONNECT response through SSL: " + statusLine.trim());
 
             // Parse status code
             String[] statusParts = statusLine.split(" ");
@@ -195,7 +185,7 @@ class SslProxyTunnelEstablisher {
             // Read headers until empty line (but don't process them for CONNECT)
             String headerLine;
             while ((headerLine = reader.readLine()) != null && !headerLine.trim().isEmpty()) {
-                Logger.v("CONNECT response header: " + headerLine);
+                // no-op
             }
 
             // Check status code
