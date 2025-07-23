@@ -56,78 +56,20 @@ class ProxyCacertConnectionHandler {
                                        @Nullable ProxyCredentialsProvider proxyCredentialsProvider) throws IOException {
 
         try {
-            SslProxyTunnelEstablisher tunnelEstablisher = new SslProxyTunnelEstablisher();
-            Socket tunnelSocket = null;
-            Socket finalSocket = null;
-            Certificate[] serverCertificates = null;
-
+            TunnelConnection connection = establishTunnelConnection(
+                    httpProxy, targetUrl, sslSocketFactory, proxyCredentialsProvider, false);
+            
             try {
-                tunnelSocket = tunnelEstablisher.establishTunnel(
-                        httpProxy.getHost(),
-                        httpProxy.getPort(),
-                        targetUrl.getHost(),
-                        getTargetPort(targetUrl),
-                        sslSocketFactory,
-                        proxyCredentialsProvider,
-                        false
-                );
-
-                finalSocket = tunnelSocket;
-
-                // If the origin is HTTPS, wrap the tunnel socket with a new SSLSocket (system CA)
-                if (HTTPS.equalsIgnoreCase(targetUrl.getProtocol())) {
-                    try {
-                        // Use the provided SSLSocketFactory, which is configured to trust the origin's CA
-                        finalSocket = sslSocketFactory.createSocket(
-                                tunnelSocket,
-                                targetUrl.getHost(),
-                                getTargetPort(targetUrl),
-                                true // autoClose
-                        );
-                        if (finalSocket instanceof SSLSocket) {
-                            SSLSocket originSslSocket = (SSLSocket) finalSocket;
-                            originSslSocket.setUseClientMode(true);
-                            originSslSocket.startHandshake();
-
-                            // Capture server certificates after successful handshake
-                            try {
-                                serverCertificates = originSslSocket.getSession().getPeerCertificates();
-                            } catch (Exception certEx) {
-                                Logger.w("Could not capture origin server certificates: " + certEx.getMessage());
-                            }
-                        } else {
-                            throw new IOException("Failed to create SSLSocket to origin");
-                        }
-                    } catch (Exception sslEx) {
-                        Logger.e("Failed to establish SSL connection to origin: " + sslEx.getMessage());
-                        throw new IOException("Failed to establish SSL connection to origin server", sslEx);
-                    }
-                }
-
                 return mTunnelExecutor.executeRequest(
-                        finalSocket,
+                        connection.finalSocket,
                         targetUrl,
                         method,
                         headers,
                         body,
-                        serverCertificates);
+                        connection.serverCertificates);
             } finally {
-                // If we have are tunnelling, finalSocket is the tunnel socket
-                if (finalSocket != null && finalSocket != tunnelSocket) {
-                    try {
-                        finalSocket.close();
-                    } catch (IOException e) {
-                        Logger.w("Failed to close origin SSL socket: " + e.getMessage());
-                    }
-                }
-
-                if (tunnelSocket != null) {
-                    try {
-                        tunnelSocket.close();
-                    } catch (IOException e) {
-                        Logger.w("Failed to close tunnel socket: " + e.getMessage());
-                    }
-                }
+                // Close all sockets for non-streaming requests
+                closeConnection(connection);
             }
         } catch (SocketException e) {
             // Let socket-related IOExceptions pass through unwrapped for consistent error handling
@@ -147,68 +89,21 @@ class ProxyCacertConnectionHandler {
                                 @Nullable ProxyCredentialsProvider proxyCredentialsProvider) throws IOException {
 
         try {
-            SslProxyTunnelEstablisher tunnelEstablisher = new SslProxyTunnelEstablisher();
-            Socket tunnelSocket = null;
-            Socket finalSocket = null;
-            Certificate[] serverCertificates = null;
-
-            try {
-                tunnelSocket = tunnelEstablisher.establishTunnel(
-                        httpProxy.getHost(),
-                        httpProxy.getPort(),
-                        targetUrl.getHost(),
-                        getTargetPort(targetUrl),
-                        sslSocketFactory,
-                        proxyCredentialsProvider,
-                        true
-                );
-
-                finalSocket = tunnelSocket;
-
-                // If the origin is HTTPS, wrap the tunnel socket with a new SSLSocket (system CA)
-                if (HTTPS.equalsIgnoreCase(targetUrl.getProtocol())) {
-                    try {
-                        // Use the provided SSLSocketFactory, which is configured to trust the origin's CA
-                        finalSocket = sslSocketFactory.createSocket(
-                                tunnelSocket,
-                                targetUrl.getHost(),
-                                getTargetPort(targetUrl),
-                                true // autoClose
-                        );
-                        if (finalSocket instanceof SSLSocket) {
-                            SSLSocket originSslSocket = (SSLSocket) finalSocket;
-                            originSslSocket.setUseClientMode(true);
-                            originSslSocket.startHandshake();
-
-                            // Capture server certificates after successful handshake
-                            try {
-                                serverCertificates = originSslSocket.getSession().getPeerCertificates();
-                            } catch (Exception certEx) {
-                                Logger.w("Could not capture origin server certificates: " + certEx.getMessage());
-                            }
-                        } else {
-                            throw new IOException("Failed to create SSLSocket to origin");
-                        }
-                    } catch (Exception sslEx) {
-                        Logger.e("Failed to establish SSL connection to origin: " + sslEx.getMessage());
-                        throw new IOException("Failed to establish SSL connection to origin server", sslEx);
-                    }
-                }
-
-                // For streaming requests, pass socket references to the response for later cleanup
-                Socket originSocket = (finalSocket != tunnelSocket) ? finalSocket : null;
-                return mTunnelExecutor.executeStreamRequest(
-                        finalSocket,
-                        tunnelSocket,
-                        originSocket,
-                        targetUrl,
-                        method,
-                        headers,
-                        serverCertificates);
-            } finally {
-                // For streaming requests, sockets are NOT closed here
-                // They will be closed when the HttpStreamResponse.close() is called
-            }
+            TunnelConnection connection = establishTunnelConnection(
+                    httpProxy, targetUrl, sslSocketFactory, proxyCredentialsProvider, true);
+            
+            // For streaming requests, pass socket references to the response for later cleanup
+            Socket originSocket = (connection.finalSocket != connection.tunnelSocket) ? connection.finalSocket : null;
+            return mTunnelExecutor.executeStreamRequest(
+                    connection.finalSocket,
+                    connection.tunnelSocket,
+                    originSocket,
+                    targetUrl,
+                    method,
+                    headers,
+                    connection.serverCertificates);
+            // For streaming requests, sockets are NOT closed here
+            // They will be closed when the HttpStreamResponse.close() is called
         } catch (SocketException e) {
             // Let socket-related IOExceptions pass through unwrapped for consistent error handling
             throw e;
@@ -229,4 +124,119 @@ class ProxyCacertConnectionHandler {
         return port;
     }
 
+    /**
+     * Represents a connection through an SSL tunnel.
+     */
+    private static class TunnelConnection {
+        final Socket tunnelSocket;
+        final Socket finalSocket;
+        final Certificate[] serverCertificates;
+
+        TunnelConnection(Socket tunnelSocket, Socket finalSocket, Certificate[] serverCertificates) {
+            this.tunnelSocket = tunnelSocket;
+            this.finalSocket = finalSocket;
+            this.serverCertificates = serverCertificates;
+        }
+    }
+
+    /**
+     * Establishes a tunnel connection to the target through the proxy.
+     *
+     * @param httpProxy                The proxy configuration
+     * @param targetUrl                The target URL to connect to
+     * @param sslSocketFactory         SSL socket factory for connections
+     * @param proxyCredentialsProvider Credentials provider for proxy authentication
+     * @param isStreaming              Whether this is a streaming connection
+     * @return A TunnelConnection object containing the established sockets
+     * @throws IOException if connection establishment fails
+     */
+    private TunnelConnection establishTunnelConnection(
+            @NonNull HttpProxy httpProxy,
+            @NonNull URL targetUrl,
+            @NonNull SSLSocketFactory sslSocketFactory,
+            @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
+            boolean isStreaming) throws IOException {
+
+        SslProxyTunnelEstablisher tunnelEstablisher = new SslProxyTunnelEstablisher();
+        Socket tunnelSocket = null;
+        Socket finalSocket = null;
+        Certificate[] serverCertificates = null;
+
+        try {
+            tunnelSocket = tunnelEstablisher.establishTunnel(
+                    httpProxy.getHost(),
+                    httpProxy.getPort(),
+                    targetUrl.getHost(),
+                    getTargetPort(targetUrl),
+                    sslSocketFactory,
+                    proxyCredentialsProvider,
+                    isStreaming
+            );
+
+            finalSocket = tunnelSocket;
+
+            // If the origin is HTTPS, wrap the tunnel socket with a new SSLSocket (system CA)
+            if (HTTPS.equalsIgnoreCase(targetUrl.getProtocol())) {
+                try {
+                    // Use the provided SSLSocketFactory, which is configured to trust the origin's CA
+                    finalSocket = sslSocketFactory.createSocket(
+                            tunnelSocket,
+                            targetUrl.getHost(),
+                            getTargetPort(targetUrl),
+                            true // autoClose
+                    );
+                    if (finalSocket instanceof SSLSocket) {
+                        SSLSocket originSslSocket = (SSLSocket) finalSocket;
+                        originSslSocket.setUseClientMode(true);
+                        originSslSocket.startHandshake();
+
+                        // Capture server certificates after successful handshake
+                        try {
+                            serverCertificates = originSslSocket.getSession().getPeerCertificates();
+                        } catch (Exception certEx) {
+                            Logger.w("Could not capture origin server certificates: " + certEx.getMessage());
+                        }
+                    } else {
+                        throw new IOException("Failed to create SSLSocket to origin");
+                    }
+                } catch (Exception sslEx) {
+                    Logger.e("Failed to establish SSL connection to origin: " + sslEx.getMessage());
+                    throw new IOException("Failed to establish SSL connection to origin server", sslEx);
+                }
+            }
+
+            return new TunnelConnection(tunnelSocket, finalSocket, serverCertificates);
+        } catch (Exception e) {
+            // Clean up resources on error
+            closeSockets(finalSocket, tunnelSocket);
+            throw e;
+        }
+    }
+
+    private void closeConnection(TunnelConnection connection) {
+        if (connection == null) {
+            return;
+        }
+        
+        closeSockets(connection.finalSocket, connection.tunnelSocket);
+    }
+
+    private void closeSockets(Socket finalSocket, Socket tunnelSocket) {
+        // If we are tunnelling, finalSocket is the tunnel socket
+        if (finalSocket != null && finalSocket != tunnelSocket) {
+            try {
+                finalSocket.close();
+            } catch (IOException e) {
+                Logger.w("Failed to close origin SSL socket: " + e.getMessage());
+            }
+        }
+
+        if (tunnelSocket != null) {
+            try {
+                tunnelSocket.close();
+            } catch (IOException e) {
+                Logger.w("Failed to close tunnel socket: " + e.getMessage());
+            }
+        }
+    }
 }

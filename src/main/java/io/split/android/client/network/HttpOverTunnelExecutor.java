@@ -115,7 +115,6 @@ class HttpOverTunnelExecutor {
             host += ":" + port;
         }
 
-        Logger.v("Sending Host header: 'Host: " + host + "'");
         writer.write("Host: " + host + CRLF);
 
         // 3. Send custom headers (excluding Host and Content-Length)
