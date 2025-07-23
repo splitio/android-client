@@ -2,6 +2,7 @@ package io.split.android.client.network;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -26,10 +27,19 @@ class SslProxyTunnelEstablisher {
 
     private static final String CRLF = "\r\n";
     private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
-    private final Base64Encoder mBase64Encoder = new DefaultBase64Encoder();
+    private final Base64Encoder mBase64Encoder;
 
     // Default timeout for regular connections (10 seconds)
     private static final int DEFAULT_SOCKET_TIMEOUT = 20000;
+
+    SslProxyTunnelEstablisher() {
+        this(new DefaultBase64Encoder());
+    }
+
+    @VisibleForTesting
+    SslProxyTunnelEstablisher(Base64Encoder base64Encoder) {
+        mBase64Encoder = base64Encoder;
+    }
 
     /**
      * Establishes an SSL tunnel through the proxy using the CONNECT method.
@@ -150,7 +160,7 @@ class SslProxyTunnelEstablisher {
             String userName = basicCredentialsProvider.getUserName();
             String password = basicCredentialsProvider.getPassword();
             if (userName != null && !userName.trim().isEmpty() && password != null && !password.trim().isEmpty()) {
-                writer.write(PROXY_AUTHORIZATION_HEADER + ": Basic " + mBase64Encoder.encode((userName + ":" + password) + CRLF));
+                writer.write(PROXY_AUTHORIZATION_HEADER + ": Basic " + mBase64Encoder.encode(userName + ":" + password) + CRLF);
             }
         }
     }

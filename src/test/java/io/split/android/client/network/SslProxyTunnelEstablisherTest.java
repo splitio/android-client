@@ -6,6 +6,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.junit.After;
 import org.junit.Before;
@@ -167,6 +168,7 @@ public class SslProxyTunnelEstablisherTest {
 
     @Test
     public void bearerTokenIsPassedWhenSet() throws IOException, InterruptedException {
+        // For Bearer token, we don't need to mock the Base64Encoder since it's not used
         SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
         establisher.establishTunnel(
                 "localhost",
@@ -183,6 +185,43 @@ public class SslProxyTunnelEstablisherTest {
                 false);
         boolean await = testProxy.getAuthorizationHeaderReceived().await(5, TimeUnit.SECONDS);
         assertTrue("Proxy should have received authorization header", await);
+        assertEquals("Proxy-Authorization: Bearer token", testProxy.getReceivedAuthHeader());
+    }
+    
+    @Test
+    public void basicAuthIsPassedWhenSet() throws IOException, InterruptedException {
+        // Create a mock Base64Encoder
+        Base64Encoder mockEncoder = mock(Base64Encoder.class);
+        String mockEncodedCredentials = "MOCK_ENCODED_CREDENTIALS";
+        when(mockEncoder.encode("username:password")).thenReturn(mockEncodedCredentials);
+        
+        // Create SslProxyTunnelEstablisher with the mock encoder
+        SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher(mockEncoder);
+        
+        establisher.establishTunnel(
+                "localhost",
+                testProxy.getPort(),
+                "example.com",
+                443,
+                clientSslSocketFactory,
+                new BasicCredentialsProvider() {
+                    @Override
+                    public String getUserName() {
+                        return "username";
+                    }
+                    
+                    @Override
+                    public String getPassword() {
+                        return "password";
+                    }
+                },
+                false);
+        boolean await = testProxy.getAuthorizationHeaderReceived().await(5, TimeUnit.SECONDS);
+        assertTrue("Proxy should have received authorization header", await);
+        
+        // The expected header should contain the mock encoded credentials
+        String expectedHeader = "Proxy-Authorization: Basic " + mockEncodedCredentials;
+        assertEquals(expectedHeader, testProxy.getReceivedAuthHeader());
     }
 
     @Test
@@ -319,6 +358,7 @@ public class SslProxyTunnelEstablisherTest {
         private final CountDownLatch mConnectRequestReceived = new CountDownLatch(1);
         private final CountDownLatch mAuthorizationHeaderReceived = new CountDownLatch(1);
         private final AtomicReference<String> mReceivedConnectLine = new AtomicReference<>();
+        private final AtomicReference<String> mReceivedAuthHeader = new AtomicReference<>();
         private final AtomicReference<String> mConnectResponse = new AtomicReference<>("HTTP/1.1 200 Connection established");
 
         public TestSslProxy(int port, HeldCertificate serverCert) {
@@ -370,8 +410,9 @@ public class SslProxyTunnelEstablisherTest {
                     mConnectRequestReceived.countDown();
 
                     while((line = reader.readLine()) != null && !line.isEmpty()) {
-                        if (line.contains("Authorization") && line.contains("Bearer")) {
+                        if (line.contains("Authorization") && (line.contains("Bearer") || line.contains("Basic"))) {
                             mAuthorizationHeaderReceived.countDown();
+                            mReceivedAuthHeader.set(line);
                         }
                     }
 
@@ -411,6 +452,10 @@ public class SslProxyTunnelEstablisherTest {
 
         public String getReceivedConnectLine() {
             return mReceivedConnectLine.get();
+        }
+
+        public String getReceivedAuthHeader() {
+            return mReceivedAuthHeader.get();
         }
 
         public void setConnectResponse(String connectResponse) {
