@@ -1298,11 +1298,15 @@ public class SplitClientConfig {
                 return legacyProxyBehavior(proxyUri);
             }
 
+            if (mProxyHost != null || mProxyAuthenticator != null) {
+                Logger.w("Both the deprecated proxy configuration methods (proxyHost, proxyAuthenticator) and the new ProxyConfiguration builder are being used. ProxyConfiguration will take precedence.");
+            }
+
             // Initialize internal config with null url. This will be verified when building the factory.
             HttpProxy.Builder builder = HttpProxy.newBuilder(null, -1);
             if (proxyConfiguration.getUrl() != null) {
                 builder = HttpProxy.newBuilder(proxyConfiguration.getUrl().getHost(), proxyConfiguration.getUrl().getPort())
-                        .mtlsAuth(proxyConfiguration.getClientCert(), proxyConfiguration.getClientPk())
+                        .mtls(proxyConfiguration.getClientCert(), proxyConfiguration.getClientPk())
                         .proxyCacert(proxyConfiguration.getCaCert())
                         .credentialsProvider(proxyConfiguration.getCredentialsProvider());
             }

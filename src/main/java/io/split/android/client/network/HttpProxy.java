@@ -90,7 +90,7 @@ public class HttpProxy {
             return this;
         }
 
-        public Builder mtlsAuth(@NonNull InputStream clientCertStream, @NonNull InputStream keyStream) {
+        public Builder mtls(@NonNull InputStream clientCertStream, @NonNull InputStream keyStream) {
             mClientCertStream = clientCertStream;
             mClientKeyStream = keyStream;
             return this;
