@@ -87,7 +87,7 @@ public class SslProxyTunnelEstablisherTest {
         SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
         String targetHost = "example.com";
         int targetPort = 443;
-        ProxyCredentialsProvider proxyCredentialsProvider = mock(ProxyCredentialsProvider.class);
+        BearerCredentialsProvider proxyCredentialsProvider = mock(BearerCredentialsProvider.class);
 
         Socket tunnelSocket = establisher.establishTunnel(
                 "localhost",
@@ -113,7 +113,7 @@ public class SslProxyTunnelEstablisherTest {
         SSLContext untrustedContext = SSLContext.getInstance("TLS");
         untrustedContext.init(null, null, null);
         SSLSocketFactory untrustedSocketFactory = untrustedContext.getSocketFactory();
-        ProxyCredentialsProvider proxyCredentialsProvider = mock(ProxyCredentialsProvider.class);
+        BearerCredentialsProvider proxyCredentialsProvider = mock(BearerCredentialsProvider.class);
 
         SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
 
@@ -134,7 +134,7 @@ public class SslProxyTunnelEstablisherTest {
     @Test
     public void establishTunnelWithFailingProxyConnectionThrows() {
         SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
-        ProxyCredentialsProvider proxyCredentialsProvider = mock(ProxyCredentialsProvider.class);
+        BearerCredentialsProvider proxyCredentialsProvider = mock(BearerCredentialsProvider.class);
 
         try {
             establisher.establishTunnel(
@@ -160,9 +160,9 @@ public class SslProxyTunnelEstablisherTest {
                 "example.com",
                 443,
                 clientSslSocketFactory,
-                new ProxyCredentialsProvider() {
+                new BearerCredentialsProvider() {
                     @Override
-                    public String getBearerToken() {
+                    public String getToken() {
                         return "token";
                     }
                 });
@@ -200,7 +200,12 @@ public class SslProxyTunnelEstablisherTest {
                 "example.com",
                 443,
                 clientSslSocketFactory,
-                () -> null);
+                new BearerCredentialsProvider() {
+                    @Override
+                    public String getToken() {
+                        return null;
+                    }
+                });
 
         assertNotNull(tunnelSocket);
         assertTrue(testProxy.getConnectRequestReceived().await(5, TimeUnit.SECONDS));
@@ -220,7 +225,12 @@ public class SslProxyTunnelEstablisherTest {
                 "example.com",
                 443,
                 clientSslSocketFactory,
-                () -> " ");
+                new BearerCredentialsProvider() {
+                    @Override
+                    public String getToken() {
+                        return "";
+                    }
+                });
 
         assertNotNull(tunnelSocket);
         assertTrue(testProxy.getConnectRequestReceived().await(5, TimeUnit.SECONDS));
