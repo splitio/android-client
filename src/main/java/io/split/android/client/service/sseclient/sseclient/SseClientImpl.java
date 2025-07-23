@@ -94,7 +94,6 @@ public class SseClientImpl implements SseClient {
 
     @Override
     public void connect(SseJwtToken token, ConnectionListener connectionListener) {
-        Logger.w("Connecting SSE client");
         mIsDisconnectCalled.set(false);
         mStatus.set(CONNECTING);
         boolean isConnectionConfirmed = false;

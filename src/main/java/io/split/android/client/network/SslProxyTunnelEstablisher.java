@@ -70,7 +70,9 @@ class SslProxyTunnelEstablisher {
             sslSocket = (SSLSocket) sslSocketFactory.createSocket(rawSocket, proxyHost, proxyPort, true);
             sslSocket.setUseClientMode(true);
             if (isStreaming) {
-                sslSocket.setSoTimeout(timeout); // no timeout for streaming
+                sslSocket.setSoTimeout(0); // no timeout for streaming
+            } else {
+                sslSocket.setSoTimeout(timeout);
             }
 
             // Perform SSL handshake using the SSL socket with custom CA certificates
@@ -92,8 +94,6 @@ class SslProxyTunnelEstablisher {
             return sslSocket;
 
         } catch (Exception e) {
-            Logger.e("SSL tunnel establishment failed for " + targetHost + ":" + targetPort + " being Streaming: " + isStreaming + " - " + e.getMessage());
-
             // Clean up resources on error
             if (sslSocket != null) {
                 try {
