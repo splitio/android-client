@@ -27,9 +27,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 
 import okhttp3.tls.HeldCertificate;
@@ -44,6 +47,14 @@ public class SslProxyTunnelEstablisherTest {
 
     @Before
     public void setUp() throws Exception {
+        // override the default hostname verifier for testing
+        HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String hostname, SSLSession sslSession) {
+                return true;
+            }
+        });
+
         // Create test certificates
         HeldCertificate proxyCa = new HeldCertificate.Builder()
                 .commonName("Test Proxy CA")

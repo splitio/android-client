@@ -29,8 +29,11 @@ import java.util.Base64;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 
 import okhttp3.mockwebserver.Dispatcher;
@@ -47,6 +50,13 @@ public class HttpClientTunnellingProxyTest {
     @Before
     public void setUp() {
 
+        // override the default hostname verifier for testing
+        HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String hostname, SSLSession sslSession) {
+                return true;
+            }
+        });
         mUrlSanitizerMock = mock(UrlSanitizer.class);
         when(mUrlSanitizerMock.getUrl(any())).thenAnswer(new Answer<URL>() {
             @Override
