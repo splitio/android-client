@@ -168,10 +168,6 @@ class HttpOverTunnelExecutor {
         return mResponseParser.parseHttpResponse(tunnelSocket.getInputStream(), serverCertificates);
     }
 
-    private HttpStreamResponse readHttpStreamResponse(@NonNull Socket tunnelSocket) throws IOException {
-        return readHttpStreamResponse(tunnelSocket, null);
-    }
-
     private HttpStreamResponse readHttpStreamResponse(@NonNull Socket tunnelSocket, @Nullable Socket originSocket) throws IOException {
         return mResponseParser.parseHttpStreamResponse(tunnelSocket.getInputStream(), tunnelSocket, originSocket);
     }

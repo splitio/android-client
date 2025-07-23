@@ -1,6 +1,5 @@
 package io.split.android.client.network;
 
-import java.io.InputStream;
 import java.security.cert.Certificate;
 
 public class HttpResponseImpl extends BaseHttpResponseImpl implements HttpResponse {
