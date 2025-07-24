@@ -7,7 +7,7 @@ package io.split.android.client.network;
  */
 public interface BasicCredentialsProvider extends ProxyCredentialsProvider {
 
-    String getUserName();
+    String getUsername();
 
     String getPassword();
 }
