@@ -216,6 +216,7 @@ public class HttpClientImpl implements HttpClient {
 
         public Builder setProxy(HttpProxy proxy) {
             mProxy = proxy;
+            mProxyCredentialsProvider = proxy.getCredentialsProvider();
             return this;
         }
 
@@ -253,11 +254,6 @@ public class HttpClientImpl implements HttpClient {
 
         public Builder setCertificatePinningConfiguration(CertificatePinningConfiguration certificatePinningConfiguration) {
             mCertificatePinningConfiguration = certificatePinningConfiguration;
-            return this;
-        }
-
-        public Builder setProxyCredentialsProvider(@NonNull ProxyCredentialsProvider proxyCredentialsProvider) {
-            mProxyCredentialsProvider = proxyCredentialsProvider;
             return this;
         }
 
