@@ -251,7 +251,6 @@ public class GeneralInfoStorageImplTest {
     
     @Test
     public void testSerializeAndStoreHttpProxy() {
-        // Create test data
         String testHost = "proxy.example.com";
         int testPort = 8080;
         String testUsername = "testuser";
@@ -260,15 +259,12 @@ public class GeneralInfoStorageImplTest {
         String testClientKey = "-----BEGIN PRIVATE KEY-----\nMIIKeyContent\n-----END PRIVATE KEY-----";
         String testCaCert = "-----BEGIN CA CERTIFICATE-----\nMIICACertContent\n-----END CA CERTIFICATE-----";
         
-        // Create input streams from test strings
         InputStream clientCertStream = new ByteArrayInputStream(testClientCert.getBytes(StandardCharsets.UTF_8));
         InputStream clientKeyStream = new ByteArrayInputStream(testClientKey.getBytes(StandardCharsets.UTF_8));
         InputStream caCertStream = new ByteArrayInputStream(testCaCert.getBytes(StandardCharsets.UTF_8));
         
-        // Mock the credentials provider
         ProxyCredentialsProvider credentialsProvider = mock(ProxyCredentialsProvider.class);
 
-        // Create the HttpProxy object
         HttpProxy httpProxy = HttpProxy.newBuilder(testHost, testPort)
                 .basicAuth(testUsername, testPassword)
                 .mtlsAuth(clientCertStream, clientKeyStream)
@@ -276,18 +272,15 @@ public class GeneralInfoStorageImplTest {
                 .credentialsProvider(credentialsProvider)
                 .build();
         
-        // Call the method under test
         HttpProxySerializer.serializeAndStore(httpProxy, mGeneralInfoStorage);
         
-        // Verify that the encrypted JSON was stored in the DAO
-        verify(mGeneralInfoDao).update(argThat(entity -> 
+        verify(mGeneralInfoDao).update(argThat(entity ->
             entity.getName().equals("proxyConfig") && 
             entity.getStringValue().startsWith("encrypted_")));
     }
     
     @Test
     public void testGetProxyConfig() {
-        // Setup mock DAO to return an entity with encrypted JSON
         String jsonContent = "{\"host\":\"proxy.example.com\",\"port\":8080,\"username\":\"testuser\",\"password\":\"testpass\",\"client_cert\":\"cert-data\",\"client_key\":\"key-data\",\"ca_cert\":\"ca-data\",\"bearer_token\":\"token\"}";
         when(mAlwaysEncryptedSplitCipher.encrypt(anyString())).thenAnswer(new Answer<Object>() {
             @Override
@@ -303,13 +296,10 @@ public class GeneralInfoStorageImplTest {
         });
         when(mGeneralInfoDao.getByName("proxyConfig")).thenReturn(new GeneralInfoEntity("proxyConfig", jsonContent));
         
-        // Call the method under test
         String proxyConfigJson = mGeneralInfoStorage.getProxyConfig();
         
-        // Verify the result
         assertNotNull("Proxy config JSON should not be null", proxyConfigJson);
         
-        // Deserialize the JSON to verify its contents
         HttpProxyDto dto = HttpProxySerializer.deserialize(proxyConfigJson);
         assertNotNull("Deserialized DTO should not be null", dto);
         assertEquals("Host should match", "proxy.example.com", dto.host);
@@ -324,36 +314,28 @@ public class GeneralInfoStorageImplTest {
     
     @Test
     public void proxyConfigIsNullWhenStoredDataIsNull() {
-        // Setup mock DAO to return null
         when(mGeneralInfoDao.getByName("proxyConfig")).thenReturn(null);
         
-        // Call the method under test
         String proxyConfig = mGeneralInfoStorage.getProxyConfig();
         
-        // Verify the result
         assertNull("Proxy config should be null when entity is null", proxyConfig);
     }
     
     @Test
     public void proxyConfigIsNullWhenTheStoredValueIsNull() {
-        // Setup mock DAO to return an entity with null value
         GeneralInfoEntity entity = new GeneralInfoEntity("proxyConfig", (String) null);
         when(mGeneralInfoDao.getByName("proxyConfig")).thenReturn(entity);
         
-        // Call the method under test
         String proxyConfig = mGeneralInfoStorage.getProxyConfig();
         
-        // Verify the result
         assertNull("Proxy config should be null when entity value is null", proxyConfig);
     }
     
     @Test
     public void proxyConfigCanBeSetToNull() {
-        // Call the method under test with null
         mGeneralInfoStorage.setProxyConfig(null);
         
-        // Verify that null was stored in the DAO
-        verify(mGeneralInfoDao).update(argThat(entity -> 
+        verify(mGeneralInfoDao).update(argThat(entity ->
             entity.getName().equals("proxyConfig") && 
             entity.getStringValue() == null));
     }

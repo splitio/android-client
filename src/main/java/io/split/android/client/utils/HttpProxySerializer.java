@@ -30,7 +30,11 @@ public class HttpProxySerializer {
     }
 
     @Nullable
-    public static HttpProxyDto deserialize(@Nullable String json) {
+    public static HttpProxyDto deserialize(GeneralInfoStorage storage) {
+        if (storage == null) {
+            return null;
+        }
+        String json = storage.getProxyConfig();
         if (json == null || json.isEmpty()) {
             return null;
         }
