@@ -231,8 +231,9 @@ class SplitFactoryHelperTest {
         `when`(config.synchronizeInBackground()).thenReturn(true)
         
         SplitFactoryHelper.setupProxyForBackgroundSync(config, proxyConfigSaveTask)
-        
-        Thread.sleep(100) // Give the thread time to start
+
+        Thread.sleep(100)
+        verify(proxyConfigSaveTask).run()
     }
     
     @Test
@@ -244,8 +245,9 @@ class SplitFactoryHelperTest {
         `when`(config.synchronizeInBackground()).thenReturn(true)
         
         SplitFactoryHelper.setupProxyForBackgroundSync(config, proxyConfigSaveTask)
-        
-        Thread.sleep(100) // Give time to ensure no thread was started
+
+        Thread.sleep(100)
+        verify(proxyConfigSaveTask, never()).run()
     }
     
     @Test
