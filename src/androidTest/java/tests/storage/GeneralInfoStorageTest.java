@@ -21,7 +21,7 @@ public class GeneralInfoStorageTest {
     @Before
     public void setUp() {
         mDb = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext());
-        mGeneralInfoStorage = new GeneralInfoStorageImpl(mDb.generalInfoDao());
+        mGeneralInfoStorage = new GeneralInfoStorageImpl(mDb.generalInfoDao(), null);
     }
 
     @After

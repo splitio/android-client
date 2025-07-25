@@ -14,11 +14,18 @@ class StorageProvider {
     private final SplitRoomDatabase mDatabase;
     private final boolean mShouldRecordTelemetry;
     private final SplitCipher mCipher;
+    // some values in general info storage require encryption always
+    private final SplitCipher mAlwaysEncryptedCipher;
 
     StorageProvider(SplitRoomDatabase database, String apiKey, boolean encryptionEnabled, boolean shouldRecordTelemetry) {
         mDatabase = database;
         mCipher = SplitCipherFactory.create(apiKey, encryptionEnabled);
         mShouldRecordTelemetry = shouldRecordTelemetry;
+        if (encryptionEnabled) {
+            mAlwaysEncryptedCipher = mCipher;
+        } else {
+            mAlwaysEncryptedCipher = SplitCipherFactory.create(apiKey, true);
+        }
     }
 
     SplitsStorage provideSplitsStorage() {
@@ -40,6 +47,6 @@ class StorageProvider {
     }
 
     GeneralInfoStorage provideGeneralInfoStorage() {
-        return StorageFactory.getGeneralInfoStorage(mDatabase);
+        return StorageFactory.getGeneralInfoStorage(mDatabase, mAlwaysEncryptedCipher);
     }
 }

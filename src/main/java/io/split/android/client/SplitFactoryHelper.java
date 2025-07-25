@@ -49,7 +49,6 @@ import io.split.android.client.service.sseclient.notifications.InstantUpdateChan
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
-import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.sseclient.notifications.mysegments.MembershipsNotificationProcessorFactory;
 import io.split.android.client.service.sseclient.notifications.mysegments.MembershipsNotificationProcessorFactoryImpl;
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
@@ -165,14 +164,15 @@ class SplitFactoryHelper {
                                                 TelemetryStorage telemetryStorage,
                                                 long observerCacheExpirationPeriod,
                                                 ScheduledThreadPoolExecutor impressionsObserverExecutor,
-                                                SplitsStorage splitsStorage) {
+                                                SplitsStorage splitsStorage,
+                                                SplitCipher alwaysEncryptedSplitCipher) {
 
         boolean isPersistenceEnabled = userConsentStatus == UserConsent.GRANTED;
         PersistentEventsStorage persistentEventsStorage =
                 StorageFactory.getPersistentEventsStorage(splitRoomDatabase, splitCipher);
         PersistentImpressionsStorage persistentImpressionsStorage =
                 StorageFactory.getPersistentImpressionsStorage(splitRoomDatabase, splitCipher);
-        GeneralInfoStorage generalInfoStorage = StorageFactory.getGeneralInfoStorage(splitRoomDatabase);
+        GeneralInfoStorage generalInfoStorage = StorageFactory.getGeneralInfoStorage(splitRoomDatabase, alwaysEncryptedSplitCipher);
         return new SplitStorageContainer(
                 splitsStorage,
                 StorageFactory.getMySegmentsStorage(splitRoomDatabase, splitCipher),

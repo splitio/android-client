@@ -38,4 +38,9 @@ public interface GeneralInfoStorage {
     void setLastProxyUpdateTimestamp(long timestamp);
 
     long getLastProxyUpdateTimestamp();
+
+    @Nullable
+    String getProxyConfig();
+
+    void setProxyConfig(@Nullable String proxyConfig);
 }
