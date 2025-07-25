@@ -1,6 +1,5 @@
 package io.split.android.client.utils;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import io.split.android.client.dtos.HttpProxyDto;
@@ -24,10 +23,6 @@ public class HttpProxySerializer {
         return Json.toJson(dto);
     }
 
-    public static void serializeAndStore(@Nullable HttpProxy httpProxy, @NonNull GeneralInfoStorage storage) {
-        String jsonProxy = serialize(httpProxy);
-        storage.setProxyConfig(jsonProxy);
-    }
 
     @Nullable
     public static HttpProxyDto deserialize(GeneralInfoStorage storage) {

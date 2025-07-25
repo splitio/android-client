@@ -271,8 +271,9 @@ public class GeneralInfoStorageImplTest {
                 .proxyCacert(caCertStream)
                 .credentialsProvider(credentialsProvider)
                 .build();
-        
-        HttpProxySerializer.serializeAndStore(httpProxy, mGeneralInfoStorage);
+
+        String jsonProxy = HttpProxySerializer.serialize(httpProxy);
+        mGeneralInfoStorage.setProxyConfig(jsonProxy);
         
         verify(mGeneralInfoDao).update(argThat(entity ->
             entity.getName().equals("proxyConfig") && 
@@ -330,7 +331,7 @@ public class GeneralInfoStorageImplTest {
         
         assertNull("Proxy config should be null when entity value is null", proxyConfig);
     }
-    
+
     @Test
     public void proxyConfigCanBeSetToNull() {
         mGeneralInfoStorage.setProxyConfig(null);
