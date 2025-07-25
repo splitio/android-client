@@ -159,7 +159,7 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitCipher alwaysEncryptedSplitCipher = (config.synchronizeInBackground() && config.proxy() != null && !config.proxy().isLegacy()) ?
                 factoryHelper.getCipher(apiToken, true) : null;
 
-        SplitsStorage splitsStorage = getSplitsStorage(splitDatabase, splitCipher);
+        SplitsStorage splitsStorage = StorageFactory.getSplitsStorage(splitDatabase, splitCipher);
 
         ScheduledThreadPoolExecutor impressionsObserverExecutor = new ScheduledThreadPoolExecutor(1,
                 new ThreadPoolExecutor.CallerRunsPolicy());
@@ -177,6 +177,9 @@ public class SplitFactoryImpl implements SplitFactory {
         String splitsFilterQueryStringFromConfig = filtersConfig.second;
 
         String flagsSpec = getFlagsSpec(testingConfig);
+        FlagSetsFilter flagSetsFilter = factoryHelper.getFlagSetsFilter(filters);
+        WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
+
         HttpClient defaultHttpClient;
         if (httpClient == null) {
             HttpClientImpl.Builder builder = new HttpClientImpl.Builder()
@@ -191,6 +194,8 @@ public class SplitFactoryImpl implements SplitFactory {
             }
 
             defaultHttpClient = builder.build();
+
+            SplitFactoryHelper.setupProxyForBackgroundSync(config, SplitFactoryHelper.getProxyConfigSaveTask(config, workManagerWrapper, mStorageContainer.getGeneralInfoStorage()));
         } else {
             defaultHttpClient = httpClient;
         }
@@ -199,26 +204,23 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
                 config, defaultHttpClient, splitsFilterQueryStringFromConfig);
 
-        FlagSetsFilter flagSetsFilter = factoryHelper.getFlagSetsFilter(filters);
-
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig,
                 getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
 
-        WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
-        
+
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
         splitSingleThreadTaskExecutor.pause();
 
         ImpressionStrategyProvider impressionStrategyProvider = factoryHelper.getImpressionStrategyProvider(mSplitTaskExecutor, splitTaskFactory, mStorageContainer, config);
         Pair<ProcessStrategy, PeriodicTracker> noneComponents = impressionStrategyProvider.getNoneComponents();
-        
+
         mImpressionManager = new StrategyImpressionManager(noneComponents, impressionStrategyProvider.getStrategy(config.impressionsMode()));
         final RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory = new RetryBackoffCounterTimerFactory();
 
         StreamingComponents streamingComponents = factoryHelper.buildStreamingComponents(mSplitTaskExecutor,
                 splitTaskFactory, config, defaultHttpClient, splitApiFacade, mStorageContainer, flagsSpec);
-        
+
         Synchronizer mSynchronizer = new SynchronizerImpl(
                 config,
                 mSplitTaskExecutor,
@@ -381,11 +383,6 @@ public class SplitFactoryImpl implements SplitFactory {
         mManager = new SplitManagerImpl(
                 mStorageContainer.getSplitsStorage(),
                 new SplitValidatorImpl(), splitParser);
-    }
-
-    @NonNull
-    private static SplitsStorage getSplitsStorage(SplitRoomDatabase splitDatabase, SplitCipher splitCipher) {
-        return StorageFactory.getSplitsStorage(splitDatabase, splitCipher);
     }
 
     private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {

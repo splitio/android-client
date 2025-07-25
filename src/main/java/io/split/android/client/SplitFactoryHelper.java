@@ -93,6 +93,7 @@ import io.split.android.client.telemetry.TelemetrySynchronizerImpl;
 import io.split.android.client.telemetry.TelemetrySynchronizerStub;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
+import io.split.android.client.utils.HttpProxySerializer;
 import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
 
@@ -226,6 +227,29 @@ class SplitFactoryHelper {
         return new WorkManagerWrapper(
                 WorkManager.getInstance(context), splitClientConfig, apiKey, databaseName, filter);
 
+    }
+
+    static void setupProxyForBackgroundSync(@NonNull SplitClientConfig config, Runnable proxyConfigSaveTask) {
+        if (config.proxy() != null && !config.proxy().isLegacy() && config.synchronizeInBackground()) {
+            // Store proxy config for background sync usage
+            new Thread(proxyConfigSaveTask).start();
+        }
+    }
+
+    // Visible to inject for testing
+    @NonNull
+    static Runnable getProxyConfigSaveTask(@NonNull SplitClientConfig config, WorkManagerWrapper workManagerWrapper, GeneralInfoStorage generalInfoStorage) {
+        return new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    generalInfoStorage.setProxyConfig(HttpProxySerializer.serialize(config.proxy()));
+                } catch (Exception ex) {
+                    Logger.w("Failed to store proxy config for background sync. Disabling background sync", ex);
+                    workManagerWrapper.removeWork();
+                }
+            }
+        };
     }
 
     SyncManager buildSyncManager(SplitClientConfig config,

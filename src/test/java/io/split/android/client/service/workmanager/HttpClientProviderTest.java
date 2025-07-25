@@ -40,17 +40,16 @@ public class HttpClientProviderTest {
 
     private static final String TEST_API_KEY = "test-api-key";
     private static final String TEST_CERT_PINNING_CONFIG = "{\"pins\":[]}";
-    private static final String TEST_PROXY_CONFIG = "proxy-config";
 
     @Test
     public void shouldBuildHttpClientWithNullCertificatePinningConfig() {
-        HttpClient result = buildHttpClientWithMocks(null, null, null);
+        HttpClient result = buildHttpClientWithMocks(null, false, null);
         assertNotNull("HttpClient should not be null", result);
     }
 
     @Test
     public void shouldBuildHttpClientWithValidCertificatePinningConfig() {
-        HttpClient result = buildHttpClientWithCertPinningMocks(TEST_CERT_PINNING_CONFIG, null, null);
+        HttpClient result = buildHttpClientWithCertPinningMocks(false);
         assertNotNull("HttpClient should not be null", result);
     }
 
@@ -59,13 +58,13 @@ public class HttpClientProviderTest {
         mockHttpProxyDto.host = "proxy.example.com";
         mockHttpProxyDto.port = 8080;
         
-        HttpClient result = buildHttpClientWithMocks(null, TEST_PROXY_CONFIG, mockHttpProxyDto);
+        HttpClient result = buildHttpClientWithMocks(null, true, mockHttpProxyDto);
         assertNotNull("HttpClient should not be null", result);
     }
 
     @Test
     public void shouldBuildHttpClientWhenProxyConfigProvidedButDtoIsNull() {
-        HttpClient result = buildHttpClientWithMocks(null, TEST_PROXY_CONFIG, null);
+        HttpClient result = buildHttpClientWithMocks(null, true, null);
         assertNotNull("HttpClient should not be null", result);
     }
 
@@ -76,7 +75,7 @@ public class HttpClientProviderTest {
         mockHttpProxyDto.username = "testuser";
         mockHttpProxyDto.password = "testpass";
         
-        HttpClient result = buildHttpClientWithMocks(null, TEST_PROXY_CONFIG, mockHttpProxyDto);
+        HttpClient result = buildHttpClientWithMocks(null, true, mockHttpProxyDto);
         assertNotNull("HttpClient should not be null", result);
     }
 
@@ -86,7 +85,7 @@ public class HttpClientProviderTest {
         mockHttpProxyDto.port = 8080;
         mockHttpProxyDto.bearerToken = "test-bearer-token";
         
-        HttpClient result = buildHttpClientWithMocks(null, TEST_PROXY_CONFIG, mockHttpProxyDto);
+        HttpClient result = buildHttpClientWithMocks(null, true, mockHttpProxyDto);
         assertNotNull("HttpClient should not be null", result);
     }
 
@@ -97,7 +96,7 @@ public class HttpClientProviderTest {
         mockHttpProxyDto.clientCert = "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----";
         mockHttpProxyDto.clientKey = "-----BEGIN PRIVATE KEY-----\nMIIE...\n-----END PRIVATE KEY-----";
         
-        HttpClient result = buildHttpClientWithMocks(null, TEST_PROXY_CONFIG, mockHttpProxyDto);
+        HttpClient result = buildHttpClientWithMocks(null, true, mockHttpProxyDto);
         assertNotNull("HttpClient should not be null", result);
     }
 
@@ -106,13 +105,13 @@ public class HttpClientProviderTest {
         mockHttpProxyDto.host = null;
         mockHttpProxyDto.port = 8080;
         
-        HttpClient result = buildHttpClientWithMocks(null, TEST_PROXY_CONFIG, mockHttpProxyDto);
+        HttpClient result = buildHttpClientWithMocks(null, true, mockHttpProxyDto);
         assertNotNull("HttpClient should not be null", result);
     }
 
     @Test
     public void shouldBuildHttpClientWithEmptyCertificatePinningConfig() {
-        HttpClient result = buildHttpClientWithMocks("", null, null);
+        HttpClient result = buildHttpClientWithMocks("", false, null);
         assertNotNull("HttpClient should not be null", result);
     }
 
@@ -122,7 +121,7 @@ public class HttpClientProviderTest {
         mockHttpProxyDto.port = 8080;
         mockHttpProxyDto.caCert = "-----BEGIN CERTIFICATE-----\nMIIC...\n-----END CERTIFICATE-----";
         
-        HttpClient result = buildHttpClientWithMocks(null, TEST_PROXY_CONFIG, mockHttpProxyDto);
+        HttpClient result = buildHttpClientWithMocks(null, true, mockHttpProxyDto);
         assertNotNull("HttpClient should not be null", result);
     }
 
@@ -138,7 +137,7 @@ public class HttpClientProviderTest {
                 .thenReturn(proxyDto);
     }
 
-    private HttpClient buildHttpClientWithMocks(String certPinningConfig, String proxyConfig, HttpProxyDto proxyDto) {
+    private HttpClient buildHttpClientWithMocks(String certPinningConfig, boolean usingProxy, HttpProxyDto proxyDto) {
         try (MockedStatic<StorageFactory> storageFactoryMock = mockStatic(StorageFactory.class);
              MockedStatic<SplitCipherFactory> cipherFactoryMock = mockStatic(SplitCipherFactory.class);
              MockedStatic<HttpProxySerializer> serializerMock = mockStatic(HttpProxySerializer.class)) {
@@ -148,30 +147,30 @@ public class HttpClientProviderTest {
             return HttpClientProvider.buildHttpClient(
                 TEST_API_KEY, 
                 certPinningConfig, 
-                proxyConfig, 
+                usingProxy,
                 mockDatabase
             );
         }
     }
 
-    private HttpClient buildHttpClientWithCertPinningMocks(String certPinningConfig, String proxyConfig, HttpProxyDto proxyDto) {
+    private HttpClient buildHttpClientWithCertPinningMocks(boolean usingProxy) {
         try (MockedStatic<StorageFactory> storageFactoryMock = mockStatic(StorageFactory.class);
              MockedStatic<SplitCipherFactory> cipherFactoryMock = mockStatic(SplitCipherFactory.class);
              MockedStatic<HttpProxySerializer> serializerMock = mockStatic(HttpProxySerializer.class);
              MockedStatic<CertificatePinningConfigurationProvider> certProviderMock = mockStatic(CertificatePinningConfigurationProvider.class)) {
             
-            setupCommonMocks(storageFactoryMock, cipherFactoryMock, serializerMock, proxyDto);
-            certProviderMock.when(() -> CertificatePinningConfigurationProvider.getCertificatePinningConfiguration(certPinningConfig))
+            setupCommonMocks(storageFactoryMock, cipherFactoryMock, serializerMock, null);
+            certProviderMock.when(() -> CertificatePinningConfigurationProvider.getCertificatePinningConfiguration(HttpClientProviderTest.TEST_CERT_PINNING_CONFIG))
                     .thenReturn(mockCertPinningConfig);
             
             HttpClient result = HttpClientProvider.buildHttpClient(
-                TEST_API_KEY, 
-                certPinningConfig, 
-                proxyConfig, 
+                TEST_API_KEY,
+                    HttpClientProviderTest.TEST_CERT_PINNING_CONFIG,
+                usingProxy,
                 mockDatabase
             );
             
-            certProviderMock.verify(() -> CertificatePinningConfigurationProvider.getCertificatePinningConfiguration(certPinningConfig));
+            certProviderMock.verify(() -> CertificatePinningConfigurationProvider.getCertificatePinningConfiguration(HttpClientProviderTest.TEST_CERT_PINNING_CONFIG));
             return result;
         }
     }

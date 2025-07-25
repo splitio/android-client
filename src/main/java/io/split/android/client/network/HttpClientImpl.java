@@ -6,6 +6,9 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
@@ -317,20 +320,63 @@ public class HttpClientImpl implements HttpClient {
             ProxySslSocketFactoryProviderImpl factoryProvider = new ProxySslSocketFactoryProviderImpl(mBase64Decoder);
             try {
                 if (proxyParams.getClientCertStream() != null && proxyParams.getClientKeyStream() != null) {
-                    try (InputStream caInput = proxyParams.getCaCertStream();
-                         InputStream certInput = proxyParams.getClientCertStream();
-                         InputStream keyInput = proxyParams.getClientKeyStream()) {
+                    // Create copies of the streams to avoid consuming the originals
+                    byte[] caCertBytes = copyStreamToByteArray(proxyParams.getCaCertStream());
+                    byte[] clientCertBytes = copyStreamToByteArray(proxyParams.getClientCertStream());
+                    byte[] clientKeyBytes = copyStreamToByteArray(proxyParams.getClientKeyStream());
+                    
+                    if (caCertBytes != null && clientCertBytes != null && clientKeyBytes != null) {
                         Logger.v("Custom proxy CA cert and client cert/key loaded for proxy: " + proxyParams.getHost());
-                        return factoryProvider.create(caInput, certInput, keyInput);
+                        return factoryProvider.create(
+                            new ByteArrayInputStream(caCertBytes),
+                            new ByteArrayInputStream(clientCertBytes),
+                            new ByteArrayInputStream(clientKeyBytes));
                     }
                 } else if (proxyParams.getCaCertStream() != null) {
-                    try (InputStream caInput = proxyParams.getCaCertStream()) {
-                        return factoryProvider.create(caInput);
+                    // Create a copy of the CA cert stream
+                    byte[] caCertBytes = copyStreamToByteArray(proxyParams.getCaCertStream());
+                    
+                    if (caCertBytes != null) {
+                        return factoryProvider.create(new ByteArrayInputStream(caCertBytes));
                     }
                 }
             } catch (Exception e) {
                 Logger.e("Failed to create SSLSocketFactory for proxy: " + proxyParams.getHost() + ", error: " + e.getMessage());
             }
+            return null;
+        }
+    }
+
+    /**
+     * Copies an InputStream to a byte array without closing the original stream.
+     */
+    @VisibleForTesting
+    static byte[] copyStreamToByteArray(InputStream inputStream) {
+        if (inputStream == null) {
+            return null;
+        }
+        
+        try {
+            if (inputStream.markSupported()) {
+                inputStream.mark(Integer.MAX_VALUE);
+            }
+            
+            // Read the stream into a byte array
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            int bytesRead;
+            byte[] data = new byte[4096];
+            while ((bytesRead = inputStream.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, bytesRead);
+            }
+            buffer.flush();
+            
+            if (inputStream.markSupported()) {
+                inputStream.reset();
+            }
+            
+            return buffer.toByteArray();
+        } catch (IOException e) {
+            Logger.e("Failed to copy input stream: " + e.getMessage());
             return null;
         }
     }

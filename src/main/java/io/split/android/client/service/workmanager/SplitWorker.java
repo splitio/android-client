@@ -31,7 +31,7 @@ public abstract class SplitWorker extends Worker {
         mDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
         mHttpClient = HttpClientProvider.buildHttpClient(apiKey,
                 inputData.getString(ServiceConstants.WORKER_PARAM_CERTIFICATE_PINS),
-                inputData.getString(ServiceConstants.WORKER_PARAM_USES_PROXY), mDatabase);
+                inputData.getBoolean(ServiceConstants.WORKER_PARAM_USES_PROXY, false), mDatabase);
     }
 
     @NonNull

@@ -24,8 +24,8 @@ import io.split.android.client.utils.HttpProxySerializer;
 
 class HttpClientProvider {
 
-    public static HttpClient buildHttpClient(String apiKey, String certPinningConfig, String proxyConfig, SplitRoomDatabase mDatabase) {
-        return buildHttpClient(apiKey, buildCertPinningConfig(certPinningConfig), buildProxyConfig(proxyConfig, mDatabase, apiKey));
+    public static HttpClient buildHttpClient(String apiKey, String certPinningConfig, boolean usesProxy, SplitRoomDatabase mDatabase) {
+        return buildHttpClient(apiKey, buildCertPinningConfig(certPinningConfig), buildProxyConfig(usesProxy, mDatabase, apiKey));
     }
 
     private static HttpClient buildHttpClient(String apiKey, @Nullable CertificatePinningConfiguration certificatePinningConfiguration, HttpProxy proxyConfiguration) {
@@ -60,13 +60,14 @@ class HttpClientProvider {
         return CertificatePinningConfigurationProvider.getCertificatePinningConfiguration(pinsJson);
     }
 
-    private static HttpProxy buildProxyConfig(String usesProxy, SplitRoomDatabase database, String apiKey) {
-        if (usesProxy == null) {
+    private static HttpProxy buildProxyConfig(boolean usesProxy, SplitRoomDatabase database, String apiKey) {
+        if (!usesProxy) {
             return null;
         }
 
         GeneralInfoStorage storage = StorageFactory.getGeneralInfoStorage(database, SplitCipherFactory.create(apiKey, true));
         HttpProxyDto proxyConfigDto = HttpProxySerializer.deserialize(storage);
+
         if (proxyConfigDto == null) {
             return null;
         }
