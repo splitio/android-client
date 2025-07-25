@@ -17,9 +17,11 @@ public class GeneralInfoStorageImpl implements GeneralInfoStorage {
     private static final String PROXY_CONFIG = "proxyConfig";
 
     private final GeneralInfoDao mGeneralInfoDao;
+    private final SplitCipher mAlwaysEncryptedSplitCipher;
 
-    public GeneralInfoStorageImpl(GeneralInfoDao generalInfoDao, SplitCipher splitCipher) {
+    public GeneralInfoStorageImpl(GeneralInfoDao generalInfoDao, @Nullable SplitCipher splitCipher) {
         mGeneralInfoDao = checkNotNull(generalInfoDao);
+        mAlwaysEncryptedSplitCipher = splitCipher;
     }
 
     @Override
@@ -116,11 +118,22 @@ public class GeneralInfoStorageImpl implements GeneralInfoStorage {
     @Override
     public String getProxyConfig() {
         GeneralInfoEntity entity = mGeneralInfoDao.getByName(PROXY_CONFIG);
-        return entity != null ? entity.getStringValue() : null;
+        if (entity == null) {
+            return null;
+        }
+
+        if (mAlwaysEncryptedSplitCipher != null) {
+            return mAlwaysEncryptedSplitCipher.decrypt(entity.getStringValue());
+        }
+
+        return entity.getStringValue();
     }
 
     @Override
     public void setProxyConfig(@Nullable String proxyConfig) {
+        if (mAlwaysEncryptedSplitCipher != null) {
+            proxyConfig = mAlwaysEncryptedSplitCipher.encrypt(proxyConfig);
+        }
         mGeneralInfoDao.update(new GeneralInfoEntity(PROXY_CONFIG, proxyConfig));
     }
 }

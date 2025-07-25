@@ -213,11 +213,13 @@ public class GeneralInfoStorageImplTest {
 
     @Test
     public void getProxyConfigReturnsValueFromDao() {
-        when(mGeneralInfoDao.getByName("proxyConfig")).thenReturn(new GeneralInfoEntity("proxyConfig", "proxyConfigValue"));
+        when(mGeneralInfoDao.getByName("proxyConfig"))
+                .thenReturn(new GeneralInfoEntity("proxyConfig", "encrypted_proxyConfigValue"));
         String proxyConfig = mGeneralInfoStorage.getProxyConfig();
 
-        assertEquals("proxyConfigValue", proxyConfig);
+        assertEquals("decrypted_encrypted_proxyConfigValue", proxyConfig);
         verify(mGeneralInfoDao).getByName("proxyConfig");
+        verify(mAlwaysEncryptedSplitCipher).decrypt("encrypted_proxyConfigValue");
     }
 
     @Test
@@ -232,8 +234,9 @@ public class GeneralInfoStorageImplTest {
     public void setProxyConfigSetsValueOnDao() {
         mGeneralInfoStorage.setProxyConfig("proxyConfigValue");
 
+        verify(mAlwaysEncryptedSplitCipher).encrypt("proxyConfigValue");
         verify(mGeneralInfoDao).update(argThat(entity ->
                 entity.getName().equals("proxyConfig") &&
-                        entity.getStringValue().equals("proxyConfigValue")));
+                entity.getStringValue().equals("encrypted_proxyConfigValue")));
     }
 }
