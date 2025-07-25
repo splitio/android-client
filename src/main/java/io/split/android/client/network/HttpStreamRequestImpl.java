@@ -18,6 +18,7 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.ProtocolException;
 import java.net.Proxy;
+import java.net.SocketException;
 import java.net.URI;
 import java.net.URL;
 import java.util.HashMap;
@@ -56,6 +57,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private final HttpProxy mHttpProxy;
     @Nullable
     private final ProxyCredentialsProvider mProxyCredentialsProvider;
+    @Nullable
+    private final ProxyCacertConnectionHandler mConnectionHandler;
 
     HttpStreamRequestImpl(@NonNull URI uri,
                           @NonNull Map<String, String> headers,
@@ -67,7 +70,8 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                           @NonNull UrlSanitizer urlSanitizer,
                           @Nullable CertificateChecker certificateChecker,
                           @Nullable HttpProxy httpProxy,
-                          @Nullable ProxyCredentialsProvider proxyCredentialsProvider) {
+                          @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
+                          @Nullable ProxyCacertConnectionHandler proxyCacertConnectionHandler) {
         mUri = checkNotNull(uri);
         mHttpMethod = HttpMethod.GET;
         mProxy = proxy;
@@ -80,10 +84,11 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         mCertificateChecker = certificateChecker;
         mHttpProxy = httpProxy;
         mProxyCredentialsProvider = proxyCredentialsProvider;
+        mConnectionHandler = proxyCacertConnectionHandler;
     }
 
     @Override
-    public HttpStreamResponse execute() throws HttpException {
+    public HttpStreamResponse execute() throws HttpException, IOException {
         return getRequest();
     }
 
@@ -115,14 +120,18 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         }
     }
 
-    private HttpStreamResponse getRequest() throws HttpException {
+    private HttpStreamResponse getRequest() throws HttpException, IOException {
         HttpStreamResponse response;
         try {
-            mConnection = setUpConnection(false);
-            response = buildResponse(mConnection);
+            if (mConnectionHandler != null && mHttpProxy != null && mSslSocketFactory != null && (mHttpProxy.getCaCertStream() != null || mHttpProxy.getClientCertStream() != null)) {
+                response = mConnectionHandler.executeStreamRequest(mHttpProxy, getUrl(), mHttpMethod, mHeaders, mSslSocketFactory, mProxyCredentialsProvider);
+            } else {
+                mConnection = setUpConnection(false);
+                response = buildResponse(mConnection);
 
-            if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
-                response = handleAuthentication(response);
+                if (response.getHttpStatus() == HttpURLConnection.HTTP_PROXY_AUTH) {
+                    response = handleAuthentication(response);
+                }
             }
         } catch (MalformedURLException e) {
             disconnect();
@@ -133,6 +142,11 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         } catch (SSLPeerUnverifiedException e) {
             disconnect();
             throw new HttpException("SSL peer not verified: " + e.getLocalizedMessage(), HttpStatus.INTERNAL_NON_RETRYABLE.getCode());
+        } catch (SocketException e) {
+            disconnect();
+            // Let socket-related IOExceptions pass through unwrapped for consistent error handling
+            // This ensures socket closures are treated the same in both direct and proxy flows
+            throw e;
         } catch (IOException e) {
             disconnect();
             throw new HttpException("Something happened while retrieving data: " + e.getLocalizedMessage());
@@ -142,10 +156,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     }
 
     private HttpURLConnection setUpConnection(boolean useProxyAuthenticator) throws IOException {
-        URL url = mUrlSanitizer.getUrl(mUri);
-        if (url == null) {
-            throw new IOException("Error parsing URL");
-        }
+        URL url = getUrl();
 
         HttpURLConnection connection = createConnection(
                 url,
@@ -165,6 +176,15 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
         checkPins(connection, mCertificateChecker);
 
         return connection;
+    }
+
+    @NonNull
+    private URL getUrl() throws IOException {
+        URL url = mUrlSanitizer.getUrl(mUri);
+        if (url == null) {
+            throw new IOException("Error parsing URL");
+        }
+        return url;
     }
 
     private HttpStreamResponse handleAuthentication(HttpStreamResponse response) throws HttpException {
@@ -190,11 +210,11 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                 }
                 mBufferedReader = new BufferedReader(new InputStreamReader(inputStream));
 
-                return new HttpStreamResponseImpl(responseCode, mBufferedReader);
+                return HttpStreamResponseImpl.createFromHttpUrlConnection(responseCode, mBufferedReader);
             }
         }
 
-        return new HttpStreamResponseImpl(responseCode);
+        return HttpStreamResponseImpl.createFromHttpUrlConnection(responseCode, null);
     }
 
     private void disconnect() {

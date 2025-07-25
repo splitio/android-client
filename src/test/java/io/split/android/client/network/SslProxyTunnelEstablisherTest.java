@@ -6,6 +6,7 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.junit.After;
 import org.junit.Before;
@@ -27,9 +28,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLServerSocket;
+import javax.net.ssl.SSLSession;
 import javax.net.ssl.SSLSocketFactory;
 
 import okhttp3.tls.HeldCertificate;
@@ -44,6 +48,14 @@ public class SslProxyTunnelEstablisherTest {
 
     @Before
     public void setUp() throws Exception {
+        // override the default hostname verifier for testing
+        HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String hostname, SSLSession sslSession) {
+                return true;
+            }
+        });
+
         // Create test certificates
         HeldCertificate proxyCa = new HeldCertificate.Builder()
                 .commonName("Test Proxy CA")
@@ -95,7 +107,8 @@ public class SslProxyTunnelEstablisherTest {
                 targetHost,
                 targetPort,
                 clientSslSocketFactory,
-                proxyCredentialsProvider);
+                proxyCredentialsProvider,
+                false);
 
         assertNotNull("Tunnel socket should not be null", tunnelSocket);
         assertTrue("Tunnel socket should be connected", tunnelSocket.isConnected());
@@ -124,7 +137,8 @@ public class SslProxyTunnelEstablisherTest {
                     "example.com",
                     443,
                     untrustedSocketFactory,
-                    proxyCredentialsProvider);
+                    proxyCredentialsProvider,
+                    false);
             fail("Should have thrown exception for untrusted certificate");
         } catch (IOException e) {
             assertTrue("Exception should be SSL-related", e.getMessage().contains("certification"));
@@ -143,7 +157,8 @@ public class SslProxyTunnelEstablisherTest {
                     "example.com",
                     443,
                     clientSslSocketFactory,
-                    proxyCredentialsProvider);
+                    proxyCredentialsProvider,
+                    false);
             fail("Should have thrown exception for connection failure");
         } catch (IOException e) {
             // The implementation wraps the original exception with a descriptive message
@@ -153,6 +168,7 @@ public class SslProxyTunnelEstablisherTest {
 
     @Test
     public void bearerTokenIsPassedWhenSet() throws IOException, InterruptedException {
+        // For Bearer token, we don't need to mock the Base64Encoder since it's not used
         SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher();
         establisher.establishTunnel(
                 "localhost",
@@ -165,9 +181,47 @@ public class SslProxyTunnelEstablisherTest {
                     public String getToken() {
                         return "token";
                     }
-                });
+                },
+                false);
         boolean await = testProxy.getAuthorizationHeaderReceived().await(5, TimeUnit.SECONDS);
         assertTrue("Proxy should have received authorization header", await);
+        assertEquals("Proxy-Authorization: Bearer token", testProxy.getReceivedAuthHeader());
+    }
+    
+    @Test
+    public void basicAuthIsPassedWhenSet() throws IOException, InterruptedException {
+        // Create a mock Base64Encoder
+        Base64Encoder mockEncoder = mock(Base64Encoder.class);
+        String mockEncodedCredentials = "MOCK_ENCODED_CREDENTIALS";
+        when(mockEncoder.encode("username:password")).thenReturn(mockEncodedCredentials);
+        
+        // Create SslProxyTunnelEstablisher with the mock encoder
+        SslProxyTunnelEstablisher establisher = new SslProxyTunnelEstablisher(mockEncoder);
+        
+        establisher.establishTunnel(
+                "localhost",
+                testProxy.getPort(),
+                "example.com",
+                443,
+                clientSslSocketFactory,
+                new BasicCredentialsProvider() {
+                    @Override
+                    public String getUserName() {
+                        return "username";
+                    }
+                    
+                    @Override
+                    public String getPassword() {
+                        return "password";
+                    }
+                },
+                false);
+        boolean await = testProxy.getAuthorizationHeaderReceived().await(5, TimeUnit.SECONDS);
+        assertTrue("Proxy should have received authorization header", await);
+        
+        // The expected header should contain the mock encoded credentials
+        String expectedHeader = "Proxy-Authorization: Basic " + mockEncodedCredentials;
+        assertEquals(expectedHeader, testProxy.getReceivedAuthHeader());
     }
 
     @Test
@@ -180,7 +234,8 @@ public class SslProxyTunnelEstablisherTest {
                 "example.com",
                 443,
                 clientSslSocketFactory,
-                null);
+                null,
+                false);
 
         assertNotNull(tunnelSocket);
         assertTrue(testProxy.getConnectRequestReceived().await(5, TimeUnit.SECONDS));
@@ -205,7 +260,8 @@ public class SslProxyTunnelEstablisherTest {
                     public String getToken() {
                         return null;
                     }
-                });
+                },
+                false);
 
         assertNotNull(tunnelSocket);
         assertTrue(testProxy.getConnectRequestReceived().await(5, TimeUnit.SECONDS));
@@ -230,7 +286,8 @@ public class SslProxyTunnelEstablisherTest {
                     public String getToken() {
                         return "";
                     }
-                });
+                },
+                false);
 
         assertNotNull(tunnelSocket);
         assertTrue(testProxy.getConnectRequestReceived().await(5, TimeUnit.SECONDS));
@@ -251,7 +308,7 @@ public class SslProxyTunnelEstablisherTest {
                 "example.com",
                 443,
                 clientSslSocketFactory,
-                null));
+                null, false));
 
         assertNotNull(exception);
     }
@@ -267,7 +324,8 @@ public class SslProxyTunnelEstablisherTest {
                 "example.com",
                 443,
                 clientSslSocketFactory,
-                null));
+                null,
+                false));
 
         assertNotNull(exception);
     }
@@ -283,7 +341,8 @@ public class SslProxyTunnelEstablisherTest {
                 "example.com",
                 443,
                 clientSslSocketFactory,
-                null));
+                null,
+                false));
 
         assertEquals(407, exception.responseCode());
     }
@@ -299,6 +358,7 @@ public class SslProxyTunnelEstablisherTest {
         private final CountDownLatch mConnectRequestReceived = new CountDownLatch(1);
         private final CountDownLatch mAuthorizationHeaderReceived = new CountDownLatch(1);
         private final AtomicReference<String> mReceivedConnectLine = new AtomicReference<>();
+        private final AtomicReference<String> mReceivedAuthHeader = new AtomicReference<>();
         private final AtomicReference<String> mConnectResponse = new AtomicReference<>("HTTP/1.1 200 Connection established");
 
         public TestSslProxy(int port, HeldCertificate serverCert) {
@@ -350,8 +410,9 @@ public class SslProxyTunnelEstablisherTest {
                     mConnectRequestReceived.countDown();
 
                     while((line = reader.readLine()) != null && !line.isEmpty()) {
-                        if (line.contains("Authorization") && line.contains("Bearer")) {
+                        if (line.contains("Authorization") && (line.contains("Bearer") || line.contains("Basic"))) {
                             mAuthorizationHeaderReceived.countDown();
+                            mReceivedAuthHeader.set(line);
                         }
                     }
 
@@ -391,6 +452,10 @@ public class SslProxyTunnelEstablisherTest {
 
         public String getReceivedConnectLine() {
             return mReceivedConnectLine.get();
+        }
+
+        public String getReceivedAuthHeader() {
+            return mReceivedAuthHeader.get();
         }
 
         public void setConnectResponse(String connectResponse) {

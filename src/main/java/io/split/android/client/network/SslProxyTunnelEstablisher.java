@@ -2,6 +2,7 @@ package io.split.android.client.network;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.annotation.VisibleForTesting;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -13,10 +14,11 @@ import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-
-import io.split.android.client.utils.logger.Logger;
 
 /**
  * Establishes SSL tunnels to SSL proxies using CONNECT protocol.
@@ -25,9 +27,19 @@ class SslProxyTunnelEstablisher {
 
     private static final String CRLF = "\r\n";
     private static final String PROXY_AUTHORIZATION_HEADER = "Proxy-Authorization";
-    
+    private final Base64Encoder mBase64Encoder;
+
     // Default timeout for regular connections (10 seconds)
-    private static final int DEFAULT_SOCKET_TIMEOUT = 10000;
+    private static final int DEFAULT_SOCKET_TIMEOUT = 20000;
+
+    SslProxyTunnelEstablisher() {
+        this(new DefaultBase64Encoder());
+    }
+
+    @VisibleForTesting
+    SslProxyTunnelEstablisher(Base64Encoder base64Encoder) {
+        mBase64Encoder = base64Encoder;
+    }
 
     /**
      * Establishes an SSL tunnel through the proxy using the CONNECT method.
@@ -40,63 +52,56 @@ class SslProxyTunnelEstablisher {
      * @param targetPort               The target server port
      * @param sslSocketFactory         SSL socket factory for proxy authentication
      * @param proxyCredentialsProvider Credentials provider for proxy authentication
-     * @return Raw socket with tunnel established (connection maintained)
-     * @throws IOException if tunnel establishment fails
-     */
-    /**
-     * Establishes an SSL tunnel through the proxy using the CONNECT method.
-     * After successful tunnel establishment, extracts the underlying socket
-     * for use with origin server SSL connections.
-     *
-     * @param proxyHost                The proxy server hostname
-     * @param proxyPort                The proxy server port
-     * @param targetHost               The target server hostname
-     * @param targetPort               The target server port
-     * @param sslSocketFactory         SSL socket factory for proxy authentication
-     * @param proxyCredentialsProvider Credentials provider for proxy authentication
+     * @param isStreaming              Whether this connection is for streaming (uses longer timeout)
      * @return Raw socket with tunnel established (connection maintained)
      * @throws IOException if tunnel establishment fails
      */
     @NonNull
     Socket establishTunnel(@NonNull String proxyHost,
-                                  int proxyPort,
-                                  @NonNull String targetHost,
-                                  int targetPort,
-                                  @NonNull SSLSocketFactory sslSocketFactory,
-                                  @Nullable ProxyCredentialsProvider proxyCredentialsProvider) throws IOException {
+                           int proxyPort,
+                           @NonNull String targetHost,
+                           int targetPort,
+                           @NonNull SSLSocketFactory sslSocketFactory,
+                           @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
+                           boolean isStreaming) throws IOException {
 
         Socket rawSocket = null;
         SSLSocket sslSocket = null;
 
         try {
-            // Determine which timeout to use based on connection type
             int timeout = DEFAULT_SOCKET_TIMEOUT;
-            
             // Step 1: Create raw TCP connection to proxy
             rawSocket = new Socket(proxyHost, proxyPort);
             rawSocket.setSoTimeout(timeout);
 
             // Create a temporary SSL socket to establish the SSL session with proper trust validation
-            sslSocket = (SSLSocket) sslSocketFactory.createSocket(rawSocket, proxyHost, proxyPort, false);
+            sslSocket = (SSLSocket) sslSocketFactory.createSocket(rawSocket, proxyHost, proxyPort, true);
             sslSocket.setUseClientMode(true);
-            sslSocket.setSoTimeout(timeout);
+            if (isStreaming) {
+                sslSocket.setSoTimeout(0); // no timeout for streaming
+            } else {
+                sslSocket.setSoTimeout(timeout);
+            }
 
             // Perform SSL handshake using the SSL socket with custom CA certificates
             sslSocket.startHandshake();
+
+            // Validate the proxy hostname
+            HostnameVerifier verifier = HttpsURLConnection.getDefaultHostnameVerifier();
+            if (!verifier.verify(proxyHost, sslSocket.getSession())) {
+                throw new SSLHandshakeException("Proxy hostname verification failed");
+            }
 
             // Step 3: Send CONNECT request through SSL connection
             sendConnectRequest(sslSocket, targetHost, targetPort, proxyCredentialsProvider);
 
             // Step 4: Validate CONNECT response through SSL connection
             validateConnectResponse(sslSocket);
-            Logger.v("SSL tunnel established successfully");
 
             // Step 5: Return SSL socket for tunnel communication
             return sslSocket;
 
         } catch (Exception e) {
-            Logger.e("SSL tunnel establishment failed: " + e.getMessage());
-
             // Clean up resources on error
             if (sslSocket != null) {
                 try {
@@ -130,27 +135,34 @@ class SslProxyTunnelEstablisher {
                                     int targetPort,
                                     @Nullable ProxyCredentialsProvider proxyCredentialsProvider) throws IOException {
 
-        Logger.v("Sending CONNECT request through SSL: CONNECT " + targetHost + ":" + targetPort + " HTTP/1.1");
-
         PrintWriter writer = new PrintWriter(new OutputStreamWriter(sslSocket.getOutputStream(), StandardCharsets.UTF_8), false);
         writer.write("CONNECT " + targetHost + ":" + targetPort + " HTTP/1.1" + CRLF);
         writer.write("Host: " + targetHost + ":" + targetPort + CRLF);
 
         if (proxyCredentialsProvider != null) {
-            if (proxyCredentialsProvider instanceof BearerCredentialsProvider) {
-                // Send Proxy-Authorization header if credentials are set
-                String bearerToken = ((BearerCredentialsProvider) proxyCredentialsProvider).getToken();
-                if (bearerToken != null && !bearerToken.trim().isEmpty()) {
-                    writer.write(PROXY_AUTHORIZATION_HEADER + ": Bearer " + bearerToken + CRLF);
-                }
-            }
+            addProxyAuthHeader(proxyCredentialsProvider, writer);
         }
 
         // Send empty line to end headers
         writer.write(CRLF);
         writer.flush();
+    }
 
-        Logger.v("CONNECT request sent through SSL connection");
+    private void addProxyAuthHeader(@NonNull ProxyCredentialsProvider proxyCredentialsProvider, PrintWriter writer) {
+        if (proxyCredentialsProvider instanceof BearerCredentialsProvider) {
+            // Send Proxy-Authorization header if credentials are set
+            String bearerToken = ((BearerCredentialsProvider) proxyCredentialsProvider).getToken();
+            if (bearerToken != null && !bearerToken.trim().isEmpty()) {
+                writer.write(PROXY_AUTHORIZATION_HEADER + ": Bearer " + bearerToken + CRLF);
+            }
+        } else if (proxyCredentialsProvider instanceof BasicCredentialsProvider) {
+            BasicCredentialsProvider basicCredentialsProvider = (BasicCredentialsProvider) proxyCredentialsProvider;
+            String userName = basicCredentialsProvider.getUserName();
+            String password = basicCredentialsProvider.getPassword();
+            if (userName != null && !userName.trim().isEmpty() && password != null && !password.trim().isEmpty()) {
+                writer.write(PROXY_AUTHORIZATION_HEADER + ": Basic " + mBase64Encoder.encode(userName + ":" + password) + CRLF);
+            }
+        }
     }
 
     /**
@@ -159,8 +171,6 @@ class SslProxyTunnelEstablisher {
      */
     private void validateConnectResponse(@NonNull SSLSocket sslSocket) throws IOException {
 
-        Logger.v("Reading CONNECT response through SSL connection");
-
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(sslSocket.getInputStream(), StandardCharsets.UTF_8));
 
@@ -168,8 +178,6 @@ class SslProxyTunnelEstablisher {
             if (statusLine == null) {
                 throw new IOException("No CONNECT response received from proxy");
             }
-
-            Logger.v("Received CONNECT response through SSL: " + statusLine.trim());
 
             // Parse status code
             String[] statusParts = statusLine.split(" ");
@@ -187,7 +195,7 @@ class SslProxyTunnelEstablisher {
             // Read headers until empty line (but don't process them for CONNECT)
             String headerLine;
             while ((headerLine = reader.readLine()) != null && !headerLine.trim().isEmpty()) {
-                Logger.v("CONNECT response header: " + headerLine);
+                // no-op
             }
 
             // Check status code

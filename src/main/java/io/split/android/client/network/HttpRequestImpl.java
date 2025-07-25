@@ -190,23 +190,12 @@ public class HttpRequestImpl implements HttpRequest {
 
         HttpURLConnection connection;
         try {
-            connection = createConnection(
-                    url,
-                    mProxy,
-                    mHttpProxy,
-                    mProxyAuthenticator,
-                    mHttpMethod,
-                    mHeaders,
-                    authenticate,
-                    mSslSocketFactory,
-                    mProxyCredentialsProvider,
-                    mBody
-            );
+            connection = getConnection(authenticate, url);
         } catch (HttpRetryException e) {
             if (mProxyAuthenticator == null) {
                 throw e;
             }
-            connection = createConnection(url, mProxy, mHttpProxy, mProxyAuthenticator, mHttpMethod, mHeaders, authenticate, null, null, null);
+            connection = getConnection(authenticate, url);
         }
         applyTimeouts(mReadTimeout, mConnectionTimeout, connection);
         applySslConfig(mSslSocketFactory, mDevelopmentSslConfig, connection);
@@ -224,6 +213,21 @@ public class HttpRequestImpl implements HttpRequest {
         HttpRequestHelper.checkPins(connection, mCertificateChecker);
 
         return connection;
+    }
+
+    @NonNull
+    private HttpURLConnection getConnection(boolean authenticate, URL url) throws IOException {
+        return createConnection(
+                url,
+                mProxy,
+                mHttpProxy,
+                mProxyAuthenticator,
+                mHttpMethod,
+                mHeaders,
+                authenticate,
+                mSslSocketFactory,
+                mProxyCredentialsProvider,
+                mBody);
     }
 
     private static HttpResponse buildResponse(HttpURLConnection connection) throws IOException {

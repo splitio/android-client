@@ -17,7 +17,6 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.X509TrustManager;
 
-import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.logger.Logger;
 
 class CertificateCheckerImpl implements CertificateChecker {
@@ -99,18 +98,5 @@ class CertificateCheckerImpl implements CertificateChecker {
         }
 
         return builder.toString();
-    }
-
-    private static class DefaultBase64Encoder implements Base64Encoder {
-
-        @Override
-        public String encode(String value) {
-            return Base64Util.encode(value);
-        }
-
-        @Override
-        public String encode(byte[] bytes) {
-            return Base64Util.encode(bytes);
-        }
     }
 }

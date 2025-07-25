@@ -5,12 +5,14 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.mock;
 
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.Socket;
 import java.security.cert.Certificate;
 import java.util.Objects;
 
@@ -157,5 +159,92 @@ public class RawHttpResponseParserTest {
         assertNotNull("Response data should not be null", response.getData());
         assertTrue("Response data should contain expected content",
                    response.getData().contains("This is chunked data!"));
+    }
+    
+    // Tests for parseHttpStreamResponse method
+    
+    @Test
+    public void parseHttpStreamResponseWithValidInputReturnsCorrectResponse() throws Exception {
+        String rawHttpResponse =
+            "HTTP/1.1 200 OK\r\n" +
+            "Content-Type: application/json\r\n" +
+            "Content-Length: 25\r\n" +
+            "\r\n" +
+            "{\"message\":\"Hello World\"}";
+        
+        InputStream inputStream = new ByteArrayInputStream(rawHttpResponse.getBytes("UTF-8"));
+        Socket mockTunnelSocket = mock(Socket.class);
+        Socket mockOriginSocket = mock(Socket.class);
+        RawHttpResponseParser parser = new RawHttpResponseParser();
+
+        HttpStreamResponse response = parser.parseHttpStreamResponse(inputStream, mockTunnelSocket, mockOriginSocket);
+
+        assertNotNull("Stream response should not be null", response);
+        assertEquals("Status code should be 200", 200, response.getHttpStatus());
+    }
+    
+    @Test
+    public void parseHttpStreamResponseWithNullSocketsReturnsValidResponse() throws Exception {
+        String rawHttpResponse =
+            "HTTP/1.1 200 OK\r\n" +
+            "Content-Type: text/plain\r\n" +
+            "Content-Length: 13\r\n" +
+            "\r\n" +
+            "Hello, World!";
+        
+        InputStream inputStream = new ByteArrayInputStream(rawHttpResponse.getBytes("UTF-8"));
+        RawHttpResponseParser parser = new RawHttpResponseParser();
+
+        HttpStreamResponse response = parser.parseHttpStreamResponse(inputStream, null, null);
+
+        assertNotNull("Stream response should not be null", response);
+        assertEquals("Status code should be 200", 200, response.getHttpStatus());
+    }
+    
+    @Test
+    public void parseHttpStreamResponseWithDifferentContentTypeUsesCorrectCharset() throws Exception {
+        String rawHttpResponse =
+            "HTTP/1.1 200 OK\r\n" +
+            "Content-Type: text/html; charset=ISO-8859-1\r\n" +
+            "Content-Length: 20\r\n" +
+            "\r\n" +
+            "<html>Test Page</html>";
+        
+        InputStream inputStream = new ByteArrayInputStream(rawHttpResponse.getBytes("ISO-8859-1"));
+        RawHttpResponseParser parser = new RawHttpResponseParser();
+
+        HttpStreamResponse response = parser.parseHttpStreamResponse(inputStream, null, null);
+
+        assertNotNull("Stream response should not be null", response);
+        assertEquals("Status code should be 200", 200, response.getHttpStatus());
+    }
+    
+    @Test
+    public void parseHttpStreamResponseWithEmptyStreamThrowsException() throws Exception {
+        InputStream inputStream = new ByteArrayInputStream(new byte[0]);
+        RawHttpResponseParser parser = new RawHttpResponseParser();
+
+        try {
+            parser.parseHttpStreamResponse(inputStream, null, null);
+            fail("Should have thrown exception for empty stream");
+        } catch (IOException e) {
+            assertTrue("Exception should mention no response", 
+                       e.getMessage().contains("No HTTP response"));
+        }
+    }
+    
+    @Test
+    public void parseHttpStreamResponseWithInvalidStatusLineThrowsException() throws Exception {
+        String rawHttpResponse = "INVALID STATUS LINE\r\n\r\n";
+        InputStream inputStream = new ByteArrayInputStream(rawHttpResponse.getBytes("UTF-8"));
+        RawHttpResponseParser parser = new RawHttpResponseParser();
+
+        try {
+            parser.parseHttpStreamResponse(inputStream, null, null);
+            fail("Should have thrown exception for invalid status line");
+        } catch (IOException e) {
+            assertTrue("Exception should mention invalid status", 
+                       Objects.requireNonNull(e.getMessage()).contains("Invalid HTTP status"));
+        }
     }
 }

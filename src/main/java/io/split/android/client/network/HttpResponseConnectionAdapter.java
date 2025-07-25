@@ -32,7 +32,7 @@ class HttpResponseConnectionAdapter extends HttpsURLConnection {
     private final HttpResponse mResponse;
     private final URL mUrl;
     private final Certificate[] mServerCertificates;
-    private OutputStream mOutputStream;
+    private final OutputStream mOutputStream;
     private InputStream mInputStream;
     private InputStream mErrorStream;
     private boolean mDoOutput = false;
@@ -57,7 +57,7 @@ class HttpResponseConnectionAdapter extends HttpsURLConnection {
                                   @NonNull OutputStream outputStream) {
         this(url, response, serverCertificates, outputStream, null, null);
     }
-    
+
     @VisibleForTesting
     HttpResponseConnectionAdapter(@NonNull URL url,
                                   @NonNull HttpResponse response,

@@ -36,6 +36,7 @@ public class SseClientImpl implements SseClient {
     private final StringHelper mStringHelper;
 
     private HttpStreamRequest mHttpStreamRequest = null;
+    private HttpStreamResponse mHttpStreamResponse = null;
 
     private static final String PUSH_NOTIFICATION_CHANNELS_PARAM = "channel";
     private static final String PUSH_NOTIFICATION_TOKEN_PARAM = "accessToken";
@@ -71,8 +72,21 @@ public class SseClientImpl implements SseClient {
     private void close() {
         Logger.d("Disconnecting SSE client");
         if (mStatus.getAndSet(DISCONNECTED) != DISCONNECTED) {
+            // Close the HttpStreamResponse first to clean up sockets
+            if (mHttpStreamResponse != null) {
+                try {
+                    mHttpStreamResponse.close();
+                    Logger.v("HttpStreamResponse closed successfully");
+                } catch (IOException e) {
+                    Logger.w("Failed to close HttpStreamResponse: " + e.getMessage());
+                }
+                mHttpStreamResponse = null;
+            }
+
+            // Close the HttpStreamRequest
             if (mHttpStreamRequest != null) {
                 mHttpStreamRequest.close();
+                mHttpStreamRequest = null;
             }
             Logger.d("SSE client disconnected");
         }
@@ -94,9 +108,9 @@ public class SseClientImpl implements SseClient {
                     .addParameter(PUSH_NOTIFICATION_TOKEN_PARAM, rawToken)
                     .build();
             mHttpStreamRequest = mHttpClient.streamRequest(url);
-            HttpStreamResponse response = mHttpStreamRequest.execute();
-            if (response.isSuccess()) {
-                bufferedReader = response.getBufferedReader();
+            mHttpStreamResponse = mHttpStreamRequest.execute();
+            if (mHttpStreamResponse.isSuccess()) {
+                bufferedReader = mHttpStreamResponse.getBufferedReader();
                 if (bufferedReader != null) {
                     Logger.d("Streaming connection opened");
                     mStatus.set(CONNECTED);
@@ -126,8 +140,8 @@ public class SseClientImpl implements SseClient {
                     throw (new IOException("Buffer is null"));
                 }
             } else {
-                Logger.e("Streaming connection error. Http return code " + response.getHttpStatus());
-                isErrorRetryable = !response.isClientRelatedError();
+                Logger.e("Streaming connection error. Http return code " + mHttpStreamResponse.getHttpStatus());
+                isErrorRetryable = !mHttpStreamResponse.isClientRelatedError();
             }
         } catch (URISyntaxException e) {
             logError("An error has occurred while creating stream Url ", e);
@@ -149,8 +163,7 @@ public class SseClientImpl implements SseClient {
         }
     }
 
-    private void logError(String message, Exception e) {
+    private static void logError(String message, Exception e) {
         Logger.e(message + " : " + e.getLocalizedMessage());
     }
-
 }
