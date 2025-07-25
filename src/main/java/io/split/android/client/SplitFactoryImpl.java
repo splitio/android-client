@@ -156,7 +156,7 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitCipher splitCipher = factoryHelper.getCipher(apiToken, config.encryptionEnabled());
 
         // At the moment this cipher is only used for proxy config
-        SplitCipher alwaysOnSplitCipher = (config.proxy() != null && !config.proxy().isLegacy()) ?
+        SplitCipher alwaysOnSplitCipher = (config.synchronizeInBackground() && config.proxy() != null && !config.proxy().isLegacy()) ?
                 factoryHelper.getCipher(apiToken, true) : null;
 
         SplitsStorage splitsStorage = getSplitsStorage(splitDatabase, splitCipher);
