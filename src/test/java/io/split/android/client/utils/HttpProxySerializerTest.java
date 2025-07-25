@@ -3,6 +3,8 @@ package io.split.android.client.utils;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -15,10 +17,12 @@ import io.split.android.client.dtos.HttpProxyDto;
 import io.split.android.client.network.BasicCredentialsProvider;
 import io.split.android.client.network.HttpProxy;
 import io.split.android.client.network.ProxyCredentialsProvider;
+import io.split.android.client.storage.general.GeneralInfoStorage;
 
 public class HttpProxySerializerTest {
 
     private HttpProxy mHttpProxy;
+    private GeneralInfoStorage mGeneralInfoStorage;
     private final String TEST_HOST = "proxy.example.com";
     private final int TEST_PORT = 8080;
     private final String TEST_USERNAME = "testuser";
@@ -29,6 +33,8 @@ public class HttpProxySerializerTest {
 
     @Before
     public void setUp() {
+        mGeneralInfoStorage = mock(GeneralInfoStorage.class);
+
         // Create input streams from test strings
         InputStream clientCertStream = new ByteArrayInputStream(TEST_CLIENT_CERT.getBytes(StandardCharsets.UTF_8));
         InputStream clientKeyStream = new ByteArrayInputStream(TEST_CLIENT_KEY.getBytes(StandardCharsets.UTF_8));
@@ -57,15 +63,16 @@ public class HttpProxySerializerTest {
     }
 
     @Test
-    public void testSerializeHttpProxy() {
+    public void serializeHttpProxyWorks() {
         // Serialize the HttpProxy object
         String json = HttpProxySerializer.serialize(mHttpProxy);
+        when(mGeneralInfoStorage.getProxyConfig()).thenReturn(json);
         
         // Verify the serialization result
         assertNotNull("Serialized JSON should not be null", json);
         
         // Deserialize back to HttpProxyDto
-        HttpProxyDto dto = HttpProxySerializer.deserialize(json);
+        HttpProxyDto dto = HttpProxySerializer.deserialize(mGeneralInfoStorage);
         
         // Verify the deserialized object
         assertNotNull("Deserialized DTO should not be null", dto);
@@ -86,20 +93,23 @@ public class HttpProxySerializerTest {
     }
 
     @Test
-    public void testDeserializeNullJson() {
-        HttpProxyDto dto = HttpProxySerializer.deserialize(null);
+    public void deserializeNullJsonReturnsNull() {
+        when(mGeneralInfoStorage.getProxyConfig()).thenReturn(null);
+        HttpProxyDto dto = HttpProxySerializer.deserialize(mGeneralInfoStorage);
         assertNull("Deserializing null should return null", dto);
     }
 
     @Test
-    public void testDeserializeEmptyJson() {
-        HttpProxyDto dto = HttpProxySerializer.deserialize("");
+    public void deserializeEmptyJsonReturnsNull() {
+        when(mGeneralInfoStorage.getProxyConfig()).thenReturn("");
+        HttpProxyDto dto = HttpProxySerializer.deserialize(mGeneralInfoStorage);
         assertNull("Deserializing empty string should return null", dto);
     }
 
     @Test
-    public void testDeserializeInvalidJson() {
-        HttpProxyDto dto = HttpProxySerializer.deserialize("{ invalid json }");
+    public void deserializeInvalidJsonReturnsNull() {
+        when(mGeneralInfoStorage.getProxyConfig()).thenReturn("{ invalid json }");
+        HttpProxyDto dto = HttpProxySerializer.deserialize(mGeneralInfoStorage);
         assertNull("Deserializing invalid JSON should return null", dto);
     }
 }

@@ -300,7 +300,7 @@ public class GeneralInfoStorageImplTest {
         
         assertNotNull("Proxy config JSON should not be null", proxyConfigJson);
         
-        HttpProxyDto dto = HttpProxySerializer.deserialize(proxyConfigJson);
+        HttpProxyDto dto = HttpProxySerializer.deserialize(mGeneralInfoStorage);
         assertNotNull("Deserialized DTO should not be null", dto);
         assertEquals("Host should match", "proxy.example.com", dto.host);
         assertEquals("Port should match", 8080, dto.port);
