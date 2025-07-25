@@ -14,6 +14,9 @@ import java.net.HttpURLConnection;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 
@@ -84,10 +87,10 @@ class SslProxyTunnelEstablisher {
             sslSocket.startHandshake();
 
             // Validate the proxy hostname
-//            HostnameVerifier verifier = HttpsURLConnection.getDefaultHostnameVerifier();
-//            if (!verifier.verify(proxyHost, sslSocket.getSession())) {
-//                throw new SSLHandshakeException("Proxy hostname verification failed");
-//            }
+            HostnameVerifier verifier = HttpsURLConnection.getDefaultHostnameVerifier();
+            if (!verifier.verify(proxyHost, sslSocket.getSession())) {
+                throw new SSLHandshakeException("Proxy hostname verification failed");
+            }
 
             // Step 3: Send CONNECT request through SSL connection
             sendConnectRequest(sslSocket, targetHost, targetPort, proxyCredentialsProvider);
