@@ -155,13 +155,17 @@ public class SplitFactoryImpl implements SplitFactory {
         mConfig = config;
         SplitCipher splitCipher = factoryHelper.getCipher(apiToken, config.encryptionEnabled());
 
+        // At the moment this cipher is only used for proxy config
+        SplitCipher alwaysEncryptedSplitCipher = (config.synchronizeInBackground() && config.proxy() != null && !config.proxy().isLegacy()) ?
+                factoryHelper.getCipher(apiToken, true) : null;
+
         SplitsStorage splitsStorage = getSplitsStorage(splitDatabase, splitCipher);
 
         ScheduledThreadPoolExecutor impressionsObserverExecutor = new ScheduledThreadPoolExecutor(1,
                 new ThreadPoolExecutor.CallerRunsPolicy());
 
         mStorageContainer = factoryHelper.buildStorageContainer(config.userConsent(),
-                splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage, config.observerCacheExpirationPeriod(), impressionsObserverExecutor, splitsStorage);
+                splitDatabase, config.shouldRecordTelemetry(), splitCipher, telemetryStorage, config.observerCacheExpirationPeriod(), impressionsObserverExecutor, splitsStorage, alwaysEncryptedSplitCipher);
 
         mSplitTaskExecutor = new SplitTaskExecutorImpl();
         mSplitTaskExecutor.pause();

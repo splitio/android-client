@@ -157,7 +157,7 @@ class SslProxyTunnelEstablisher {
             }
         } else if (proxyCredentialsProvider instanceof BasicCredentialsProvider) {
             BasicCredentialsProvider basicCredentialsProvider = (BasicCredentialsProvider) proxyCredentialsProvider;
-            String userName = basicCredentialsProvider.getUserName();
+            String userName = basicCredentialsProvider.getUsername();
             String password = basicCredentialsProvider.getPassword();
             if (userName != null && !userName.trim().isEmpty() && password != null && !password.trim().isEmpty()) {
                 writer.write(PROXY_AUTHORIZATION_HEADER + ": Basic " + mBase64Encoder.encode(userName + ":" + password) + CRLF);

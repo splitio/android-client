@@ -15,8 +15,9 @@ public class HttpProxy {
     private final @Nullable InputStream mClientKeyStream;
     private final @Nullable InputStream mCaCertStream;
     private final @Nullable ProxyCredentialsProvider mCredentialsProvider;
+    private final boolean mIsLegacy;
 
-    private HttpProxy(Builder builder) {
+    private HttpProxy(Builder builder, boolean isLegacy) {
         mHost = builder.mHost;
         mPort = builder.mPort;
         mUsername = builder.mUsername;
@@ -25,6 +26,7 @@ public class HttpProxy {
         mClientKeyStream = builder.mClientKeyStream;
         mCaCertStream = builder.mCaCertStream;
         mCredentialsProvider = builder.mCredentialsProvider;
+        mIsLegacy = isLegacy;
     }
 
     public @Nullable String getHost() {
@@ -61,6 +63,10 @@ public class HttpProxy {
 
     public static Builder newBuilder(@Nullable String host, int port) {
         return new Builder(host, port);
+    }
+
+    public boolean isLegacy() {
+        return mIsLegacy;
     }
 
     public static class Builder {
@@ -102,7 +108,11 @@ public class HttpProxy {
         }
 
         public HttpProxy build() {
-            return new HttpProxy(this);
+            return new HttpProxy(this, false);
+        }
+
+        public HttpProxy buildLegacy() {
+            return new HttpProxy(this, true);
         }
     }
 }

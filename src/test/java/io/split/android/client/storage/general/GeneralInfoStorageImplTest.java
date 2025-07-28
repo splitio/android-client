@@ -1,6 +1,8 @@
 package io.split.android.client.storage.general;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -8,19 +10,37 @@ import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.GeneralInfoDao;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 
 public class GeneralInfoStorageImplTest {
 
     private GeneralInfoDao mGeneralInfoDao;
+    private SplitCipher mAlwaysEncryptedSplitCipher;
     private GeneralInfoStorageImpl mGeneralInfoStorage;
 
     @Before
     public void setUp() {
+        mAlwaysEncryptedSplitCipher = mock(SplitCipher.class);
+        when(mAlwaysEncryptedSplitCipher.encrypt(anyString())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) {
+                return "encrypted_" + invocation.getArgument(0);
+            }
+        });
+        when(mAlwaysEncryptedSplitCipher.decrypt(anyString())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) {
+                return "decrypted_" + invocation.getArgument(0);
+            }
+        });
+
         mGeneralInfoDao = mock(GeneralInfoDao.class);
-        mGeneralInfoStorage = new GeneralInfoStorageImpl(mGeneralInfoDao);
+        mGeneralInfoStorage = new GeneralInfoStorageImpl(mGeneralInfoDao, mAlwaysEncryptedSplitCipher);
     }
 
     @Test
@@ -189,5 +209,34 @@ public class GeneralInfoStorageImplTest {
         mGeneralInfoStorage.setRbsChangeNumber(123L);
 
         verify(mGeneralInfoDao).update(argThat(entity -> entity.getName().equals("rbsChangeNumber") && entity.getLongValue() == 123L));
+    }
+
+    @Test
+    public void getProxyConfigReturnsValueFromDao() {
+        when(mGeneralInfoDao.getByName("proxyConfig"))
+                .thenReturn(new GeneralInfoEntity("proxyConfig", "encrypted_proxyConfigValue"));
+        String proxyConfig = mGeneralInfoStorage.getProxyConfig();
+
+        assertEquals("decrypted_encrypted_proxyConfigValue", proxyConfig);
+        verify(mGeneralInfoDao).getByName("proxyConfig");
+        verify(mAlwaysEncryptedSplitCipher).decrypt("encrypted_proxyConfigValue");
+    }
+
+    @Test
+    public void getProxyConfigReturnsNullIfEntityIsNull() {
+        when(mGeneralInfoDao.getByName("proxyConfig")).thenReturn(null);
+        String proxyConfig = mGeneralInfoStorage.getProxyConfig();
+
+        assertNull(proxyConfig);
+    }
+
+    @Test
+    public void setProxyConfigSetsValueOnDao() {
+        mGeneralInfoStorage.setProxyConfig("proxyConfigValue");
+
+        verify(mAlwaysEncryptedSplitCipher).encrypt("proxyConfigValue");
+        verify(mGeneralInfoDao).update(argThat(entity ->
+                entity.getName().equals("proxyConfig") &&
+                entity.getStringValue().equals("encrypted_proxyConfigValue")));
     }
 }

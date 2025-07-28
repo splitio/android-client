@@ -1331,9 +1331,9 @@ public class SplitClientConfig {
                     }
                     String host = String.format("%s%s", uri.getHost(), uri.getPath());
                     if (username != null && password != null) {
-                        return HttpProxy.newBuilder(host, port).basicAuth(username, password).build();
+                        return HttpProxy.newBuilder(host, port).basicAuth(username, password).buildLegacy();
                     } else {
-                        return HttpProxy.newBuilder(host, port).build();
+                        return HttpProxy.newBuilder(host, port).buildLegacy();
                     }
                 } catch (IllegalArgumentException e) {
                     Logger.e("Proxy URI not valid: " + e.getLocalizedMessage());

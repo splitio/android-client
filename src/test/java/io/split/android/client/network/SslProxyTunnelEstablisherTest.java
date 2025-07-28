@@ -206,7 +206,7 @@ public class SslProxyTunnelEstablisherTest {
                 clientSslSocketFactory,
                 new BasicCredentialsProvider() {
                     @Override
-                    public String getUserName() {
+                    public String getUsername() {
                         return "username";
                     }
                     
