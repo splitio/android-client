@@ -1,6 +1,7 @@
 package io.split.android.client.storage.general;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -13,9 +14,17 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+
+import io.split.android.client.dtos.HttpProxyDto;
+import io.split.android.client.network.HttpProxy;
+import io.split.android.client.network.ProxyCredentialsProvider;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.GeneralInfoDao;
 import io.split.android.client.storage.db.GeneralInfoEntity;
+import io.split.android.client.utils.HttpProxySerializer;
 
 public class GeneralInfoStorageImplTest {
 
@@ -238,5 +247,97 @@ public class GeneralInfoStorageImplTest {
         verify(mGeneralInfoDao).update(argThat(entity ->
                 entity.getName().equals("proxyConfig") &&
                 entity.getStringValue().equals("encrypted_proxyConfigValue")));
+    }
+    
+    @Test
+    public void testSerializeAndStoreHttpProxy() {
+        String testHost = "proxy.example.com";
+        int testPort = 8080;
+        String testUsername = "testuser";
+        String testPassword = "testpass";
+        String testClientCert = "-----BEGIN CERTIFICATE-----\nMIICertificateContent\n-----END CERTIFICATE-----";
+        String testClientKey = "-----BEGIN PRIVATE KEY-----\nMIIKeyContent\n-----END PRIVATE KEY-----";
+        String testCaCert = "-----BEGIN CA CERTIFICATE-----\nMIICACertContent\n-----END CA CERTIFICATE-----";
+        
+        InputStream clientCertStream = new ByteArrayInputStream(testClientCert.getBytes(StandardCharsets.UTF_8));
+        InputStream clientKeyStream = new ByteArrayInputStream(testClientKey.getBytes(StandardCharsets.UTF_8));
+        InputStream caCertStream = new ByteArrayInputStream(testCaCert.getBytes(StandardCharsets.UTF_8));
+        
+        ProxyCredentialsProvider credentialsProvider = mock(ProxyCredentialsProvider.class);
+
+        HttpProxy httpProxy = HttpProxy.newBuilder(testHost, testPort)
+                .basicAuth(testUsername, testPassword)
+                .mtlsAuth(clientCertStream, clientKeyStream)
+                .proxyCacert(caCertStream)
+                .credentialsProvider(credentialsProvider)
+                .build();
+
+        String jsonProxy = HttpProxySerializer.serialize(httpProxy);
+        mGeneralInfoStorage.setProxyConfig(jsonProxy);
+        
+        verify(mGeneralInfoDao).update(argThat(entity ->
+            entity.getName().equals("proxyConfig") && 
+            entity.getStringValue().startsWith("encrypted_")));
+    }
+    
+    @Test
+    public void testGetProxyConfig() {
+        String jsonContent = "{\"host\":\"proxy.example.com\",\"port\":8080,\"username\":\"testuser\",\"password\":\"testpass\",\"client_cert\":\"cert-data\",\"client_key\":\"key-data\",\"ca_cert\":\"ca-data\",\"bearer_token\":\"token\"}";
+        when(mAlwaysEncryptedSplitCipher.encrypt(anyString())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) {
+                return invocation.getArgument(0);
+            }
+        });
+        when(mAlwaysEncryptedSplitCipher.decrypt(anyString())).thenAnswer(new Answer<Object>() {
+            @Override
+            public Object answer(InvocationOnMock invocation) {
+                return invocation.getArgument(0);
+            }
+        });
+        when(mGeneralInfoDao.getByName("proxyConfig")).thenReturn(new GeneralInfoEntity("proxyConfig", jsonContent));
+        
+        String proxyConfigJson = mGeneralInfoStorage.getProxyConfig();
+        
+        assertNotNull("Proxy config JSON should not be null", proxyConfigJson);
+        
+        HttpProxyDto dto = HttpProxySerializer.deserialize(mGeneralInfoStorage);
+        assertNotNull("Deserialized DTO should not be null", dto);
+        assertEquals("Host should match", "proxy.example.com", dto.host);
+        assertEquals("Port should match", 8080, dto.port);
+        assertEquals("Username should match", "testuser", dto.username);
+        assertEquals("Password should match", "testpass", dto.password);
+        assertEquals("Client cert should match", "cert-data", dto.clientCert);
+        assertEquals("Client key should match", "key-data", dto.clientKey);
+        assertEquals("CA cert should match", "ca-data", dto.caCert);
+        assertEquals("token", dto.bearerToken);
+    }
+    
+    @Test
+    public void proxyConfigIsNullWhenStoredDataIsNull() {
+        when(mGeneralInfoDao.getByName("proxyConfig")).thenReturn(null);
+        
+        String proxyConfig = mGeneralInfoStorage.getProxyConfig();
+        
+        assertNull("Proxy config should be null when entity is null", proxyConfig);
+    }
+    
+    @Test
+    public void proxyConfigIsNullWhenTheStoredValueIsNull() {
+        GeneralInfoEntity entity = new GeneralInfoEntity("proxyConfig", (String) null);
+        when(mGeneralInfoDao.getByName("proxyConfig")).thenReturn(entity);
+        
+        String proxyConfig = mGeneralInfoStorage.getProxyConfig();
+        
+        assertNull("Proxy config should be null when entity value is null", proxyConfig);
+    }
+
+    @Test
+    public void proxyConfigCanBeSetToNull() {
+        mGeneralInfoStorage.setProxyConfig(null);
+        
+        verify(mGeneralInfoDao).update(argThat(entity ->
+            entity.getName().equals("proxyConfig") && 
+            entity.getStringValue() == null));
     }
 }
