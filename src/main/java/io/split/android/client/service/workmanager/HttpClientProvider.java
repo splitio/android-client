@@ -96,7 +96,7 @@ class HttpClientProvider {
         if (proxyConfigDto.clientCert != null && proxyConfigDto.clientKey != null) {
             InputStream clientCertStream = stringToInputStream(proxyConfigDto.clientCert);
             InputStream clientKeyStream = stringToInputStream(proxyConfigDto.clientKey);
-            builder.mtlsAuth(clientCertStream, clientKeyStream);
+            builder.mtls(clientCertStream, clientKeyStream);
         }
     }
 
