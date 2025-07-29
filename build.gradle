@@ -238,15 +238,6 @@ def releaseRepo = {
     }
 }
 
-def devRepo = {
-    name = "DevelopmentRepo"
-    url = 'https://splitio.jfrog.io/artifactory/maven-all-virtual'
-    credentials {
-        username = System.getenv('ARTIFACTORY_USER')
-        password = System.getenv('ARTIFACTORY_TOKEN')
-    }
-}
-
 afterEvaluate {
     android.sourceSets.all { sourceSet ->
         if (!sourceSet.name.startsWith("test")) {
@@ -269,20 +260,7 @@ afterEvaluate {
 
                 repositories {
                     maven releaseRepo
-                    maven devRepo
                 }
-            }
-
-            development(MavenPublication) {
-                from components.release
-
-                artifactId = 'android-client'
-                groupId = 'io.split.client'
-                version = splitVersion
-                artifact sourcesJar
-                artifact javadocJar
-
-                pom splitPOM
             }
         }
     }
@@ -290,11 +268,6 @@ afterEvaluate {
     task publishRelease(type: PublishToMavenRepository) {
         publication = publishing.publications.getByName("release")
         repository = publishing.repositories.ReleaseRepo
-    }
-
-    task publishDev(type: PublishToMavenRepository) {
-        publication = publishing.publications.getByName("development")
-        repository = publishing.repositories.DevelopmentRepo
     }
 
     signing {
