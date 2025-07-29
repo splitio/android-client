@@ -100,9 +100,10 @@ public abstract class SplitRoomDatabase extends RoomDatabase {
                 }
 
                 mInstances.put(databaseName, instance);
+
                 // Ensure Room is fully initialized before starting preload thread
                 try {
-                    instance.getOpenHelper().getWritableDatabase(); // Block until schema is validated
+                    instance.getOpenHelper().getWritableDatabase(); // This blocks until validations happen
                 } catch (Exception e) {
                     Logger.i("Failed to force Room initialization: " + e.getMessage());
                 }
