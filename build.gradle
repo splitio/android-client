@@ -25,12 +25,12 @@ ext {
 
 // Define exclusions for JaCoCo coverage
 def coverageExclusions = [
-    '**/R.class',
-    '**/R$*.class',
-    '**/BuildConfig.*',
-    '**/Manifest*.*',
-    '**/*Test*.*',
-    'android/**/*.*'
+        '**/R.class',
+        '**/R$*.class',
+        '**/BuildConfig.*',
+        '**/Manifest*.*',
+        '**/*Test*.*',
+        'android/**/*.*'
 ]
 
 android {
@@ -76,7 +76,7 @@ android {
 
     testOptions {
         unitTests.returnDefaultValues = true
-        
+
         // Configure JaCoCo for all test tasks
         unitTests.all {
             jacoco {
@@ -219,15 +219,6 @@ def splitPOM = {
     }
 }
 
-def devRepo = {
-    name = "DevelopmentRepo"
-    url = 'https://splitio.jfrog.io/artifactory/maven-all-virtual'
-    credentials {
-        username = System.getenv('ARTIFACTORY_USER')
-        password = System.getenv('ARTIFACTORY_TOKEN')
-    }
-}
-
 mavenPublishing {
     coordinates("io.split.client", "android-client", splitVersion)
     pom(splitPOM)
@@ -293,7 +284,6 @@ tasks.withType(Test) {
     forkEvery = 100
     maxHeapSize = "1024m"
 }
-
 
 
 

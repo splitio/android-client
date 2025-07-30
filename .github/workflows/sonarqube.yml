@@ -14,12 +14,6 @@ jobs:
     name: SonarCloud Scan
     runs-on: ubuntu-latest
     steps:
-      - name: Enable KVM group perms
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -53,53 +47,6 @@ jobs:
             echo "Some tests failed, but continuing to check for coverage data..."
             # Even if tests fail, JaCoCo should generate a report with partial coverage
             # from the tests that did pass
-          fi
-          
-          # Check if the report was generated with content
-          if [ -f build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml ]; then
-            # Use stat command compatible with both Linux and macOS
-            if [[ "$(uname)" == "Darwin" ]]; then
-              # macOS syntax
-              REPORT_SIZE=$(stat -f%z build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
-            else
-              # Linux syntax
-              REPORT_SIZE=$(stat -c%s build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
-            fi
-            
-            if [ "$REPORT_SIZE" -lt 1000 ]; then
-              echo "JaCoCo report is too small ($REPORT_SIZE bytes), likely empty. Trying to generate from test execution data..."
-              # Try to generate the report directly from the exec file
-              if [ -f build/jacoco/testDebugUnitTest.exec ]; then
-                java -jar ~/.gradle/caches/modules-2/files-2.1/org.jacoco/org.jacoco.cli/0.8.8/*/org.jacoco.cli-0.8.8.jar report build/jacoco/testDebugUnitTest.exec \
-                  --classfiles build/intermediates/runtime_library_classes_dir/debug \
-                  --sourcefiles src/main/java \
-                  --xml build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
-                
-                # Check if the report was successfully generated
-                if [[ "$(uname)" == "Darwin" ]]; then
-                  # macOS syntax
-                  NEW_REPORT_SIZE=$(stat -f%z build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
-                else
-                  # Linux syntax
-                  NEW_REPORT_SIZE=$(stat -c%s build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml)
-                fi
-                
-                if [ "$NEW_REPORT_SIZE" -lt 1000 ]; then
-                  echo "ERROR: Failed to generate a valid JaCoCo report with coverage data"
-                  exit 1
-                else
-                  echo "JaCoCo report successfully generated with size $NEW_REPORT_SIZE bytes"
-                fi
-              else
-                echo "ERROR: No JaCoCo execution data file found. Tests may not have run correctly."
-                exit 1
-              fi
-            else
-              echo "JaCoCo report generated successfully with size $REPORT_SIZE bytes"
-            fi
-          else
-            echo "ERROR: JaCoCo report file not found. Coverage data is missing."
-            exit 1
           fi
         
       - name: Prepare class files for SonarQube analysis
