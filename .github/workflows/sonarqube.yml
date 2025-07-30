@@ -1,0 +1,118 @@
+name: SonarCloud Analysis
+
+on:
+  pull_request:
+    branches:
+      - '*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sonarcloud:
+    name: SonarCloud Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Shallow clones should be disabled for better relevancy of analysis
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Gradle cache
+        uses: gradle/actions/setup-gradle@v3
+        
+      - name: Configure Gradle memory settings
+        run: |
+          echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError" >> gradle.properties
+          echo "android.enableJetifier=false" >> gradle.properties
+          echo "android.enableR8.fullMode=false" >> gradle.properties
+          cat gradle.properties
+
+      - name: Build project and run tests with coverage
+        run: |
+          # Build the project
+          ./gradlew assembleDebug --stacktrace
+          
+          # Run tests with coverage - allow test failures
+          ./gradlew testDebugUnitTest jacocoTestReport --stacktrace
+          TEST_RESULT=$?
+          if [ $TEST_RESULT -ne 0 ]; then
+            echo "Some tests failed, but continuing to check for coverage data..."
+            # Even if tests fail, JaCoCo should generate a report with partial coverage
+            # from the tests that did pass
+          fi
+        
+      - name: Prepare class files for SonarQube analysis
+        run: |
+          echo "Searching for compiled class files..."
+          
+          # Create the target directory
+          mkdir -p build/intermediates/runtime_library_classes_dir/debug
+          
+          # Find all directories containing class files
+          CLASS_DIRS=$(find build -name "*.class" -type f -exec dirname {} \; | sort -u)
+          
+          if [ -z "$CLASS_DIRS" ]; then
+            echo "WARNING: No class files found in the build directory!"
+          else
+            echo "Found class files in the following directories:"
+            echo "$CLASS_DIRS"
+            
+            # Copy classes from the first directory with classes
+            FIRST_CLASS_DIR=$(echo "$CLASS_DIRS" | head -1)
+            echo "Copying classes from $FIRST_CLASS_DIR to build/intermediates/runtime_library_classes_dir/debug"
+            cp -r $FIRST_CLASS_DIR/* build/intermediates/runtime_library_classes_dir/debug/ || echo "Failed to copy from $FIRST_CLASS_DIR"
+            
+            # Verify the target directory now has class files
+            CLASS_COUNT=$(find build/intermediates/runtime_library_classes_dir/debug -name "*.class" | wc -l)
+            echo "Target directory now contains $CLASS_COUNT class files"
+          fi
+          
+          # Update sonar-project.properties with all found class directories as a fallback
+          echo "\n# Additional binary paths found during build" >> sonar-project.properties
+          echo "sonar.java.binaries=build/intermediates/runtime_library_classes_dir/debug,$CLASS_DIRS" >> sonar-project.properties
+          
+          echo "Checking for JaCoCo report files..."
+          find build -name "*.xml" | grep jacoco || echo "No XML files found"
+          find build -name "*.exec" | grep jacoco || echo "No exec files found"
+          echo "Contents of JaCoCo report directory:"
+          ls -la build/reports/jacoco/jacocoTestReport/ || echo "Directory not found"
+          
+          echo "\nChecking test execution results:"
+          find build -name "TEST-*.xml" | xargs cat | grep -E 'tests|failures|errors|skipped' || echo "No test result files found"
+          
+          echo "\nChecking JaCoCo report content:"
+          if [ -f build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml ]; then
+            echo "Report file size: $(wc -c < build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml) bytes"
+            echo "First 500 chars of report:"
+            head -c 500 build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+            echo "\n\nCounting coverage elements:"
+            grep -c "<package" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No packages found"
+            grep -c "<class" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No classes found"
+            grep -c "<method" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No methods found"
+            grep -c "<line" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No lines found"
+            grep -c 'ci="1"' build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No covered lines found"
+          else
+            echo "JaCoCo report file not found"
+          fi
+          
+          echo "\nChecking binary directories specified in sonar-project.properties:"
+          echo "build/intermediates/runtime_library_classes_dir/debug:"
+          ls -la build/intermediates/runtime_library_classes_dir/debug || echo "Directory not found"
+          
+          echo "\nChecking all available class directories:"
+          find build -path "*/build/*" -name "*.class" | head -n 5 || echo "No class files found"
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information
+          SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
+          SONAR_HOST_URL: ${{ secrets.SONARQUBE_HOST }}
