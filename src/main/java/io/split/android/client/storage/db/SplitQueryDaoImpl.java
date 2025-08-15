@@ -1,7 +1,6 @@
 package io.split.android.client.storage.db;
 
 import android.database.Cursor;
-import android.os.Process;
 
 import androidx.annotation.NonNull;
 
@@ -16,27 +15,16 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
     private volatile Map<String, SplitEntity> mCachedSplitsMap;
     private final Object mLock = new Object();
     private final Thread mInitializationThread;
+    private final SplitMapInitializationTask mInitializationTask;
     private boolean mIsInitialized = false;
     private boolean mIsInvalidated = false;
 
-    public SplitQueryDaoImpl(SplitRoomDatabase mDatabase) {
-        this.mDatabase = mDatabase;
-        // Start prefilling the map in a background thread
-        mInitializationThread = new Thread(() -> {
-            try {
-                android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
-            } catch (Exception ignore) {
-                // Ignore
-            }
+    public SplitQueryDaoImpl(SplitRoomDatabase database) {
+        mDatabase = database;
+        mInitializationTask = new SplitMapInitializationTask(this, mLock);
 
-            Map<String, SplitEntity> result = loadSplitsMap();
-            
-            synchronized (mLock) {
-                mCachedSplitsMap = result;
-                mIsInitialized = true;
-                mLock.notifyAll(); // Notify any waiting threads
-            }
-        });
+        // Start prefilling the map in a background thread
+        mInitializationThread = new Thread(mInitializationTask);
         mInitializationThread.setName("SplitMapPrefill");
         mInitializationThread.start();
     }
@@ -50,39 +38,44 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
     }
 
     public Map<String, SplitEntity> getAllAsMap() {
-        // Fast path - if the map is already initialized, return it immediately
-        if (isValid() && !mCachedSplitsMap.isEmpty()) {
-            return new HashMap<>(mCachedSplitsMap);
-        }
-        
-        // Wait for initialization to complete if it's in progress
-        synchronized (mLock) {
+        try {
+            // Fast path - if the map is already initialized, return it immediately
             if (isValid() && !mCachedSplitsMap.isEmpty()) {
                 return new HashMap<>(mCachedSplitsMap);
             }
-            
-            // If initialization thread is running, wait for it
-            if (mInitializationThread != null && mInitializationThread.isAlive()) {
-                try {
-                    mLock.wait(5000); // Wait up to 5 seconds
-                    
-                    if (isValid()) {
-                        return new HashMap<>(mCachedSplitsMap);
-                    }
-                } catch (InterruptedException e) {
 
+            // Wait for initialization to complete if it's in progress
+            synchronized (mLock) {
+                if (isValid() && !mCachedSplitsMap.isEmpty()) {
+                    return new HashMap<>(mCachedSplitsMap);
                 }
+
+                // If initialization thread is running, wait for it
+                if (mInitializationThread != null && mInitializationThread.isAlive()) {
+                    try {
+                        mLock.wait(5000); // Wait up to 5 seconds
+
+                        if (isValid()) {
+                            return new HashMap<>(mCachedSplitsMap);
+                        }
+                    } catch (InterruptedException e) {
+
+                    }
+                }
+
+                // If we get here, either initialization failed or timed out
+                // Load the map directly
+                Map<String, SplitEntity> result = loadSplitsMap();
+
+                // Cache the result for future calls
+                mCachedSplitsMap = result;
+                mIsInitialized = true;
+
+                return new HashMap<>(result);
             }
-            
-            // If we get here, either initialization failed or timed out
-            // Load the map directly
-            Map<String, SplitEntity> result = loadSplitsMap();
-            
-            // Cache the result for future calls
-            mCachedSplitsMap = result;
-            mIsInitialized = true;
-            
-            return new HashMap<>(result);
+        } catch (Exception e) {
+            Logger.e("Failed to get splits map: " + e.getLocalizedMessage());
+            return new HashMap<>();
         }
     }
 
@@ -102,18 +95,48 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
         }
     }
     
+    void setCachedSplitsMap(Map<String, SplitEntity> cachedSplitsMap) {
+        mCachedSplitsMap = cachedSplitsMap;
+    }
+
+    void setInitialized(boolean initialized) {
+        mIsInitialized = initialized;
+    }
+
+    /**
+     * Get the initialization task for testing purposes.
+     * Package-private for testing access.
+     */
+    SplitMapInitializationTask getInitializationTask() {
+        return mInitializationTask;
+    }
+
     /**
      * Internal method to load the splits map from the database.
      * This contains the actual loading logic separated from the caching/synchronization.
      */
-    private Map<String, SplitEntity> loadSplitsMap() {
+    Map<String, SplitEntity> loadSplitsMap() {
+        try {
+            mDatabase.getOpenHelper().getWritableDatabase();
+
+            mDatabase.splitDao().getAll().size();
+
+            return getStringSplitEntityMap();
+        } catch (Exception e) {
+            Logger.e("Failed to ensure database initialization: " + e.getLocalizedMessage());
+            return new HashMap<>();
+        }
+    }
+
+    @NonNull
+    private Map<String, SplitEntity> getStringSplitEntityMap() throws IllegalStateException {
         final String sql = "SELECT name, body FROM splits";
 
         Cursor cursor = mDatabase.query(sql, null);
 
         final int ESTIMATED_CAPACITY = 2000;
         Map<String, SplitEntity> result = new HashMap<>(ESTIMATED_CAPACITY);
-        
+
         try {
             final int nameIndex = getColumnIndexOrThrow(cursor, "name");
             final int bodyIndex = getColumnIndexOrThrow(cursor, "body");
