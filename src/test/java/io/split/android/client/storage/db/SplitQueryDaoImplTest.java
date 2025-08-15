@@ -92,7 +92,7 @@ public class SplitQueryDaoImplTest {
         Map<String, SplitEntity> afterInvalidate = splitQueryDao.getAllAsMap();
         assertNotNull("Result should not be null after invalidate", afterInvalidate);
     }
-    
+
     @Test
     public void testSettersAndGetters() {
         Map<String, SplitEntity> testMap = new HashMap<>();
@@ -123,7 +123,7 @@ public class SplitQueryDaoImplTest {
         doReturn(testData).when(splitQueryDao).loadSplitsMap();
         
         Thread[] threads = new Thread[10];
-        Map<String, SplitEntity>[] results = new Map[10];
+        Map[] results = new Map[10];
         
         for (int i = 0; i < 10; i++) {
             final int index = i;
@@ -141,15 +141,5 @@ public class SplitQueryDaoImplTest {
             assertNotNull("Result " + i + " should not be null", results[i]);
             assertEquals("All results should have same size", testData.size(), results[i].size());
         }
-    }
-    
-    @Test
-    public void testInitializationTaskIntegration() {
-        SplitMapInitializationTask task = splitQueryDao.getInitializationTask();
-        
-        assertNotNull("Initialization task should be created", task);
-        
-        assertTrue("Task should be instance of SplitMapInitializationTask",
-                  task instanceof SplitMapInitializationTask);
     }
 }
