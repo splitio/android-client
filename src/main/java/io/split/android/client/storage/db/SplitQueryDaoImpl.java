@@ -146,8 +146,12 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
         } catch (Exception e) {
             Logger.e("Error executing loadSplitsMap query: " + e.getLocalizedMessage());
         } finally {
-            if (cursor != null) {
-                cursor.close();
+            try {
+                if (cursor != null) {
+                    cursor.close();
+                }
+            } catch (Exception ignored) {
+                // ignore
             }
         }
 
