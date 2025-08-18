@@ -1,7 +1,6 @@
 package io.split.android.client.storage.db;
 
 import android.database.Cursor;
-import android.os.Process;
 
 import androidx.annotation.NonNull;
 
@@ -23,12 +22,6 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
         this.mDatabase = mDatabase;
         // Start prefilling the map in a background thread
         mInitializationThread = new Thread(() -> {
-            try {
-                android.os.Process.setThreadPriority(Process.THREAD_PRIORITY_URGENT_AUDIO);
-            } catch (Exception ignore) {
-                // Ignore
-            }
-
             Map<String, SplitEntity> result = loadSplitsMap();
             
             synchronized (mLock) {
@@ -107,14 +100,15 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
      * This contains the actual loading logic separated from the caching/synchronization.
      */
     private Map<String, SplitEntity> loadSplitsMap() {
-        final String sql = "SELECT name, body FROM splits";
-
-        Cursor cursor = mDatabase.query(sql, null);
-
-        final int ESTIMATED_CAPACITY = 2000;
-        Map<String, SplitEntity> result = new HashMap<>(ESTIMATED_CAPACITY);
-        
+        Cursor cursor = null;
         try {
+            final String sql = "SELECT name, body FROM splits";
+
+            cursor = mDatabase.query(sql, null);
+
+            final int ESTIMATED_CAPACITY = 2000;
+            Map<String, SplitEntity> result = new HashMap<>(ESTIMATED_CAPACITY);
+
             final int nameIndex = getColumnIndexOrThrow(cursor, "name");
             final int bodyIndex = getColumnIndexOrThrow(cursor, "body");
 
@@ -147,12 +141,16 @@ public class SplitQueryDaoImpl implements SplitQueryDao {
                 entity.setBody(bodies[i]);
                 result.put(names[i], entity);
             }
+
+            return result;
         } catch (Exception e) {
             Logger.e("Error executing loadSplitsMap query: " + e.getLocalizedMessage());
         } finally {
-            cursor.close();
+            if (cursor != null) {
+                cursor.close();
+            }
         }
 
-        return result;
+        return new HashMap<>();
     }
 }
