@@ -56,44 +56,72 @@ jobs:
           # Create the target directory
           mkdir -p build/intermediates/runtime_library_classes_dir/debug
           
-          # Find all directories containing class files
-          CLASS_DIRS=$(find build -name "*.class" -type f -exec dirname {} \; | sort -u)
+          # Find all directories containing class files with better patterns
+          CLASS_DIRS=$(find build -name "*.class" -type f -exec dirname {} \; | sort -u | grep -E "(javac|kotlin-classes|runtime_library)" | head -10)
           
           if [ -z "$CLASS_DIRS" ]; then
             echo "WARNING: No class files found in the build directory!"
+            echo "Searching in all build subdirectories..."
+            find build -name "*.class" -type f | head -20
           else
             echo "Found class files in the following directories:"
             echo "$CLASS_DIRS"
             
-            # Copy classes from the first directory with classes
-            FIRST_CLASS_DIR=$(echo "$CLASS_DIRS" | head -1)
-            echo "Copying classes from $FIRST_CLASS_DIR to build/intermediates/runtime_library_classes_dir/debug"
-            cp -r $FIRST_CLASS_DIR/* build/intermediates/runtime_library_classes_dir/debug/ || echo "Failed to copy from $FIRST_CLASS_DIR"
+            # Copy classes from all relevant directories, not just the first one
+            for CLASS_DIR in $CLASS_DIRS; do
+              if [ -d "$CLASS_DIR" ] && [ "$(find "$CLASS_DIR" -name "*.class" | wc -l)" -gt 0 ]; then
+                echo "Copying classes from $CLASS_DIR"
+                cp -r "$CLASS_DIR"/* build/intermediates/runtime_library_classes_dir/debug/ 2>/dev/null || echo "Failed to copy from $CLASS_DIR"
+              fi
+            done
             
             # Verify the target directory now has class files
             CLASS_COUNT=$(find build/intermediates/runtime_library_classes_dir/debug -name "*.class" | wc -l)
             echo "Target directory now contains $CLASS_COUNT class files"
           fi
           
-          # Update sonar-project.properties with all found class directories as a fallback
-          echo "\n# Additional binary paths found during build" >> sonar-project.properties
-          echo "sonar.java.binaries=build/intermediates/runtime_library_classes_dir/debug,$CLASS_DIRS" >> sonar-project.properties
+          # Update sonar-project.properties with all found class directories
+          echo "" >> sonar-project.properties
+          echo "# Additional binary paths found during build" >> sonar-project.properties
+          if [ -n "$CLASS_DIRS" ]; then
+            # Convert newlines to commas for sonar.java.binaries
+            BINARY_PATHS=$(echo "$CLASS_DIRS" | tr '\n' ',' | sed 's/,$//')
+            echo "sonar.java.binaries=build/intermediates/runtime_library_classes_dir/debug,$BINARY_PATHS" >> sonar-project.properties
+          else
+            echo "sonar.java.binaries=build/intermediates/runtime_library_classes_dir/debug" >> sonar-project.properties
+          fi
           
           echo "Checking for JaCoCo report files..."
-          find build -name "*.xml" | grep jacoco || echo "No XML files found"
-          find build -name "*.exec" | grep jacoco || echo "No exec files found"
+          find build -name "*.xml" | grep jacoco || echo "No JaCoCo XML files found"
+          find build -name "*.exec" | grep jacoco || echo "No JaCoCo exec files found"
+          
           echo "Contents of JaCoCo report directory:"
           ls -la build/reports/jacoco/jacocoTestReport/ || echo "Directory not found"
           
-          echo "\nChecking test execution results:"
-          find build -name "TEST-*.xml" | xargs cat | grep -E 'tests|failures|errors|skipped' || echo "No test result files found"
+          echo ""
+          echo "Checking test execution results:"
+          TEST_RESULT_FILES=$(find build -name "TEST-*.xml" 2>/dev/null)
+          if [ -n "$TEST_RESULT_FILES" ]; then
+            echo "Found test result files:"
+            echo "$TEST_RESULT_FILES"
+            # Count total tests, failures, errors
+            TOTAL_TESTS=$(cat $TEST_RESULT_FILES | grep -o 'tests="[0-9]*"' | cut -d'"' -f2 | awk '{sum+=$1} END {print sum}')
+            TOTAL_FAILURES=$(cat $TEST_RESULT_FILES | grep -o 'failures="[0-9]*"' | cut -d'"' -f2 | awk '{sum+=$1} END {print sum}')
+            TOTAL_ERRORS=$(cat $TEST_RESULT_FILES | grep -o 'errors="[0-9]*"' | cut -d'"' -f2 | awk '{sum+=$1} END {print sum}')
+            echo "Test summary: $TOTAL_TESTS tests, $TOTAL_FAILURES failures, $TOTAL_ERRORS errors"
+          else
+            echo "No test result files found"
+          fi
           
-          echo "\nChecking JaCoCo report content:"
+          echo ""
+          echo "Checking JaCoCo report content:"
           if [ -f build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml ]; then
             echo "Report file size: $(wc -c < build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml) bytes"
             echo "First 500 chars of report:"
             head -c 500 build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
-            echo "\n\nCounting coverage elements:"
+            echo ""
+            echo ""
+            echo "Counting coverage elements:"
             grep -c "<package" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No packages found"
             grep -c "<class" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No classes found"
             grep -c "<method" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No methods found"
@@ -103,12 +131,18 @@ jobs:
             echo "JaCoCo report file not found"
           fi
           
-          echo "\nChecking binary directories specified in sonar-project.properties:"
+          echo ""
+          echo "Checking binary directories specified in sonar-project.properties:"
           echo "build/intermediates/runtime_library_classes_dir/debug:"
           ls -la build/intermediates/runtime_library_classes_dir/debug || echo "Directory not found"
           
-          echo "\nChecking all available class directories:"
-          find build -path "*/build/*" -name "*.class" | head -n 5 || echo "No class files found"
+          echo ""
+          echo "Checking all available class directories:"
+          find build -path "*/build/*" -name "*.class" | head -n 10 || echo "No class files found"
+          
+          echo ""
+          echo "Final sonar-project.properties content:"
+          cat sonar-project.properties
 
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v5
