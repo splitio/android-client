@@ -1,3 +1,6 @@
+5.3.2 (Aug 20, 2025)
+- Fixed issue with uncaught exception on flags preloading.
+
 5.3.1 (Jul 30, 2025)
 - Fixed race condition in database initialization.
 - Fixed increased ANRs when pausing task executor.
