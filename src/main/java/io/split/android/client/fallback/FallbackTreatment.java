@@ -52,13 +52,4 @@ public final class FallbackTreatment {
     public int hashCode() {
         return Objects.hash(mTreatment, mConfig);
     }
-
-    @Override
-    public String toString() {
-        return "FallbackTreatment{" +
-                "treatment='" + mTreatment + '\'' +
-                ", config=" + (mConfig == null ? "null" : "[redacted]") +
-                ", label='" + LABEL + '\'' +
-                '}';
-    }
 }
