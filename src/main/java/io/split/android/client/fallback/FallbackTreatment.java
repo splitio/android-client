@@ -12,7 +12,7 @@ import io.split.android.grammar.Treatments;
  */
 public final class FallbackTreatment {
 
-    public static final String LABEL = "fallback treatment";
+    private static final String LABEL_PREFIX = "fallback - ";
 
     /**
      * Default fallback representing "control" treatment with no config.
@@ -42,8 +42,8 @@ public final class FallbackTreatment {
         return mConfig;
     }
 
-    public String getLabel() {
-        return LABEL;
+    public String getLabelPrefix() {
+        return LABEL_PREFIX;
     }
 
     @Override
