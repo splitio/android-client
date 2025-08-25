@@ -12,7 +12,7 @@ public interface FallbackTreatmentsCalculator {
      * Resolve a fallback for a given flag name.
      *
      * @param flagName non-null flag name
-     * @return a fallback treatment if configured, otherwise null
+     * @return a fallback treatment if configured, otherwise "control"
      */
     @NonNull
     FallbackTreatment resolve(@NonNull String flagName);
