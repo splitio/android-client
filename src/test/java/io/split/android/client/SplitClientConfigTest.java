@@ -3,6 +3,7 @@ package io.split.android.client;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertSame;
 import static junit.framework.TestCase.assertTrue;
 
 import androidx.annotation.NonNull;
@@ -13,6 +14,8 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.fallback.FallbackConfiguration;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.utils.logger.LogPrinter;
 import io.split.android.client.utils.logger.Logger;
@@ -254,6 +257,26 @@ public class SplitClientConfigTest {
         assertEquals(10, config.getExpirationDays());
         assertFalse(config.isClearOnInit());
         assertEquals(1, logMessages.size());
+    }
+
+    @Test
+    public void fallbackTreatmentsIsNullByDefault() {
+        SplitClientConfig config = SplitClientConfig.builder().build();
+        assertNull(config.fallbackTreatments());
+    }
+
+    @Test
+    public void fallbackTreatmentsAreCorrectlySet() {
+        FallbackConfiguration byFactoryConfig = FallbackConfiguration.builder().build();
+        FallbackTreatmentsConfiguration ftConfiguration = FallbackTreatmentsConfiguration.builder()
+                .byFactory(byFactoryConfig)
+                .build();
+        SplitClientConfig config = SplitClientConfig.builder()
+                .fallbackTreatments(ftConfiguration)
+                .build();
+
+        assertSame(ftConfiguration, config.fallbackTreatments());
+        assertEquals(byFactoryConfig, config.fallbackTreatments().getByFactory());
     }
 
     @NonNull
