@@ -75,7 +75,7 @@ public class FallbackTreatmentsCalculatorTest {
         FallbackTreatment resolved = calculator.resolve("nope");
 
         assertNotNull(resolved);
-        assertEquals(FallbackTreatment.CONTROL, resolved);
+        assertEquals(new FallbackTreatment("control", null, null), resolved);
     }
 
     @Test

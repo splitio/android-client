@@ -5,6 +5,8 @@ import androidx.annotation.Nullable;
 
 import java.util.Map;
 
+import io.split.android.grammar.Treatments;
+
 public final class FallbackTreatmentsCalculatorImpl implements FallbackTreatmentsCalculator {
 
     private static final String LABEL_PREFIX = "fallback - ";
@@ -36,7 +38,7 @@ public final class FallbackTreatmentsCalculatorImpl implements FallbackTreatment
         if (global != null) {
             return global.copyWithLabel(resolveLabel(label));
         }
-        return FallbackTreatment.CONTROL;
+        return new FallbackTreatment(Treatments.CONTROL, null, label);
     }
 
     @Nullable

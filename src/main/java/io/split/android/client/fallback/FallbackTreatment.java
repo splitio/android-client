@@ -5,17 +5,10 @@ import androidx.annotation.Nullable;
 
 import java.util.Objects;
 
-import io.split.android.grammar.Treatments;
-
 /**
  * Represents the fallback treatment, with an optional config and a fixed label.
  */
 public final class FallbackTreatment {
-
-    /**
-     * Default fallback representing "control" treatment with no config.
-     */
-    public static final FallbackTreatment CONTROL = new FallbackTreatment(Treatments.CONTROL);
 
     @NonNull
     private final String mTreatment;
@@ -32,7 +25,7 @@ public final class FallbackTreatment {
         this(treatment, config, null);
     }
 
-    private FallbackTreatment(@NonNull String treatment, @Nullable String config, @Nullable String label) {
+    FallbackTreatment(@NonNull String treatment, @Nullable String config, @Nullable String label) {
         mTreatment = treatment;
         mConfig = config;
         mLabel = label;
