@@ -5,12 +5,19 @@ import androidx.annotation.Nullable;
 
 import java.util.Objects;
 
+import io.split.android.grammar.Treatments;
+
 /**
  * Represents the fallback treatment, with an optional config and a fixed label.
  */
 public final class FallbackTreatment {
 
-    public static final String LABEL = "fallback treatment";
+    private static final String LABEL_PREFIX = "fallback - ";
+
+    /**
+     * Default fallback representing "control" treatment with no config.
+     */
+    public static final FallbackTreatment CONTROL = new FallbackTreatment(Treatments.CONTROL);
 
     @NonNull
     private final String mTreatment;
@@ -35,8 +42,8 @@ public final class FallbackTreatment {
         return mConfig;
     }
 
-    public String getLabel() {
-        return LABEL;
+    public String getLabelPrefix() {
+        return LABEL_PREFIX;
     }
 
     @Override

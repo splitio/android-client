@@ -8,14 +8,14 @@ import org.junit.Test;
 
 public class FallbackTreatmentTest {
 
-    private static final String FALLBACK_TREATMENT = "fallback treatment";
+    private static final String FALLBACK_TREATMENT = "fallback - ";
 
     @Test
     public void constructorSetsFields() {
         FallbackTreatment ft = new FallbackTreatment("off", "{\"k\":true}");
         assertEquals("off", ft.getTreatment());
         assertEquals("{\"k\":true}", ft.getConfig());
-        assertEquals(FALLBACK_TREATMENT, ft.getLabel());
+        assertEquals(FALLBACK_TREATMENT, ft.getLabelPrefix());
     }
 
     @Test
@@ -23,7 +23,7 @@ public class FallbackTreatmentTest {
         FallbackTreatment ft = new FallbackTreatment("off", null);
         assertEquals("off", ft.getTreatment());
         assertNull(ft.getConfig());
-        assertEquals(FALLBACK_TREATMENT, ft.getLabel());
+        assertEquals(FALLBACK_TREATMENT, ft.getLabelPrefix());
     }
 
     @Test
@@ -31,7 +31,7 @@ public class FallbackTreatmentTest {
         FallbackTreatment ft = new FallbackTreatment("off");
         assertEquals("off", ft.getTreatment());
         assertNull(ft.getConfig());
-        assertEquals(FALLBACK_TREATMENT, ft.getLabel());
+        assertEquals(FALLBACK_TREATMENT, ft.getLabelPrefix());
     }
 
     @Test
