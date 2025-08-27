@@ -4,6 +4,10 @@ import java.util.Map;
 
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
+import io.split.android.client.fallback.FallbackConfiguration;
+import io.split.android.client.fallback.FallbackTreatment;
+import io.split.android.client.fallback.FallbackTreatmentsCalculator;
+import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.engine.experiments.ParsedCondition;
@@ -11,16 +15,21 @@ import io.split.android.engine.experiments.ParsedSplit;
 import io.split.android.engine.experiments.SplitParser;
 import io.split.android.engine.matchers.PrerequisitesMatcher;
 import io.split.android.engine.splitter.Splitter;
-import io.split.android.grammar.Treatments;
 
 public class EvaluatorImpl implements Evaluator {
 
     private final SplitsStorage mSplitsStorage;
     private final SplitParser mSplitParser;
+    private final FallbackTreatmentsCalculator mFallbackCalculator;
 
     public EvaluatorImpl(SplitsStorage splitsStorage, SplitParser splitParser) {
+        this(splitsStorage, splitParser, new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder().build()));
+    }
+
+    public EvaluatorImpl(SplitsStorage splitsStorage, SplitParser splitParser, FallbackTreatmentsCalculator fallbackCalculator) {
         mSplitsStorage = splitsStorage;
         mSplitParser = splitParser;
+        mFallbackCalculator = fallbackCalculator;
     }
 
     @Override
@@ -29,16 +38,19 @@ public class EvaluatorImpl implements Evaluator {
         try {
             ParsedSplit parsedSplit = mSplitParser.parse(mSplitsStorage.get(splitName), matchingKey);
             if (parsedSplit == null) {
-                return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.DEFINITION_NOT_FOUND, true);
+                FallbackTreatment fallback = mFallbackCalculator.resolve(splitName, TreatmentLabels.DEFINITION_NOT_FOUND);
+                return new EvaluationResult(fallback.getTreatment(), fallback.getLabel(), null, fallback.getConfig(), true);
             }
 
             return getTreatment(matchingKey, bucketingKey, parsedSplit, attributes);
         } catch (ChangeNumberExceptionWrapper ex) {
             Logger.e(ex, "Catch Change Number Exception");
-            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION, ex.changeNumber(), true);
+            FallbackTreatment fallback = mFallbackCalculator.resolve(splitName, TreatmentLabels.EXCEPTION);
+            return new EvaluationResult(fallback.getTreatment(), fallback.getLabel(), ex.changeNumber(), fallback.getConfig(), true);
         } catch (Exception e) {
             Logger.e(e, "Catch All Exception");
-            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.EXCEPTION, true);
+            FallbackTreatment fallback = mFallbackCalculator.resolve(splitName, TreatmentLabels.EXCEPTION);
+            return new EvaluationResult(fallback.getTreatment(), fallback.getLabel(), null, fallback.getConfig(), true);
         }
     }
 
@@ -95,7 +107,7 @@ public class EvaluatorImpl implements Evaluator {
                 }
 
                 if (parsedCondition.matcher().match(matchingKey, bucketingKey, attributes, this)) {
-                    String treatment = Splitter.getTreatment(bk, parsedSplit.seed(), parsedCondition.partitions(), parsedSplit.algo());
+                    String treatment = Splitter.getTreatment(bk, parsedSplit.seed(), parsedCondition.partitions(), parsedSplit.algo(), mFallbackCalculator);
                     return new EvaluationResult(treatment, parsedCondition.label(), parsedSplit.changeNumber(), configForTreatment(parsedSplit, treatment), parsedSplit.impressionsDisabled());
                 }
             }

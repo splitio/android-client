@@ -8,30 +8,36 @@ import org.junit.Test;
 
 public class FallbackTreatmentTest {
 
-    private static final String FALLBACK_TREATMENT = "fallback - ";
-
     @Test
     public void constructorSetsFields() {
-        FallbackTreatment ft = new FallbackTreatment("off", "{\"k\":true}");
+        FallbackTreatment ft = new FallbackTreatment("off", "{\"k\":true}", "my label");
         assertEquals("off", ft.getTreatment());
         assertEquals("{\"k\":true}", ft.getConfig());
-        assertEquals(FALLBACK_TREATMENT, ft.getLabelPrefix());
+        assertEquals("my label", ft.getLabel());
     }
 
     @Test
     public void configCanBeNull() {
-        FallbackTreatment ft = new FallbackTreatment("off", null);
+        FallbackTreatment ft = new FallbackTreatment("off", null, "my label");
         assertEquals("off", ft.getTreatment());
         assertNull(ft.getConfig());
-        assertEquals(FALLBACK_TREATMENT, ft.getLabelPrefix());
+        assertEquals("my label", ft.getLabel());
     }
 
     @Test
-    public void convenienceConstructorSetsNullConfig() {
+    public void labelCanBeNull() {
+        FallbackTreatment ft = new FallbackTreatment("off", null, null);
+        assertEquals("off", ft.getTreatment());
+        assertNull(ft.getConfig());
+        assertNull(ft.getLabel());
+    }
+
+    @Test
+    public void convenienceConstructorSetsNullConfigAndLabel() {
         FallbackTreatment ft = new FallbackTreatment("off");
         assertEquals("off", ft.getTreatment());
         assertNull(ft.getConfig());
-        assertEquals(FALLBACK_TREATMENT, ft.getLabelPrefix());
+        assertNull(ft.getLabel());
     }
 
     @Test

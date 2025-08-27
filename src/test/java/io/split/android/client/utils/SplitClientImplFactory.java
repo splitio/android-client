@@ -42,7 +42,7 @@ public class SplitClientImplFactory {
         TreatmentManagerFactory treatmentManagerFactory = new TreatmentManagerFactoryImpl(
                 new KeyValidatorImpl(), new SplitValidatorImpl(), new ImpressionListener.FederatedImpressionListener(mock(DecoratedImpressionListener.class), Collections.emptyList()),
                 false, new AttributesMergerImpl(), telemetryStorage, splitParser,
-                new FlagSetsFilterImpl(Collections.emptySet()), splitsStorage);
+                new FlagSetsFilterImpl(Collections.emptySet()), splitsStorage, null);
 
         AttributesManager attributesManager = mock(AttributesManager.class);
         SplitClientImpl c = new SplitClientImpl(
