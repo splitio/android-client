@@ -12,8 +12,6 @@ import io.split.android.grammar.Treatments;
  */
 public final class FallbackTreatment {
 
-    private static final String LABEL_PREFIX = "fallback - ";
-
     /**
      * Default fallback representing "control" treatment with no config.
      */
@@ -23,14 +21,21 @@ public final class FallbackTreatment {
     private final String mTreatment;
     @Nullable
     private final String mConfig;
+    @Nullable
+    private final String mLabel;
 
     public FallbackTreatment(@NonNull String treatment) {
         this(treatment, null);
     }
 
     public FallbackTreatment(@NonNull String treatment, @Nullable String config) {
+        this(treatment, config, null);
+    }
+
+    private FallbackTreatment(@NonNull String treatment, @Nullable String config, @Nullable String label) {
         mTreatment = treatment;
         mConfig = config;
+        mLabel = label;
     }
 
     public String getTreatment() {
@@ -42,8 +47,13 @@ public final class FallbackTreatment {
         return mConfig;
     }
 
-    public String getLabelPrefix() {
-        return LABEL_PREFIX;
+    @Nullable
+    public String getLabel() {
+        return mLabel;
+    }
+
+    FallbackTreatment copyWithLabel(String label) {
+        return new FallbackTreatment(mTreatment, mConfig, label);
     }
 
     @Override
@@ -52,11 +62,12 @@ public final class FallbackTreatment {
         if (o == null || getClass() != o.getClass()) return false;
         FallbackTreatment that = (FallbackTreatment) o;
         return Objects.equals(mTreatment, that.mTreatment) &&
-                Objects.equals(mConfig, that.mConfig);
+                Objects.equals(mConfig, that.mConfig) &&
+                Objects.equals(mLabel, that.mLabel);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(mTreatment, mConfig);
+        return Objects.hash(mTreatment, mConfig, mLabel);
     }
 }

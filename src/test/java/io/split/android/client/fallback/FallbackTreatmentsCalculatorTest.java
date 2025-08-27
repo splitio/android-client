@@ -2,12 +2,15 @@ package io.split.android.client.fallback;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import io.split.android.client.TreatmentLabels;
 
 public class FallbackTreatmentsCalculatorTest {
 
@@ -90,5 +93,33 @@ public class FallbackTreatmentsCalculatorTest {
 
         assertNotNull(resolved);
         assertEquals(global, resolved);
+    }
+
+    @Test
+    public void labelIsPrefixed() {
+        FallbackTreatment global = new FallbackTreatment("off");
+        FallbackConfiguration config = FallbackConfiguration.builder()
+                .global(global)
+                .build();
+
+        FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(config);
+        FallbackTreatment resolved = calculator.resolve("flagA", TreatmentLabels.EXCEPTION);
+
+        assertNotNull(resolved);
+        assertEquals("fallback - exception", resolved.getLabel());
+    }
+
+    @Test
+    public void noLabelReturnsNull() {
+        FallbackTreatment global = new FallbackTreatment("off");
+        FallbackConfiguration config = FallbackConfiguration.builder()
+                .global(global)
+                .build();
+
+        FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(config);
+        FallbackTreatment resolved = calculator.resolve("flagA", null);
+
+        assertNotNull(resolved);
+        assertNull(resolved.getLabel());
     }
 }
