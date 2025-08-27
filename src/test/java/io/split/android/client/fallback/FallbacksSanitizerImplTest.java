@@ -2,6 +2,7 @@ package io.split.android.client.fallback;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -58,5 +59,64 @@ public class FallbacksSanitizerImplTest {
 
         assertNull(sanitized.getGlobal());
         assertEquals(0, sanitized.getByFlag().size());
+    }
+
+    @Test
+    public void byFlagTreatmentIsDroppedWhenInvalidFormat() {
+        Map<String, FallbackTreatment> byFlag = new HashMap<>();
+        byFlag.put(VALID_FLAG, new FallbackTreatment("on.off"));
+        byFlag.put("valid_num_dot", new FallbackTreatment("123.on"));
+        byFlag.put("null_treatment", new FallbackTreatment(null));
+
+        FallbackConfiguration config = FallbackConfiguration.builder()
+                .global(null)
+                .byFlag(byFlag)
+                .build();
+
+        FallbackConfiguration sanitized = mSanitizer.sanitize(config);
+
+        // Only the valid one should remain
+        assertEquals(1, sanitized.getByFlag().size());
+        assertEquals("123.on", sanitized.getByFlag().get("valid_num_dot").getTreatment());
+    }
+
+    @Test
+    public void globalTreatmentIsDroppedWhenInvalidFormat() {
+        Map<String, FallbackTreatment> byFlag = new HashMap<>();
+        byFlag.put(VALID_FLAG, new FallbackTreatment("on_1-2"));
+        byFlag.put("null_treatment", new FallbackTreatment(null));
+
+        FallbackConfiguration config = FallbackConfiguration.builder()
+                // Global invalid due to regex (letters cannot be followed by '.')
+                .global(new FallbackTreatment("on.off"))
+                .byFlag(byFlag)
+                .build();
+
+        FallbackConfiguration sanitized = mSanitizer.sanitize(config);
+
+        assertNull(sanitized.getGlobal());
+        // Ensure only the valid by-flag entry is preserved
+        assertEquals(1, sanitized.getByFlag().size());
+        assertEquals("on_1-2", sanitized.getByFlag().get(VALID_FLAG).getTreatment());
+    }
+
+    @Test
+    public void validFormatTreatmentIsNotDropped() {
+        Map<String, FallbackTreatment> byFlag = new HashMap<>();
+        byFlag.put("numWithDot", new FallbackTreatment("123.on"));
+        byFlag.put(VALID_FLAG, new FallbackTreatment("on_1-2"));
+
+        FallbackConfiguration config = FallbackConfiguration.builder()
+                .global(new FallbackTreatment("on"))
+                .byFlag(byFlag)
+                .build();
+
+        FallbackConfiguration sanitized = mSanitizer.sanitize(config);
+
+        assertEquals(2, sanitized.getByFlag().size());
+        assertTrue(sanitized.getByFlag().containsKey("numWithDot"));
+        assertEquals("123.on", sanitized.getByFlag().get("numWithDot").getTreatment());
+        assertEquals("on_1-2", sanitized.getByFlag().get(VALID_FLAG).getTreatment());
+        assertEquals("on", sanitized.getGlobal().getTreatment());
     }
 }
