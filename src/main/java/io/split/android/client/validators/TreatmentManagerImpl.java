@@ -311,8 +311,6 @@ public class TreatmentManagerImpl implements TreatmentManager {
             evaluationResult = evaluateIfReady(splitName, mergedAttributes, validationTag);
             SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
 
-            // Fallback logic handled in EvaluatorImpl when definition not found.
-
             // If the feature flag was not found, log the message and return the result
             if (evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
                 mValidationLogger.w(mSplitValidator.splitNotFoundMessage(splitName), validationTag);

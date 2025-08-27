@@ -14,11 +14,11 @@ public class Splitter {
     private static final int ALGO_LEGACY = 1;
     private static final int ALGO_MURMUR = 2;
 
-    public static String getTreatment(String key, int seed, List<Partition> partitions, int algo, FallbackTreatmentsCalculator mFallbackCalculator) {
+    public static String getTreatment(String key, int seed, List<Partition> partitions, int algo, FallbackTreatmentsCalculator fallbackCalculator) {
 
         // 1. when there are no partitions, we just return control
         if (partitions.isEmpty()) {
-            return mFallbackCalculator.resolve(key).getTreatment();
+            return fallbackCalculator.resolve(key).getTreatment();
         }
 
 
@@ -26,7 +26,7 @@ public class Splitter {
             return partitions.get(0).treatment;
         }
 
-        String controlTreatment = mFallbackCalculator.resolve(key).getTreatment();
+        String controlTreatment = fallbackCalculator.resolve(key).getTreatment();
         return getTreatment(bucket(hash(key, seed, algo)), partitions, controlTreatment);
     }
 
