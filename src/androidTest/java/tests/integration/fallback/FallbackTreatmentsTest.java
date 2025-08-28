@@ -68,15 +68,14 @@ public class FallbackTreatmentsTest {
 
     private static SplitClientConfig buildDebugConfigWithListener(ServiceEndpoints endpoints,
                                                                   FallbackTreatmentsConfiguration fbConfig,
-                                                                  ImpressionListener listener,
-                                                                  int impressionsRefreshRateSeconds) {
+                                                                  ImpressionListener listener) {
         return SplitClientConfig.builder()
                 .serviceEndpoints(endpoints)
                 .ready(30000)
                 .featuresRefreshRate(3)
                 .segmentsRefreshRate(3)
                 .trafficType("account")
-                .impressionsRefreshRate(impressionsRefreshRateSeconds)
+                .impressionsRefreshRate(1)
                 .impressionsMode(ImpressionsMode.DEBUG)
                 .fallbackTreatments(fbConfig)
                 .impressionListener(listener)
@@ -267,7 +266,6 @@ public class FallbackTreatmentsTest {
         boolean hasPrefixed = body.contains("\"f\":\"any_flag\"") && body.contains("\"r\":\"fallback - not ready\"");
         boolean hasPlain = body.contains("\"f\":\"other_flag\"") && body.contains("\"r\":\"not ready\"");
         if (!hasPrefixed || !hasPlain) {
-            // Fall back to relaxed check if split names are not present in payload structure
             hasPrefixed = body.contains("fallback - not ready");
             hasPlain = body.contains("\"r\":\"not ready\"");
         }
@@ -557,8 +555,7 @@ public class FallbackTreatmentsTest {
         final List<Impression> capturedImpressions = Collections.synchronizedList(new ArrayList<>());
         ImpressionListener listener = createImpressionCapturingListener(capturedImpressions);
 
-        // Use DEBUG impressions and fast posting to capture payload and add the listener above
-        SplitClientConfig config = buildDebugConfigWithListener(endpoints, fbConfig, listener, 1);
+        SplitClientConfig config = buildDebugConfigWithListener(endpoints, fbConfig, listener);
         SplitFactory factory = buildFactory(config);
 
         SplitClient client = factory.client(new Key("key_1"));
