@@ -312,7 +312,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
 
             // If the feature flag was not found, log the message and return the result
-            if (evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
+            if (evaluationResult.getLabel().contains(TreatmentLabels.DEFINITION_NOT_FOUND)) {
                 mValidationLogger.w(mSplitValidator.splitNotFoundMessage(splitName), validationTag);
                 return new TreatmentResult(splitResult, false);
             }

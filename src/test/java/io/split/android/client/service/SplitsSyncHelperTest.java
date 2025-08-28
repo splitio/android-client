@@ -481,7 +481,7 @@ public class SplitsSyncHelperTest {
         try { mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES); } catch (Exception ignored) {}
         // Simulate time NOT elapsed
         mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
-        verify(mSplitsFetcher, times(1)).execute(argThat(params ->
+        verify(mSplitsFetcher, times(2)).execute(argThat(params ->
                 "1.2".equals(params.get("s")) &&
                 !params.containsKey("rbSince")
         ), any());

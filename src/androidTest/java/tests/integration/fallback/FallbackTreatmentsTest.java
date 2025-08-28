@@ -1,6 +1,7 @@
 package tests.integration.fallback;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
@@ -11,7 +12,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -28,6 +32,8 @@ import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.fallback.FallbackConfiguration;
 import io.split.android.client.fallback.FallbackTreatment;
 import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
+import io.split.android.client.impressions.Impression;
+import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.utils.logger.SplitLogLevel;
 import io.split.android.grammar.Treatments;
@@ -48,6 +54,56 @@ public class FallbackTreatmentsTest {
                 .apiEndpoint(url)
                 .eventsEndpoint(url)
                 .build();
+    }
+
+    // Helpers
+    private static ImpressionListener createImpressionCapturingListener(final List<Impression> sink) {
+        return new ImpressionListener() {
+            @Override
+            public void log(Impression impression) { sink.add(impression); }
+            @Override
+            public void close() { }
+        };
+    }
+
+    private static SplitClientConfig buildDebugConfigWithListener(ServiceEndpoints endpoints,
+                                                                  FallbackTreatmentsConfiguration fbConfig,
+                                                                  ImpressionListener listener,
+                                                                  int impressionsRefreshRateSeconds) {
+        return SplitClientConfig.builder()
+                .serviceEndpoints(endpoints)
+                .ready(30000)
+                .featuresRefreshRate(3)
+                .segmentsRefreshRate(3)
+                .trafficType("account")
+                .impressionsRefreshRate(impressionsRefreshRateSeconds)
+                .impressionsMode(ImpressionsMode.DEBUG)
+                .fallbackTreatments(fbConfig)
+                .impressionListener(listener)
+                .build();
+    }
+
+    private static void assertPayloadHasOnlyKnownFlagNoDnf(String body) {
+        boolean hasKnown = body.contains("\"f\":\"real_flag\"") || body.contains("real_flag");
+        boolean hasUnknownFlag = body.contains("\"f\":\"dnf_flag\"");
+        boolean hasDnfLabel = body.contains("\"r\":\"definition not found\"");
+        boolean hasFallbackDnfLabel = body.contains("fallback - definition not found");
+
+        assertTrue("Expected at least one impression for real_flag", hasKnown);
+        assertFalse("Unknown flag should not produce impressions", hasUnknownFlag);
+        assertFalse("Label 'definition not found' should not appear in impressions", hasDnfLabel);
+        assertFalse("Label 'fallback - definition not found' should not appear in impressions", hasFallbackDnfLabel);
+    }
+
+    private static void assertLocalNoUnknownOrDnf(List<Impression> captured) {
+        assertEquals("Expected exactly one impression locally (real_flag)", 1, captured.size());
+        Impression imp = captured.get(0);
+        assertEquals("real_flag", imp.split());
+        String label = imp.appliedRule();
+        assertFalse("Label 'definition not found' should not appear in impressions (listener)",
+                "definition not found".equals(label));
+        assertFalse("Label 'fallback - definition not found' should not appear in impressions (listener)",
+                label != null && label.contains("fallback - definition not found"));
     }
 
     private SplitClientConfig buildConfig(FallbackTreatmentsConfiguration fbConfig) {
@@ -452,6 +508,74 @@ public class FallbackTreatmentsTest {
         assertEquals("{\"flag\":true}", rMy.config());
         assertEquals("OFF_FALLBACK", rUnknown.treatment());
         assertEquals("{\"global\":true}", rUnknown.config());
+
+        factory.destroy();
+    }
+
+    @Test
+    public void case8_noImpressionsForDefinitionNotFoundOrFallbackDefinitionNotFoundAfterReady() throws Exception {
+        final String url = mWebServer.url("/").url().toString();
+        ServiceEndpoints endpoints = ServiceEndpoints.builder()
+                .apiEndpoint(url)
+                .eventsEndpoint(url)
+                .build();
+
+        final StringBuilder postedImpressions = new StringBuilder();
+        final CountDownLatch impressionsLatch = new CountDownLatch(1);
+        mCurSplitReqId = 1;
+        final Dispatcher dispatcher = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                final String path = request.getPath();
+                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
+                } else if (path.contains("/splitChanges")) {
+                    // Serve a real flag so we do generate impressions in DEBUG mode
+                    String change = IntegrationHelper.loadSplitChanges(mContext, "simple_split.json");
+                    change = change.replace("\"workm\"", "\"real_flag\"");
+                    return new MockResponse().setResponseCode(200).setBody(change);
+                } else if (path.contains("/testImpressions/bulk")) {
+                    try {
+                        postedImpressions.append(request.getBody().readUtf8());
+                    } catch (Exception ignore) { }
+                    impressionsLatch.countDown();
+                    return new MockResponse().setResponseCode(200);
+                }
+                return new MockResponse().setResponseCode(404);
+            }
+        };
+        mWebServer.setDispatcher(dispatcher);
+
+        // Configure global fallback so unknown flags return a fallback treatment
+        FallbackConfiguration byFactory = FallbackConfiguration.builder()
+                .global(new FallbackTreatment("OFF_FALLBACK"))
+                .build();
+        FallbackTreatmentsConfiguration fbConfig = FallbackTreatmentsConfiguration.builder()
+                .byFactory(byFactory)
+                .build();
+
+        final List<Impression> capturedImpressions = Collections.synchronizedList(new ArrayList<>());
+        ImpressionListener listener = createImpressionCapturingListener(capturedImpressions);
+
+        // Use DEBUG impressions and fast posting to capture payload and add the listener above
+        SplitClientConfig config = buildDebugConfigWithListener(endpoints, fbConfig, listener, 1);
+        SplitFactory factory = buildFactory(config);
+
+        SplitClient client = factory.client(new Key("key_1"));
+        awaitReady(client);
+
+        // Evaluate a real flag (will log impression) and an unknown flag (should not log impression)
+        String tUnknown = client.getTreatment("dnf_flag");
+        String tKnown = client.getTreatment("real_flag");
+
+        // Push impressions
+        Thread.sleep(1000);
+        client.flush();
+        impressionsLatch.await(5, TimeUnit.SECONDS);
+
+        String body = postedImpressions.toString();
+        assertPayloadHasOnlyKnownFlagNoDnf(body);
+        assertLocalNoUnknownOrDnf(capturedImpressions);
 
         factory.destroy();
     }
