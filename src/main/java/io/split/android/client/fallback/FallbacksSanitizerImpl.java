@@ -4,6 +4,7 @@ import androidx.annotation.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import io.split.android.client.utils.logger.Logger;
 
@@ -15,6 +16,8 @@ class FallbacksSanitizerImpl implements FallbacksSanitizer {
 
     private static final int MAX_FLAG_NAME_LENGTH = 100;
     private static final int MAX_TREATMENT_LENGTH = 100;
+    private static final String TREATMENT_REGEXP = "^[0-9]+[.a-zA-Z0-9_-]*$|^[a-zA-Z]+[a-zA-Z0-9_-]*$";
+    private static final Pattern TREATMENT_PATTERN = Pattern.compile(TREATMENT_REGEXP);
 
     /**
      * Sanitizes the provided fallback configuration by applying validation rules.
@@ -93,6 +96,7 @@ class FallbacksSanitizerImpl implements FallbacksSanitizer {
         if (treatment == null || treatment.getTreatment() == null) {
             return false;
         }
-        return treatment.getTreatment().length() <= MAX_TREATMENT_LENGTH;
+        String value = treatment.getTreatment();
+        return value.length() <= MAX_TREATMENT_LENGTH && TREATMENT_PATTERN.matcher(value).matches();
     }
 }
