@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.TreatmentLabels;
 import io.split.android.client.EvaluationResult;
 import io.split.android.client.Evaluator;
 import io.split.android.client.EvaluatorImpl;
@@ -28,6 +29,8 @@ import io.split.android.client.fallback.FallbackConfiguration;
 import io.split.android.client.fallback.FallbackTreatment;
 import io.split.android.client.fallback.FallbackTreatmentsCalculator;
 import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
+import io.split.android.client.impressions.DecoratedImpression;
+import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
@@ -149,6 +152,33 @@ public class TreatmentManagerFallbackTreatmentsTest {
         assertEquals("FALLBACK_AFTER_EXCEPTION", out);
         verify(telemetry, times(1)).recordException(Method.TREATMENT);
         verify(fallbackCalc, times(2)).resolve(flag);
+    }
+
+    @Test
+    public void treatmentManagerLabelContainsDefinitionNotFoundTriggersNotFoundPath() {
+        String flag = "flag_contains_def_not_found";
+
+        Evaluator evaluator = mock(Evaluator.class);
+        TelemetryStorageProducer telemetry = mock(TelemetryStorageProducer.class);
+        FallbackTreatmentsCalculator fallbackCalc = mock(FallbackTreatmentsCalculator.class);
+        Mocks m = Mocks.create(evaluator, telemetry, fallbackCalc);
+
+        String label = "some prefix - " + TreatmentLabels.DEFINITION_NOT_FOUND + " - some suffix";
+        when(evaluator.getTreatment(eq("m"), eq("b"), eq(flag), any()))
+                .thenReturn(new EvaluationResult("on", label, null, null, false));
+
+        when(m.splitValidator.splitNotFoundMessage(flag)).thenReturn("not found: " + flag);
+
+        // Invoke getTreatmentWithConfig to go through getTreatmentWithConfigWithoutMetrics path
+        SplitResult result = m.manager.getTreatmentWithConfig(flag, null, null, false);
+
+        // Ensure treatment is the one provided by evaluator and no impressions are logged
+        assertEquals("on", result.treatment());
+        verify(m.impressions, times(0)).log(Mockito.any(DecoratedImpression.class));
+        verify(m.impressions, times(0)).log(Mockito.any(Impression.class));
+
+        // Ensure we logged the not-found warning by requesting the message from SplitValidator
+        verify(m.splitValidator, times(1)).splitNotFoundMessage(flag);
     }
 
     private static class Mocks {
