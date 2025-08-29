@@ -15,6 +15,7 @@ import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 
 public class TestableSplitConfigBuilder {
 
@@ -66,6 +67,7 @@ public class TestableSplitConfigBuilder {
     private CertificatePinningConfiguration mCertificatePinningConfiguration;
     private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
     private RolloutCacheConfiguration mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();
+    private FallbackTreatmentsConfiguration mFallbackTreatments;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -281,6 +283,11 @@ public class TestableSplitConfigBuilder {
         return this;
     }
 
+    public TestableSplitConfigBuilder fallbackTreatments(FallbackTreatmentsConfiguration fallbackTreatments) {
+        this.mFallbackTreatments = fallbackTreatments;
+        return this;
+    }
+
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
         constructor.setAccessible(true);
@@ -337,7 +344,8 @@ public class TestableSplitConfigBuilder {
                     mObserverCacheExpirationPeriod,
                     mCertificatePinningConfiguration,
                     mImpressionsDedupeTimeInterval,
-                    mRolloutCacheConfiguration);
+                    mRolloutCacheConfiguration,
+                    mFallbackTreatments);
 
             Logger.instance().setLevel(mLogLevel);
             return config;

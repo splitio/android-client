@@ -1,10 +1,10 @@
 package io.split.android.engine.splitter;
 
-import io.split.android.client.dtos.Partition;
-import io.split.android.client.utils.MurmurHash3;
-import io.split.android.grammar.Treatments;
-
 import java.util.List;
+
+import io.split.android.client.dtos.Partition;
+import io.split.android.client.fallback.FallbackTreatmentsCalculator;
+import io.split.android.client.utils.MurmurHash3;
 
 /**
  * These set of functions figure out which treatment a key should see.
@@ -14,11 +14,11 @@ public class Splitter {
     private static final int ALGO_LEGACY = 1;
     private static final int ALGO_MURMUR = 2;
 
-    public static String getTreatment(String key, int seed, List<Partition> partitions, int algo) {
+    public static String getTreatment(String key, int seed, List<Partition> partitions, int algo, FallbackTreatmentsCalculator fallbackCalculator) {
 
         // 1. when there are no partitions, we just return control
         if (partitions.isEmpty()) {
-            return Treatments.CONTROL;
+            return fallbackCalculator.resolve(key).getTreatment();
         }
 
 
@@ -26,7 +26,8 @@ public class Splitter {
             return partitions.get(0).treatment;
         }
 
-        return getTreatment(bucket(hash(key, seed, algo)), partitions);
+        String controlTreatment = fallbackCalculator.resolve(key).getTreatment();
+        return getTreatment(bucket(hash(key, seed, algo)), partitions, controlTreatment);
     }
 
     static long hash(String key, int seed, int algo) {
@@ -65,10 +66,11 @@ public class Splitter {
 
     /**
      * @param bucket
-     * @param partitions MUST HAVE more than one partitions.
+     * @param partitions       MUST HAVE more than one partitions.
+     * @param controlTreatment
      * @return
      */
-    private static String getTreatment(int bucket, List<Partition> partitions) {
+    private static String getTreatment(int bucket, List<Partition> partitions, String controlTreatment) {
 
         int bucketsCoveredThusFar = 0;
 
@@ -80,7 +82,7 @@ public class Splitter {
             }
         }
 
-        return Treatments.CONTROL;
+        return controlTreatment;
     }
 
     /*package private*/

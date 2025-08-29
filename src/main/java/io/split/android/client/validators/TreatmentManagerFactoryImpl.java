@@ -17,6 +17,10 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.engine.experiments.SplitParser;
+import io.split.android.client.fallback.FallbackConfiguration;
+import io.split.android.client.fallback.FallbackTreatmentsCalculator;
+import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 
 public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
 
@@ -32,6 +36,7 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
     private final ValidationMessageLogger mValidationMessageLogger;
     private final SplitFilterValidator mFlagSetsValidator;
     private final PropertyValidator mPropertyValidator;
+    private final FallbackTreatmentsCalculator mFallbackCalculator;
 
     public TreatmentManagerFactoryImpl(@NonNull KeyValidator keyValidator,
                                        @NonNull SplitValidator splitValidator,
@@ -41,14 +46,23 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
                                        @NonNull TelemetryStorageProducer telemetryStorageProducer,
                                        @NonNull SplitParser splitParser,
                                        @Nullable FlagSetsFilter flagSetsFilter,
-                                       @NonNull SplitsStorage splitsStorage) {
+                                       @NonNull SplitsStorage splitsStorage,
+                                       @Nullable FallbackTreatmentsConfiguration fallbackTreatments) {
         mKeyValidator = checkNotNull(keyValidator);
         mSplitValidator = checkNotNull(splitValidator);
         mCustomerImpressionListener = checkNotNull(customerImpressionListener);
         mLabelsEnabled = labelsEnabled;
         mAttributesMerger = checkNotNull(attributesMerger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
-        mEvaluator = new EvaluatorImpl(splitsStorage, splitParser);
+        FallbackTreatmentsCalculator calculator;
+        if (fallbackTreatments != null && fallbackTreatments.getByFactory() != null) {
+            FallbackConfiguration byFactory = fallbackTreatments.getByFactory();
+            calculator = new FallbackTreatmentsCalculatorImpl(byFactory);
+        } else {
+            calculator = new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder().build());
+        }
+        mEvaluator = new EvaluatorImpl(splitsStorage, splitParser, calculator);
+        mFallbackCalculator = calculator;
         mFlagSetsFilter = flagSetsFilter;
         mSplitsStorage = checkNotNull(splitsStorage);
         mValidationMessageLogger = new ValidationMessageLoggerImpl();
@@ -74,7 +88,8 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
                 mSplitsStorage,
                 mValidationMessageLogger,
                 mFlagSetsValidator,
-                mPropertyValidator
+                mPropertyValidator,
+                mFallbackCalculator
         );
     }
 }
