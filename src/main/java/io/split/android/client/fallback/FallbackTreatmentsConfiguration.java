@@ -86,7 +86,10 @@ public final class FallbackTreatmentsConfiguration {
          * @return a new immutable {@link FallbackTreatmentsConfiguration}
          */
         public FallbackTreatmentsConfiguration build() {
-            return new FallbackTreatmentsConfiguration(mGlobal, mByFlag);
+            // Sanitize parts individually before building the immutable configuration
+            FallbackTreatment sanitizedGlobal = mSanitizer.sanitizeGlobal(mGlobal);
+            Map<String, FallbackTreatment> sanitizedByFlag = mSanitizer.sanitizeByFlag(mByFlag);
+            return new FallbackTreatmentsConfiguration(sanitizedGlobal, sanitizedByFlag);
         }
 
         @VisibleForTesting

@@ -28,6 +28,7 @@ import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
 import io.split.android.client.validators.PrefixValidatorImpl;
 import io.split.android.client.validators.ValidationErrorInfo;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 
 /**
  * Configurations for the SplitClient.
