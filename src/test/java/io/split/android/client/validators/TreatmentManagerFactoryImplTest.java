@@ -9,6 +9,7 @@ import org.junit.Test;
 
 import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.attributes.AttributesMerger;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorage;

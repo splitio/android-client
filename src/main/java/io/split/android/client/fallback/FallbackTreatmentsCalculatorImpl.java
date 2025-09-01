@@ -1,5 +1,7 @@
 package io.split.android.client.fallback;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -15,7 +17,7 @@ public final class FallbackTreatmentsCalculatorImpl implements FallbackTreatment
     private final FallbackTreatmentsConfiguration mConfig;
 
     public FallbackTreatmentsCalculatorImpl(@NonNull FallbackTreatmentsConfiguration config) {
-        mConfig = config;
+        mConfig = checkNotNull(config);
     }
 
     @NonNull

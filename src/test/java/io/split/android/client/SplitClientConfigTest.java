@@ -266,16 +266,12 @@ public class SplitClientConfigTest {
 
     @Test
     public void fallbackTreatmentsAreCorrectlySet() {
-        FallbackTreatmentsConfiguration byFactoryConfig = FallbackTreatmentsConfiguration.builder().build();
-        FallbackTreatmentsConfiguration ftConfiguration = FallbackTreatmentsConfiguration.builder()
-                .byFactory(byFactoryConfig)
-                .build();
+        FallbackTreatmentsConfiguration ftConfiguration = FallbackTreatmentsConfiguration.builder().build();
         SplitClientConfig config = SplitClientConfig.builder()
                 .fallbackTreatments(ftConfiguration)
                 .build();
 
         assertSame(ftConfiguration, config.fallbackTreatments());
-        assertEquals(byFactoryConfig, config.fallbackTreatments().getByFactory());
     }
 
     @NonNull

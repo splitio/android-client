@@ -54,9 +54,8 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
         mAttributesMerger = checkNotNull(attributesMerger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
         FallbackTreatmentsCalculator calculator;
-        if (fallbackTreatments != null && fallbackTreatments.getByFactory() != null) {
-            FallbackTreatmentsConfiguration byFactory = fallbackTreatments.getByFactory();
-            calculator = new FallbackTreatmentsCalculatorImpl(byFactory);
+        if (fallbackTreatments != null) {
+            calculator = new FallbackTreatmentsCalculatorImpl(fallbackTreatments);
         } else {
             calculator = new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build());
         }
