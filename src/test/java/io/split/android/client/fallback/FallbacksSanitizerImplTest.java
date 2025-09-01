@@ -7,12 +7,18 @@ import static org.junit.Assert.assertTrue;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
+
+import io.split.android.client.utils.logger.LogPrinterStub;
+import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.utils.logger.SplitLogLevel;
 
 public class FallbacksSanitizerImplTest {
 
     private FallbacksSanitizerImpl mSanitizer;
+    private LogPrinterStub mLogPrinter;
 
     private static final String VALID_FLAG = "my_flag";
     private static final String INVALID_FLAG_WITH_SPACE = "my flag";
@@ -26,6 +32,9 @@ public class FallbacksSanitizerImplTest {
     @Before
     public void setUp() {
         mSanitizer = new FallbacksSanitizerImpl();
+        mLogPrinter = new LogPrinterStub();
+        Logger.instance().setLevel(SplitLogLevel.VERBOSE);
+        Logger.instance().setPrinter(mLogPrinter);
     }
 
     @Test
@@ -43,7 +52,15 @@ public class FallbacksSanitizerImplTest {
 
         FallbackConfiguration sanitized = mSanitizer.sanitize(config);
 
-        // only VALID_FLAG should remain
+        Deque<String> errors = mLogPrinter.getLoggedMessages().get(android.util.Log.ERROR);
+        assertTrue("Expected ERROR logs to be present", errors != null && !errors.isEmpty());
+        long invalidFlagNameCount = errors.stream().filter(m -> m.contains("Invalid flag name")).count();
+        assertEquals(2, invalidFlagNameCount);
+        assertTrue(errors.stream().anyMatch(m -> m.contains("Discarded flag 'my flag'")));
+        // invalid treatment for a specific flag name and contains the full expected message
+        assertTrue(errors.stream().anyMatch(m -> m.contains("Discarded treatment for flag 'tooLongTreatment'")));
+        assertTrue(errors.stream().anyMatch(m -> m.contains("Invalid treatment (max 100 chars and comply with ^[0-9]+[.a-zA-Z0-9_-]*$|^[a-zA-Z]+[a-zA-Z0-9_-]*$)")));
+
         assertEquals(1, sanitized.getByFlag().size());
         assertEquals("on", sanitized.getByFlag().get(VALID_FLAG).getTreatment());
     }
@@ -56,6 +73,11 @@ public class FallbacksSanitizerImplTest {
                 .build();
 
         FallbackConfiguration sanitized = mSanitizer.sanitize(config);
+
+        // Assert error log for discarded global fallback only
+        Deque<String> errors = mLogPrinter.getLoggedMessages().get(android.util.Log.ERROR);
+        assertTrue("Expected ERROR logs to be present", errors != null && !errors.isEmpty());
+        assertTrue(errors.stream().anyMatch(m -> m.contains("Discarded global fallback")));
 
         assertNull(sanitized.getGlobal());
         assertEquals(0, sanitized.getByFlag().size());
@@ -75,6 +97,15 @@ public class FallbacksSanitizerImplTest {
 
         FallbackConfiguration sanitized = mSanitizer.sanitize(config);
 
+        // Assert error logs for invalid treatments under flags
+        Deque<String> errors = mLogPrinter.getLoggedMessages().get(android.util.Log.ERROR);
+        assertTrue("Expected ERROR logs to be present", errors != null && !errors.isEmpty());
+        assertTrue(errors.stream().anyMatch(m -> m.contains("Discarded treatment for flag '" + VALID_FLAG + "'")));
+        assertTrue(errors.stream().anyMatch(m -> m.contains("Invalid treatment (max 100 chars and comply with ^[0-9]+[.a-zA-Z0-9_-]*$|^[a-zA-Z]+[a-zA-Z0-9_-]*$)")));
+        assertTrue(errors.stream().anyMatch(m -> m.contains("Discarded treatment for flag 'null_treatment'")));
+        // Ensure no error for valid flag/treatment
+        assertTrue(errors.stream().noneMatch(m -> m.contains("Discarded treatment for flag 'valid_num_dot'")));
+
         // Only the valid one should remain
         assertEquals(1, sanitized.getByFlag().size());
         assertEquals("123.on", sanitized.getByFlag().get("valid_num_dot").getTreatment());
@@ -93,6 +124,22 @@ public class FallbacksSanitizerImplTest {
                 .build();
 
         FallbackConfiguration sanitized = mSanitizer.sanitize(config);
+
+        // Assert error logs were emitted for invalid entries
+        Deque<String> errorLogs = mLogPrinter.getLoggedMessages().get(android.util.Log.ERROR);
+        assertTrue("Expected ERROR logs to be present", errorLogs != null && !errorLogs.isEmpty());
+        boolean hasGlobalDiscard = false;
+        boolean hasNullFlagDiscard = false;
+        for (String msg : errorLogs) {
+            if (msg.contains("Discarded global fallback")) {
+                hasGlobalDiscard = true;
+            }
+            if (msg.contains("Discarded treatment for flag 'null_treatment'")) {
+                hasNullFlagDiscard = true;
+            }
+        }
+        assertTrue("Expected an error about discarded global fallback", hasGlobalDiscard);
+        assertTrue("Expected an error about discarded treatment for flag 'null_treatment'", hasNullFlagDiscard);
 
         assertNull(sanitized.getGlobal());
         // Ensure only the valid by-flag entry is preserved
@@ -118,5 +165,9 @@ public class FallbacksSanitizerImplTest {
         assertEquals("123.on", sanitized.getByFlag().get("numWithDot").getTreatment());
         assertEquals("on_1-2", sanitized.getByFlag().get(VALID_FLAG).getTreatment());
         assertEquals("on", sanitized.getGlobal().getTreatment());
+
+        // No ERROR logs expected for valid-only case
+        Deque<String> errors4 = mLogPrinter.getLoggedMessages().get(android.util.Log.ERROR);
+        assertTrue(errors4 == null || errors4.isEmpty());
     }
 }

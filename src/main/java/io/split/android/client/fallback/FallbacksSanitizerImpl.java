@@ -51,7 +51,7 @@ class FallbacksSanitizerImpl implements FallbacksSanitizer {
         }
 
         if (!isValidTreatment(global)) {
-            Logger.w("Discarded global fallback: Invalid treatment (max " + MAX_TREATMENT_LENGTH + " chars)");
+            Logger.e("Discarded global fallback: Invalid treatment (max " + MAX_TREATMENT_LENGTH + " chars and comply with " + TREATMENT_REGEXP + ")");
             return null;
         }
 
@@ -70,12 +70,12 @@ class FallbacksSanitizerImpl implements FallbacksSanitizer {
             FallbackTreatment treatment = entry.getValue();
 
             if (!isValidFlagName(flagName)) {
-                Logger.w("Discarded flag '" + flagName + "': Invalid flag name (max " + MAX_FLAG_NAME_LENGTH + " chars, no spaces)");
+                Logger.e("Discarded flag '" + flagName + "': Invalid flag name (max " + MAX_FLAG_NAME_LENGTH + " chars, no spaces)");
                 continue;
             }
 
             if (!isValidTreatment(treatment)) {
-                Logger.w("Discarded treatment for flag '" + flagName + "': Invalid treatment (max " + MAX_TREATMENT_LENGTH + " chars)");
+                Logger.e("Discarded treatment for flag '" + flagName + "': Invalid treatment (max " + MAX_TREATMENT_LENGTH + " chars and comply with " + TREATMENT_REGEXP + ")");
                 continue;
             }
 
