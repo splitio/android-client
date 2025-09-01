@@ -12,9 +12,9 @@ public final class FallbackTreatmentsCalculatorImpl implements FallbackTreatment
     private static final String LABEL_PREFIX = "fallback - ";
 
     @NonNull
-    private final FallbackConfiguration mConfig;
+    private final FallbackTreatmentsConfiguration mConfig;
 
-    public FallbackTreatmentsCalculatorImpl(@NonNull FallbackConfiguration config) {
+    public FallbackTreatmentsCalculatorImpl(@NonNull FallbackTreatmentsConfiguration config) {
         mConfig = config;
     }
 

@@ -28,7 +28,7 @@ import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.fallback.FallbackConfiguration;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
 import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.impressions.ImpressionListener;
@@ -373,7 +373,7 @@ public class TreatmentManagerTest {
                 mock(ImpressionListener.FederatedImpressionListener.class), config.labelsEnabled(), eventsManager,
                 mock(AttributesManager.class), mock(AttributesMerger.class),
                 mock(TelemetryStorageProducer.class), mFlagSetsFilter, mSplitsStorage, validationLogger, new FlagSetsValidatorImpl(), new PropertyValidatorImpl(),
-                new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder().build()));
+                new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build()));
     }
 
     private TreatmentManagerImpl initializeTreatmentManager() {
@@ -404,7 +404,7 @@ public class TreatmentManagerTest {
                 mFlagSetsFilter,
                 mSplitsStorage,
                 new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(), new PropertyValidatorImpl(),
-                new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder().build()));
+                new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build()));
     }
 
     private Map<String, Split> splitsMap(List<Split> splits) {

@@ -5,5 +5,5 @@ import androidx.annotation.Nullable;
 interface FallbacksSanitizer {
 
     @Nullable
-    FallbackConfiguration sanitize(@Nullable FallbackConfiguration config);
+    FallbackTreatmentsConfiguration sanitize(@Nullable FallbackTreatmentsConfiguration config);
 }

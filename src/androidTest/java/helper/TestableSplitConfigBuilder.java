@@ -15,7 +15,6 @@ import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
-import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 
 public class TestableSplitConfigBuilder {
 

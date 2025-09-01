@@ -27,7 +27,7 @@ class FallbacksSanitizerImpl implements FallbacksSanitizer {
      * @return a new sanitized configuration, or null if input was null
      */
     @Nullable
-    public FallbackConfiguration sanitize(@Nullable FallbackConfiguration config) {
+    public FallbackTreatmentsConfiguration sanitize(@Nullable FallbackTreatmentsConfiguration config) {
         if (config == null) {
             return null;
         }
@@ -38,7 +38,7 @@ class FallbacksSanitizerImpl implements FallbacksSanitizer {
         // Sanitize by-flag treatments
         Map<String, FallbackTreatment> sanitizedByFlag = sanitizeByFlagTreatments(config.getByFlag());
 
-        return FallbackConfiguration.builder()
+        return FallbackTreatmentsConfiguration.builder()
                 .global(sanitizedGlobal)
                 .byFlag(sanitizedByFlag)
                 .build();

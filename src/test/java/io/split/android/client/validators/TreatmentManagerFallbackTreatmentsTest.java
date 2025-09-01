@@ -25,7 +25,7 @@ import io.split.android.client.SplitResult;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.fallback.FallbackConfiguration;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.fallback.FallbackTreatment;
 import io.split.android.client.fallback.FallbackTreatmentsCalculator;
 import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
@@ -46,7 +46,7 @@ public class TreatmentManagerFallbackTreatmentsTest {
 
     @Test
     public void evaluatorDefinitionNotFoundUsesFallback() {
-        FallbackConfiguration cfg = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration cfg = FallbackTreatmentsConfiguration.builder()
                 .global(new FallbackTreatment("FALLBACK_TREATMENT", "{\"k\":1}"))
                 .build();
         FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(cfg);
@@ -67,7 +67,7 @@ public class TreatmentManagerFallbackTreatmentsTest {
 
     @Test
     public void evaluatorExceptionUsesFallback() {
-        FallbackConfiguration cfg = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration cfg = FallbackTreatmentsConfiguration.builder()
                 .global(new FallbackTreatment("FALLBACK_TREATMENT_2"))
                 .build();
         FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(cfg);
@@ -88,7 +88,7 @@ public class TreatmentManagerFallbackTreatmentsTest {
 
     @Test
     public void helperControlTreatmentsPathUsesFallback() {
-        FallbackConfiguration cfg = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration cfg = FallbackTreatmentsConfiguration.builder()
                 .global(new FallbackTreatment("FALLBACK_HELPER", "cfg"))
                 .build();
         FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(cfg);

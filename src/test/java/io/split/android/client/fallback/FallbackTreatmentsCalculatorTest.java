@@ -20,7 +20,7 @@ public class FallbackTreatmentsCalculatorTest {
         FallbackTreatment byFlag = new FallbackTreatment("on", "{\"f\":true}");
         Map<String, FallbackTreatment> map = new HashMap<>();
         map.put("my_flag", byFlag);
-        FallbackConfiguration config = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
                 .global(global)
                 .byFlag(map)
                 .build();
@@ -38,7 +38,7 @@ public class FallbackTreatmentsCalculatorTest {
     @Test
     public void globalFallbackIsReturnedWhenNoFlagOverride() {
         FallbackTreatment global = new FallbackTreatment("off");
-        FallbackConfiguration config = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
                 .global(global)
                 .byFlag(Collections.emptyMap())
                 .build();
@@ -55,7 +55,7 @@ public class FallbackTreatmentsCalculatorTest {
         FallbackTreatment byFlag = new FallbackTreatment("on");
         Map<String, FallbackTreatment> map = new HashMap<>();
         map.put("flagA", byFlag);
-        FallbackConfiguration config = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
                 .byFlag(map)
                 .build();
 
@@ -68,7 +68,7 @@ public class FallbackTreatmentsCalculatorTest {
 
     @Test
     public void returnsControlWhenNoFallbackConfigured() {
-        FallbackConfiguration config = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
                 .build();
 
         FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(config);
@@ -83,7 +83,7 @@ public class FallbackTreatmentsCalculatorTest {
         FallbackTreatment global = new FallbackTreatment("off");
         Map<String, FallbackTreatment> map = new HashMap<>();
         map.put("flagA", new FallbackTreatment("on"));
-        FallbackConfiguration config = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
                 .global(global)
                 .byFlag(map)
                 .build();
@@ -98,7 +98,7 @@ public class FallbackTreatmentsCalculatorTest {
     @Test
     public void labelIsPrefixed() {
         FallbackTreatment global = new FallbackTreatment("off");
-        FallbackConfiguration config = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
                 .global(global)
                 .build();
 
@@ -112,7 +112,7 @@ public class FallbackTreatmentsCalculatorTest {
     @Test
     public void noLabelReturnsNull() {
         FallbackTreatment global = new FallbackTreatment("off");
-        FallbackConfiguration config = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
                 .global(global)
                 .build();
 
