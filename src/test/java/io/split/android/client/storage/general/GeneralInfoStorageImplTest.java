@@ -267,7 +267,7 @@ public class GeneralInfoStorageImplTest {
 
         HttpProxy httpProxy = HttpProxy.newBuilder(testHost, testPort)
                 .basicAuth(testUsername, testPassword)
-                .mtlsAuth(clientCertStream, clientKeyStream)
+                .mtls(clientCertStream, clientKeyStream)
                 .proxyCacert(caCertStream)
                 .credentialsProvider(credentialsProvider)
                 .build();

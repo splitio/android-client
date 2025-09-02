@@ -56,7 +56,7 @@ public class HttpProxySerializerTest {
         // Create the HttpProxy object
         mHttpProxy = HttpProxy.newBuilder(TEST_HOST, TEST_PORT)
                 .basicAuth(TEST_USERNAME, TEST_PASSWORD)
-                .mtlsAuth(clientCertStream, clientKeyStream)
+                .mtls(clientCertStream, clientKeyStream)
                 .proxyCacert(caCertStream)
                 .credentialsProvider(credentialsProvider)
                 .build();
