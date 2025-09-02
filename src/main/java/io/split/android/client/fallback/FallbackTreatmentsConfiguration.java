@@ -1,5 +1,6 @@
 package io.split.android.client.fallback;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
@@ -7,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+import io.split.android.client.utils.logger.Logger;
 
 public final class FallbackTreatmentsConfiguration {
 
@@ -68,6 +70,19 @@ public final class FallbackTreatmentsConfiguration {
         }
 
         /**
+         * Sets an optional global fallback treatment to be used when no flag-specific
+         * fallback exists for a given flag. This value is returned only in place of
+         * the "control" treatment.
+         *
+         * @param treatment the treatment string to use as global
+         * @return this builder instance
+         */
+        public Builder global(String treatment) {
+            mGlobal = new FallbackTreatment(treatment);
+            return this;
+        }
+
+        /**
          * Sets optional flag-specific fallback treatments, where keys are flag names.
          * These take precedence over the global fallback.
          *
@@ -75,7 +90,43 @@ public final class FallbackTreatmentsConfiguration {
          * @return this builder instance
          */
         public Builder byFlag(@Nullable Map<String, FallbackTreatment> byFlag) {
-            mByFlag = byFlag;
+            if (byFlag == null || byFlag.isEmpty()) {
+                return this;
+            }
+            if (mByFlag == null) {
+                mByFlag = new HashMap<>();
+            }
+            for (Map.Entry<String, FallbackTreatment> e : byFlag.entrySet()) {
+                String key = e.getKey();
+                if (mByFlag.containsKey(key)) {
+                    Logger.w(getLogMessage(key));
+                }
+                mByFlag.put(key, e.getValue());
+            }
+            return this;
+        }
+
+        /**
+         * Sets optional flag-specific fallback treatments, where keys are flag names.
+         * These take precedence over the global fallback.
+         *
+         * @param byFlag map of flag name to treatment string; may be null or empty
+         * @return this builder instance
+         */
+        public Builder byFlagStrings(@Nullable Map<String, String> byFlag) {
+            if (byFlag == null || byFlag.isEmpty()) {
+                return this;
+            }
+            if (mByFlag == null) {
+                mByFlag = new HashMap<>();
+            }
+            for (Map.Entry<String, String> e : byFlag.entrySet()) {
+                String key = e.getKey();
+                if (mByFlag.containsKey(key)) {
+                    Logger.w(getLogMessage(key));
+                }
+                mByFlag.put(key, new FallbackTreatment(e.getValue()));
+            }
             return this;
         }
 
@@ -94,6 +145,11 @@ public final class FallbackTreatmentsConfiguration {
         Builder sanitizer(FallbacksSanitizer sanitizer) {
             mSanitizer = sanitizer;
             return this;
+        }
+
+        @NonNull
+        private static String getLogMessage(String key) {
+            return "Fallback treatments - Overriding existing fallback for flag '" + key + "' with latest value";
         }
     }
 
