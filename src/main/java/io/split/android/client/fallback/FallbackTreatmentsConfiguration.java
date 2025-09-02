@@ -80,13 +80,11 @@ public final class FallbackTreatmentsConfiguration {
         }
 
         /**
-         * Builds an immutable {@link FallbackTreatmentsConfiguration} snapshot of the
-         * configured values.
+         * Builds a {@link FallbackTreatmentsConfiguration} for the configured values.
          *
          * @return a new immutable {@link FallbackTreatmentsConfiguration}
          */
         public FallbackTreatmentsConfiguration build() {
-            // Sanitize parts individually before building the immutable configuration
             FallbackTreatment sanitizedGlobal = mSanitizer.sanitizeGlobal(mGlobal);
             Map<String, FallbackTreatment> sanitizedByFlag = mSanitizer.sanitizeByFlag(mByFlag);
             return new FallbackTreatmentsConfiguration(sanitizedGlobal, sanitizedByFlag);
