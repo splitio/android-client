@@ -5,32 +5,32 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.4.2'
+        classpath 'com.android.tools.build:gradle:8.7.3'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
+        classpath "com.vanniktech:gradle-maven-publish-plugin:0.33.0"
     }
 }
 
 apply plugin: 'com.android.library'
-apply plugin: 'maven-publish'
 apply plugin: 'signing'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.vanniktech.maven.publish'
 apply from: 'spec.gradle'
 apply from: 'jacoco.gradle'
 
-
 ext {
-    splitVersion = '5.3.0'
+    splitVersion = '5.3.2-rc1'
     jacocoVersion = '0.8.8'
 }
 
 // Define exclusions for JaCoCo coverage
 def coverageExclusions = [
-    '**/R.class',
-    '**/R$*.class',
-    '**/BuildConfig.*',
-    '**/Manifest*.*',
-    '**/*Test*.*',
-    'android/**/*.*'
+        '**/R.class',
+        '**/R$*.class',
+        '**/BuildConfig.*',
+        '**/Manifest*.*',
+        '**/*Test*.*',
+        'android/**/*.*'
 ]
 
 android {
@@ -76,7 +76,7 @@ android {
 
     testOptions {
         unitTests.returnDefaultValues = true
-        
+
         // Configure JaCoCo for all test tasks
         unitTests.all {
             jacoco {
@@ -195,7 +195,6 @@ dependencies {
 
 def splitPOM = {
     name = 'Split Android SDK'
-    packaging = 'aar'
     description = 'Official Split Android SDK'
     url = 'https://github.com/splitio/android-client'
 
@@ -208,15 +207,8 @@ def splitPOM = {
 
     developers {
         developer {
-            id = 'sarrubia'
-            name = 'Sebastian Arrubia'
-            email = 'sebastian@split.io'
-        }
-
-        developer {
-            id = 'fernando'
-            name = 'Fernando Martin'
-            email = 'fernando@split.io'
+            id = 'sdks'
+            email = 'sdks@split.io'
         }
     }
 
@@ -227,86 +219,17 @@ def splitPOM = {
     }
 }
 
-def releaseRepo = {
-    name = "ReleaseRepo"
-    def releasesRepoUrl = "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
-    def snapshotsRepoUrl = "https://oss.sonatype.org/content/repositories/snapshots/"
-    url = version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
-    credentials {
-        username = ossrhUsername
-        password = ossrhPassword
-    }
+mavenPublishing {
+    coordinates("io.split.client", "android-client", splitVersion)
+    pom(splitPOM)
+
+    publishToMavenCentral(false)
+    signAllPublications()
 }
-
-def devRepo = {
-    name = "DevelopmentRepo"
-    url = 'https://splitio.jfrog.io/artifactory/maven-all-virtual'
-    credentials {
-        username = System.getenv('ARTIFACTORY_USER')
-        password = System.getenv('ARTIFACTORY_TOKEN')
-    }
-}
-
-afterEvaluate {
-    android.sourceSets.all { sourceSet ->
-        if (!sourceSet.name.startsWith("test")) {
-            sourceSet.kotlin.setSrcDirs([])
-        }
-    }
-
-    publishing {
-        publications {
-            release(MavenPublication) {
-                from components.release
-
-                artifactId = 'android-client'
-                groupId = 'io.split.client'
-                version = splitVersion
-                artifact sourcesJar
-                artifact javadocJar
-
-                pom splitPOM
-
-                repositories {
-                    maven releaseRepo
-                    maven devRepo
-                }
-            }
-
-            development(MavenPublication) {
-                from components.release
-
-                artifactId = 'android-client'
-                groupId = 'io.split.client'
-                version = splitVersion
-                artifact sourcesJar
-                artifact javadocJar
-
-                pom splitPOM
-            }
-        }
-    }
-
-    task publishRelease(type: PublishToMavenRepository) {
-        publication = publishing.publications.getByName("release")
-        repository = publishing.repositories.ReleaseRepo
-    }
-
-    task publishDev(type: PublishToMavenRepository) {
-        publication = publishing.publications.getByName("development")
-        repository = publishing.repositories.DevelopmentRepo
-    }
-
-    signing {
-        sign publishing.publications.getByName("release")
-    }
-}
-
 
 task sourcesJar(type: Jar) {
     archiveClassifier.set("sources")
     from android.sourceSets.main.java.srcDirs
-//    archiveClassifier = "sources"
 }
 
 task javadoc(type: Javadoc) {
@@ -361,7 +284,6 @@ tasks.withType(Test) {
     forkEvery = 100
     maxHeapSize = "1024m"
 }
-
 
 
 

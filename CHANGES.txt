@@ -1,3 +1,7 @@
+5.3.1 (Jul 30, 2025)
+- Fixed race condition in database initialization.
+- Fixed increased ANRs when pausing task executor.
+
 5.3.0 (May 28, 2025)
  - Added support for rule-based segments. These segments determine membership at runtime by evaluating their configured rules against the user attributes provided to the SDK.
  - Added support for feature flag prerequisites. This allows customers to define dependency conditions between flags, which are evaluated before any allowlists or targeting rules.

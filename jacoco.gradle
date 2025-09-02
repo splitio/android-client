@@ -28,34 +28,79 @@ tasks.register('jacocoTestReport', JacocoReport) {
     }
     
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
-    def debugTree = fileTree(dir: "${buildDir}/intermediates/javac/debug/classes", excludes: fileFilter)
     
-    // Make sure to include all source directories
-    sourceDirectories.from = files(['src/main/java'])
+    // Updated to handle multiple possible class directory locations
+    def classDirectoriesFiles = []
     
-    // Include all class files except excluded ones
-    classDirectories.from = files([debugTree])
+    // Try multiple possible class directory locations for different AGP versions
+    def possibleClassDirs = [
+        "${buildDir}/intermediates/javac/debug/classes",
+        "${buildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes",
+        "${buildDir}/intermediates/runtime_library_classes_dir/debug",
+        "${buildDir}/tmp/kotlin-classes/debug"
+    ]
     
-    // Include execution data files
+    possibleClassDirs.each { dirPath ->
+        def classDir = fileTree(dir: dirPath, excludes: fileFilter)
+        if (classDir.files.size() > 0) {
+            classDirectoriesFiles.add(classDir)
+        }
+    }
+    
+    // Include all source directories (Java and Kotlin)
+    sourceDirectories.from = files([
+        'src/main/java',
+        'src/main/kotlin'
+    ])
+    
+    // Include all found class files
+    classDirectories.from = files(classDirectoriesFiles)
+    
+    // Include execution data files from multiple possible locations
     executionData.from(fileTree(dir: "$buildDir", includes: [
         'jacoco/testDebugUnitTest.exec',
-        'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec'
+        'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec',
+        'jacoco/*.exec',
+        'outputs/**/**.exec'
     ]))
 
     outputs.upToDateWhen { false }
     
     doFirst {
-        // Log a warning if no execution data files exist
+        // Enhanced logging for debugging
+        logger.lifecycle("=== JaCoCo Report Generation ===")
+        
+        // Log source directories
+        logger.lifecycle("Source directories:")
+        sourceDirectories.files.each { dir ->
+            if (dir.exists()) {
+                logger.lifecycle("  - Found: $dir")
+            } else {
+                logger.lifecycle("  - Missing: $dir")
+            }
+        }
+        
+        // Log class directories
+        logger.lifecycle("Class directories:")
+        classDirectories.files.each { dir ->
+            logger.lifecycle("  - $dir (${dir.exists() ? 'exists' : 'missing'})")
+        }
+        
+        // Log execution data files
         def execFiles = executionData.files
+        logger.lifecycle("Execution data files:")
         if (execFiles.isEmpty() || !execFiles.any { it.exists() }) {
-            logger.warn("JaCoCo will not generate coverage report because no execution data files were found")
+            logger.warn("  - No execution data files found - coverage report will be empty")
         } else {
             execFiles.each { file ->
                 if (file.exists()) {
-                    logger.lifecycle("Found JaCoCo execution data file: $file")
+                    logger.lifecycle("  - Found: $file (${file.length()} bytes)")
+                } else {
+                    logger.lifecycle("  - Missing: $file")
                 }
             }
         }
+        logger.lifecycle("================================")
     }
 }
 
