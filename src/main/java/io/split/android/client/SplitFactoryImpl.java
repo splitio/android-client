@@ -185,10 +185,12 @@ public class SplitFactoryImpl implements SplitFactory {
             HttpClientImpl.Builder builder = new HttpClientImpl.Builder()
                     .setConnectionTimeout(config.connectionTimeout())
                     .setReadTimeout(config.readTimeout())
-                    .setProxy(config.proxy())
                     .setDevelopmentSslConfig(config.developmentSslConfig())
                     .setContext(context)
                     .setProxyAuthenticator(config.authenticator());
+            if (config.proxy() != null) {
+                builder.setProxy(config.proxy());
+            }
             if (config.certificatePinningConfiguration() != null) {
                 builder.setCertificatePinningConfiguration(config.certificatePinningConfiguration());
             }
