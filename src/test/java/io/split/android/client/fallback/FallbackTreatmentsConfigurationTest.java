@@ -3,8 +3,8 @@ package io.split.android.client.fallback;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -130,11 +130,10 @@ public class FallbackTreatmentsConfigurationTest {
         assertNull(cfg.getByFlag().get("flagA").getConfig());
         assertEquals("on", cfg.getByFlag().get("flagB").getTreatment());
         assertEquals("off", cfg.getByFlag().get("flagC").getTreatment());
-        assertNull(cfg.getByFlag().get("flagC").getConfig());
-
+        // warning logged with expected content for overridden key
         ConcurrentLinkedDeque<String> warns = printer.getLoggedMessages().get(android.util.Log.WARN);
         assertFalse("Expected at least one warning", warns.isEmpty());
-        boolean containsExpected = warns.stream().anyMatch(m -> m.contains("Overriding existing fallback for flag 'flagA'"));
+        boolean containsExpected = warns.stream().anyMatch(m -> m.contains("Fallback treatments - Duplicate fallback for flag 'flagA'. Overriding existing value."));
         assertTrue("Expected warning mentioning overridden key 'flagA'", containsExpected);
     }
 

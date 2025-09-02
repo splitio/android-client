@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
+
 import io.split.android.client.utils.logger.Logger;
 
 public final class FallbackTreatmentsConfiguration {
@@ -65,6 +66,9 @@ public final class FallbackTreatmentsConfiguration {
          * @return this builder instance
          */
         public Builder global(@Nullable FallbackTreatment global) {
+            if (mGlobal != null && global != null) {
+                Logger.w("Fallback treatments - You had previously set a global fallback. The new value will replace it");
+            }
             mGlobal = global;
             return this;
         }
@@ -78,6 +82,9 @@ public final class FallbackTreatmentsConfiguration {
          * @return this builder instance
          */
         public Builder global(String treatment) {
+            if (mGlobal != null) {
+                Logger.w("Fallback treatments - You had previously set a global fallback. The new value will replace it");
+            }
             mGlobal = new FallbackTreatment(treatment);
             return this;
         }
@@ -99,7 +106,7 @@ public final class FallbackTreatmentsConfiguration {
             for (Map.Entry<String, FallbackTreatment> e : byFlag.entrySet()) {
                 String key = e.getKey();
                 if (mByFlag.containsKey(key)) {
-                    Logger.w(getLogMessage(key));
+                    Logger.w(getDuplicateFlagMessage(key));
                 }
                 mByFlag.put(key, e.getValue());
             }
@@ -123,7 +130,7 @@ public final class FallbackTreatmentsConfiguration {
             for (Map.Entry<String, String> e : byFlag.entrySet()) {
                 String key = e.getKey();
                 if (mByFlag.containsKey(key)) {
-                    Logger.w(getLogMessage(key));
+                    Logger.w(getDuplicateFlagMessage(key));
                 }
                 mByFlag.put(key, new FallbackTreatment(e.getValue()));
             }
@@ -148,8 +155,8 @@ public final class FallbackTreatmentsConfiguration {
         }
 
         @NonNull
-        private static String getLogMessage(String key) {
-            return "Fallback treatments - Overriding existing fallback for flag '" + key + "' with latest value";
+        private static String getDuplicateFlagMessage(String key) {
+            return "Fallback treatments - Duplicate fallback for flag '" + key + "'. Overriding existing value.";
         }
     }
 
