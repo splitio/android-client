@@ -173,4 +173,18 @@ public final class FallbackTreatmentsConfiguration {
     public int hashCode() {
         return Objects.hash(mGlobal, mByFlag);
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        FallbackTreatmentsConfiguration that = (FallbackTreatmentsConfiguration) o;
+        return Objects.equals(mGlobal, that.mGlobal) &&
+                Objects.equals(mByFlag, that.mByFlag);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(mGlobal, mByFlag);
+    }
 }
