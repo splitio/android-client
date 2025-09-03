@@ -76,6 +76,7 @@ android {
 
     testOptions {
         unitTests.returnDefaultValues = true
+        unitTests.includeAndroidResources = true
 
         // Configure JaCoCo for all test tasks
         unitTests.all {
@@ -143,6 +144,7 @@ dependencies {
     def apacheCommonsVersion = '3.12.0'
     def kotlinVer = '1.5.31'
     def mockWebServerVersion = '4.12.0'
+    def robolectricVersion = '4.12.2'
 
     def testRulesVersion = '1.4.0'
     def jUnitExtVersion = '1.1.3'
@@ -177,6 +179,7 @@ dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
     testImplementation "com.google.guava:guava:$guavaVersion"
+    testImplementation "org.robolectric:robolectric:$robolectricVersion"
 
     androidTestImplementation "androidx.test:rules:$testRulesVersion"
     androidTestImplementation "androidx.test.ext:junit:$jUnitExtVersion"
