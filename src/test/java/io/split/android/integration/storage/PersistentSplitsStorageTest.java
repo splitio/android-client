@@ -1,12 +1,14 @@
-package tests.storage;
+package io.split.android.integration.storage;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,7 +16,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import helper.DatabaseHelper;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
@@ -25,7 +26,9 @@ import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.storage.splits.SplitsSnapshot;
 import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
+import io.split.android.integration.DatabaseHelper;
 
+@RunWith(RobolectricTestRunner.class)
 public class PersistentSplitsStorageTest {
 
     final static Long INITIAL_CHANGE_NUMBER = 9999L;
@@ -38,7 +41,7 @@ public class PersistentSplitsStorageTest {
 
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = ApplicationProvider.getApplicationContext();
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
         List<SplitEntity> entities = new ArrayList<>();

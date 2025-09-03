@@ -1,17 +1,18 @@
-package tests.storage;
+package io.split.android.integration.storage;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import helper.DatabaseHelper;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -24,7 +25,9 @@ import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
 import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
+import io.split.android.integration.DatabaseHelper;
 
+@RunWith(RobolectricTestRunner.class)
 public class LoadSplitTaskTest {
 
     final static Long INITIAL_CHANGE_NUMBER = 9999L;
@@ -35,7 +38,7 @@ public class LoadSplitTaskTest {
 
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = ApplicationProvider.getApplicationContext();
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
         List<SplitEntity> entities = new ArrayList<>();

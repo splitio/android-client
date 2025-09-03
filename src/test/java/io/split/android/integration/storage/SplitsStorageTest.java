@@ -1,4 +1,4 @@
-package tests.storage;
+package io.split.android.integration.storage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -7,11 +7,13 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,8 +26,6 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import helper.DatabaseHelper;
-import helper.IntegrationHelper;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.Status;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
@@ -37,7 +37,9 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
 import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
 import io.split.android.client.utils.Json;
+import io.split.android.integration.DatabaseHelper;
 
+@RunWith(RobolectricTestRunner.class)
 public class SplitsStorageTest {
 
     private static final Long INITIAL_CHANGE_NUMBER = 9999L;
@@ -48,7 +50,7 @@ public class SplitsStorageTest {
 
     @Before
     public void setUp() {
-        Context context = InstrumentationRegistry.getInstrumentation().getContext();
+        Context context = ApplicationProvider.getApplicationContext();
         mRoomDb = DatabaseHelper.getTestDatabase(context);
         mRoomDb.clearAllTables();
         List<SplitEntity> entities = new ArrayList<>();
@@ -560,7 +562,7 @@ public class SplitsStorageTest {
         SplitEntity entity = new SplitEntity();
         String setsString = String.join(",", sets);
         entity.setName(name);
-        entity.setBody(String.format(IntegrationHelper.JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, name, INITIAL_CHANGE_NUMBER, trafficType, setsString));
+        entity.setBody(String.format(Helper.JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, name, INITIAL_CHANGE_NUMBER, trafficType, setsString));
 
         return entity;
     }

@@ -1,25 +1,34 @@
-package tests.storage;
+package io.split.android.integration.storage;
+
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
+import org.robolectric.RobolectricTestRunner;
 
 import java.util.Collections;
 import java.util.List;
 
-import helper.DatabaseHelper;
-import helper.IntegrationHelper;
 import io.split.android.client.dtos.SegmentsChange;
+import io.split.android.client.storage.cipher.NoOpCipher;
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
+import io.split.android.integration.DatabaseHelper;
 
+@RunWith(RobolectricTestRunner.class)
 public class PersistentMyLargeSegmentStorageTest {
     SplitRoomDatabase mRoomDb;
     Context mContext;
@@ -28,7 +37,7 @@ public class PersistentMyLargeSegmentStorageTest {
 
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = ApplicationProvider.getApplicationContext();
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
 
@@ -63,7 +72,7 @@ public class PersistentMyLargeSegmentStorageTest {
     @Test
     public void updateSegments() {
 
-        mPersistentMySegmentsStorage.set(mUserKey, SegmentsChange.create(IntegrationHelper.asSet("a1", "a2", "a3", "a4"), 2002012));
+        mPersistentMySegmentsStorage.set(mUserKey, SegmentsChange.create(Helper.asSet("a1", "a2", "a3", "a4"), 2002012));
 
         SegmentsChange snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
 
@@ -77,20 +86,26 @@ public class PersistentMyLargeSegmentStorageTest {
 
     @Test
     public void updateSegmentsEncrypted() {
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
-                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true), mRoomDb.myLargeSegmentDao(), MyLargeSegmentEntity.creator());
+        try (MockedStatic<SplitCipherFactory> mocked = mockStatic(SplitCipherFactory.class)) {
+            mocked.when(() -> SplitCipherFactory.create(anyString(), eq(true)))
+                    .thenReturn(new NoOpCipher());
 
-        mPersistentMySegmentsStorage.set(mUserKey, SegmentsChange.create(IntegrationHelper.asSet("a1", "a2", "a3", "a4"), 2002012));
+            SplitCipher splitCipher = SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true);
+            mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
+                    splitCipher, mRoomDb.myLargeSegmentDao(), MyLargeSegmentEntity.creator());
 
-        SegmentsChange snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
+            mPersistentMySegmentsStorage.set(mUserKey, SegmentsChange.create(Helper.asSet("a1", "a2", "a3", "a4"), 2002012));
 
-        List<String> mySegments = snapshot.getNames();
-        Assert.assertEquals(4, mySegments.size());
-        Assert.assertTrue(mySegments.contains("a1"));
-        Assert.assertTrue(mySegments.contains("a2"));
-        Assert.assertTrue(mySegments.contains("a3"));
-        Assert.assertTrue(mySegments.contains("a4"));
-        Assert.assertEquals(2002012, snapshot.getChangeNumber().longValue());
+            SegmentsChange snapshot = mPersistentMySegmentsStorage.getSnapshot(mUserKey);
+
+            List<String> mySegments = snapshot.getNames();
+            Assert.assertEquals(4, mySegments.size());
+            Assert.assertTrue(mySegments.contains("a1"));
+            Assert.assertTrue(mySegments.contains("a2"));
+            Assert.assertTrue(mySegments.contains("a3"));
+            Assert.assertTrue(mySegments.contains("a4"));
+            Assert.assertEquals(2002012, snapshot.getChangeNumber().longValue());
+        }
     }
 
     @Test

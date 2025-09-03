@@ -1,29 +1,29 @@
-package tests.storage;
+package io.split.android.integration.storage;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import helper.DatabaseHelper;
-import io.split.android.client.dtos.Event;
 import io.split.android.client.dtos.KeyImpression;
-import io.split.android.client.impressions.Impression;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
-import io.split.android.client.storage.db.EventEntity;
 import io.split.android.client.storage.db.ImpressionEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageRecordStatus;
 import io.split.android.client.storage.impressions.PersistentImpressionsStorage;
 import io.split.android.client.storage.impressions.SqLitePersistentImpressionsStorage;
 import io.split.android.client.utils.Json;
+import io.split.android.integration.DatabaseHelper;
 
+@RunWith(RobolectricTestRunner.class)
 public class PersistentImpressionStorageTest {
 
     SplitRoomDatabase mRoomDb;
@@ -33,7 +33,7 @@ public class PersistentImpressionStorageTest {
 
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = ApplicationProvider.getApplicationContext();
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
         generateImpressions(1, 10, StorageRecordStatus.ACTIVE, false);

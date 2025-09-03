@@ -1,18 +1,21 @@
-package tests.storage;
+package io.split.android.integration.storage;
 
 import static org.junit.Assert.assertEquals;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
-import helper.DatabaseHelper;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.general.GeneralInfoStorageImpl;
+import io.split.android.integration.DatabaseHelper;
 
+@RunWith(RobolectricTestRunner.class)
 public class GeneralInfoStorageTest {
 
     private SplitRoomDatabase mDb;
@@ -20,7 +23,7 @@ public class GeneralInfoStorageTest {
 
     @Before
     public void setUp() {
-        mDb = DatabaseHelper.getTestDatabase(InstrumentationRegistry.getInstrumentation().getContext());
+        mDb = DatabaseHelper.getTestDatabase(ApplicationProvider.getApplicationContext());
         mGeneralInfoStorage = new GeneralInfoStorageImpl(mDb.generalInfoDao(), null);
     }
 

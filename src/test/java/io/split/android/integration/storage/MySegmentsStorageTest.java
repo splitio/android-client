@@ -1,14 +1,20 @@
-package tests.storage;
+package io.split.android.integration.storage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mockStatic;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
+import org.mockito.MockedStatic;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -16,9 +22,8 @@ import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import helper.DatabaseHelper;
-import helper.IntegrationHelper;
 import io.split.android.client.dtos.SegmentsChange;
+import io.split.android.client.storage.cipher.NoOpCipher;
 import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -27,7 +32,9 @@ import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainerImpl;
 import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
+import io.split.android.integration.DatabaseHelper;
 
+@RunWith(RobolectricTestRunner.class)
 public class MySegmentsStorageTest {
 
     private SplitRoomDatabase mRoomDb;
@@ -39,7 +46,7 @@ public class MySegmentsStorageTest {
 
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = ApplicationProvider.getApplicationContext();
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
 
@@ -82,7 +89,7 @@ public class MySegmentsStorageTest {
     @Test
     public void updateSegments() {
         mMySegmentsStorage.loadLocal();
-        mMySegmentsStorage.set(SegmentsChange.create(IntegrationHelper.asSet("a1", "a2", "a3", "a4"), 2222222L));
+        mMySegmentsStorage.set(SegmentsChange.create(Helper.asSet("a1", "a2", "a3", "a4"), 2222222L));
         MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
         mySegmentsStorage.loadLocal();
 
@@ -155,22 +162,27 @@ public class MySegmentsStorageTest {
 
     @Test
     public void originalValuesCanBeRetrievedWhenStorageIsEncrypted() {
-        mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
-                SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
-        mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
-        mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
+        try (MockedStatic<SplitCipherFactory> mocked = mockStatic(SplitCipherFactory.class)) {
+            mocked.when(() -> SplitCipherFactory.create(anyString(), eq(true)))
+                    .thenReturn(new NoOpCipher());
 
-        mMySegmentsStorage.set(SegmentsChange.create(IntegrationHelper.asSet("a1", "a2", "a3", "a4"), 999820));
-        MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
-        mySegmentsStorage.loadLocal();
+            mPersistentMySegmentsStorage = new SqLitePersistentMySegmentsStorage(
+                    SplitCipherFactory.create("abcdefghijlkmnopqrstuvxyz", true), mRoomDb.mySegmentDao(), MySegmentEntity.creator());
+            mMySegmentsStorageContainer = new MySegmentsStorageContainerImpl(mPersistentMySegmentsStorage);
+            mMySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
 
-        Set<String> all = mySegmentsStorage.getAll();
-        assertTrue(all.contains("a1"));
-        assertTrue(all.contains("a2"));
-        assertTrue(all.contains("a3"));
-        assertTrue(all.contains("a4"));
-        assertEquals(4, all.size());
-        assertEquals(999820, mySegmentsStorage.getChangeNumber());
+            mMySegmentsStorage.set(SegmentsChange.create(Helper.asSet("a1", "a2", "a3", "a4"), 999820));
+            MySegmentsStorage mySegmentsStorage = mMySegmentsStorageContainer.getStorageForKey(mUserKey);
+            mySegmentsStorage.loadLocal();
+
+            Set<String> all = mySegmentsStorage.getAll();
+            assertTrue(all.contains("a1"));
+            assertTrue(all.contains("a2"));
+            assertTrue(all.contains("a3"));
+            assertTrue(all.contains("a4"));
+            assertEquals(4, all.size());
+            assertEquals(999820, mySegmentsStorage.getChangeNumber());
+        }
     }
 
     @Test

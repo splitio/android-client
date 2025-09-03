@@ -1,17 +1,18 @@
-package tests.storage;
+package io.split.android.integration.storage;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricTestRunner;
 
 import java.util.HashSet;
 import java.util.Set;
 
-import helper.DatabaseHelper;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -26,7 +27,9 @@ import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainerImpl;
 import io.split.android.client.storage.mysegments.PersistentMySegmentsStorage;
 import io.split.android.client.storage.mysegments.SqLitePersistentMySegmentsStorage;
+import io.split.android.integration.DatabaseHelper;
 
+@RunWith(RobolectricTestRunner.class)
 public class LoadMySegmentsTaskTest {
     SplitRoomDatabase mRoomDb;
     Context mContext;
@@ -40,7 +43,7 @@ public class LoadMySegmentsTaskTest {
 
     @Before
     public void setUp() {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = ApplicationProvider.getApplicationContext();
         mRoomDb = DatabaseHelper.getTestDatabase(mContext);
         mRoomDb.clearAllTables();
 
