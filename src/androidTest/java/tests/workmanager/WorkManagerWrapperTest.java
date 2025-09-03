@@ -295,6 +295,7 @@ public class WorkManagerWrapperTest {
         dataBuilder.putString("databaseName", "test_database_name");
         dataBuilder.putString("apiKey", "api_key");
         dataBuilder.putBoolean("encryptionEnabled", false);
+        dataBuilder.putBoolean("usesProxy", false);
         if (customData != null) {
             dataBuilder.putAll(customData);
         }
