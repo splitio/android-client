@@ -180,6 +180,12 @@ dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
     testImplementation "com.google.guava:guava:$guavaVersion"
     testImplementation "org.robolectric:robolectric:$robolectricVersion"
+    testImplementation "com.google.guava:guava:$guavaVersion"
+    testImplementation "com.squareup.okhttp3:mockwebserver:$mockWebServerVersion"
+    testImplementation "com.squareup.okhttp3:okhttp-tls:$mockWebServerVersion"
+    testImplementation "androidx.room:room-testing:$roomVersion"
+    testImplementation "androidx.work:work-testing:$workVersion"
+    testImplementation "androidx.test:core:1.5.0"
 
     androidTestImplementation "androidx.test:rules:$testRulesVersion"
     androidTestImplementation "androidx.test.ext:junit:$jUnitExtVersion"
