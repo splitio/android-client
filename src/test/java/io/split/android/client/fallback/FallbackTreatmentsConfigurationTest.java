@@ -9,7 +9,7 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-public class FallbackConfigurationTest {
+public class FallbackTreatmentsConfigurationTest {
 
     @Test
     public void constructorSetsFields() {
@@ -17,7 +17,7 @@ public class FallbackConfigurationTest {
         Map<String, FallbackTreatment> map = new HashMap<>();
         map.put("flagA", new FallbackTreatment("off"));
 
-        FallbackConfiguration cfg = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration cfg = FallbackTreatmentsConfiguration.builder()
                 .global(global)
                 .byFlag(map)
                 .build();
@@ -33,7 +33,7 @@ public class FallbackConfigurationTest {
         Map<String, FallbackTreatment> byFlag = new HashMap<>();
         byFlag.put("flagA", new FallbackTreatment("off"));
 
-        FallbackConfiguration config = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
                 .global(global)
                 .byFlag(byFlag)
                 .build();
@@ -60,9 +60,9 @@ public class FallbackConfigurationTest {
         Map<String, FallbackTreatment> b = new HashMap<>();
         b.put("flagA", new FallbackTreatment("off"));
 
-        FallbackConfiguration configOne = FallbackConfiguration.builder().global(global).byFlag(a).build();
-        FallbackConfiguration configTwo = FallbackConfiguration.builder().global(global).byFlag(b).build();
-        FallbackConfiguration configThree = FallbackConfiguration.builder().global(null).byFlag(b).build();
+        FallbackTreatmentsConfiguration configOne = FallbackTreatmentsConfiguration.builder().global(global).byFlag(a).build();
+        FallbackTreatmentsConfiguration configTwo = FallbackTreatmentsConfiguration.builder().global(global).byFlag(b).build();
+        FallbackTreatmentsConfiguration configThree = FallbackTreatmentsConfiguration.builder().global(null).byFlag(b).build();
 
         assertEquals(configOne, configTwo);
         assertEquals(configOne.hashCode(), configTwo.hashCode());

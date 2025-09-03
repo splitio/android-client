@@ -29,9 +29,8 @@ import io.split.android.client.SplitResult;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
-import io.split.android.client.fallback.FallbackConfiguration;
-import io.split.android.client.fallback.FallbackTreatment;
 import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
+import io.split.android.client.fallback.FallbackTreatment;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.service.impressions.ImpressionsMode;
@@ -239,11 +238,8 @@ public class FallbackTreatmentsTest {
 
         Map<String, FallbackTreatment> byFlag = new HashMap<>();
         byFlag.put("any_flag", new FallbackTreatment("OFF_FALLBACK"));
-        FallbackConfiguration byFactory = FallbackConfiguration.builder()
-                .byFlag(byFlag)
-                .build();
         FallbackTreatmentsConfiguration fbConfig = FallbackTreatmentsConfiguration.builder()
-                .byFactory(byFactory)
+                .byFlag(byFlag)
                 .build();
 
         SplitClientConfig config = buildConfig(fbConfig, true, 1);
@@ -301,11 +297,8 @@ public class FallbackTreatmentsTest {
         };
         mWebServer.setDispatcher(dispatcher);
 
-        FallbackConfiguration byFactory = FallbackConfiguration.builder()
-                .global(new FallbackTreatment("OFF_FALLBACK"))
-                .build();
         FallbackTreatmentsConfiguration fbConfig = FallbackTreatmentsConfiguration.builder()
-                .byFactory(byFactory)
+                .global(new FallbackTreatment("OFF_FALLBACK"))
                 .build();
 
         SplitClientConfig config = buildConfig(fbConfig);
@@ -329,12 +322,9 @@ public class FallbackTreatmentsTest {
     public void case4_FlagOverrideBeatsFactoryDefaultReturnsOnFallbackForOverriddenAndOffFallbackForOthers() throws Exception {
         Map<String, FallbackTreatment> byFlag = new HashMap<>();
         byFlag.put("my_flag", new FallbackTreatment("ON_FALLBACK"));
-        FallbackConfiguration byFactory = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration fbConfig = FallbackTreatmentsConfiguration.builder()
                 .global(new FallbackTreatment("OFF_FALLBACK"))
                 .byFlag(byFlag)
-                .build();
-        FallbackTreatmentsConfiguration fbConfig = FallbackTreatmentsConfiguration.builder()
-                .byFactory(byFactory)
                 .build();
 
         SplitClientConfig config = buildConfig(fbConfig);
@@ -363,11 +353,8 @@ public class FallbackTreatmentsTest {
     public void case2_factoryWideOverrideReturnsFallbackForUnknownFlagsAndTwoKeys() throws Exception {
         // endpoints provided by helper in buildConfig
 
-        FallbackConfiguration byFactory = FallbackConfiguration.builder()
-                .global(new FallbackTreatment("FALLBACK_TREATMENT"))
-                .build();
         FallbackTreatmentsConfiguration fbConfig = FallbackTreatmentsConfiguration.builder()
-                .byFactory(byFactory)
+                .global(new FallbackTreatment("FALLBACK_TREATMENT"))
                 .build();
 
         SplitClientConfig config = buildConfig(fbConfig);
@@ -409,11 +396,8 @@ public class FallbackTreatmentsTest {
 
         Map<String, FallbackTreatment> byFlag = new HashMap<>();
         byFlag.put("non_existent_flag", new FallbackTreatment("FALLBACK_TREATMENT"));
-        FallbackConfiguration byFactory = FallbackConfiguration.builder()
-                .byFlag(byFlag)
-                .build();
         FallbackTreatmentsConfiguration fbConfig = FallbackTreatmentsConfiguration.builder()
-                .byFactory(byFactory)
+                .byFlag(byFlag)
                 .build();
 
         SplitClientConfig config = SplitClientConfig.builder()
@@ -466,12 +450,9 @@ public class FallbackTreatmentsTest {
 
         Map<String, FallbackTreatment> byFlag = new HashMap<>();
         byFlag.put("my_flag", new FallbackTreatment("ON_FALLBACK", "{\"flag\":true}"));
-        FallbackConfiguration byFactory = FallbackConfiguration.builder()
+        FallbackTreatmentsConfiguration fbConfig = FallbackTreatmentsConfiguration.builder()
                 .global(new FallbackTreatment("OFF_FALLBACK", "{\"global\":true}"))
                 .byFlag(byFlag)
-                .build();
-        FallbackTreatmentsConfiguration fbConfig = FallbackTreatmentsConfiguration.builder()
-                .byFactory(byFactory)
                 .build();
 
         SplitClientConfig config = SplitClientConfig.builder()
@@ -545,11 +526,8 @@ public class FallbackTreatmentsTest {
         mWebServer.setDispatcher(dispatcher);
 
         // Configure global fallback so unknown flags return a fallback treatment
-        FallbackConfiguration byFactory = FallbackConfiguration.builder()
-                .global(new FallbackTreatment("OFF_FALLBACK"))
-                .build();
         FallbackTreatmentsConfiguration fbConfig = FallbackTreatmentsConfiguration.builder()
-                .byFactory(byFactory)
+                .global(new FallbackTreatment("OFF_FALLBACK"))
                 .build();
 
         final List<Impression> capturedImpressions = Collections.synchronizedList(new ArrayList<>());

@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.Map;
 
 import io.split.android.client.SplitResult;
-import io.split.android.client.fallback.FallbackConfiguration;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.fallback.FallbackTreatment;
 import io.split.android.client.fallback.FallbackTreatmentsCalculator;
 import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
@@ -26,7 +26,7 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder()
+        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder()
                 .global(new FallbackTreatment("control"))
                 .build());
 
@@ -44,7 +44,7 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder()
+        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder()
                 .global(new FallbackTreatment("control"))
                 .build());
 
@@ -62,7 +62,7 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder()
+        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder()
                 .global(new FallbackTreatment("control"))
                 .build());
 
@@ -83,7 +83,7 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder()
+        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder()
                 .global(new FallbackTreatment("control"))
                 .build());
 

@@ -6,6 +6,7 @@ import io.split.android.client.RolloutCacheConfiguration;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SyncConfig;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.network.DevelopmentSslConfig;
@@ -15,7 +16,6 @@ import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
-import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 
 public class TestableSplitConfigBuilder {
 

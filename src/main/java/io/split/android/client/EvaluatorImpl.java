@@ -4,7 +4,7 @@ import java.util.Map;
 
 import io.split.android.client.dtos.ConditionType;
 import io.split.android.client.exceptions.ChangeNumberExceptionWrapper;
-import io.split.android.client.fallback.FallbackConfiguration;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.fallback.FallbackTreatment;
 import io.split.android.client.fallback.FallbackTreatmentsCalculator;
 import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
@@ -23,7 +23,7 @@ public class EvaluatorImpl implements Evaluator {
     private final FallbackTreatmentsCalculator mFallbackCalculator;
 
     public EvaluatorImpl(SplitsStorage splitsStorage, SplitParser splitParser) {
-        this(splitsStorage, splitParser, new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder().build()));
+        this(splitsStorage, splitParser, new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build()));
     }
 
     public EvaluatorImpl(SplitsStorage splitsStorage, SplitParser splitParser, FallbackTreatmentsCalculator fallbackCalculator) {

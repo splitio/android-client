@@ -17,10 +17,9 @@ import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.engine.experiments.SplitParser;
-import io.split.android.client.fallback.FallbackConfiguration;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.fallback.FallbackTreatmentsCalculator;
 import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
-import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 
 public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
 
@@ -55,11 +54,10 @@ public class TreatmentManagerFactoryImpl implements TreatmentManagerFactory {
         mAttributesMerger = checkNotNull(attributesMerger);
         mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
         FallbackTreatmentsCalculator calculator;
-        if (fallbackTreatments != null && fallbackTreatments.getByFactory() != null) {
-            FallbackConfiguration byFactory = fallbackTreatments.getByFactory();
-            calculator = new FallbackTreatmentsCalculatorImpl(byFactory);
+        if (fallbackTreatments != null) {
+            calculator = new FallbackTreatmentsCalculatorImpl(fallbackTreatments);
         } else {
-            calculator = new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder().build());
+            calculator = new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build());
         }
         mEvaluator = new EvaluatorImpl(splitsStorage, splitParser, calculator);
         mFallbackCalculator = calculator;

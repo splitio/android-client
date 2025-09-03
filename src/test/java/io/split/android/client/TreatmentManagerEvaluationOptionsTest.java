@@ -19,7 +19,7 @@ import java.util.HashMap;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ListenableEventsManager;
-import io.split.android.client.fallback.FallbackConfiguration;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
@@ -71,7 +71,7 @@ public class TreatmentManagerEvaluationOptionsTest {
                 mValidationMessageLogger,
                 new FlagSetsValidatorImpl(),
                 mPropertyValidator,
-                new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder().build()));
+                new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build()));
     }
 
     @Test

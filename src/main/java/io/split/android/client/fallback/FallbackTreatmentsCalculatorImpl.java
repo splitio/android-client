@@ -1,5 +1,7 @@
 package io.split.android.client.fallback;
 
+import static io.split.android.client.utils.Utils.checkNotNull;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -12,10 +14,10 @@ public final class FallbackTreatmentsCalculatorImpl implements FallbackTreatment
     private static final String LABEL_PREFIX = "fallback - ";
 
     @NonNull
-    private final FallbackConfiguration mConfig;
+    private final FallbackTreatmentsConfiguration mConfig;
 
-    public FallbackTreatmentsCalculatorImpl(@NonNull FallbackConfiguration config) {
-        mConfig = config;
+    public FallbackTreatmentsCalculatorImpl(@NonNull FallbackTreatmentsConfiguration config) {
+        mConfig = checkNotNull(config);
     }
 
     @NonNull

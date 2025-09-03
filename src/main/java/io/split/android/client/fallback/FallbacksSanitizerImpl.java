@@ -19,46 +19,25 @@ class FallbacksSanitizerImpl implements FallbacksSanitizer {
     private static final String TREATMENT_REGEXP = "^[0-9]+[.a-zA-Z0-9_-]*$|^[a-zA-Z]+[a-zA-Z0-9_-]*$";
     private static final Pattern TREATMENT_PATTERN = Pattern.compile(TREATMENT_REGEXP);
 
-    /**
-     * Sanitizes the provided fallback configuration by applying validation rules.
-     * Invalid entries are dropped and warnings are logged.
-     *
-     * @param config the configuration to sanitize; may be null
-     * @return a new sanitized configuration, or null if input was null
-     */
+    
+
+    @Override
     @Nullable
-    public FallbackConfiguration sanitize(@Nullable FallbackConfiguration config) {
-        if (config == null) {
-            return null;
-        }
-
-        // Sanitize global treatment
-        FallbackTreatment sanitizedGlobal = sanitizeGlobalTreatment(config.getGlobal());
-
-        // Sanitize by-flag treatments
-        Map<String, FallbackTreatment> sanitizedByFlag = sanitizeByFlagTreatments(config.getByFlag());
-
-        return FallbackConfiguration.builder()
-                .global(sanitizedGlobal)
-                .byFlag(sanitizedByFlag)
-                .build();
-    }
-
-    @Nullable
-    private FallbackTreatment sanitizeGlobalTreatment(@Nullable FallbackTreatment global) {
+    public FallbackTreatment sanitizeGlobal(@Nullable FallbackTreatment global) {
         if (global == null) {
             return null;
         }
 
         if (!isValidTreatment(global)) {
-            Logger.e("Discarded global fallback: Invalid treatment (max " + MAX_TREATMENT_LENGTH + " chars and comply with " + TREATMENT_REGEXP + ")");
+            Logger.e("Fallback treatments - Discarded global fallback: Invalid treatment (max " + MAX_TREATMENT_LENGTH + " chars and comply with " + TREATMENT_REGEXP + ")");
             return null;
         }
 
         return global;
     }
 
-    private Map<String, FallbackTreatment> sanitizeByFlagTreatments(Map<String, FallbackTreatment> byFlag) {
+    @Override
+    public Map<String, FallbackTreatment> sanitizeByFlag(@Nullable Map<String, FallbackTreatment> byFlag) {
         if (byFlag == null || byFlag.isEmpty()) {
             return new HashMap<>();
         }
@@ -70,12 +49,12 @@ class FallbacksSanitizerImpl implements FallbacksSanitizer {
             FallbackTreatment treatment = entry.getValue();
 
             if (!isValidFlagName(flagName)) {
-                Logger.e("Discarded flag '" + flagName + "': Invalid flag name (max " + MAX_FLAG_NAME_LENGTH + " chars, no spaces)");
+                Logger.e("Fallback treatments - Discarded flag '" + flagName + "': Invalid flag name (max " + MAX_FLAG_NAME_LENGTH + " chars, no spaces)");
                 continue;
             }
 
             if (!isValidTreatment(treatment)) {
-                Logger.e("Discarded treatment for flag '" + flagName + "': Invalid treatment (max " + MAX_TREATMENT_LENGTH + " chars and comply with " + TREATMENT_REGEXP + ")");
+                Logger.e("Fallback treatments - Discarded treatment for flag '" + flagName + "': Invalid treatment (max " + MAX_TREATMENT_LENGTH + " chars and comply with " + TREATMENT_REGEXP + ")");
                 continue;
             }
 

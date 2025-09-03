@@ -45,12 +45,12 @@ public class FallbacksSanitizerImplTest {
         byFlag.put(LONG_101, new FallbackTreatment("off"));
         byFlag.put("tooLongTreatment", new FallbackTreatment(LONG_101));
 
-        FallbackConfiguration config = FallbackConfiguration.builder()
-                .global(new FallbackTreatment("on"))
-                .byFlag(byFlag)
+        FallbackTreatment sanitizedGlobal = mSanitizer.sanitizeGlobal(new FallbackTreatment("on"));
+        Map<String, FallbackTreatment> sanitizedByFlag = mSanitizer.sanitizeByFlag(byFlag);
+        FallbackTreatmentsConfiguration sanitized = FallbackTreatmentsConfiguration.builder()
+                .global(sanitizedGlobal)
+                .byFlag(sanitizedByFlag)
                 .build();
-
-        FallbackConfiguration sanitized = mSanitizer.sanitize(config);
 
         Deque<String> errors = mLogPrinter.getLoggedMessages().get(android.util.Log.ERROR);
         assertTrue("Expected ERROR logs to be present", errors != null && !errors.isEmpty());
@@ -67,12 +67,12 @@ public class FallbacksSanitizerImplTest {
 
     @Test
     public void dropsInvalidGlobalTreatment() {
-        FallbackConfiguration config = FallbackConfiguration.builder()
-                .global(new FallbackTreatment(LONG_101)) // invalid treatment length
-                .byFlag(null)
+        FallbackTreatment sanitizedGlobal = mSanitizer.sanitizeGlobal(new FallbackTreatment(LONG_101)); // invalid treatment length
+        Map<String, FallbackTreatment> sanitizedByFlag = mSanitizer.sanitizeByFlag(null);
+        FallbackTreatmentsConfiguration sanitized = FallbackTreatmentsConfiguration.builder()
+                .global(sanitizedGlobal)
+                .byFlag(sanitizedByFlag)
                 .build();
-
-        FallbackConfiguration sanitized = mSanitizer.sanitize(config);
 
         // Assert error log for discarded global fallback only
         Deque<String> errors = mLogPrinter.getLoggedMessages().get(android.util.Log.ERROR);
@@ -90,12 +90,12 @@ public class FallbacksSanitizerImplTest {
         byFlag.put("valid_num_dot", new FallbackTreatment("123.on"));
         byFlag.put("null_treatment", new FallbackTreatment(null));
 
-        FallbackConfiguration config = FallbackConfiguration.builder()
-                .global(null)
-                .byFlag(byFlag)
+        FallbackTreatment sanitizedGlobal = mSanitizer.sanitizeGlobal(null);
+        Map<String, FallbackTreatment> sanitizedByFlag = mSanitizer.sanitizeByFlag(byFlag);
+        FallbackTreatmentsConfiguration sanitized = FallbackTreatmentsConfiguration.builder()
+                .global(sanitizedGlobal)
+                .byFlag(sanitizedByFlag)
                 .build();
-
-        FallbackConfiguration sanitized = mSanitizer.sanitize(config);
 
         // Assert error logs for invalid treatments under flags
         Deque<String> errors = mLogPrinter.getLoggedMessages().get(android.util.Log.ERROR);
@@ -117,13 +117,13 @@ public class FallbacksSanitizerImplTest {
         byFlag.put(VALID_FLAG, new FallbackTreatment("on_1-2"));
         byFlag.put("null_treatment", new FallbackTreatment(null));
 
-        FallbackConfiguration config = FallbackConfiguration.builder()
-                // Global invalid due to regex (letters cannot be followed by '.')
-                .global(new FallbackTreatment("on.off"))
-                .byFlag(byFlag)
+        // Global invalid due to regex (letters cannot be followed by '.')
+        FallbackTreatment sanitizedGlobal = mSanitizer.sanitizeGlobal(new FallbackTreatment("on.off"));
+        Map<String, FallbackTreatment> sanitizedByFlag = mSanitizer.sanitizeByFlag(byFlag);
+        FallbackTreatmentsConfiguration sanitized = FallbackTreatmentsConfiguration.builder()
+                .global(sanitizedGlobal)
+                .byFlag(sanitizedByFlag)
                 .build();
-
-        FallbackConfiguration sanitized = mSanitizer.sanitize(config);
 
         // Assert error logs were emitted for invalid entries
         Deque<String> errorLogs = mLogPrinter.getLoggedMessages().get(android.util.Log.ERROR);
@@ -153,12 +153,12 @@ public class FallbacksSanitizerImplTest {
         byFlag.put("numWithDot", new FallbackTreatment("123.on"));
         byFlag.put(VALID_FLAG, new FallbackTreatment("on_1-2"));
 
-        FallbackConfiguration config = FallbackConfiguration.builder()
-                .global(new FallbackTreatment("on"))
-                .byFlag(byFlag)
+        FallbackTreatment sanitizedGlobal = mSanitizer.sanitizeGlobal(new FallbackTreatment("on"));
+        Map<String, FallbackTreatment> sanitizedByFlag = mSanitizer.sanitizeByFlag(byFlag);
+        FallbackTreatmentsConfiguration sanitized = FallbackTreatmentsConfiguration.builder()
+                .global(sanitizedGlobal)
+                .byFlag(sanitizedByFlag)
                 .build();
-
-        FallbackConfiguration sanitized = mSanitizer.sanitize(config);
 
         assertEquals(2, sanitized.getByFlag().size());
         assertTrue(sanitized.getByFlag().containsKey("numWithDot"));

@@ -14,7 +14,6 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
-import io.split.android.client.fallback.FallbackConfiguration;
 import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.utils.logger.LogPrinter;
@@ -267,16 +266,12 @@ public class SplitClientConfigTest {
 
     @Test
     public void fallbackTreatmentsAreCorrectlySet() {
-        FallbackConfiguration byFactoryConfig = FallbackConfiguration.builder().build();
-        FallbackTreatmentsConfiguration ftConfiguration = FallbackTreatmentsConfiguration.builder()
-                .byFactory(byFactoryConfig)
-                .build();
+        FallbackTreatmentsConfiguration ftConfiguration = FallbackTreatmentsConfiguration.builder().build();
         SplitClientConfig config = SplitClientConfig.builder()
                 .fallbackTreatments(ftConfiguration)
                 .build();
 
         assertSame(ftConfiguration, config.fallbackTreatments());
-        assertEquals(byFactoryConfig, config.fallbackTreatments().getByFactory());
     }
 
     @NonNull

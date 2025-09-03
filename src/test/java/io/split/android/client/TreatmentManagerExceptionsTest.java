@@ -26,7 +26,7 @@ import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.fallback.FallbackConfiguration;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
@@ -86,7 +86,7 @@ public class TreatmentManagerExceptionsTest {
                 new ValidationMessageLoggerImpl(),
                 mFlagSetsValidator,
                 new PropertyValidatorImpl(),
-                new FallbackTreatmentsCalculatorImpl(FallbackConfiguration.builder().build()));
+                new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build()));
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
     }
