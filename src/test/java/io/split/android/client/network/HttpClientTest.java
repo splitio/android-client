@@ -23,11 +23,14 @@ import org.junit.Test;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -52,12 +55,12 @@ public class HttpClientTest {
     private MockWebServer mWebServer;
     private MockWebServer mProxyServer;
     private HttpClient client;
-    private UrlSanitizer mUrlSanitizer;
+    private UrlSanitizer mUrlSanitizerMock;
 
     @Before
     public void setup() throws IOException {
-        mUrlSanitizer = mock(UrlSanitizer.class);
-        when(mUrlSanitizer.getUrl(any())).thenAnswer(new Answer<URL>() {
+        mUrlSanitizerMock = mock(UrlSanitizer.class);
+        when(mUrlSanitizerMock.getUrl(any())).thenAnswer(new Answer<URL>() {
             @Override
             public URL answer(InvocationOnMock invocation) throws Throwable {
                 URI argument = invocation.getArgument(0);
@@ -219,7 +222,7 @@ public class HttpClientTest {
     }
 
     @Test
-    public void addStreamingHeaders() throws InterruptedException, URISyntaxException, HttpException {
+    public void addStreamingHeaders() throws InterruptedException, HttpException, IOException {
         client.addStreamingHeaders(Collections.singletonMap("my_header", "my_header_value"));
 
         HttpUrl url = mWebServer.url("/test1/");
@@ -277,8 +280,8 @@ public class HttpClientTest {
 
         HttpClient client = new HttpClientImpl.Builder()
                 .setContext(mock(Context.class))
-                .setUrlSanitizer(mUrlSanitizer)
-                .setProxy(new HttpProxy(mProxyServer.getHostName(), mProxyServer.getPort()))
+                .setUrlSanitizer(mUrlSanitizerMock)
+                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).build())
                 .build();
 
         HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.GET);
@@ -312,7 +315,7 @@ public class HttpClientTest {
 
         HttpClient client = new HttpClientImpl.Builder()
                 .setContext(mock(Context.class))
-                .setUrlSanitizer(mUrlSanitizer)
+                .setUrlSanitizer(mUrlSanitizerMock)
                 .setProxyAuthenticator(new SplitAuthenticator() {
                     @Override
                     public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
@@ -322,7 +325,7 @@ public class HttpClientTest {
                         return request;
                     }
                 })
-                .setProxy(new HttpProxy(mProxyServer.getHostName(), mProxyServer.getPort()))
+                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).build())
                 .build();
 
         HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.GET);
@@ -367,7 +370,7 @@ public class HttpClientTest {
 
         HttpClient client = new HttpClientImpl.Builder()
                 .setContext(mock(Context.class))
-                .setUrlSanitizer(mUrlSanitizer)
+                .setUrlSanitizer(mUrlSanitizerMock)
                 .setProxyAuthenticator(new SplitAuthenticator() {
                     @Override
                     public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
@@ -377,7 +380,7 @@ public class HttpClientTest {
                         return request;
                     }
                 })
-                .setProxy(new HttpProxy(mProxyServer.getHostName(), mProxyServer.getPort()))
+                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).build())
                 .build();
 
         HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.POST, "{}");
@@ -398,6 +401,79 @@ public class HttpClientTest {
         assertTrue(authAwait);
         assertTrue(successAwait);
         mProxyServer.shutdown();
+    }
+
+
+    @Test
+    public void copyStreamToByteArrayWithSimpleString() {
+        String testString = "Test string content";
+        InputStream inputStream = new ByteArrayInputStream(testString.getBytes(StandardCharsets.UTF_8));
+
+        byte[] result = HttpClientImpl.copyStreamToByteArray(inputStream);
+
+        assertNotNull("Result should not be null", result);
+        assertEquals("Result should match original string", testString, new String(result, StandardCharsets.UTF_8));
+
+        byte[] buffer = new byte[100];
+        try {
+            int bytesRead = inputStream.read(buffer);
+            assertEquals("Stream should be readable and contain the same content", testString,
+                    new String(buffer, 0, bytesRead, StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            Assert.fail("Should be able to read from stream after copying: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void copyStreamToByteArrayWithEmptyStream() {
+        InputStream emptyStream = new ByteArrayInputStream(new byte[0]);
+
+        byte[] result = HttpClientImpl.copyStreamToByteArray(emptyStream);
+
+        assertNotNull("Result should not be null even for empty stream", result);
+        assertEquals("Result should be empty array", 0, result.length);
+    }
+
+    @Test
+    public void copyStreamToByteArrayWithNullStream() {
+        byte[] result = HttpClientImpl.copyStreamToByteArray(null);
+
+        assertNull("Result should be null for null input", result);
+    }
+
+    @Test
+    public void copyStreamToByteArrayWithNonMarkableStream() {
+        InputStream nonMarkableStream = new InputStream() {
+            private final byte[] data = "Test data".getBytes(StandardCharsets.UTF_8);
+            private int position = 0;
+
+            @Override
+            public int read() {
+                if (position < data.length) {
+                    return data[position++] & 0xff;
+                }
+                return -1;
+            }
+
+            @Override
+            public boolean markSupported() {
+                return false;
+            }
+        };
+
+        byte[] result = HttpClientImpl.copyStreamToByteArray(nonMarkableStream);
+
+        assertNotNull("Result should not be null", result);
+        assertEquals("Result should match original content", "Test data",
+                new String(result, StandardCharsets.UTF_8));
+
+        int nextByte = -1;
+        try {
+            nextByte = nonMarkableStream.read();
+        } catch (IOException e) {
+            Assert.fail("Reading from stream should not throw exception");
+        }
+        assertEquals("Stream should be at EOF", -1, nextByte);
     }
 
     @After
@@ -456,7 +532,7 @@ public class HttpClientTest {
         mWebServer.start();
 
         client = new HttpClientImpl.Builder()
-                .setUrlSanitizer(mUrlSanitizer)
+                .setUrlSanitizer(mUrlSanitizerMock)
                 .build();
     }
 

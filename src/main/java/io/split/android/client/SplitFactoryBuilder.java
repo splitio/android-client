@@ -67,6 +67,9 @@ public class SplitFactoryBuilder {
                 return new SplitFactoryImpl(sdkKey, key, config, context);
             }
         } catch (Exception ex) {
+            if (ex instanceof SplitInstantiationException) {
+                throw (SplitInstantiationException) ex;
+            }
             throw new SplitInstantiationException("Could not instantiate SplitFactory", ex);
         }
     }
@@ -96,6 +99,10 @@ public class SplitFactoryBuilder {
 
         if (context == null) {
             throw new SplitInstantiationException("Could not instantiate SplitFactory. Context cannot be null");
+        }
+
+        if (config.proxy() != null && config.proxy().getHost() == null) {
+            throw new SplitInstantiationException("Could not instantiate SplitFactory. When configured, proxy host cannot be null");
         }
     }
 }
