@@ -371,7 +371,7 @@ public class FallbackTreatmentsTest {
                 readyLatch.countDown();
             }
         });
-        readyLatch.await(30, TimeUnit.SECONDS);
+        readyLatch.await(5, TimeUnit.SECONDS);
 
         String t1_flag1 = clientKey1.getTreatment("non_existent_flag");
         String t1_flag2 = clientKey1.getTreatment("non_existent_flag_2");
@@ -424,7 +424,7 @@ public class FallbackTreatmentsTest {
                 readyLatch.countDown();
             }
         });
-        readyLatch.await(30, TimeUnit.SECONDS);
+        readyLatch.await(5, TimeUnit.SECONDS);
 
         String t1_flag1 = clientKey1.getTreatment("non_existent_flag");
         String t1_flag2 = clientKey1.getTreatment("non_existent_flag_2");
@@ -478,7 +478,7 @@ public class FallbackTreatmentsTest {
                 readyLatch.countDown();
             }
         });
-        readyLatch.await(30, TimeUnit.SECONDS);
+        readyLatch.await(5, TimeUnit.SECONDS);
 
         SplitResult rMy = client.getTreatmentWithConfig("my_flag", null);
         SplitResult rUnknown = client.getTreatmentWithConfig("non_existent_flag", null);
