@@ -1,0 +1,446 @@
+{
+  "ff": {
+    "splits": [
+      {
+        "name": "bucket_test",
+        "changeNumber": 1506703262916,
+        "trafficAllocationSeed": -1277047201,
+        "seed": 1844331483,
+        "configurations": {},
+        "conditions": [
+          {
+            "conditionType": "rollout",
+            "label": "default rule",
+            "matcherGroup": {
+              "matchers": [
+                {
+                  "matcherType": "ALL_KEYS",
+                  "keySelector": {
+                    "trafficType": "account"
+                  },
+                  "negate": false
+                }
+              ],
+              "combiner": "AND"
+            },
+            "partitions": [
+              {
+                "size": 1,
+                "treatment": "V1"
+              },
+              {
+                "size": 1,
+                "treatment": "V2"
+              },
+              {
+                "size": 1,
+                "treatment": "V3"
+              },
+              {
+                "size": 1,
+                "treatment": "V4"
+              },
+              {
+                "size": 1,
+                "treatment": "V5"
+              },
+              {
+                "size": 1,
+                "treatment": "V6"
+              },
+              {
+                "size": 1,
+                "treatment": "V7"
+              },
+              {
+                "size": 1,
+                "treatment": "V8"
+              },
+              {
+                "size": 1,
+                "treatment": "V9"
+              },
+              {
+                "size": 1,
+                "treatment": "V10"
+              },
+              {
+                "size": 1,
+                "treatment": "V11"
+              },
+              {
+                "size": 1,
+                "treatment": "V12"
+              },
+              {
+                "size": 1,
+                "treatment": "V13"
+              },
+              {
+                "size": 1,
+                "treatment": "V14"
+              },
+              {
+                "size": 1,
+                "treatment": "V15"
+              },
+              {
+                "size": 1,
+                "treatment": "V16"
+              },
+              {
+                "size": 1,
+                "treatment": "V17"
+              },
+              {
+                "size": 1,
+                "treatment": "V18"
+              },
+              {
+                "size": 1,
+                "treatment": "V19"
+              },
+              {
+                "size": 1,
+                "treatment": "V20"
+              },
+              {
+                "size": 1,
+                "treatment": "V21"
+              },
+              {
+                "size": 1,
+                "treatment": "V22"
+              },
+              {
+                "size": 1,
+                "treatment": "V23"
+              },
+              {
+                "size": 1,
+                "treatment": "V24"
+              },
+              {
+                "size": 1,
+                "treatment": "V25"
+              },
+              {
+                "size": 1,
+                "treatment": "V26"
+              },
+              {
+                "size": 1,
+                "treatment": "V27"
+              },
+              {
+                "size": 1,
+                "treatment": "V28"
+              },
+              {
+                "size": 1,
+                "treatment": "V29"
+              },
+              {
+                "size": 1,
+                "treatment": "V30"
+              },
+              {
+                "size": 1,
+                "treatment": "V31"
+              },
+              {
+                "size": 1,
+                "treatment": "V32"
+              },
+              {
+                "size": 1,
+                "treatment": "V33"
+              },
+              {
+                "size": 1,
+                "treatment": "V34"
+              },
+              {
+                "size": 1,
+                "treatment": "V35"
+              },
+              {
+                "size": 1,
+                "treatment": "V36"
+              },
+              {
+                "size": 1,
+                "treatment": "V37"
+              },
+              {
+                "size": 1,
+                "treatment": "V38"
+              },
+              {
+                "size": 1,
+                "treatment": "V39"
+              },
+              {
+                "size": 1,
+                "treatment": "V40"
+              },
+              {
+                "size": 1,
+                "treatment": "V41"
+              },
+              {
+                "size": 1,
+                "treatment": "V42"
+              },
+              {
+                "size": 1,
+                "treatment": "V43"
+              },
+              {
+                "size": 1,
+                "treatment": "V44"
+              },
+              {
+                "size": 1,
+                "treatment": "V45"
+              },
+              {
+                "size": 1,
+                "treatment": "V46"
+              },
+              {
+                "size": 1,
+                "treatment": "V47"
+              },
+              {
+                "size": 1,
+                "treatment": "V48"
+              },
+              {
+                "size": 1,
+                "treatment": "V49"
+              },
+              {
+                "size": 1,
+                "treatment": "V50"
+              },
+              {
+                "size": 1,
+                "treatment": "V51"
+              },
+              {
+                "size": 1,
+                "treatment": "V52"
+              },
+              {
+                "size": 1,
+                "treatment": "V53"
+              },
+              {
+                "size": 1,
+                "treatment": "V54"
+              },
+              {
+                "size": 1,
+                "treatment": "V55"
+              },
+              {
+                "size": 1,
+                "treatment": "V56"
+              },
+              {
+                "size": 1,
+                "treatment": "V57"
+              },
+              {
+                "size": 1,
+                "treatment": "V58"
+              },
+              {
+                "size": 1,
+                "treatment": "V59"
+              },
+              {
+                "size": 1,
+                "treatment": "V60"
+              },
+              {
+                "size": 1,
+                "treatment": "V61"
+              },
+              {
+                "size": 1,
+                "treatment": "V62"
+              },
+              {
+                "size": 1,
+                "treatment": "V63"
+              },
+              {
+                "size": 1,
+                "treatment": "V64"
+              },
+              {
+                "size": 1,
+                "treatment": "V65"
+              },
+              {
+                "size": 1,
+                "treatment": "V66"
+              },
+              {
+                "size": 1,
+                "treatment": "V67"
+              },
+              {
+                "size": 1,
+                "treatment": "V68"
+              },
+              {
+                "size": 1,
+                "treatment": "V69"
+              },
+              {
+                "size": 1,
+                "treatment": "V70"
+              },
+              {
+                "size": 1,
+                "treatment": "V71"
+              },
+              {
+                "size": 1,
+                "treatment": "V72"
+              },
+              {
+                "size": 1,
+                "treatment": "V73"
+              },
+              {
+                "size": 1,
+                "treatment": "V74"
+              },
+              {
+                "size": 1,
+                "treatment": "V75"
+              },
+              {
+                "size": 1,
+                "treatment": "V76"
+              },
+              {
+                "size": 1,
+                "treatment": "V77"
+              },
+              {
+                "size": 1,
+                "treatment": "V78"
+              },
+              {
+                "size": 1,
+                "treatment": "V79"
+              },
+              {
+                "size": 1,
+                "treatment": "V80"
+              },
+              {
+                "size": 1,
+                "treatment": "V81"
+              },
+              {
+                "size": 1,
+                "treatment": "V82"
+              },
+              {
+                "size": 1,
+                "treatment": "V83"
+              },
+              {
+                "size": 1,
+                "treatment": "V84"
+              },
+              {
+                "size": 1,
+                "treatment": "V85"
+              },
+              {
+                "size": 1,
+                "treatment": "V86"
+              },
+              {
+                "size": 1,
+                "treatment": "V87"
+              },
+              {
+                "size": 1,
+                "treatment": "V88"
+              },
+              {
+                "size": 1,
+                "treatment": "V89"
+              },
+              {
+                "size": 1,
+                "treatment": "V90"
+              },
+              {
+                "size": 1,
+                "treatment": "V91"
+              },
+              {
+                "size": 1,
+                "treatment": "V92"
+              },
+              {
+                "size": 1,
+                "treatment": "V93"
+              },
+              {
+                "size": 1,
+                "treatment": "V94"
+              },
+              {
+                "size": 1,
+                "treatment": "V95"
+              },
+              {
+                "size": 1,
+                "treatment": "V96"
+              },
+              {
+                "size": 1,
+                "treatment": "V97"
+              },
+              {
+                "size": 1,
+                "treatment": "V98"
+              },
+              {
+                "size": 1,
+                "treatment": "V99"
+              },
+              {
+                "size": 1,
+                "treatment": "V100"
+              }
+            ]
+          }
+        ],
+        "defaultTreatment": "V1",
+        "trafficAllocation": 100,
+        "algo": 2,
+        "trafficTypeName": "account",
+        "status": "ACTIVE",
+        "killed": false
+      }
+    ],
+    "since": 1506703262916,
+    "till": 1506703262916
+  },
+  "rbs": {
+    "d": [],
+    "s": 1506703262911,
+    "t": 1506703262911
+  }
+}

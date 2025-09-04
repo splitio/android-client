@@ -28,20 +28,17 @@ import fake.HttpResponseMockDispatcher;
 import fake.HttpStreamResponseMock;
 import fake.LifecycleManagerStub;
 import helper.DatabaseHelper;
-import helper.FileHelper;
 import helper.IntegrationHelper;
 import helper.SplitEventTaskHelper;
 import helper.TestableSplitConfigBuilder;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 
 public class SingleSyncTest {

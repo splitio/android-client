@@ -35,7 +35,6 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitManager;
 import io.split.android.client.api.SplitView;
-import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TestImpressions;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.service.impressions.ImpressionsCount;

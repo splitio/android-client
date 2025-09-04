@@ -20,7 +20,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
-import helper.TestingHelper;
+import io.split.sharedtest.helper.TestingHelper;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Condition;
 import io.split.android.client.dtos.ConditionType;

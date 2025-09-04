@@ -32,7 +32,6 @@ import io.split.android.client.network.SplitAuthenticator;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.synchronizer.ThreadUtils;
 import io.split.android.client.storage.db.SplitRoomDatabase;
-import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;

@@ -6,7 +6,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static helper.TestingHelper.getFieldValue;
+import static io.split.sharedtest.helper.TestingHelper.getFieldValue;
 
 import org.junit.Before;
 import org.junit.Test;

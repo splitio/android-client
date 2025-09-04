@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import helper.TestingHelper;
+import io.split.sharedtest.helper.TestingHelper;
 import io.split.android.client.storage.db.StorageRecordStatus;
 
 public class ImpressionsStorageTest {

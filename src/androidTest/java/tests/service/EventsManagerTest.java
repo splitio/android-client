@@ -13,7 +13,6 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
-import io.split.android.client.service.synchronizer.ThreadUtils;
 
 public class EventsManagerTest {
     @Test

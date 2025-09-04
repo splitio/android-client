@@ -23,7 +23,6 @@ import fake.HttpResponseMockDispatcher;
 import helper.DatabaseHelper;
 import fake.HttpStreamResponseMock;
 import helper.IntegrationHelper;
-import helper.SplitEventTaskHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;

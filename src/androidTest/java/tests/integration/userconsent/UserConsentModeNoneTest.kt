@@ -6,7 +6,6 @@ import fake.*
 import helper.*
 import io.split.android.client.SplitClient
 import io.split.android.client.SplitFactory
-import io.split.android.client.dtos.SplitChange
 import io.split.android.client.dtos.TargetingRulesChange
 import io.split.android.client.events.SplitEvent
 import io.split.android.client.events.SplitEventTask
@@ -32,7 +31,8 @@ class UserConsentModeNoneTest {
     private lateinit var mContext: Context
     private lateinit var mKeysDao: UniqueKeysDao
     private lateinit var mCountDao: ImpressionsCountDao
-    private val mLifecycleManager = LifecycleManagerStub()
+    private val mLifecycleManager =
+        io.split.sharedtest.fake.LifecycleManagerStub()
 
     var mKeysPosted = false
     var mCountPosted = false
@@ -197,12 +197,12 @@ class UserConsentModeNoneTest {
     }
 
     private fun createFactory(userConsent: UserConsent): SplitFactory {
-        val splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext)
+        val splitRoomDatabase = io.split.sharedtest.helper.DatabaseHelper.getTestDatabase(mContext)
         splitRoomDatabase.clearAllTables()
         mKeysDao = splitRoomDatabase.uniqueKeysDao()
         mCountDao = splitRoomDatabase.impressionsCountDao()
-        val dispatcher: HttpResponseMockDispatcher = buildDispatcher()
-        val config = TestableSplitConfigBuilder().ready(30000)
+        val dispatcher: io.split.sharedtest.fake.HttpResponseMockDispatcher = buildDispatcher()
+        val config = io.split.sharedtest.helper.TestableSplitConfigBuilder().ready(30000)
             .trafficType("account")
             .impressionsMode(ImpressionsMode.NONE)
             .impressionsRefreshRate(3)
@@ -212,68 +212,74 @@ class UserConsentModeNoneTest {
             .userConsent(userConsent)
             .build()
 
-        return IntegrationHelper.buildFactory(
-            IntegrationHelper.dummyApiKey(),
-            IntegrationHelper.dummyUserKey(),
+        return io.split.sharedtest.helper.IntegrationHelper.buildFactory(
+            io.split.sharedtest.helper.IntegrationHelper.dummyApiKey(),
+            io.split.sharedtest.helper.IntegrationHelper.dummyUserKey(),
             config,
             mContext,
-            HttpClientMock(dispatcher),
+            io.split.sharedtest.fake.HttpClientMock(dispatcher),
             splitRoomDatabase, null, null,
             mLifecycleManager
         )
     }
 
     var mChangeHit = 0
-    private fun buildDispatcher(): HttpResponseMockDispatcher {
-        return object : HttpResponseMockDispatcher {
+    private fun buildDispatcher(): io.split.sharedtest.fake.HttpResponseMockDispatcher {
+        return object : io.split.sharedtest.fake.HttpResponseMockDispatcher {
             override fun getStreamResponse(uri: URI): HttpStreamResponseMock {
                 return HttpStreamResponseMock(200, null)
             }
 
-            override fun getResponse(uri: URI, method: HttpMethod, body: String?): HttpResponseMock {
+            override fun getResponse(uri: URI, method: HttpMethod, body: String?): io.split.sharedtest.fake.HttpResponseMock {
                 println(uri.path)
-                return if (uri.path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
-                    HttpResponseMock(200, IntegrationHelper.emptyAllSegments())
+                return if (uri.path.contains("/" + io.split.sharedtest.helper.IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    io.split.sharedtest.fake.HttpResponseMock(
+                        200,
+                        io.split.sharedtest.helper.IntegrationHelper.emptyAllSegments()
+                    )
                 } else if (uri.path.contains("/splitChanges")) {
                     if (mChangeHit == 0) {
                         mChangeHit += 1
                         return getSplitsMockResponse("")
                     }
-                    return HttpResponseMock(
+                    return io.split.sharedtest.fake.HttpResponseMock(
                         200,
-                        IntegrationHelper.emptySplitChanges(99999999)
+                        io.split.sharedtest.helper.IntegrationHelper.emptySplitChanges(99999999)
                     )
                 } else if (uri.path.contains("/testImpressions/bulk")) {
-                    HttpResponseMock(200)
+                    io.split.sharedtest.fake.HttpResponseMock(200)
                 } else if (uri.path.contains("/testImpressions/count")) {
                     if (!mCountPosted) {
                         mCountPosted = true
                         mCountLatch?.countDown()
                     }
-                    HttpResponseMock(200)
+                    io.split.sharedtest.fake.HttpResponseMock(200)
                 } else if (uri.path.contains("/events/bulk")) {
-                    HttpResponseMock(200)
+                    io.split.sharedtest.fake.HttpResponseMock(200)
                 } else if (uri.path.contains("/keys/cs")) {
                     if (!mKeysPosted) {
                         mKeysPosted = true
                         mKeysLatch?.countDown()
                     }
-                    HttpResponseMock(200)
+                    io.split.sharedtest.fake.HttpResponseMock(200)
                 } else if (uri.path.contains("/auth")) {
-                    HttpResponseMock(200, IntegrationHelper.streamingEnabledToken())
+                    io.split.sharedtest.fake.HttpResponseMock(
+                        200,
+                        io.split.sharedtest.helper.IntegrationHelper.streamingEnabledToken()
+                    )
                 } else {
-                    HttpResponseMock(404)
+                    io.split.sharedtest.fake.HttpResponseMock(404)
                 }
             }
         }
     }
 
-    private fun getSplitsMockResponse(since: String): HttpResponseMock {
-        return HttpResponseMock(200, loadSplitChanges())
+    private fun getSplitsMockResponse(since: String): io.split.sharedtest.fake.HttpResponseMock {
+        return io.split.sharedtest.fake.HttpResponseMock(200, loadSplitChanges())
     }
 
     private fun loadSplitChanges(): String? {
-        val fileHelper = FileHelper()
+        val fileHelper = io.split.sharedtest.helper.FileHelper()
         val change = fileHelper.loadFileContent(mContext, "split_changes_1.json")
         val parsedChange = Json.fromJson(change, TargetingRulesChange::class.java).featureFlagsChange
         parsedChange.since = parsedChange.till

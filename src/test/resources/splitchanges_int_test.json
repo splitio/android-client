@@ -1,0 +1,62 @@
+{
+  "ff": {
+    "splits": [
+      {
+        "trafficTypeName": "client",
+        "name": "test_feature",
+        "trafficAllocation": 100,
+        "trafficAllocationSeed": -2049557248,
+        "seed": 1188118899,
+        "status": "ACTIVE",
+        "killed": false,
+        "defaultTreatment": "yes",
+        "changeNumber": 1567456937865,
+        "algo": 2,
+        "configurations": {},
+        "conditions": [
+          {
+            "conditionType": "ROLLOUT",
+            "matcherGroup": {
+              "combiner": "AND",
+              "matchers": [
+                {
+                  "keySelector": {
+                    "trafficType": "client",
+                    "attribute": null
+                  },
+                  "matcherType": "ALL_KEYS",
+                  "negate": false,
+                  "userDefinedSegmentMatcherData": null,
+                  "whitelistMatcherData": null,
+                  "unaryNumericMatcherData": null,
+                  "betweenMatcherData": null,
+                  "booleanMatcherData": null,
+                  "dependencyMatcherData": null,
+                  "stringMatcherData": null
+                }
+              ]
+            },
+            "partitions": [
+              {
+                "treatment": "si",
+                "size": 0
+              },
+              {
+                "treatment": "no",
+                "size": 100
+              }
+            ],
+            "label": "default rule"
+          }
+        ]
+      }
+    ],
+    "since": 1567456937865,
+    "till": 1567456937865
+  },
+  "rbs": {
+    "d": [],
+    "s": 1567456937861,
+    "t": 1567456937861
+  }
+}
