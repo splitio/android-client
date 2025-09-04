@@ -6,7 +6,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 
-import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.core.app.ApplicationProvider;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -57,7 +57,7 @@ public class UniqueKeysIntegrationTest {
 
     @Before
     public void setUp() throws IOException {
-        mContext = InstrumentationRegistry.getInstrumentation().getContext();
+        mContext = ApplicationProvider.getApplicationContext();
         mHttpClient = new HttpClientMock(IntegrationHelper.buildDispatcher(getMockResponses()));
         mDatabase = DatabaseHelper.getTestDatabase(mContext);
         mSplitFactory = IntegrationHelper.buildFactory(

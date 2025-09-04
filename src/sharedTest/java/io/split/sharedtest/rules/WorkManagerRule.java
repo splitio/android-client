@@ -1,7 +1,5 @@
 package io.split.sharedtest.rules;
 
-import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
-
 import android.content.Context;
 import android.util.Log;
 
@@ -17,14 +15,12 @@ import org.junit.runner.Description;
 import org.junit.runners.model.Statement;
 
 /**
- * JUnit4 rule to initialize WorkManager in tests in a consistent, scalable way.
- *
  * Usage:
- *   @Rule
- *   public WorkManagerRule mWorkManagerRule = new WorkManagerRule();
  *
+ * @Rule public WorkManagerRule mWorkManagerRule = new WorkManagerRule();
+ * <p>
  * Requires dependency in the test scope:
- *   testImplementation "androidx.work:work-testing:<version>"
+ * testImplementation "androidx.work:work-testing:<version>"
  */
 public class WorkManagerRule implements TestRule {
 

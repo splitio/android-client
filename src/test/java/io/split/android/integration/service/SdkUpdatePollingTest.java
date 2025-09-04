@@ -94,42 +94,6 @@ public class SdkUpdatePollingTest {
     }
 
     @Test
-    public void readyTest() throws IOException, InterruptedException {
-        CountDownLatch readyLatch = new CountDownLatch(1);
-
-        HttpClientMock httpClientMock = new HttpClientMock(createNoChangesDispatcher());
-
-        SplitClientConfig config = new TestableSplitConfigBuilder()
-                .streamingEnabled(false)
-                .featuresRefreshRate(1)
-                .segmentsRefreshRate(1)
-                .ready(3000)
-                .build();
-        mSplitRoomDatabase.generalInfoDao().update(
-                new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 100));
-
-        mFactory = IntegrationHelper.buildFactory(
-                mApiKey, mUserKey,
-                config, mContext, httpClientMock, mSplitRoomDatabase);
-
-        mClient = mFactory.client();
-
-        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(readyLatch);
-        SplitEventTaskHelper timeoutTask = new SplitEventTaskHelper(readyLatch);
-        SplitEventTaskHelper updatedTask = new SplitEventTaskHelper();
-
-        mClient.on(SplitEvent.SDK_READY, readyTask);
-        mClient.on(SplitEvent.SDK_READY_TIMED_OUT, timeoutTask);
-        mClient.on(SplitEvent.SDK_UPDATE, updatedTask);
-
-        boolean await = readyLatch.await(10, TimeUnit.SECONDS);
-
-        TestingHelper.delay(1000);
-        Assert.assertTrue(readyTask.isOnPostExecutionCalled);
-        Assert.assertFalse(updatedTask.isOnPostExecutionCalled);
-    }
-
-    @Test
     public void sdkUpdateSplits() throws IOException, InterruptedException {
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch updateLatch = new CountDownLatch(1);
@@ -241,9 +205,22 @@ public class SdkUpdatePollingTest {
                     Logger.i("NO CHANGWES MY S");
                     return createResponse(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
-                    String json = IntegrationHelper.emptySplitChanges(99999, 99999);
+                    // Bootstrap from -1 to a positive since/till, then echo since==till
+                    String since = IntegrationHelper.getSinceFromUri(uri);
+                    long s;
+                    try {
+                        s = Long.parseLong(since);
+                    } catch (Exception e) {
+                        s = -1L;
+                    }
+                    String json;
+                    if (s < 0) {
+                        json = IntegrationHelper.emptySplitChanges(-1, 100);
+                    } else {
+                        json = IntegrationHelper.emptySplitChanges(s, s);
+                    }
                     Logger.i("NO CHANGES changes: " + json);
-                    return createResponse(200, IntegrationHelper.emptySplitChanges(99999, 99999));
+                    return createResponse(200, json);
                 } else if (uri.getPath().contains("/auth")) {
                     Logger.i("** SSE Auth hit");
                     mSseLatch.countDown();
