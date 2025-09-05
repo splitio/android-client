@@ -5,6 +5,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.GeneralInfoDao;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 
@@ -13,11 +14,14 @@ public class GeneralInfoStorageImpl implements GeneralInfoStorage {
     private static final String ROLLOUT_CACHE_LAST_CLEAR_TIMESTAMP = "rolloutCacheLastClearTimestamp";
     private static final String RBS_CHANGE_NUMBER = "rbsChangeNumber";
     private static final String LAST_PROXY_CHECK_TIMESTAMP = "lastProxyCheckTimestamp";
+    private static final String PROXY_CONFIG = "proxyConfig";
 
     private final GeneralInfoDao mGeneralInfoDao;
+    private final SplitCipher mAlwaysEncryptedSplitCipher;
 
-    public GeneralInfoStorageImpl(GeneralInfoDao generalInfoDao) {
+    public GeneralInfoStorageImpl(GeneralInfoDao generalInfoDao, @Nullable SplitCipher splitCipher) {
         mGeneralInfoDao = checkNotNull(generalInfoDao);
+        mAlwaysEncryptedSplitCipher = splitCipher;
     }
 
     @Override
@@ -108,5 +112,28 @@ public class GeneralInfoStorageImpl implements GeneralInfoStorage {
     public long getLastProxyUpdateTimestamp() {
         GeneralInfoEntity entity = mGeneralInfoDao.getByName(LAST_PROXY_CHECK_TIMESTAMP);
         return entity != null ? entity.getLongValue() : 0L;
+    }
+
+    @Nullable
+    @Override
+    public String getProxyConfig() {
+        GeneralInfoEntity entity = mGeneralInfoDao.getByName(PROXY_CONFIG);
+        if (entity == null) {
+            return null;
+        }
+
+        if (mAlwaysEncryptedSplitCipher != null) {
+            return mAlwaysEncryptedSplitCipher.decrypt(entity.getStringValue());
+        }
+
+        return entity.getStringValue();
+    }
+
+    @Override
+    public void setProxyConfig(@Nullable String proxyConfig) {
+        if (mAlwaysEncryptedSplitCipher != null) {
+            proxyConfig = mAlwaysEncryptedSplitCipher.encrypt(proxyConfig);
+        }
+        mGeneralInfoDao.update(new GeneralInfoEntity(PROXY_CONFIG, proxyConfig));
     }
 }

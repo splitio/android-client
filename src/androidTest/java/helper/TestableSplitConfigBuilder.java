@@ -10,6 +10,7 @@ import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.network.DevelopmentSslConfig;
+import io.split.android.client.network.ProxyConfiguration;
 import io.split.android.client.network.SplitAuthenticator;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.impressions.ImpressionsMode;
@@ -68,6 +69,7 @@ public class TestableSplitConfigBuilder {
     private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
     private RolloutCacheConfiguration mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();
     private FallbackTreatmentsConfiguration mFallbackTreatments;
+    private ProxyConfiguration mProxyConfiguration = null;
 
     public TestableSplitConfigBuilder() {
         mServiceEndpoints = ServiceEndpoints.builder().build();
@@ -287,6 +289,11 @@ public class TestableSplitConfigBuilder {
         this.mFallbackTreatments = fallbackTreatments;
         return this;
     }
+    
+    public TestableSplitConfigBuilder logger(ProxyConfiguration proxyConfiguration) {
+        this.mProxyConfiguration = proxyConfiguration;
+        return this;
+    }
 
     public SplitClientConfig build() {
         Constructor constructor = SplitClientConfig.class.getDeclaredConstructors()[0];
@@ -345,6 +352,7 @@ public class TestableSplitConfigBuilder {
                     mCertificatePinningConfiguration,
                     mImpressionsDedupeTimeInterval,
                     mRolloutCacheConfiguration,
+                    mProxyConfiguration,
                     mFallbackTreatments);
 
             Logger.instance().setLevel(mLogLevel);

@@ -19,12 +19,54 @@ import io.split.android.client.utils.logger.Logger;
 
 class HttpRequestHelper {
 
-    static HttpURLConnection openConnection(@Nullable Proxy proxy,
-                                            @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
-                                            @NonNull URL url,
-                                            @NonNull HttpMethod method,
-                                            @NonNull Map<String, String> headers,
-                                            boolean useProxyAuthentication) throws IOException {
+    private static final ProxyCacertConnectionHandler mConnectionHandler = new ProxyCacertConnectionHandler();
+
+    static HttpURLConnection createConnection(@NonNull URL url,
+                                              @Nullable Proxy proxy,
+                                              @Nullable HttpProxy httpProxy,
+                                              @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                                              @NonNull HttpMethod method,
+                                              @NonNull Map<String, String> headers,
+                                              boolean useProxyAuthentication,
+                                              @Nullable SSLSocketFactory sslSocketFactory,
+                                              @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
+                                              @Nullable String body) throws IOException {
+
+        if (httpProxy != null && sslSocketFactory != null && (httpProxy.getCaCertStream() != null || httpProxy.getClientCertStream() != null)) {
+            try {
+                HttpResponse response = mConnectionHandler.executeRequest(
+                        httpProxy,
+                        url,
+                        method,
+                        headers,
+                        body,
+                        sslSocketFactory,
+                        proxyCredentialsProvider
+                );
+
+                return new HttpResponseConnectionAdapter(url, response, response.getServerCertificates());
+            } catch (UnsupportedOperationException e) {
+                // Fall through to standard handling
+            }
+        }
+
+        return openConnection(proxy, httpProxy, proxyAuthenticator, url, method, headers, useProxyAuthentication);
+    }
+
+    private static HttpURLConnection openConnection(@Nullable Proxy proxy,
+                                                    @Nullable HttpProxy httpProxy,
+                                                    @Nullable SplitUrlConnectionAuthenticator proxyAuthenticator,
+                                                    @NonNull URL url,
+                                                    @NonNull HttpMethod method,
+                                                    @NonNull Map<String, String> headers,
+                                                    boolean useProxyAuthentication) throws IOException {
+        
+        // Check if we need custom SSL proxy handling
+        if (httpProxy != null && (httpProxy.getCaCertStream() != null || httpProxy.getClientCertStream() != null)) {
+            throw new IOException("SSL proxy scenarios require custom handling - use executeRequest method instead");
+        }
+        
+        // Standard HttpURLConnection proxy handling
         HttpURLConnection connection;
         if (proxy != null) {
             connection = (HttpURLConnection) url.openConnection(proxy);
@@ -84,7 +126,7 @@ class HttpRequestHelper {
 
     private static void addHeaders(HttpURLConnection request, Map<String, String> headers) {
         for (Map.Entry<String, String> entry : headers.entrySet()) {
-            if (entry == null) {
+            if (entry == null || entry.getKey() == null) {
                 continue;
             }
 

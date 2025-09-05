@@ -147,6 +147,7 @@ public class WorkManagerWrapper implements MySegmentsWorkManagerWrapper {
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_DATABASE_NAME, mDatabaseName);
         dataBuilder.putString(ServiceConstants.WORKER_PARAM_API_KEY, mApiKey);
         dataBuilder.putBoolean(ServiceConstants.WORKER_PARAM_ENCRYPTION_ENABLED, mSplitClientConfig.encryptionEnabled());
+        dataBuilder.putBoolean(ServiceConstants.WORKER_PARAM_USES_PROXY, mSplitClientConfig.proxy() != null);
         if (mSplitClientConfig.certificatePinningConfiguration() != null) {
             try {
                 Map<String, Set<CertificatePin>> pins = mSplitClientConfig.certificatePinningConfiguration().getPins();
