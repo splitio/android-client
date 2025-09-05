@@ -29,6 +29,7 @@ import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
 import io.split.android.client.validators.PrefixValidatorImpl;
 import io.split.android.client.validators.ValidationErrorInfo;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 
 /**
  * Configurations for the SplitClient.
@@ -136,6 +137,8 @@ public class SplitClientConfig {
     private final RolloutCacheConfiguration mRolloutCacheConfiguration;
     @Nullable
     private final ProxyConfiguration mProxyConfiguration;
+    @Nullable
+    private final FallbackTreatmentsConfiguration mFallbackTreatments;
 
     public static Builder builder() {
         return new Builder();
@@ -192,7 +195,8 @@ public class SplitClientConfig {
                               CertificatePinningConfiguration certificatePinningConfiguration,
                               long impressionsDedupeTimeInterval,
                               @NonNull RolloutCacheConfiguration rolloutCacheConfiguration,
-                              @Nullable ProxyConfiguration proxyConfiguration) {
+                              @Nullable ProxyConfiguration proxyConfiguration,
+                              @Nullable FallbackTreatmentsConfiguration fallbackTreatments) {
         mEndpoint = endpoint;
         mEventsEndpoint = eventsEndpoint;
         mTelemetryEndpoint = telemetryEndpoint;
@@ -252,6 +256,7 @@ public class SplitClientConfig {
         mImpressionsDedupeTimeInterval = impressionsDedupeTimeInterval;
         mRolloutCacheConfiguration = rolloutCacheConfiguration;
         mProxyConfiguration = proxyConfiguration;
+        mFallbackTreatments = fallbackTreatments;
     }
 
     public String trafficType() {
@@ -506,6 +511,11 @@ public class SplitClientConfig {
         return mRolloutCacheConfiguration;
     }
 
+    @Nullable
+    public FallbackTreatmentsConfiguration fallbackTreatments() {
+        return mFallbackTreatments;
+    }
+
     public static final class Builder {
 
         static final int PROXY_PORT_DEFAULT = 80;
@@ -583,11 +593,18 @@ public class SplitClientConfig {
         private long mImpressionsDedupeTimeInterval = ServiceConstants.DEFAULT_IMPRESSIONS_DEDUPE_TIME_INTERVAL;
 
         private RolloutCacheConfiguration mRolloutCacheConfiguration = RolloutCacheConfiguration.builder().build();
+        @Nullable
+        private FallbackTreatmentsConfiguration mFallbackTreatments = null;
 
         private ProxyConfiguration mProxyConfiguration = null;
 
         public Builder() {
             mServiceEndpoints = ServiceEndpoints.builder().build();
+        }
+
+        public Builder fallbackTreatments(@Nullable FallbackTreatmentsConfiguration fallbackTreatments) {
+            mFallbackTreatments = fallbackTreatments;
+            return this;
         }
 
         /**
@@ -1289,7 +1306,8 @@ public class SplitClientConfig {
                     mCertificatePinningConfiguration,
                     mImpressionsDedupeTimeInterval,
                     mRolloutCacheConfiguration,
-                    mProxyConfiguration);
+                    mProxyConfiguration,
+                    mFallbackTreatments);
         }
 
         private HttpProxy parseProxyHost(String proxyUri, ProxyConfiguration proxyConfiguration) {

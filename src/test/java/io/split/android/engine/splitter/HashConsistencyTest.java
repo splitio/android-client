@@ -1,8 +1,8 @@
 package io.split.android.engine.splitter;
 
 import com.google.common.hash.Hashing;
+
 import org.junit.Assert;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.BufferedReader;
@@ -13,21 +13,12 @@ import java.net.URL;
 import java.nio.charset.Charset;
 
 import io.split.android.client.utils.MurmurHash3;
-import io.split.android.engine.splitter.Splitter;
 
 @SuppressWarnings({"UnstableApiUsage", "ConstantConditions"})
 public class HashConsistencyTest {
     @Test
     public void testLegacyHashAlphaNum() throws IOException {
         URL resource = getClass().getClassLoader().getResource("legacy-hash-sample-data.csv");
-        File file = new File(resource.getFile());
-        validateFileLegacyHash(file);
-    }
-
-    @Test
-    @Ignore
-    public void testLegacyHashNonAlphaNum() throws IOException {
-        URL resource = getClass().getClassLoader().getResource("legacy-hash-sample-data-non-alpha-numeric.csv");
         File file = new File(resource.getFile());
         validateFileLegacyHash(file);
     }

@@ -84,7 +84,8 @@ public class SplitClientFactoryImpl implements SplitClientFactory {
                 mStorageContainer.getTelemetryStorage(),
                 mSplitParser,
                 flagSetsFilter,
-                splitsStorage
+                splitsStorage,
+                config.fallbackTreatments()
         );
     }
 

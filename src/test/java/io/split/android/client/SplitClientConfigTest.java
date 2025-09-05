@@ -3,6 +3,7 @@ package io.split.android.client;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertSame;
 import static junit.framework.TestCase.assertTrue;
 
 import androidx.annotation.NonNull;
@@ -14,6 +15,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.network.ProxyConfiguration;
 import io.split.android.client.network.SplitAuthenticatedRequest;
@@ -260,6 +262,22 @@ public class SplitClientConfigTest {
         assertEquals(1, logMessages.size());
     }
 
+    @Test
+    public void fallbackTreatmentsIsNullByDefault() {
+        SplitClientConfig config = SplitClientConfig.builder().build();
+        assertNull(config.fallbackTreatments());
+    }
+
+    @Test
+    public void fallbackTreatmentsAreCorrectlySet() {
+        FallbackTreatmentsConfiguration ftConfiguration = FallbackTreatmentsConfiguration.builder().build();
+        SplitClientConfig config = SplitClientConfig.builder()
+                .fallbackTreatments(ftConfiguration)
+                .build();
+
+        assertSame(ftConfiguration, config.fallbackTreatments());
+    }
+    
     @Test
     public void proxyHostAndProxyConfigurationSetLogWarning() {
         Queue<String> logMessages = getLogMessagesQueue();

@@ -1,0 +1,125 @@
+package io.split.android.client.fallback;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+
+import org.junit.Test;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import io.split.android.client.TreatmentLabels;
+
+public class FallbackTreatmentsCalculatorTest {
+
+    @Test
+    public void flagLevelOverrideTakesPrecedence() {
+        FallbackTreatment global = new FallbackTreatment("off", "{\"g\":true}");
+        FallbackTreatment byFlag = new FallbackTreatment("on", "{\"f\":true}");
+        Map<String, FallbackTreatment> map = new HashMap<>();
+        map.put("my_flag", byFlag);
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
+                .global(global)
+                .byFlag(map)
+                .build();
+
+        FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(config);
+        FallbackTreatment resolvedExisting = calculator.resolve("my_flag");
+        FallbackTreatment resolvedOther = calculator.resolve("other_flag");
+
+        assertNotNull(resolvedExisting);
+        assertEquals(byFlag, resolvedExisting);
+        assertNotNull(resolvedOther);
+        assertEquals(global, resolvedOther);
+    }
+
+    @Test
+    public void globalFallbackIsReturnedWhenNoFlagOverride() {
+        FallbackTreatment global = new FallbackTreatment("off");
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
+                .global(global)
+                .byFlag(Collections.emptyMap())
+                .build();
+
+        FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(config);
+        FallbackTreatment resolved = calculator.resolve("any_flag");
+
+        assertNotNull(resolved);
+        assertEquals(global, resolved);
+    }
+
+    @Test
+    public void flagLevelFallbackIsReturnedWhenConfigured() {
+        FallbackTreatment byFlag = new FallbackTreatment("on");
+        Map<String, FallbackTreatment> map = new HashMap<>();
+        map.put("flagA", byFlag);
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
+                .byFlag(map)
+                .build();
+
+        FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(config);
+        FallbackTreatment resolved = calculator.resolve("flagA");
+
+        assertNotNull(resolved);
+        assertEquals(byFlag, resolved);
+    }
+
+    @Test
+    public void returnsControlWhenNoFallbackConfigured() {
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
+                .build();
+
+        FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(config);
+        FallbackTreatment resolved = calculator.resolve("nope");
+
+        assertNotNull(resolved);
+        assertEquals(new FallbackTreatment("control", null, null), resolved);
+    }
+
+    @Test
+    public void nonexistentFlagFallsBackToGlobal() {
+        FallbackTreatment global = new FallbackTreatment("off");
+        Map<String, FallbackTreatment> map = new HashMap<>();
+        map.put("flagA", new FallbackTreatment("on"));
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
+                .global(global)
+                .byFlag(map)
+                .build();
+
+        FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(config);
+        FallbackTreatment resolved = calculator.resolve("flagB");
+
+        assertNotNull(resolved);
+        assertEquals(global, resolved);
+    }
+
+    @Test
+    public void labelIsPrefixed() {
+        FallbackTreatment global = new FallbackTreatment("off");
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
+                .global(global)
+                .build();
+
+        FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(config);
+        FallbackTreatment resolved = calculator.resolve("flagA", TreatmentLabels.EXCEPTION);
+
+        assertNotNull(resolved);
+        assertEquals("fallback - exception", resolved.getLabel());
+    }
+
+    @Test
+    public void noLabelReturnsNull() {
+        FallbackTreatment global = new FallbackTreatment("off");
+        FallbackTreatmentsConfiguration config = FallbackTreatmentsConfiguration.builder()
+                .global(global)
+                .build();
+
+        FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(config);
+        FallbackTreatment resolved = calculator.resolve("flagA", null);
+
+        assertNotNull(resolved);
+        assertNull(resolved.getLabel());
+    }
+}

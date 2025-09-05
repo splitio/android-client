@@ -12,6 +12,10 @@ import java.util.Arrays;
 import java.util.Map;
 
 import io.split.android.client.SplitResult;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
+import io.split.android.client.fallback.FallbackTreatment;
+import io.split.android.client.fallback.FallbackTreatmentsCalculator;
+import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
 
 public class TreatmentManagerHelperTest {
 
@@ -22,7 +26,11 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", SplitResult::treatment);
+        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder()
+                .global(new FallbackTreatment("control"))
+                .build());
+
+        TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", SplitResult::treatment, calc);
 
         verify(validator).validateName("split1");
         verify(validator).validateName("split2");
@@ -36,7 +44,11 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", TreatmentManagerImpl.ResultTransformer::identity);
+        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder()
+                .global(new FallbackTreatment("control"))
+                .build());
+
+        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", TreatmentManagerImpl.ResultTransformer::identity, calc);
 
         verify(validator).validateName("split1");
         verify(validator).validateName("split2");
@@ -50,7 +62,11 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", TreatmentManagerImpl.ResultTransformer::identity);
+        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder()
+                .global(new FallbackTreatment("control"))
+                .build());
+
+        Map<String, SplitResult> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", TreatmentManagerImpl.ResultTransformer::identity, calc);
 
         verify(validator).validateName("split1");
         verify(validator).validateName("split2");
@@ -67,7 +83,11 @@ public class TreatmentManagerHelperTest {
 
         when(validator.validateName("split2")).thenReturn(new ValidationErrorInfo(ValidationErrorInfo.ERROR_SOME, "message"));
 
-        Map<String, String> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", SplitResult::treatment);
+        FallbackTreatmentsCalculator calc = new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder()
+                .global(new FallbackTreatment("control"))
+                .build());
+
+        Map<String, String> result = TreatmentManagerHelper.controlTreatmentsForSplitsWithConfig(validator, logger, Arrays.asList("split1", "split2"), "tag", SplitResult::treatment, calc);
 
         verify(validator).validateName("split1");
         verify(validator).validateName("split2");
