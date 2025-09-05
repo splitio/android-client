@@ -194,7 +194,6 @@ public class SplitClientConfig {
                               long observerCacheExpirationPeriod,
                               CertificatePinningConfiguration certificatePinningConfiguration,
                               long impressionsDedupeTimeInterval,
-                              RolloutCacheConfiguration rolloutCacheConfiguration
                               @NonNull RolloutCacheConfiguration rolloutCacheConfiguration,
                               @Nullable ProxyConfiguration proxyConfiguration,
                               @Nullable FallbackTreatmentsConfiguration fallbackTreatments) {
@@ -1307,7 +1306,7 @@ public class SplitClientConfig {
                     mCertificatePinningConfiguration,
                     mImpressionsDedupeTimeInterval,
                     mRolloutCacheConfiguration,
-  `                 mProxyConfiguration,
+                    mProxyConfiguration,
                     mFallbackTreatments);
         }
 
