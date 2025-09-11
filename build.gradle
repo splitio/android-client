@@ -19,7 +19,7 @@ apply from: 'spec.gradle'
 apply from: 'jacoco.gradle'
 
 ext {
-    splitVersion = '5.4.0-rc2'
+    splitVersion = '5.4.0-rc3'
     jacocoVersion = '0.8.8'
 }
 
