@@ -32,7 +32,9 @@ class HttpRequestHelper {
                                               @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
                                               @Nullable String body) throws IOException {
 
-        if (httpProxy != null && sslSocketFactory != null && (httpProxy.getCaCertStream() != null || httpProxy.getClientCertStream() != null)) {
+        // Use the new tunnel path only when there is no legacy authenticator present.
+        // If a legacy authenticator proxy, we prefer the legacy path to preserve 407 retry behavior.
+        if (httpProxy != null && sslSocketFactory != null && !httpProxy.isLegacy()) {
             try {
                 HttpResponse response = mConnectionHandler.executeRequest(
                         httpProxy,
@@ -60,12 +62,11 @@ class HttpRequestHelper {
                                                     @NonNull HttpMethod method,
                                                     @NonNull Map<String, String> headers,
                                                     boolean useProxyAuthentication) throws IOException {
-        
-        // Check if we need custom SSL proxy handling
-        if (httpProxy != null && (httpProxy.getCaCertStream() != null || httpProxy.getClientCertStream() != null)) {
+
+        if (httpProxy != null && !httpProxy.isLegacy() && (httpProxy.getCaCertStream() != null || httpProxy.getClientCertStream() != null)) {
             throw new IOException("SSL proxy scenarios require custom handling - use executeRequest method instead");
         }
-        
+
         // Standard HttpURLConnection proxy handling
         HttpURLConnection connection;
         if (proxy != null) {
