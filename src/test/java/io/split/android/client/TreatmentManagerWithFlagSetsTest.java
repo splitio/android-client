@@ -26,6 +26,8 @@ import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
+import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.Method;
@@ -155,7 +157,8 @@ public class TreatmentManagerWithFlagSetsTest {
                 mAttributesMerger,
                 mTelemetryStorageProducer,
                 mFlagSetsFilter,
-                mSplitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(), new PropertyValidatorImpl());
+                mSplitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(), new PropertyValidatorImpl(),
+                new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build()));
     }
 
     @Test

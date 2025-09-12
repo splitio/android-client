@@ -3,9 +3,11 @@ package io.split.android.client;
 import static junit.framework.Assert.assertFalse;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNull;
+import static junit.framework.TestCase.assertSame;
 import static junit.framework.TestCase.assertTrue;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import org.junit.Test;
 
@@ -13,7 +15,11 @@ import java.util.LinkedList;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.network.CertificatePinningConfiguration;
+import io.split.android.client.network.ProxyConfiguration;
+import io.split.android.client.network.SplitAuthenticatedRequest;
+import io.split.android.client.network.SplitAuthenticator;
 import io.split.android.client.utils.logger.LogPrinter;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.utils.logger.SplitLogLevel;
@@ -254,6 +260,63 @@ public class SplitClientConfigTest {
         assertEquals(10, config.getExpirationDays());
         assertFalse(config.isClearOnInit());
         assertEquals(1, logMessages.size());
+    }
+
+    @Test
+    public void fallbackTreatmentsIsNullByDefault() {
+        SplitClientConfig config = SplitClientConfig.builder().build();
+        assertNull(config.fallbackTreatments());
+    }
+
+    @Test
+    public void fallbackTreatmentsAreCorrectlySet() {
+        FallbackTreatmentsConfiguration ftConfiguration = FallbackTreatmentsConfiguration.builder().build();
+        SplitClientConfig config = SplitClientConfig.builder()
+                .fallbackTreatments(ftConfiguration)
+                .build();
+
+        assertSame(ftConfiguration, config.fallbackTreatments());
+    }
+    
+    @Test
+    public void proxyHostAndProxyConfigurationSetLogWarning() {
+        Queue<String> logMessages = getLogMessagesQueue();
+        SplitClientConfig.builder()
+                .logLevel(SplitLogLevel.WARNING)
+                .proxyHost("proxyHost")
+                .proxyConfiguration(ProxyConfiguration.builder().url("http://proxy.url").build())
+                .build();
+        assertEquals(1, logMessages.size());
+        assertEquals("Both the deprecated proxy configuration methods (proxyHost, proxyAuthenticator) and the new ProxyConfiguration builder are being used. ProxyConfiguration will take precedence.", logMessages.poll());
+    }
+
+    @Test
+    public void proxyAuthenticatorAndProxyConfigurationSetLogWarning() {
+        Queue<String> logMessages = getLogMessagesQueue();
+        SplitClientConfig.builder()
+                .logLevel(SplitLogLevel.WARNING)
+                .proxyAuthenticator(new SplitAuthenticator() {
+                    @Nullable
+                    @Override
+                    public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
+                        return null;
+                    }
+                })
+                .proxyConfiguration(ProxyConfiguration.builder().url("http://proxy.url").build())
+                .build();
+        assertEquals(1, logMessages.size());
+        assertEquals("Both the deprecated proxy configuration methods (proxyHost, proxyAuthenticator) and the new ProxyConfiguration builder are being used. ProxyConfiguration will take precedence.", logMessages.poll());
+    }
+
+    @Test
+    public void proxyConfigurationWithNoUrlSetLogWarning() {
+        Queue<String> logMessages = getLogMessagesQueue();
+        SplitClientConfig.builder()
+                .logLevel(SplitLogLevel.WARNING)
+                .proxyConfiguration(ProxyConfiguration.builder().build())
+                .build();
+        assertEquals(1, logMessages.size());
+        assertEquals("Proxy configuration with no URL. This will prevent SplitFactory from working.", logMessages.poll());
     }
 
     @NonNull

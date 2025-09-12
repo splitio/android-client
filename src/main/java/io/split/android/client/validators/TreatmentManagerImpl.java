@@ -22,6 +22,8 @@ import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
+import io.split.android.client.fallback.FallbackTreatment;
+import io.split.android.client.fallback.FallbackTreatmentsCalculator;
 import io.split.android.client.impressions.DecoratedImpression;
 import io.split.android.client.impressions.Impression;
 import io.split.android.client.impressions.ImpressionListener;
@@ -30,7 +32,6 @@ import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
-import io.split.android.grammar.Treatments;
 
 public class TreatmentManagerImpl implements TreatmentManager {
 
@@ -52,6 +53,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
     private final SplitsStorage mSplitsStorage;
     private final SplitFilterValidator mFlagSetsValidator;
     private final PropertyValidator mPropertyValidator;
+    @NonNull
+    private final FallbackTreatmentsCalculator mFallbackCalculator;
 
     public TreatmentManagerImpl(String matchingKey,
                                 String bucketingKey,
@@ -68,7 +71,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                                 @NonNull SplitsStorage splitsStorage,
                                 @NonNull ValidationMessageLogger validationLogger,
                                 @NonNull SplitFilterValidator flagSetsValidator,
-                                @NonNull PropertyValidator propertyValidator) {
+                                @NonNull PropertyValidator propertyValidator,
+                                @NonNull FallbackTreatmentsCalculator fallbackCalculator) {
         mEvaluator = evaluator;
         mKeyValidator = keyValidator;
         mSplitValidator = splitValidator;
@@ -85,6 +89,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
         mSplitsStorage = checkNotNull(splitsStorage);
         mFlagSetsValidator = checkNotNull(flagSetsValidator);
         mPropertyValidator = checkNotNull(propertyValidator);
+        mFallbackCalculator = checkNotNull(fallbackCalculator);
     }
 
     @Override
@@ -100,14 +105,19 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     Method.TREATMENT
             ).get(split);
 
-            return (treatment == null) ? Treatments.CONTROL : treatment;
+            if (treatment == null) {
+                FallbackTreatment fallback = mFallbackCalculator.resolve(split);
+                return fallback.getTreatment();
+            }
+            return treatment;
         } catch (Exception ex) {
             // In case get fails for some reason
             Logger.e("Client " + Method.TREATMENT.getMethod() + " exception", ex);
 
             mTelemetryStorageProducer.recordException(Method.TREATMENT);
 
-            return Treatments.CONTROL;
+            FallbackTreatment fallback = mFallbackCalculator.resolve(split);
+            return fallback.getTreatment();
         }
     }
 
@@ -124,13 +134,18 @@ public class TreatmentManagerImpl implements TreatmentManager {
                     Method.TREATMENT_WITH_CONFIG
             ).get(split);
 
-            return (splitResult == null) ? new SplitResult(Treatments.CONTROL) : splitResult;
+            if (splitResult == null) {
+                FallbackTreatment fallback = mFallbackCalculator.resolve(split);
+                return new SplitResult(fallback.getTreatment(), fallback.getConfig());
+            }
+            return splitResult;
         } catch (Exception ex) {
             // In case get fails for some reason
             Logger.e("Client " + Method.TREATMENT_WITH_CONFIG.getMethod() + " exception", ex);
             mTelemetryStorageProducer.recordException(Method.TREATMENT_WITH_CONFIG);
 
-            return new SplitResult(Treatments.CONTROL);
+            FallbackTreatment fallback = mFallbackCalculator.resolve(split);
+            return new SplitResult(fallback.getTreatment(), fallback.getConfig());
         }
     }
 
@@ -285,7 +300,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
             if (errorInfo != null) {
                 if (errorInfo.isError()) {
                     mValidationLogger.e(errorInfo, validationTag);
-                    return new TreatmentResult(new SplitResult(Treatments.CONTROL), false);
+                    FallbackTreatment fallback = mFallbackCalculator.resolve(split.trim());
+                    return new TreatmentResult(new SplitResult(fallback.getTreatment(), fallback.getConfig()), false);
                 }
                 mValidationLogger.w(errorInfo, validationTag);
                 splitName = split.trim();
@@ -296,7 +312,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
             SplitResult splitResult = new SplitResult(evaluationResult.getTreatment(), evaluationResult.getConfigurations());
 
             // If the feature flag was not found, log the message and return the result
-            if (evaluationResult.getLabel().equals(TreatmentLabels.DEFINITION_NOT_FOUND)) {
+            if (evaluationResult.getLabel().contains(TreatmentLabels.DEFINITION_NOT_FOUND)) {
                 mValidationLogger.w(mSplitValidator.splitNotFoundMessage(splitName), validationTag);
                 return new TreatmentResult(splitResult, false);
             }
@@ -317,12 +333,13 @@ public class TreatmentManagerImpl implements TreatmentManager {
             return new TreatmentResult(splitResult, false);
         } catch (Exception ex) {
             // Since this only logs an impression with EXCEPTION label, we don't log anything if labels are disabled
+            FallbackTreatment resolvedTreatment = mFallbackCalculator.resolve(split);
             if (mLabelsEnabled) {
                 logImpression(
                         mMatchingKey,
                         mBucketingKey,
                         split,
-                        Treatments.CONTROL,
+                        resolvedTreatment.getTreatment(),
                         TreatmentLabels.EXCEPTION,
                         (evaluationResult != null) ? evaluationResult.getChangeNumber() : null,
                         mergedAttributes,
@@ -331,7 +348,7 @@ public class TreatmentManagerImpl implements TreatmentManager {
                         validationTag);
             }
 
-            return new TreatmentResult(new SplitResult(Treatments.CONTROL), true);
+            return new TreatmentResult(new SplitResult(resolvedTreatment.getTreatment(), resolvedTreatment.getConfig()), true);
         }
     }
 
@@ -380,7 +397,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
                 mValidationLogger,
                 (names != null) ? names : new ArrayList<>(),
                 validationTag,
-                resultTransformer);
+                resultTransformer,
+                mFallbackCalculator);
     }
 
     private EvaluationResult evaluateIfReady(String featureFlagName,
@@ -390,7 +408,8 @@ public class TreatmentManagerImpl implements TreatmentManager {
             mValidationLogger.w("the SDK is not ready, results may be incorrect for feature flag " + featureFlagName + ". Make sure to wait for SDK readiness before using this method", validationTag);
             mTelemetryStorageProducer.recordNonReadyUsage();
 
-            return new EvaluationResult(Treatments.CONTROL, TreatmentLabels.NOT_READY, null, null, false);
+            FallbackTreatment fallback = mFallbackCalculator.resolve(featureFlagName, TreatmentLabels.NOT_READY);
+            return new EvaluationResult(fallback.getTreatment(), fallback.getLabel(), null, fallback.getConfig(), false);
         }
         return mEvaluator.getTreatment(mMatchingKey, mBucketingKey, featureFlagName, attributes);
     }

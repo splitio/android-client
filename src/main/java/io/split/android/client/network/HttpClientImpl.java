@@ -6,6 +6,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.net.URI;
@@ -28,7 +32,11 @@ public class HttpClientImpl implements HttpClient {
     @Nullable
     private final Proxy mProxy;
     @Nullable
+    private final HttpProxy mHttpProxy;
+    @Nullable
     private final SplitUrlConnectionAuthenticator mProxyAuthenticator;
+    @Nullable
+    private final ProxyCredentialsProvider mProxyCredentialsProvider;
     private final long mReadTimeout;
     private final long mConnectionTimeout;
     @Nullable
@@ -39,17 +47,22 @@ public class HttpClientImpl implements HttpClient {
     private final UrlSanitizer mUrlSanitizer;
     @Nullable
     private final CertificateChecker mCertificateChecker;
+    @Nullable
+    private final ProxyCacertConnectionHandler mConnectionHandler;
 
     HttpClientImpl(@Nullable HttpProxy proxy,
                    @Nullable SplitAuthenticator proxyAuthenticator,
+                   @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
                    long readTimeout,
                    long connectionTimeout,
                    @Nullable DevelopmentSslConfig developmentSslConfig,
                    @Nullable SSLSocketFactory sslSocketFactory,
                    @NonNull UrlSanitizer urlSanitizer,
                    @Nullable CertificateChecker certificateChecker) {
+        mHttpProxy = proxy;
         mProxy = initializeProxy(proxy);
         mProxyAuthenticator = initializeProxyAuthenticator(proxy, proxyAuthenticator);
+        mProxyCredentialsProvider = proxyCredentialsProvider;
         mReadTimeout = readTimeout;
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
@@ -58,6 +71,8 @@ public class HttpClientImpl implements HttpClient {
         mSslSocketFactory = sslSocketFactory;
         mUrlSanitizer = urlSanitizer;
         mCertificateChecker = certificateChecker;
+        mConnectionHandler = mHttpProxy != null && mSslSocketFactory != null ?
+                    new ProxyCacertConnectionHandler() : null;
     }
 
     @Override
@@ -73,7 +88,9 @@ public class HttpClientImpl implements HttpClient {
                 body,
                 newHeaders,
                 mProxy,
+                mHttpProxy,
                 mProxyAuthenticator,
+                mProxyCredentialsProvider,
                 mReadTimeout,
                 mConnectionTimeout,
                 mDevelopmentSslConfig,
@@ -101,7 +118,10 @@ public class HttpClientImpl implements HttpClient {
                 mDevelopmentSslConfig,
                 mSslSocketFactory,
                 mUrlSanitizer,
-                mCertificateChecker);
+                mCertificateChecker,
+                mHttpProxy,
+                mProxyCredentialsProvider,
+                mConnectionHandler);
     }
 
     @Override
@@ -177,7 +197,9 @@ public class HttpClientImpl implements HttpClient {
     }
 
     public static class Builder {
+
         private SplitAuthenticator mProxyAuthenticator;
+        private ProxyCredentialsProvider mProxyCredentialsProvider;
         private HttpProxy mProxy;
         private long mReadTimeout = -1;
         private long mConnectionTimeout = -1;
@@ -187,6 +209,7 @@ public class HttpClientImpl implements HttpClient {
         private UrlSanitizer mUrlSanitizer;
         private CertificatePinningConfiguration mCertificatePinningConfiguration;
         private CertificateChecker mCertificateChecker;
+        private Base64Decoder mBase64Decoder = new DefaultBase64Decoder();
 
         public Builder setContext(Context context) {
             mHostAppContext = context;
@@ -195,6 +218,7 @@ public class HttpClientImpl implements HttpClient {
 
         public Builder setProxy(HttpProxy proxy) {
             mProxy = proxy;
+            mProxyCredentialsProvider = proxy.getCredentialsProvider();
             return this;
         }
 
@@ -241,10 +265,21 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
+        @VisibleForTesting
+        Builder setBase64Decoder(Base64Decoder base64Decoder) {
+            mBase64Decoder = base64Decoder;
+            return this;
+        }
+
         public HttpClient build() {
             if (mDevelopmentSslConfig == null) {
                 if (LegacyTlsUpdater.couldBeOld()) {
                     LegacyTlsUpdater.update(mHostAppContext);
+                }
+
+                if (mProxy != null) {
+                    mSslSocketFactory = createSslSocketFactoryFromProxy(mProxy);
+                } else {
                     try {
                         mSslSocketFactory = new Tls12OnlySocketFactory();
                     } catch (NoSuchAlgorithmException | KeyManagementException e) {
@@ -271,12 +306,80 @@ public class HttpClientImpl implements HttpClient {
             return new HttpClientImpl(
                     mProxy,
                     mProxyAuthenticator,
+                    mProxyCredentialsProvider,
                     mReadTimeout,
                     mConnectionTimeout,
                     mDevelopmentSslConfig,
                     mSslSocketFactory,
                     (mUrlSanitizer == null) ? new UrlSanitizerImpl() : mUrlSanitizer,
                     certificateChecker);
+        }
+
+        private SSLSocketFactory createSslSocketFactoryFromProxy(HttpProxy proxyParams) {
+            ProxySslSocketFactoryProviderImpl factoryProvider = new ProxySslSocketFactoryProviderImpl(mBase64Decoder);
+            try {
+                if (proxyParams.getClientCertStream() != null && proxyParams.getClientKeyStream() != null) {
+                    // Create copies of the streams to avoid consuming the originals
+                    byte[] caCertBytes = copyStreamToByteArray(proxyParams.getCaCertStream());
+                    byte[] clientCertBytes = copyStreamToByteArray(proxyParams.getClientCertStream());
+                    byte[] clientKeyBytes = copyStreamToByteArray(proxyParams.getClientKeyStream());
+                    
+                    if (caCertBytes != null && clientCertBytes != null && clientKeyBytes != null) {
+                        Logger.v("Custom proxy CA cert and client cert/key loaded for proxy: " + proxyParams.getHost());
+                        return factoryProvider.create(
+                            new ByteArrayInputStream(caCertBytes),
+                            new ByteArrayInputStream(clientCertBytes),
+                            new ByteArrayInputStream(clientKeyBytes));
+                    }
+                } else if (proxyParams.getCaCertStream() != null) {
+                    // Create a copy of the CA cert stream
+                    byte[] caCertBytes = copyStreamToByteArray(proxyParams.getCaCertStream());
+                    
+                    if (caCertBytes != null) {
+                        return factoryProvider.create(new ByteArrayInputStream(caCertBytes));
+                    }
+                } else {
+                    // No custom auth path
+                    return factoryProvider.create(null);
+                }
+            } catch (Exception e) {
+                Logger.e("Failed to create SSLSocketFactory for proxy: " + proxyParams.getHost() + ", error: " + e.getMessage());
+            }
+            return null;
+        }
+    }
+
+    /**
+     * Copies an InputStream to a byte array without closing the original stream.
+     */
+    @VisibleForTesting
+    static byte[] copyStreamToByteArray(InputStream inputStream) {
+        if (inputStream == null) {
+            return null;
+        }
+        
+        try {
+            if (inputStream.markSupported()) {
+                inputStream.mark(Integer.MAX_VALUE);
+            }
+            
+            // Read the stream into a byte array
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            int bytesRead;
+            byte[] data = new byte[4096];
+            while ((bytesRead = inputStream.read(data, 0, data.length)) != -1) {
+                buffer.write(data, 0, bytesRead);
+            }
+            buffer.flush();
+            
+            if (inputStream.markSupported()) {
+                inputStream.reset();
+            }
+            
+            return buffer.toByteArray();
+        } catch (IOException e) {
+            Logger.e("Failed to copy input stream: " + e.getMessage());
+            return null;
         }
     }
 }

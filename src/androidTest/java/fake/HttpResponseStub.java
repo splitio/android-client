@@ -1,5 +1,7 @@
 package fake;
 
+import java.security.cert.Certificate;
+
 import io.split.android.client.network.BaseHttpResponseImpl;
 import io.split.android.client.network.HttpResponse;
 
@@ -28,5 +30,10 @@ public class HttpResponseStub extends BaseHttpResponseImpl implements HttpRespon
     @Override
     public String getData() {
         return data;
+    }
+
+    @Override
+    public Certificate[] getServerCertificates() {
+        return new Certificate[0];
     }
 }

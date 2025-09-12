@@ -1,47 +1,118 @@
 package io.split.android.client.network;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.io.InputStream;
+
 public class HttpProxy {
 
-    final private String host;
-    final private int port;
-    final private String username;
-    final private String password;
+    private final @NonNull String mHost;
+    private final int mPort;
+    private final @Nullable String mUsername;
+    private final @Nullable String mPassword;
+    private final @Nullable InputStream mClientCertStream;
+    private final @Nullable InputStream mClientKeyStream;
+    private final @Nullable InputStream mCaCertStream;
+    private final @Nullable ProxyCredentialsProvider mCredentialsProvider;
+    private final boolean mIsLegacy;
 
-    public HttpProxy(@NonNull String host, int port) {
-        this(host, port, null, null);
+    private HttpProxy(Builder builder, boolean isLegacy) {
+        mHost = builder.mHost;
+        mPort = builder.mPort;
+        mUsername = builder.mUsername;
+        mPassword = builder.mPassword;
+        mClientCertStream = builder.mClientCertStream;
+        mClientKeyStream = builder.mClientKeyStream;
+        mCaCertStream = builder.mCaCertStream;
+        mCredentialsProvider = builder.mCredentialsProvider;
+        mIsLegacy = isLegacy;
     }
 
-    public HttpProxy(@NonNull String host, int port, @Nullable String username, @Nullable String password) {
-        checkNotNull(host);
-
-        this.host = host;
-        this.port = port;
-        this.username = username;
-        this.password = password;
-    }
-
-    public String getHost() {
-        return host;
+    public @Nullable String getHost() {
+        return mHost;
     }
 
     public int getPort() {
-        return port;
+        return mPort;
     }
 
-    public String getUsername() {
-        return username;
+    public @Nullable String getUsername() {
+        return mUsername;
     }
 
-    public String getPassword() {
-        return password;
+    public @Nullable String getPassword() {
+        return mPassword;
     }
 
-    public boolean usesCredentials() {
-        return username == null;
+    public @Nullable InputStream getClientCertStream() {
+        return mClientCertStream;
+    }
+
+    public @Nullable InputStream getClientKeyStream() {
+        return mClientKeyStream;
+    }
+
+    public @Nullable InputStream getCaCertStream() {
+        return mCaCertStream;
+    }
+
+    public @Nullable ProxyCredentialsProvider getCredentialsProvider() {
+        return mCredentialsProvider;
+    }
+
+    public static Builder newBuilder(@Nullable String host, int port) {
+        return new Builder(host, port);
+    }
+
+    public boolean isLegacy() {
+        return mIsLegacy;
+    }
+
+    public static class Builder {
+        private final @Nullable String mHost;
+        private final int mPort;
+        private @Nullable String mUsername;
+        private @Nullable String mPassword;
+        private @Nullable InputStream mClientCertStream;
+        private @Nullable InputStream mClientKeyStream;
+        private @Nullable InputStream mCaCertStream;
+        @Nullable
+        private ProxyCredentialsProvider mCredentialsProvider;
+
+        private Builder(@Nullable String host, int port) {
+            mHost = host;
+            mPort = port;
+        }
+
+        public Builder basicAuth(@NonNull String username, @NonNull String password) {
+            mUsername = username;
+            mPassword = password;
+            return this;
+        }
+
+        public Builder proxyCacert(@NonNull InputStream caCertStream) {
+            mCaCertStream = caCertStream;
+            return this;
+        }
+
+        public Builder mtls(@NonNull InputStream clientCertStream, @NonNull InputStream keyStream) {
+            mClientCertStream = clientCertStream;
+            mClientKeyStream = keyStream;
+            return this;
+        }
+
+        public Builder credentialsProvider(@NonNull ProxyCredentialsProvider credentialsProvider) {
+            mCredentialsProvider = credentialsProvider;
+            return this;
+        }
+
+        public HttpProxy build() {
+            return new HttpProxy(this, false);
+        }
+
+        public HttpProxy buildLegacy() {
+            return new HttpProxy(this, true);
+        }
     }
 }

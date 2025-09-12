@@ -32,6 +32,9 @@ import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.FlagSetsValidatorImpl;
+import io.split.android.client.fallback.FallbackTreatmentsCalculator;
+import io.split.android.client.fallback.FallbackTreatmentsCalculatorImpl;
+import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
 import io.split.android.client.validators.KeyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
 import io.split.android.client.validators.TreatmentManager;
@@ -72,12 +75,13 @@ public final class LocalhostSplitClient implements SplitClient {
         mKey = checkNotNull(key);
         mEventsManager = checkNotNull(eventsManager);
         mSplitsStorage = splitsStorage;
+        FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build());
         mTreatmentManager = new TreatmentManagerImpl(mKey.matchingKey(), mKey.bucketingKey(),
-                new EvaluatorImpl(splitsStorage, splitParser), new KeyValidatorImpl(),
+                new EvaluatorImpl(splitsStorage, splitParser, calculator), new KeyValidatorImpl(),
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
                 splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger,
                 telemetryStorageProducer, flagSetsFilter, splitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(),
-                new PropertyValidatorImpl());
+                new PropertyValidatorImpl(), calculator);
     }
 
     @Override

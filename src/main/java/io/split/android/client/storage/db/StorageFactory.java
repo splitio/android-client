@@ -153,8 +153,8 @@ public class StorageFactory {
         return new SqlitePersistentImpressionsObserverCacheStorage(splitRoomDatabase.impressionsObserverCacheDao(), expirationPeriod, executorService);
     }
 
-    public static GeneralInfoStorage getGeneralInfoStorage(SplitRoomDatabase splitRoomDatabase) {
-        return new GeneralInfoStorageImpl(splitRoomDatabase.generalInfoDao());
+    public static GeneralInfoStorage getGeneralInfoStorage(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
+        return new GeneralInfoStorageImpl(splitRoomDatabase.generalInfoDao(), splitCipher);
     }
 
     public static PersistentRuleBasedSegmentStorage getPersistentRuleBasedSegmentStorage(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher, GeneralInfoStorage generalInfoStorage) {
@@ -163,7 +163,7 @@ public class StorageFactory {
 
     public static RuleBasedSegmentStorageProducer getRuleBasedSegmentStorageForWorker(SplitRoomDatabase splitRoomDatabase, SplitCipher splitCipher) {
         PersistentRuleBasedSegmentStorage persistentRuleBasedSegmentStorage =
-                new SqLitePersistentRuleBasedSegmentStorageProvider(splitCipher, splitRoomDatabase, getGeneralInfoStorage(splitRoomDatabase)).get();
+                new SqLitePersistentRuleBasedSegmentStorageProvider(splitCipher, splitRoomDatabase, getGeneralInfoStorage(splitRoomDatabase, null)).get();
         return new RuleBasedSegmentStorageProducerImpl(persistentRuleBasedSegmentStorage, new ConcurrentHashMap<>(), new AtomicLong(-1));
     }
 }
