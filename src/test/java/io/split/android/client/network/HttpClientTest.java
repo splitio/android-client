@@ -281,7 +281,7 @@ public class HttpClientTest {
         HttpClient client = new HttpClientImpl.Builder()
                 .setContext(mock(Context.class))
                 .setUrlSanitizer(mUrlSanitizerMock)
-                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).build())
+                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).buildLegacy())
                 .build();
 
         HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.GET);
@@ -325,7 +325,7 @@ public class HttpClientTest {
                         return request;
                     }
                 })
-                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).build())
+                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).buildLegacy())
                 .build();
 
         HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.GET);
@@ -380,7 +380,7 @@ public class HttpClientTest {
                         return request;
                     }
                 })
-                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).build())
+                .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).buildLegacy())
                 .build();
 
         HttpRequest request = client.request(mWebServer.url("/test1/").uri(), HttpMethod.POST, "{}");

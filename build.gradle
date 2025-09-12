@@ -19,7 +19,7 @@ apply from: 'spec.gradle'
 apply from: 'jacoco.gradle'
 
 ext {
-    splitVersion = '5.4.0-rc1'
+    splitVersion = '5.4.0'
     jacocoVersion = '0.8.8'
 }
 
@@ -284,6 +284,3 @@ tasks.withType(Test) {
     forkEvery = 100
     maxHeapSize = "1024m"
 }
-
-
-

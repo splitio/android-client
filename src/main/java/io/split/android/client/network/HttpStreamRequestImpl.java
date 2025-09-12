@@ -123,7 +123,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
     private HttpStreamResponse getRequest() throws HttpException, IOException {
         HttpStreamResponse response;
         try {
-            if (mConnectionHandler != null && mHttpProxy != null && mSslSocketFactory != null && (mHttpProxy.getCaCertStream() != null || mHttpProxy.getClientCertStream() != null)) {
+            if (mConnectionHandler != null && mHttpProxy != null && mSslSocketFactory != null) {
                 response = mConnectionHandler.executeStreamRequest(mHttpProxy, getUrl(), mHttpMethod, mHeaders, mSslSocketFactory, mProxyCredentialsProvider);
             } else {
                 mConnection = setUpConnection(false);

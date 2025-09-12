@@ -71,8 +71,7 @@ public class HttpClientImpl implements HttpClient {
         mSslSocketFactory = sslSocketFactory;
         mUrlSanitizer = urlSanitizer;
         mCertificateChecker = certificateChecker;
-        mConnectionHandler = mHttpProxy != null && mSslSocketFactory != null &&
-                (mHttpProxy.getCaCertStream() != null || mHttpProxy.getClientCertStream() != null) ?
+        mConnectionHandler = mHttpProxy != null && mSslSocketFactory != null ?
                     new ProxyCacertConnectionHandler() : null;
     }
 
@@ -339,6 +338,9 @@ public class HttpClientImpl implements HttpClient {
                     if (caCertBytes != null) {
                         return factoryProvider.create(new ByteArrayInputStream(caCertBytes));
                     }
+                } else {
+                    // No custom auth path
+                    return factoryProvider.create(null);
                 }
             } catch (Exception e) {
                 Logger.e("Failed to create SSLSocketFactory for proxy: " + proxyParams.getHost() + ", error: " + e.getMessage());
