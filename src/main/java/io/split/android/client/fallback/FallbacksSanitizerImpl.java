@@ -19,8 +19,6 @@ class FallbacksSanitizerImpl implements FallbacksSanitizer {
     private static final String TREATMENT_REGEXP = "^[0-9]+[.a-zA-Z0-9_-]*$|^[a-zA-Z]+[a-zA-Z0-9_-]*$";
     private static final Pattern TREATMENT_PATTERN = Pattern.compile(TREATMENT_REGEXP);
 
-    
-
     @Override
     @Nullable
     public FallbackTreatment sanitizeGlobal(@Nullable FallbackTreatment global) {
