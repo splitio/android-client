@@ -76,8 +76,6 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         mDatabase.runInTransaction(new Runnable() {
             @Override
             public void run() {
-                mDatabase.generalInfoDao().update(
-                        new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, splitChange.getChangeNumber()));
                 if (!splitEntities.isEmpty()) {
                     mDatabase.splitDao().insert(splitEntities);
                 }
@@ -94,6 +92,8 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                     mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP,
                             encryptedFlagSets));
                 }
+                mDatabase.generalInfoDao().update(
+                        new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, splitChange.getChangeNumber()));
                 mDatabase.generalInfoDao().update(
                         new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, splitChange.getUpdateTimestamp()));
             }

@@ -28,8 +28,6 @@ public interface SplitsStorage extends RolloutDefinitionsCache {
 
     long getTill();
 
-    long getUpdateTimestamp();
-
     String getSplitsFilterQueryString();
 
     void updateSplitsFilterQueryString(String queryString);

@@ -109,11 +109,6 @@ public class LocalhostSplitsStorage implements SplitsStorage {
     }
 
     @Override
-    public long getUpdateTimestamp() {
-        return 1;
-    }
-
-    @Override
     public String getSplitsFilterQueryString() {
         return "";
     }
