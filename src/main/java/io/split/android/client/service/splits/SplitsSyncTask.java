@@ -12,8 +12,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.synchronizer.SplitsChangeChecker;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
-import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
@@ -21,8 +20,7 @@ public class SplitsSyncTask implements SplitTask {
 
     private final String mSplitsFilterQueryStringFromConfig;
 
-    private final SplitsStorage mSplitsStorage;
-    private final RuleBasedSegmentStorageProducer mRuleBasedSegmentStorage;
+    private final GeneralInfoStorage mGeneralInfoStorage;
     private final SplitsSyncHelper mSplitsSyncHelper;
     @Nullable
     private final ISplitEventsManager mEventsManager; // Should only be null on background sync
@@ -31,33 +29,29 @@ public class SplitsSyncTask implements SplitTask {
     private final int mOnDemandFetchBackoffMaxRetries;
 
     public static SplitsSyncTask build(@NonNull SplitsSyncHelper splitsSyncHelper,
-                                       @NonNull SplitsStorage splitsStorage,
-                                       @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
+                                       @NonNull GeneralInfoStorage generalInfoStorage,
                                        String splitsFilterQueryString,
                                        @NonNull ISplitEventsManager eventsManager,
                                        @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
-        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, ruleBasedSegmentStorage, splitsFilterQueryString, telemetryRuntimeProducer, eventsManager, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+        return new SplitsSyncTask(splitsSyncHelper, generalInfoStorage, splitsFilterQueryString, telemetryRuntimeProducer, eventsManager, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
     }
 
     public static SplitTask buildForBackground(@NonNull SplitsSyncHelper splitsSyncHelper,
-                                               @NonNull SplitsStorage splitsStorage,
-                                               @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
+                                               @NonNull GeneralInfoStorage generalInfoStorage,
                                                String splitsFilterQueryString,
                                                @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
-        return new SplitsSyncTask(splitsSyncHelper, splitsStorage, ruleBasedSegmentStorage, splitsFilterQueryString, telemetryRuntimeProducer, null, 1);
+        return new SplitsSyncTask(splitsSyncHelper, generalInfoStorage, splitsFilterQueryString, telemetryRuntimeProducer, null, 1);
     }
 
     private SplitsSyncTask(@NonNull SplitsSyncHelper splitsSyncHelper,
-                           @NonNull SplitsStorage splitsStorage,
-                           @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
+                           @NonNull GeneralInfoStorage generalInfoStorage,
                            String splitsFilterQueryString,
                            @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                            @Nullable ISplitEventsManager eventsManager,
                            int onDemandFetchBackoffMaxRetries) {
 
-        mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
-        mRuleBasedSegmentStorage = checkNotNull(ruleBasedSegmentStorage);
+        mGeneralInfoStorage = checkNotNull(generalInfoStorage);
         mSplitsFilterQueryStringFromConfig = splitsFilterQueryString;
         mEventsManager = eventsManager;
         mChangeChecker = new SplitsChangeChecker();
@@ -68,13 +62,13 @@ public class SplitsSyncTask implements SplitTask {
     @Override
     @NonNull
     public SplitTaskExecutionInfo execute() {
-        long storedChangeNumber = mSplitsStorage.getTill();
-        long storedRbsChangeNumber = mRuleBasedSegmentStorage.getChangeNumber();
+        long storedChangeNumber = mGeneralInfoStorage.getFlagsChangeNumber();
+        long storedRbsChangeNumber = mGeneralInfoStorage.getRbsChangeNumber();
 
-        boolean splitsFilterHasChanged = splitsFilterHasChanged(mSplitsStorage.getSplitsFilterQueryString());
+        boolean splitsFilterHasChanged = splitsFilterHasChanged(mGeneralInfoStorage.getSplitsFilterQueryString());
 
         if (splitsFilterHasChanged) {
-            mSplitsStorage.updateSplitsFilterQueryString(mSplitsFilterQueryStringFromConfig);
+            mGeneralInfoStorage.setSplitsFilterQueryString(mSplitsFilterQueryStringFromConfig);
             storedChangeNumber = -1;
         }
 
@@ -95,7 +89,7 @@ public class SplitsSyncTask implements SplitTask {
     private void notifyInternalEvent(long storedChangeNumber) {
         if (mEventsManager != null) {
             SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
-            if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill())) {
+            if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mGeneralInfoStorage.getFlagsChangeNumber())) {
                 event = SplitInternalEvent.SPLITS_UPDATED;
             }
 

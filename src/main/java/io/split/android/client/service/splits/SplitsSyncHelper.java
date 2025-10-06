@@ -46,6 +46,7 @@ public class SplitsSyncHelper {
     private final SplitChangeProcessor mSplitChangeProcessor;
     private final RuleBasedSegmentChangeProcessor mRuleBasedSegmentChangeProcessor;
     private final RuleBasedSegmentStorageProducer mRuleBasedSegmentStorage;
+    private final GeneralInfoStorage mGeneralInfoStorage;
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final BackoffCounter mBackoffCounter;
     private final OutdatedSplitProxyHandler mOutdatedSplitProxyHandler;
@@ -113,6 +114,7 @@ public class SplitsSyncHelper {
         mRuleBasedSegmentStorage = checkNotNull(ruleBasedSegmentStorage);
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mBackoffCounter = checkNotNull(backoffCounter);
+        mGeneralInfoStorage = checkNotNull(generalInfoStorage);
         mOutdatedSplitProxyHandler = new OutdatedSplitProxyHandler(flagsSpec, forBackgroundSync, generalInfoStorage, proxyCheckIntervalMillis);
     }
 
@@ -225,8 +227,8 @@ public class SplitsSyncHelper {
 
         SinceChangeNumbers newTill = till;
         while (true) {
-            long changeNumber = (resetChangeNumber) ? -1 : mSplitsStorage.getTill();
-            long rbsChangeNumber = (resetChangeNumber) ? -1 : mRuleBasedSegmentStorage.getChangeNumber();
+            long changeNumber = (resetChangeNumber) ? -1 : mGeneralInfoStorage.getFlagsChangeNumber();
+            long rbsChangeNumber = (resetChangeNumber) ? -1 : mGeneralInfoStorage.getRbsChangeNumber();
             resetChangeNumber = false;
             if ((newTill.getFlagsSince() < changeNumber) && ((newTill.getRbsSince() == null) || (newTill.getRbsSince() < rbsChangeNumber))) {
                 return new SinceChangeNumbers(changeNumber, rbsChangeNumber);

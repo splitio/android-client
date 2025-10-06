@@ -15,6 +15,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import androidx.annotation.NonNull;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,8 +32,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
-import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
-import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.telemetry.model.OperationType;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.helpers.FileHelper;
@@ -40,10 +41,9 @@ public class SplitSyncTaskTest {
 
     private static final long OLD_TIMESTAMP = 1546300800L; //2019-01-01
 
-    SplitsStorage mSplitsStorage;
     SplitChange mSplitChange = null;
     SplitsSyncHelper mSplitsSyncHelper;
-    RuleBasedSegmentStorageProducer mRuleBasedSegmentStorage;
+    private GeneralInfoStorage mGeneralInfoStorage;
 
     SplitsSyncTask mTask;
     String mQueryString = "qs=1";
@@ -56,10 +56,9 @@ public class SplitSyncTaskTest {
     public void setup() {
         mTelemetryRuntimeProducer = mock(TelemetryRuntimeProducer.class);
 
-        mSplitsStorage = mock(SplitsStorage.class);
         mSplitsSyncHelper = mock(SplitsSyncHelper.class);
         mEventsManager = mock(SplitEventsManager.class);
-        mRuleBasedSegmentStorage = mock(RuleBasedSegmentStorageProducer.class);
+        mGeneralInfoStorage = mock(GeneralInfoStorage.class);
 
         when(mSplitsSyncHelper.sync(notNull(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLIT_KILL));
 
@@ -72,12 +71,12 @@ public class SplitSyncTaskTest {
         // Querystring is the same, so no clear sould be called
         // And updateTimestamp is 0
         // Retry is off, so splitSyncHelper.sync should be called
-        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mGeneralInfoStorage,
                 mQueryString, mEventsManager, mTelemetryRuntimeProducer);
-        when(mSplitsStorage.getTill()).thenReturn(-1L);
-        when(mRuleBasedSegmentStorage.getChangeNumber()).thenReturn(-1L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
-        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mGeneralInfoStorage.getFlagsChangeNumber()).thenReturn(-1L);
+        when(mGeneralInfoStorage.getRbsChangeNumber()).thenReturn(-1L);
+        when(mGeneralInfoStorage.getSplitsUpdateTimestamp()).thenReturn(0L);
+        when(mGeneralInfoStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
 
         mTask.execute();
 
@@ -93,17 +92,17 @@ public class SplitSyncTaskTest {
         String otherQs = "q=other";
         Map<String, Object> params = new HashMap<>();
         params.put("since", 100L);
-        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mGeneralInfoStorage,
                 otherQs, mEventsManager, mTelemetryRuntimeProducer);
-        when(mSplitsStorage.getTill()).thenReturn(100L);
-        when(mRuleBasedSegmentStorage.getChangeNumber()).thenReturn(200L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
-        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mGeneralInfoStorage.getFlagsChangeNumber()).thenReturn(100L);
+        when(mGeneralInfoStorage.getRbsChangeNumber()).thenReturn(200L);
+        when(mGeneralInfoStorage.getSplitsUpdateTimestamp()).thenReturn(1111L);
+        when(mGeneralInfoStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
 
         mTask.execute();
 
         verify(mSplitsSyncHelper, times(1)).sync(argThat(argument -> argument.getFlagsSince() == -1 && argument.getRbsSince() == 200), eq(true), eq(true), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES));
-        verify(mSplitsStorage, times(1)).updateSplitsFilterQueryString(otherQs);
+        verify(mGeneralInfoStorage, times(1)).setSplitsFilterQueryString(otherQs);
     }
 
     @Test
@@ -111,16 +110,15 @@ public class SplitSyncTaskTest {
         // Splits have to be cleared when query string on db is != than current one on current sdk client instance
         // Setting up cache not expired
 
-        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
-                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
-        when(mSplitsStorage.getTill()).thenReturn(100L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(1111L);
-        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        mTask = buildSplitsSyncTask();
+        when(mGeneralInfoStorage.getFlagsChangeNumber()).thenReturn(100L);
+        when(mGeneralInfoStorage.getSplitsUpdateTimestamp()).thenReturn(1111L);
+        when(mGeneralInfoStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
 
         mTask.execute();
 
         verify(mSplitsSyncHelper, times(1)).sync(argThat(argument -> argument.getFlagsSince() == 100L), eq(false), eq(false), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES));
-        verify(mSplitsStorage, never()).updateSplitsFilterQueryString(anyString());
+        verify(mGeneralInfoStorage, never()).setSplitsFilterQueryString(anyString());
     }
 
     @Test
@@ -129,11 +127,10 @@ public class SplitSyncTaskTest {
         // Querystring is the same, so no clear sould be called
         // And updateTimestamp is 0
         // Retry is off, so splitSyncHelper.sync should be called
-        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
-                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
-        when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
-        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        mTask = buildSplitsSyncTask();
+        when(mGeneralInfoStorage.getFlagsChangeNumber()).thenReturn(-1L).thenReturn(100L);
+        when(mGeneralInfoStorage.getSplitsUpdateTimestamp()).thenReturn(0L);
+        when(mGeneralInfoStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
 
         mTask.execute();
@@ -147,11 +144,10 @@ public class SplitSyncTaskTest {
         // Querystring is the same, so no clear sould be called
         // And updateTimestamp is 0
         // Retry is off, so splitSyncHelper.sync should be called
-        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
-                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
-        when(mSplitsStorage.getTill()).thenReturn(100L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
-        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        mTask = buildSplitsSyncTask();
+        when(mGeneralInfoStorage.getFlagsChangeNumber()).thenReturn(100L);
+        when(mGeneralInfoStorage.getSplitsUpdateTimestamp()).thenReturn(0L);
+        when(mGeneralInfoStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
 
         mTask.execute();
@@ -161,11 +157,10 @@ public class SplitSyncTaskTest {
 
     @Test
     public void syncIsTrackedInTelemetry() {
-        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
-                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
-        when(mSplitsStorage.getTill()).thenReturn(100L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
-        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        mTask = buildSplitsSyncTask();
+        when(mGeneralInfoStorage.getFlagsChangeNumber()).thenReturn(100L);
+        when(mGeneralInfoStorage.getSplitsUpdateTimestamp()).thenReturn(0L);
+        when(mGeneralInfoStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
 
         mTask.execute();
@@ -175,20 +170,25 @@ public class SplitSyncTaskTest {
 
     @Test
     public void recordSuccessInTelemetry() {
-        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
-                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
-        when(mSplitsStorage.getTill()).thenReturn(-1L);
-        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
-        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        mTask = buildSplitsSyncTask();
+        when(mGeneralInfoStorage.getFlagsChangeNumber()).thenReturn(-1L);
+        when(mGeneralInfoStorage.getSplitsUpdateTimestamp()).thenReturn(0L);
+        when(mGeneralInfoStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
 
         mTask.execute();
 
         verify(mTelemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.SPLITS), longThat(arg -> arg > 0));
     }
 
+    @NonNull
+    private SplitsSyncTask buildSplitsSyncTask() {
+        return SplitsSyncTask.build(mSplitsSyncHelper, mGeneralInfoStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+    }
+
     @After
     public void tearDown() {
-        reset(mSplitsStorage);
+        reset(mGeneralInfoStorage);
     }
 
     private void loadSplitChanges() {
