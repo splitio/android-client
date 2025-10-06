@@ -4,7 +4,6 @@ import static org.junit.Assert.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -64,12 +63,12 @@ public class SplitsSyncWorkerTaskBuilderTest {
     }
 
     @Test
-    public void getTaskDoesNotUseStorageProviderForSplitsStorage() {
+    public void getTaskUsesStorageProviderForSplitsStorage() {
         SplitsSyncWorkerTaskBuilder builder = getSplitsSyncWorkerTaskBuilder(null);
 
         builder.getTask();
 
-        verify(mStorageProvider, times(0)).provideSplitsStorage();
+        verify(mStorageProvider).provideSplitsStorage();
     }
 
     @Test
