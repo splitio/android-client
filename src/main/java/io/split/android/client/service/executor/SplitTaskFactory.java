@@ -22,7 +22,7 @@ public interface SplitTaskFactory extends TelemetryTaskFactory, ImpressionsTaskF
 
     EventsRecorderTask createEventsRecorderTask();
 
-    SplitsSyncTask createSplitsSyncTask(boolean checkCacheExpiration);
+    SplitsSyncTask createSplitsSyncTask();
 
     LoadSplitsTask createLoadSplitsTask();
 

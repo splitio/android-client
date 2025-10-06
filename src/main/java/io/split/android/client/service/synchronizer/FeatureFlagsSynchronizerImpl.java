@@ -79,7 +79,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
             };
         }
 
-        mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), mSplitsSyncListener);
+        mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(), mSplitsSyncListener);
         mLoadLocalSplitsListener = new LoadLocalDataListener(
                 splitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
     }
@@ -144,7 +144,7 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
         }
 
         mSplitsFetcherTaskId = mSplitsTaskExecutor.schedule(
-                mSplitTaskFactory.createSplitsSyncTask(false),
+                mSplitTaskFactory.createSplitsSyncTask(),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitClientConfig.featuresRefreshRate(),
                 mSplitsSyncListener);

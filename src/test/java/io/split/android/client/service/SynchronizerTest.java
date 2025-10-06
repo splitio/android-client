@@ -182,7 +182,7 @@ public class SynchronizerTest {
         when(mSplitStorageContainer.getEventsStorage()).thenReturn(mEventsStorage);
         when(mSplitStorageContainer.getImpressionsStorage()).thenReturn(mImpressionsStorage);
 
-        when(mTaskFactory.createSplitsSyncTask(anyBoolean())).thenReturn(Mockito.mock(SplitsSyncTask.class));
+        when(mTaskFactory.createSplitsSyncTask()).thenReturn(Mockito.mock(SplitsSyncTask.class));
         when(mMySegmentsTaskFactory.createMySegmentsSyncTask(anyBoolean(), anyLong(), anyLong())).thenReturn(Mockito.mock(MySegmentsSyncTask.class));
         when(mTaskFactory.createImpressionsRecorderTask()).thenReturn(Mockito.mock(ImpressionsRecorderTask.class));
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(Mockito.mock(EventsRecorderTask.class));

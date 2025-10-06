@@ -1,7 +1,6 @@
 package io.split.android.client.service.telemetry;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
@@ -75,7 +74,7 @@ public class SynchronizerImplTelemetryTest {
 
         SplitTaskFactory mTaskFactory = mock(SplitTaskFactory.class);
         when(mTaskFactory.createEventsRecorderTask()).thenReturn(eventsRecorderTask);
-        when(mTaskFactory.createSplitsSyncTask(anyBoolean())).thenReturn(mock(SplitsSyncTask.class));
+        when(mTaskFactory.createSplitsSyncTask()).thenReturn(mock(SplitsSyncTask.class));
 
         SplitTaskExecutor mTaskExecutor = mock(SplitTaskExecutor.class);
         SplitTaskExecutor mSingleThreadTaskExecutor = mock(SplitTaskExecutor.class);
