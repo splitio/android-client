@@ -490,10 +490,10 @@ public class SplitsSyncHelperTest {
     @Test
     public void generic400InFallbackDoesNotResetToNone() throws Exception {
         // Simulate proxy outdated error
+        when(mGeneralInfoStorage.getFlagsChangeNumber()).thenReturn(-1L);
         when(mSplitsFetcher.execute(any(), any()))
                 .thenThrow(new HttpFetcherException("Proxy outdated", "Proxy outdated", HttpStatus.INTERNAL_PROXY_OUTDATED.getCode()))
                 .thenThrow(new HttpFetcherException("Bad Request", "Bad Request", 400));
-        when(mGeneralInfoStorage.getFlagsChangeNumber()).thenReturn(-1L);
         // Trigger fallback
         mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
         // Next call gets a generic 400, should remain in fallback
