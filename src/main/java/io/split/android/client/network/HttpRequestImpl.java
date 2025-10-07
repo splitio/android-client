@@ -10,10 +10,9 @@ import static io.split.android.client.network.HttpRequestHelper.createConnection
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.io.BufferedReader;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpRetryException;
 import java.net.HttpURLConnection;
@@ -234,19 +233,22 @@ public class HttpRequestImpl implements HttpRequest {
         int responseCode = connection.getResponseCode();
 
         if (responseCode >= HttpURLConnection.HTTP_OK && responseCode < 300) {
-            StringBuilder responseData = new StringBuilder();
+            String responseData = null;
             try (InputStream inputStream = connection.getInputStream()) {
                 if (inputStream != null) {
-                    try (BufferedReader in = new BufferedReader(new InputStreamReader(inputStream))) {
-                        String inputLine;
-                        while ((inputLine = in.readLine()) != null) {
-                            responseData.append(inputLine);
-                        }
+                    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                    byte[] data = new byte[8192];
+                    int bytesRead;
+                    while ((bytesRead = inputStream.read(data, 0, data.length)) != -1) {
+                        buffer.write(data, 0, bytesRead);
+                    }
+                    if (buffer.size() > 0) {
+                        responseData = buffer.toString("UTF-8");
                     }
                 }
             }
 
-            return new HttpResponseImpl(responseCode, (responseData.length() > 0 ? responseData.toString() : null));
+            return new HttpResponseImpl(responseCode, responseData);
         }
 
         return new HttpResponseImpl(responseCode);
