@@ -10,6 +10,8 @@ import androidx.annotation.VisibleForTesting;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.RuleBasedSegmentChange;
@@ -49,6 +51,7 @@ public class SplitsSyncHelper {
     private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
     private final BackoffCounter mBackoffCounter;
     private final OutdatedSplitProxyHandler mOutdatedSplitProxyHandler;
+    private final ExecutorService mExecutor;
 
     public SplitsSyncHelper(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
                             @NonNull SplitsStorage splitsStorage,
@@ -114,6 +117,7 @@ public class SplitsSyncHelper {
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mBackoffCounter = checkNotNull(backoffCounter);
         mOutdatedSplitProxyHandler = new OutdatedSplitProxyHandler(flagsSpec, forBackgroundSync, generalInfoStorage, proxyCheckIntervalMillis);
+        mExecutor = Executors.newSingleThreadExecutor();
     }
 
     public SplitTaskExecutionInfo sync(SinceChangeNumbers till, int onDemandFetchBackoffMaxRetries) {
@@ -270,13 +274,13 @@ public class SplitsSyncHelper {
             mSplitsStorage.clear();
             mRuleBasedSegmentStorage.clear();
         }
-        mSplitsStorage.update(mSplitChangeProcessor.process(splitChange));
+        mSplitsStorage.update(mSplitChangeProcessor.process(splitChange), mExecutor);
         updateRbsStorage(ruleBasedSegmentChange);
     }
 
     private void updateRbsStorage(RuleBasedSegmentChange ruleBasedSegmentChange) {
         ProcessedRuleBasedSegmentChange change = mRuleBasedSegmentChangeProcessor.process(ruleBasedSegmentChange.getSegments(), ruleBasedSegmentChange.getTill());
-        mRuleBasedSegmentStorage.update(change.getActive(), change.getArchived(), change.getChangeNumber());
+        mRuleBasedSegmentStorage.update(change.getActive(), change.getArchived(), change.getChangeNumber(), mExecutor);
     }
 
     private void logError(String message) {

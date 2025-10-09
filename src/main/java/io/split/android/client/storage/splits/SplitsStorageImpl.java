@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.Split;
@@ -124,7 +125,7 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     @Override
     @WorkerThread
-    public boolean update(ProcessedSplitChange splitChange) {
+    public boolean update(ProcessedSplitChange splitChange, ExecutorService mExecutor) {
         if (splitChange == null) {
             return false;
         }
@@ -163,7 +164,11 @@ public class SplitsStorageImpl implements SplitsStorage {
         mChangeNumber = splitChange.getChangeNumber();
         mUpdateTimestamp = splitChange.getUpdateTimestamp();
 
-        mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets);
+        if ((activeSplits.size() > 50 || archivedSplits.size() > 50) && mExecutor != null) {
+            mExecutor.submit(() -> mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets));
+        } else {
+            mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets);
+        }
 
         return appliedUpdates;
     }

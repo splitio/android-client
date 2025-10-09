@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.dtos.RuleBasedSegment;
@@ -27,7 +28,7 @@ public class RuleBasedSegmentStorageProducerImpl implements RuleBasedSegmentStor
     }
 
     @Override
-    public boolean update(@NonNull Set<RuleBasedSegment> toAdd, @NonNull Set<RuleBasedSegment> toRemove, long changeNumber) {
+    public boolean update(@NonNull Set<RuleBasedSegment> toAdd, @NonNull Set<RuleBasedSegment> toRemove, long changeNumber, ExecutorService executor) {
         boolean appliedUpdates = false;
 
         if (toAdd != null) {
@@ -53,7 +54,13 @@ public class RuleBasedSegmentStorageProducerImpl implements RuleBasedSegmentStor
         }
 
         mChangeNumberRef.set(changeNumber);
-        mPersistentStorage.update(toAdd, toRemove, changeNumber);
+        HashSet<RuleBasedSegment> finalToAdd = new HashSet<>(toAdd);
+        HashSet<RuleBasedSegment> finalToRemove = new HashSet<>(toRemove);
+        if ((finalToAdd.size() > 50 || finalToRemove.size() > 50) && executor != null) {
+            executor.submit(() -> mPersistentStorage.update(finalToAdd, finalToRemove, changeNumber));
+        } else {
+            mPersistentStorage.update(toAdd, toRemove, changeNumber);
+        }
 
         return appliedUpdates;
     }

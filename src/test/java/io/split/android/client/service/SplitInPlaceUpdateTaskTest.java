@@ -60,7 +60,7 @@ public class SplitInPlaceUpdateTaskTest {
         SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
 
         verify(mSplitChangeProcessor).process(mSplit, 123L);
-        verify(mSplitsStorage).update(processedSplitChange);
+        verify(mSplitsStorage).update(processedSplitChange, null);
         verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
 
         assertEquals(result.getStatus(), SplitTaskExecutionStatus.SUCCESS);
@@ -74,7 +74,7 @@ public class SplitInPlaceUpdateTaskTest {
         SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
 
         verify(mSplitChangeProcessor).process(mSplit, 123L);
-        verify(mSplitsStorage, never()).update(any());
+        verify(mSplitsStorage, never()).update(any(), null);
         verify(mEventsManager, never()).notifyInternalEvent(any());
         verify(mTelemetryRuntimeProducer, never()).recordUpdatesFromSSE(any());
 
@@ -86,12 +86,12 @@ public class SplitInPlaceUpdateTaskTest {
         ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 0L, 0);
 
         when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
-        doThrow(new RuntimeException()).when(mSplitsStorage).update(processedSplitChange);
+        doThrow(new RuntimeException()).when(mSplitsStorage).update(processedSplitChange, null);
 
         SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
 
         verify(mSplitChangeProcessor).process(mSplit, 123L);
-        verify(mSplitsStorage).update(processedSplitChange);
+        verify(mSplitsStorage).update(processedSplitChange, null);
         verify(mEventsManager, never()).notifyInternalEvent(any());
         verify(mTelemetryRuntimeProducer, never()).recordUpdatesFromSSE(any());
 
@@ -103,12 +103,12 @@ public class SplitInPlaceUpdateTaskTest {
         ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 0L, 0);
 
         when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
-        when(mSplitsStorage.update(processedSplitChange)).thenReturn(false);
+        when(mSplitsStorage.update(processedSplitChange, null)).thenReturn(false);
 
         SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
 
         verify(mSplitChangeProcessor).process(mSplit, 123L);
-        verify(mSplitsStorage).update(processedSplitChange);
+        verify(mSplitsStorage).update(processedSplitChange, null);
         verify(mEventsManager, never()).notifyInternalEvent(any());
         verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
     }
@@ -118,12 +118,12 @@ public class SplitInPlaceUpdateTaskTest {
         ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 0L, 0);
 
         when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
-        when(mSplitsStorage.update(processedSplitChange)).thenReturn(true);
+        when(mSplitsStorage.update(processedSplitChange, null)).thenReturn(true);
 
         SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
 
         verify(mSplitChangeProcessor).process(mSplit, 123L);
-        verify(mSplitsStorage).update(processedSplitChange);
+        verify(mSplitsStorage).update(processedSplitChange, null);
         verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
         verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
     }

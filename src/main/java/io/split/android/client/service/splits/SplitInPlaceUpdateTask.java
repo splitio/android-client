@@ -44,7 +44,7 @@ public class SplitInPlaceUpdateTask implements SplitTask {
     public SplitTaskExecutionInfo execute() {
         try {
             ProcessedSplitChange processedSplitChange = mSplitChangeProcessor.process(mSplit, mChangeNumber);
-            boolean triggerSdkUpdate = mSplitsStorage.update(processedSplitChange);
+            boolean triggerSdkUpdate = mSplitsStorage.update(processedSplitChange, null);
 
             if (triggerSdkUpdate) {
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
