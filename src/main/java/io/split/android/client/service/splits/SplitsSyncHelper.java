@@ -236,12 +236,15 @@ public class SplitsSyncHelper {
 
     private SinceChangeNumbers fetchUntil(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, CdnByPassType withCdnByPass, boolean resetChangeNumber) throws Exception {
         boolean shouldClearBeforeUpdate = clearBeforeUpdate;
+        boolean usedCache = false;
 
         SinceChangeNumbers newTill = till;
+        boolean lockAcquired = false;
         try {
             while (true) {
-                if (mCachedFetchLock != null) {
+                if (mCachedFetchLock != null && !lockAcquired) {
                     mCachedFetchLock.lock();
+                    lockAcquired = true;
                 }
                 long changeNumber = (resetChangeNumber) ? -1 : mSplitsStorage.getTill();
                 long rbsChangeNumber = (resetChangeNumber) ? -1 : mRuleBasedSegmentStorage.getChangeNumber();
@@ -252,11 +255,18 @@ public class SplitsSyncHelper {
 
                 TargetingRulesChange targetingRulesChange;
                 if ((rbsChangeNumber == -1L) && changeNumber == -1 && mCacheRef != null && mCacheRef.get() != null) {
-                    System.out.println("Initializer: Using cached TR value");
+                    Logger.d("Fresh install: Using prefetched targeting rules from cache");
                     targetingRulesChange = mCacheRef.get();
+                    usedCache = true;
                 } else {
-                    System.out.println("Initializer: not using caching value - rbsCN: " + rbsChangeNumber + " changeNumber: " + changeNumber + " mCacheRef == null " + (mCacheRef == null));
+                    Logger.d("Fetching targeting rules - changeNumber: " + changeNumber + ", rbsChangeNumber: " + rbsChangeNumber);
                     targetingRulesChange = fetchSplits(new SinceChangeNumbers(changeNumber, rbsChangeNumber), avoidCache, withCdnByPass);
+                }
+
+                // Release lock after first use of cache to avoid blocking subsequent syncs
+                if (lockAcquired && usedCache) {
+                    mCachedFetchLock.unlock();
+                    lockAcquired = false;
                 }
 
                 SplitChange splitChange = targetingRulesChange.getFeatureFlagsChange();
@@ -270,9 +280,8 @@ public class SplitsSyncHelper {
                 }
             }
         } finally {
-            if (mCachedFetchLock != null) {
+            if (lockAcquired) {
                 mCachedFetchLock.unlock();
-                mCachedFetchLock = null;
             }
         }
     }
@@ -297,7 +306,6 @@ public class SplitsSyncHelper {
         return mSplitFetcher.execute(params, getHeaders(avoidCache));
     }
 
-    // TODO
     public static void fetchSplits(SinceChangeNumbers till,
                                    boolean avoidCache,
                                    String currentSpec,

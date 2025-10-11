@@ -115,14 +115,9 @@ class SplitFactoryHelper {
         return dbName;
     }
 
-    /**
-     * Returns the database name if it exists, null otherwise.
-     * @param context
-     * @param dbName
-     * @return
-     */
     @Nullable
-    static String getDbName(Context context, String dbName) {
+    private String getDbName(SplitClientConfig config, String apiToken, Context context) {
+        String dbName = buildDatabaseName(config, apiToken);
         File dbPath = context.getDatabasePath(dbName);
         if (dbPath.exists()) {
             return dbName;

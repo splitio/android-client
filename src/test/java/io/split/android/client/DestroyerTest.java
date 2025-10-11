@@ -100,7 +100,7 @@ public class DestroyerTest {
             mSplitManager,
             mSplitTaskExecutor,
             mSplitSingleThreadTaskExecutor,
-            mIsTerminated
+                mInitExecutor, mIsTerminated
         );
     }
 
@@ -170,7 +170,7 @@ public class DestroyerTest {
             mSplitManager,
             mSplitTaskExecutor,
             mSplitSingleThreadTaskExecutor,
-            mIsTerminated
+                mInitExecutor, mIsTerminated
         ) {
             @Override
             public void run() {

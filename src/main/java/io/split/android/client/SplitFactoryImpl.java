@@ -108,6 +108,8 @@ public class SplitFactoryImpl implements SplitFactory {
     private AtomicReference<TargetingRulesChange> mCachedFetchRef = null;
     private ReentrantLock mCachedFetchLock = null;
 
+    private final ExecutorService mInitExecutor = Executors.newFixedThreadPool(2);
+
     public SplitFactoryImpl(@NonNull String apiToken, @NonNull Key key, @NonNull SplitClientConfig config, @NonNull Context context)
             throws URISyntaxException {
         this(apiToken, key, config, context,
@@ -152,45 +154,27 @@ public class SplitFactoryImpl implements SplitFactory {
         mFactoryMonitor.add(apiToken);
         mApiKey = apiToken;
 
-
-HttpClient defaultHttpClient = null;
-SplitApiFacade splitApiFacade = null;
-Pair<Map<SplitFilter.Type, SplitFilter>, String> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
-Map<SplitFilter.Type, SplitFilter> filters = filtersConfig.first;
-String splitsFilterQueryStringFromConfig = filtersConfig.second;
-
-String flagsSpec = getFlagsSpec(testingConfig);
-FlagSetsFilter flagSetsFilter = factoryHelper.getFlagSetsFilter(filters);
-WorkManagerWrapper workManagerWrapper = null;
+        Pair<Map<SplitFilter.Type, SplitFilter>, String> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
+        Map<SplitFilter.Type, SplitFilter> filters = filtersConfig.first;
+        String splitsFilterQueryStringFromConfig = filtersConfig.second;
+        String flagsSpec = getFlagsSpec(testingConfig);
+        FlagSetsFilter flagSetsFilter = factoryHelper.getFlagSetsFilter(filters);
         String databaseName = SplitFactoryHelper.buildDatabaseName(config, apiToken);
+
+        // Check if this is a fresh install (no database exists and not using test database)
         File dbPath = context.getDatabasePath(databaseName);
-        if (!dbPath.exists() && testDatabase != null) {
-            System.out.println("Initializer: no DB; fresh install");
+        boolean isFreshInstall = !dbPath.exists() && testDatabase == null;
+
+        WorkManagerWrapper workManagerWrapper = null;
+        HttpClient defaultHttpClient = null;
+        SplitApiFacade splitApiFacade = null;
+        if (isFreshInstall) {
             workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
             defaultHttpClient = getHttpClient(apiToken, config, context, httpClient, workManagerWrapper, factoryHelper, null);
-            splitApiFacade = factoryHelper.buildApiFacade(
-                    config, defaultHttpClient, splitsFilterQueryStringFromConfig);
-            // TODO -1 flow
-            final SplitApiFacade finalFacade = splitApiFacade;
-            mCachedFetchRef = new AtomicReference<>(null);
-            mCachedFetchLock = new ReentrantLock();
-            new Thread(() -> {
-                try {
-                    SplitsSyncHelper.fetchSplits(new SplitsSyncHelper.SinceChangeNumbers(-1L, -1L),
-                            true,
-                            flagsSpec,
-                            finalFacade.getSplitFetcher(),
-                            mCachedFetchRef,
-                            mCachedFetchLock);
-                    System.out.println("Initializer: finished fetch since start: " + (System.currentTimeMillis() - initializationStartTime));
-                } catch (HttpFetcherException e) {
-                    Logger.w("Error prefetching tr");
-                }
-            }).start();
+            splitApiFacade = factoryHelper.buildApiFacade(config, defaultHttpClient, splitsFilterQueryStringFromConfig);
+            startFreshInstallPrefetch(splitApiFacade, flagsSpec, initializationStartTime);
         }
 
-// Check if test database available
-//        String databaseName = factoryHelper.getDatabaseName(config, apiToken, context);
         SplitRoomDatabase splitDatabase;
         if (testDatabase == null) {
             splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
@@ -218,21 +202,21 @@ WorkManagerWrapper workManagerWrapper = null;
 
         EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
+        // Build WorkManager and Api Facade in case they weren't present
         if (workManagerWrapper == null) {
             workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
         }
-
         if (defaultHttpClient == null) {
             defaultHttpClient = getHttpClient(apiToken, config, context, httpClient, workManagerWrapper, factoryHelper, mStorageContainer.getGeneralInfoStorage());
-            splitApiFacade = factoryHelper.buildApiFacade(
-                    config, defaultHttpClient, splitsFilterQueryStringFromConfig);
+        }
+        if (splitApiFacade == null) {
+            splitApiFacade = factoryHelper.buildApiFacade(config, defaultHttpClient, splitsFilterQueryStringFromConfig);
         }
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig,
                 getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter,
                 testingConfig, mCachedFetchRef, mCachedFetchLock);
-
 
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
         splitSingleThreadTaskExecutor.pause();
@@ -346,7 +330,7 @@ WorkManagerWrapper workManagerWrapper = null;
         }
 
         // Run initializer
-        new Thread(initializer).start();
+        mInitExecutor.submit(initializer);
 
         CleanUpDatabaseTask cleanUpDatabaseTask = splitTaskFactory.createCleanUpDatabaseTask(System.currentTimeMillis() / 1000);
         mSplitTaskExecutor.schedule(cleanUpDatabaseTask, 5L, null);
@@ -374,6 +358,7 @@ WorkManagerWrapper workManagerWrapper = null;
                 mManager,
                 mSplitTaskExecutor,
                 splitSingleThreadTaskExecutor,
+                mInitExecutor,
                 mIsTerminated);
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -409,6 +394,7 @@ WorkManagerWrapper workManagerWrapper = null;
 
             defaultHttpClient = builder.build();
 
+            // This should be extracted; has nothing to do with the method.
             if (config.proxy() != null && generalInfoStorage != null) {
                 SplitFactoryHelper.setupProxyForBackgroundSync(config,
                         SplitFactoryHelper.getProxyConfigSaveTask(config,
@@ -429,6 +415,29 @@ WorkManagerWrapper workManagerWrapper = null;
         } else {
             return testingConfig.getFlagsSpec();
         }
+    }
+
+    private void startFreshInstallPrefetch(@NonNull SplitApiFacade splitApiFacade, @NonNull String flagsSpec, long initializationStartTime) {
+        mCachedFetchRef = new AtomicReference<>(null);
+        mCachedFetchLock = new ReentrantLock();
+
+        Runnable prefetch = () -> {
+            try {
+                Logger.d("Fresh install detected - prefetching targeting rules");
+                SplitsSyncHelper.fetchSplits(
+                        new SplitsSyncHelper.SinceChangeNumbers(-1L, -1L),
+                        true,
+                        flagsSpec,
+                        splitApiFacade.getSplitFetcher(),
+                        mCachedFetchRef,
+                        mCachedFetchLock);
+                long elapsedTime = System.currentTimeMillis() - initializationStartTime;
+                Logger.d("Fresh install prefetch completed in " + elapsedTime + "ms");
+            } catch (HttpFetcherException e) {
+                Logger.w("Error prefetching targeting rules on fresh install: " + e.getLocalizedMessage());
+            }
+        };
+        mInitExecutor.submit(prefetch);
     }
 
     @Override
