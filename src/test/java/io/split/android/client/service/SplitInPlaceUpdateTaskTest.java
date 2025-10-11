@@ -74,7 +74,7 @@ public class SplitInPlaceUpdateTaskTest {
         SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
 
         verify(mSplitChangeProcessor).process(mSplit, 123L);
-        verify(mSplitsStorage, never()).update(any(), null);
+        verify(mSplitsStorage, never()).update(any(), any());
         verify(mEventsManager, never()).notifyInternalEvent(any());
         verify(mTelemetryRuntimeProducer, never()).recordUpdatesFromSSE(any());
 
