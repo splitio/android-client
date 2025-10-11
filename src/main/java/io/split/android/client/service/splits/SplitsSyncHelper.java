@@ -239,16 +239,12 @@ public class SplitsSyncHelper {
 
             TargetingRulesChange targetingRulesChange;
             // Try to use cached value for fresh installs
-            if ((rbsChangeNumber == -1L) && changeNumber == -1 && mTargetingRulesCache != null) {
+            if (rbsChangeNumber == -1L && changeNumber == -1 && mTargetingRulesCache != null) {
                 targetingRulesChange = mTargetingRulesCache.getAndConsume();
-                if (targetingRulesChange != null) {
-                    Logger.d("Fresh install: Using prefetched targeting rules from cache");
-                } else {
-                    Logger.d("Fetching targeting rules - changeNumber: " + changeNumber + ", rbsChangeNumber: " + rbsChangeNumber);
+                if (targetingRulesChange == null) {
                     targetingRulesChange = fetchSplits(new SinceChangeNumbers(changeNumber, rbsChangeNumber), avoidCache, withCdnByPass);
                 }
             } else {
-                Logger.d("Fetching targeting rules - changeNumber: " + changeNumber + ", rbsChangeNumber: " + rbsChangeNumber);
                 targetingRulesChange = fetchSplits(new SinceChangeNumbers(changeNumber, rbsChangeNumber), avoidCache, withCdnByPass);
             }
 

@@ -48,12 +48,12 @@ public class SplitsSyncTask implements SplitTask {
     }
 
     private SplitsSyncTask(@NonNull SplitsSyncHelper splitsSyncHelper,
-                          @NonNull SplitsStorage splitsStorage,
-                          @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
-                          String splitsFilterQueryString,
-                          @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
-                          @Nullable ISplitEventsManager eventsManager,
-                          int onDemandFetchBackoffMaxRetries) {
+                           @NonNull SplitsStorage splitsStorage,
+                           @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
+                           String splitsFilterQueryString,
+                           @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                           @Nullable ISplitEventsManager eventsManager,
+                           int onDemandFetchBackoffMaxRetries) {
 
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);
