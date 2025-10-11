@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.ReentrantLock;
 
 import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClientConfig;
@@ -20,7 +18,6 @@ import io.split.android.client.SplitFilter;
 import io.split.android.client.TestingConfig;
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.Split;
-import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.ServiceConstants;
@@ -46,6 +43,7 @@ import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
+import io.split.android.client.service.splits.TargetingRulesCache;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.telemetry.TelemetryConfigRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryStatsRecorderTask;
@@ -84,8 +82,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                                 @Nullable Map<SplitFilter.Type, SplitFilter> filters,
                                 @Nullable FlagSetsFilter flagSetsFilter,
                                 @Nullable TestingConfig testingConfig,
-                                @Nullable AtomicReference<TargetingRulesChange> cacheRef,
-                                @Nullable ReentrantLock cachedFetchLock) {
+                                @Nullable TargetingRulesCache targetingRulesCache) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitApiFacade = checkNotNull(splitApiFacade);
@@ -109,8 +106,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mTelemetryRuntimeProducer,
                     new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()),
                     flagsSpecFromConfig,
-                    cacheRef,
-                    cachedFetchLock);
+                    targetingRulesCache);
         } else {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
@@ -121,8 +117,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mTelemetryRuntimeProducer,
                     flagsSpecFromConfig,
                     false,
-                    cacheRef,
-                    cachedFetchLock);
+                    targetingRulesCache);
         }
 
         mFilters = (filters == null) ? new ArrayList<>() : new ArrayList<>(filters.values());

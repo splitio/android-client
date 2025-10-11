@@ -90,7 +90,7 @@ public class SplitsSyncHelperTest {
         mSecondFetchParams = getSinceParams(1506703262916L, 262325L);
         when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(262325L);
         // Use a short proxy check interval for all tests
-        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mRuleBasedSegmentChangeProcessor, mRuleBasedSegmentStorageProducer, mGeneralInfoStorage, mTelemetryRuntimeProducer, mBackoffCounter, "1.3", false, 1L, null, null);
+        mSplitsSyncHelper = new SplitsSyncHelper(mSplitsFetcher, mSplitsStorage, mSplitChangeProcessor, mRuleBasedSegmentChangeProcessor, mRuleBasedSegmentStorageProducer, mGeneralInfoStorage, mTelemetryRuntimeProducer, mBackoffCounter, "1.3", false, 1L, null);
         loadSplitChanges();
     }
 

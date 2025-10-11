@@ -18,13 +18,11 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
-import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
@@ -48,6 +46,7 @@ import io.split.android.client.service.impressions.strategy.ImpressionStrategyPr
 import io.split.android.client.service.impressions.strategy.PeriodicTracker;
 import io.split.android.client.service.impressions.strategy.ProcessStrategy;
 import io.split.android.client.service.splits.SplitsSyncHelper;
+import io.split.android.client.service.splits.TargetingRulesCache;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -105,8 +104,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private final SplitTaskExecutor mSplitTaskExecutor;
     private final SplitClientConfig mConfig;
 
-    private AtomicReference<TargetingRulesChange> mCachedFetchRef = null;
-    private ReentrantLock mCachedFetchLock = null;
+    private TargetingRulesCache mTargetingRulesCache = null;
 
     private final ExecutorService mInitExecutor = Executors.newFixedThreadPool(2);
 
@@ -216,7 +214,7 @@ public class SplitFactoryImpl implements SplitFactory {
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig,
                 getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter,
-                testingConfig, mCachedFetchRef, mCachedFetchLock);
+                testingConfig, mTargetingRulesCache);
 
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
         splitSingleThreadTaskExecutor.pause();
@@ -418,8 +416,7 @@ public class SplitFactoryImpl implements SplitFactory {
     }
 
     private void startFreshInstallPrefetch(@NonNull SplitApiFacade splitApiFacade, @NonNull String flagsSpec, long initializationStartTime) {
-        mCachedFetchRef = new AtomicReference<>(null);
-        mCachedFetchLock = new ReentrantLock();
+        mTargetingRulesCache = new TargetingRulesCache();
 
         Runnable prefetch = () -> {
             try {
@@ -429,8 +426,7 @@ public class SplitFactoryImpl implements SplitFactory {
                         true,
                         flagsSpec,
                         splitApiFacade.getSplitFetcher(),
-                        mCachedFetchRef,
-                        mCachedFetchLock);
+                        mTargetingRulesCache);
                 long elapsedTime = System.currentTimeMillis() - initializationStartTime;
                 Logger.d("Fresh install prefetch completed in " + elapsedTime + "ms");
             } catch (HttpFetcherException e) {
