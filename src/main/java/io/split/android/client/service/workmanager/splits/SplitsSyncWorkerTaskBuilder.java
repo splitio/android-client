@@ -1,7 +1,12 @@
 package io.split.android.client.service.workmanager.splits;
 
-import java.net.URISyntaxException;
+import androidx.annotation.Nullable;
 
+import java.net.URISyntaxException;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
+
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.SplitChangeProcessor;
@@ -24,19 +29,25 @@ class SplitsSyncWorkerTaskBuilder {
     private final RuleBasedSegmentChangeProcessor mRuleBasedSegmentChangeProcessor;
     private final SyncHelperProvider mSplitsSyncHelperProvider;
     private final String mFlagsSpec;
+    private final AtomicReference<TargetingRulesChange> mCacheRef;
+    private final ReentrantLock mCachedFetchLock;
 
     SplitsSyncWorkerTaskBuilder(StorageProvider storageProvider,
                                 FetcherProvider fetcherProvider,
                                 SplitChangeProcessor splitChangeProcessor,
                                 RuleBasedSegmentChangeProcessor ruleBasedSegmentChangeProcessor,
                                 SyncHelperProvider splitsSyncHelperProvider,
-                                String flagsSpec) {
+                                String flagsSpec,
+                                @Nullable AtomicReference<TargetingRulesChange> cacheRef,
+                                @Nullable ReentrantLock cachedFetchLock) {
         mStorageProvider = storageProvider;
         mFetcherProvider = fetcherProvider;
         mSplitsSyncHelperProvider = splitsSyncHelperProvider;
         mSplitChangeProcessor = splitChangeProcessor;
         mRuleBasedSegmentChangeProcessor = ruleBasedSegmentChangeProcessor;
         mFlagsSpec = flagsSpec;
+        mCacheRef = cacheRef;
+        mCachedFetchLock = cachedFetchLock;
     }
 
     SplitTask getTask() {
@@ -55,7 +66,9 @@ class SplitsSyncWorkerTaskBuilder {
                     ruleBasedSegmentStorageProducer,
                     generalInfoStorage,
                     telemetryStorage,
-                    mFlagsSpec);
+                    mFlagsSpec,
+                    mCacheRef,
+                    mCachedFetchLock);
 
             return SplitsSyncTask.buildForBackground(splitsSyncHelper,
                     splitsStorage,

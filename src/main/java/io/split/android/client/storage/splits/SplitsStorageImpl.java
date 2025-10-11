@@ -164,7 +164,7 @@ public class SplitsStorageImpl implements SplitsStorage {
         mChangeNumber = splitChange.getChangeNumber();
         mUpdateTimestamp = splitChange.getUpdateTimestamp();
 
-        if ((activeSplits.size() > 50 || archivedSplits.size() > 50) && mExecutor != null) {
+        if (((activeSplits != null && activeSplits.size() > 50) || (archivedSplits != null && archivedSplits.size() > 50)) && mExecutor != null) {
             mExecutor.submit(() -> mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets));
         } else {
             mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets);

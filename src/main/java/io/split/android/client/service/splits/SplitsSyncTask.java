@@ -47,13 +47,13 @@ public class SplitsSyncTask implements SplitTask {
         return new SplitsSyncTask(splitsSyncHelper, splitsStorage, ruleBasedSegmentStorage, splitsFilterQueryString, telemetryRuntimeProducer, null, 1);
     }
 
-    private SplitsSyncTask(@NonNull SplitsSyncHelper splitsSyncHelper,
-                           @NonNull SplitsStorage splitsStorage,
-                           @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
-                           String splitsFilterQueryString,
-                           @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
-                           @Nullable ISplitEventsManager eventsManager,
-                           int onDemandFetchBackoffMaxRetries) {
+    public SplitsSyncTask(@NonNull SplitsSyncHelper splitsSyncHelper,
+                          @NonNull SplitsStorage splitsStorage,
+                          @NonNull RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
+                          String splitsFilterQueryString,
+                          @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                          @Nullable ISplitEventsManager eventsManager,
+                          int onDemandFetchBackoffMaxRetries) {
 
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitsSyncHelper = checkNotNull(splitsSyncHelper);

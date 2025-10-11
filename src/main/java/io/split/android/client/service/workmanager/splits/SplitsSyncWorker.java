@@ -24,7 +24,9 @@ public class SplitsSyncWorker extends SplitWorker {
                 new SplitChangeProcessorProvider().provideSplitChangeProcessor(params.configuredFilterType(), params.configuredFilterValues()),
                 new RuleBasedSegmentChangeProcessor(),
                 new SyncHelperProvider(),
-                params.flagsSpec());
+                params.flagsSpec(),
+                null,
+                null);
 
         mSplitTask = builder.getTask();
     }

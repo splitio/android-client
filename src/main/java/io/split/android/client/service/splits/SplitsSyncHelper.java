@@ -13,6 +13,8 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.split.android.client.dtos.RuleBasedSegmentChange;
 import io.split.android.client.dtos.SplitChange;
@@ -52,6 +54,8 @@ public class SplitsSyncHelper {
     private final BackoffCounter mBackoffCounter;
     private final OutdatedSplitProxyHandler mOutdatedSplitProxyHandler;
     private final ExecutorService mExecutor;
+    private final AtomicReference<TargetingRulesChange> mCacheRef;
+    private ReentrantLock mCachedFetchLock;
 
     public SplitsSyncHelper(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
                             @NonNull SplitsStorage splitsStorage,
@@ -61,7 +65,9 @@ public class SplitsSyncHelper {
                             @NonNull GeneralInfoStorage generalInfoStorage,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @Nullable String flagsSpec,
-                            boolean forBackgroundSync) {
+                            boolean forBackgroundSync,
+                            @Nullable AtomicReference<TargetingRulesChange> cacheRef,
+                            @Nullable ReentrantLock cachedFetchLock) {
         this(splitFetcher,
                 splitsStorage,
                 splitChangeProcessor,
@@ -72,7 +78,9 @@ public class SplitsSyncHelper {
                 new ReconnectBackoffCounter(1, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT),
                 flagsSpec,
                 forBackgroundSync,
-                DEFAULT_PROXY_CHECK_INTERVAL_MILLIS);
+                DEFAULT_PROXY_CHECK_INTERVAL_MILLIS,
+                cacheRef,
+                cachedFetchLock);
     }
 
     public SplitsSyncHelper(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
@@ -83,7 +91,9 @@ public class SplitsSyncHelper {
                             @NonNull GeneralInfoStorage generalInfoStorage,
                             @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
                             @NonNull BackoffCounter backoffCounter,
-                            @Nullable String flagsSpec) {
+                            @Nullable String flagsSpec,
+                            @Nullable AtomicReference<TargetingRulesChange> cacheRef,
+                            @Nullable ReentrantLock cachedFetchLock) {
         this(splitFetcher,
                 splitsStorage,
                 splitChangeProcessor,
@@ -94,7 +104,9 @@ public class SplitsSyncHelper {
                 backoffCounter,
                 flagsSpec,
                 false,
-                DEFAULT_PROXY_CHECK_INTERVAL_MILLIS);
+                DEFAULT_PROXY_CHECK_INTERVAL_MILLIS,
+                cacheRef,
+                cachedFetchLock);
     }
 
     @VisibleForTesting
@@ -108,7 +120,9 @@ public class SplitsSyncHelper {
                             @NonNull BackoffCounter backoffCounter,
                             @Nullable String flagsSpec,
                             boolean forBackgroundSync,
-                            long proxyCheckIntervalMillis) {
+                            long proxyCheckIntervalMillis,
+                            @Nullable AtomicReference<TargetingRulesChange> cacheRef,
+                            @Nullable ReentrantLock cachedFetchLock) {
         mSplitFetcher = checkNotNull(splitFetcher);
         mSplitsStorage = checkNotNull(splitsStorage);
         mSplitChangeProcessor = checkNotNull(splitChangeProcessor);
@@ -118,6 +132,8 @@ public class SplitsSyncHelper {
         mBackoffCounter = checkNotNull(backoffCounter);
         mOutdatedSplitProxyHandler = new OutdatedSplitProxyHandler(flagsSpec, forBackgroundSync, generalInfoStorage, proxyCheckIntervalMillis);
         mExecutor = Executors.newSingleThreadExecutor();
+        mCacheRef = cacheRef;
+        mCachedFetchLock = cachedFetchLock;
     }
 
     public SplitTaskExecutionInfo sync(SinceChangeNumbers till, int onDemandFetchBackoffMaxRetries) {
@@ -178,12 +194,6 @@ public class SplitsSyncHelper {
         return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
     }
 
-    private SplitTaskExecutionInfo handleOutdatedProxy(SinceChangeNumbers till, boolean ignoredAvoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) throws Exception {
-
-
-        return SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC);
-    }
-
     /**
      * @param targetChangeNumber             target changeNumber
      * @param clearBeforeUpdate              whether to clear splits storage before updating it
@@ -228,23 +238,41 @@ public class SplitsSyncHelper {
         boolean shouldClearBeforeUpdate = clearBeforeUpdate;
 
         SinceChangeNumbers newTill = till;
-        while (true) {
-            long changeNumber = (resetChangeNumber) ? -1 : mSplitsStorage.getTill();
-            long rbsChangeNumber = (resetChangeNumber) ? -1 : mRuleBasedSegmentStorage.getChangeNumber();
-            resetChangeNumber = false;
-            if ((newTill.getFlagsSince() < changeNumber) && ((newTill.getRbsSince() == null) || (newTill.getRbsSince() < rbsChangeNumber))) {
-                return new SinceChangeNumbers(changeNumber, rbsChangeNumber);
+        try {
+            while (true) {
+                if (mCachedFetchLock != null) {
+                    mCachedFetchLock.lock();
+                }
+                long changeNumber = (resetChangeNumber) ? -1 : mSplitsStorage.getTill();
+                long rbsChangeNumber = (resetChangeNumber) ? -1 : mRuleBasedSegmentStorage.getChangeNumber();
+                resetChangeNumber = false;
+                if ((newTill.getFlagsSince() < changeNumber) && ((newTill.getRbsSince() == null) || (newTill.getRbsSince() < rbsChangeNumber))) {
+                    return new SinceChangeNumbers(changeNumber, rbsChangeNumber);
+                }
+
+                TargetingRulesChange targetingRulesChange;
+                if ((rbsChangeNumber == -1L) && changeNumber == -1 && mCacheRef != null && mCacheRef.get() != null) {
+                    System.out.println("Initializer: Using cached TR value");
+                    targetingRulesChange = mCacheRef.get();
+                } else {
+                    System.out.println("Initializer: not using caching value - rbsCN: " + rbsChangeNumber + " changeNumber: " + changeNumber + " mCacheRef == null " + (mCacheRef == null));
+                    targetingRulesChange = fetchSplits(new SinceChangeNumbers(changeNumber, rbsChangeNumber), avoidCache, withCdnByPass);
+                }
+
+                SplitChange splitChange = targetingRulesChange.getFeatureFlagsChange();
+                RuleBasedSegmentChange ruleBasedSegmentChange = targetingRulesChange.getRuleBasedSegmentsChange();
+                updateStorage(shouldClearBeforeUpdate, splitChange, ruleBasedSegmentChange);
+                shouldClearBeforeUpdate = false;
+
+                newTill = new SinceChangeNumbers(splitChange.till, ruleBasedSegmentChange.getTill());
+                if (splitChange.till == splitChange.since && ruleBasedSegmentChange.getTill() == ruleBasedSegmentChange.getSince()) {
+                    return new SinceChangeNumbers(splitChange.till, ruleBasedSegmentChange.getTill());
+                }
             }
-
-            TargetingRulesChange targetingRulesChange = fetchSplits(new SinceChangeNumbers(changeNumber, rbsChangeNumber), avoidCache, withCdnByPass);
-            SplitChange splitChange = targetingRulesChange.getFeatureFlagsChange();
-            RuleBasedSegmentChange ruleBasedSegmentChange = targetingRulesChange.getRuleBasedSegmentsChange();
-            updateStorage(shouldClearBeforeUpdate, splitChange, ruleBasedSegmentChange);
-            shouldClearBeforeUpdate = false;
-
-            newTill = new SinceChangeNumbers(splitChange.till, ruleBasedSegmentChange.getTill());
-            if (splitChange.till == splitChange.since && ruleBasedSegmentChange.getTill() == ruleBasedSegmentChange.getSince()) {
-                return new SinceChangeNumbers(splitChange.till, ruleBasedSegmentChange.getTill());
+        } finally {
+            if (mCachedFetchLock != null) {
+                mCachedFetchLock.unlock();
+                mCachedFetchLock = null;
             }
         }
     }
@@ -269,6 +297,29 @@ public class SplitsSyncHelper {
         return mSplitFetcher.execute(params, getHeaders(avoidCache));
     }
 
+    // TODO
+    public static void fetchSplits(SinceChangeNumbers till,
+                                   boolean avoidCache,
+                                   String currentSpec,
+                                   HttpFetcher<TargetingRulesChange> fetcher,
+                                   @NonNull AtomicReference<TargetingRulesChange> cacheRef,
+                                   @NonNull ReentrantLock mCachedFetchLock) throws HttpFetcherException {
+        mCachedFetchLock.lock();
+        try {
+            Map<String, Object> params = new LinkedHashMap<>();
+            if (currentSpec != null && !currentSpec.trim().isEmpty()) {
+                params.put(FLAGS_SPEC_PARAM, currentSpec);
+            }
+            params.put(SINCE_PARAM, till.getFlagsSince());
+            params.put(RBS_SINCE_PARAM, till.getRbsSince());
+
+            TargetingRulesChange execute = fetcher.execute(params, getHeaders(avoidCache));
+            cacheRef.set(execute);
+        } finally {
+            mCachedFetchLock.unlock();
+        }
+    }
+
     private void updateStorage(boolean clearBeforeUpdate, SplitChange splitChange, RuleBasedSegmentChange ruleBasedSegmentChange) {
         if (clearBeforeUpdate) {
             mSplitsStorage.clear();
@@ -287,7 +338,8 @@ public class SplitsSyncHelper {
         Logger.e("Error while executing splits sync/update task: " + message);
     }
 
-    private @Nullable Map<String, String> getHeaders(boolean avoidCache) {
+    @Nullable
+    private static Map<String, String> getHeaders(boolean avoidCache) {
         if (avoidCache) {
             return SplitHttpHeadersBuilder.noCacheHeaders();
         }

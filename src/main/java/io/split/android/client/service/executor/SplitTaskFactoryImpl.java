@@ -11,6 +11,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.ReentrantLock;
 
 import io.split.android.client.FlagSetsFilter;
 import io.split.android.client.SplitClientConfig;
@@ -18,6 +20,7 @@ import io.split.android.client.SplitFilter;
 import io.split.android.client.TestingConfig;
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.Split;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.ServiceConstants;
@@ -80,7 +83,9 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                                 ISplitEventsManager eventsManager,
                                 @Nullable Map<SplitFilter.Type, SplitFilter> filters,
                                 @Nullable FlagSetsFilter flagSetsFilter,
-                                @Nullable TestingConfig testingConfig) {
+                                @Nullable TestingConfig testingConfig,
+                                @Nullable AtomicReference<TargetingRulesChange> cacheRef,
+                                @Nullable ReentrantLock cachedFetchLock) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitApiFacade = checkNotNull(splitApiFacade);
@@ -103,7 +108,9 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mSplitsStorageContainer.getGeneralInfoStorage(),
                     mTelemetryRuntimeProducer,
                     new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()),
-                    flagsSpecFromConfig);
+                    flagsSpecFromConfig,
+                    cacheRef,
+                    cachedFetchLock);
         } else {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
@@ -113,7 +120,9 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mSplitsStorageContainer.getGeneralInfoStorage(),
                     mTelemetryRuntimeProducer,
                     flagsSpecFromConfig,
-                    false);
+                    false,
+                    cacheRef,
+                    cachedFetchLock);
         }
 
         mFilters = (filters == null) ? new ArrayList<>() : new ArrayList<>(filters.values());

@@ -6,6 +6,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.util.Pair;
 
+import java.io.File;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -17,11 +18,13 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
 import io.split.android.android_client.BuildConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;
@@ -39,10 +42,12 @@ import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.service.executor.SplitTaskFactory;
 import io.split.android.client.service.executor.SplitTaskFactoryImpl;
+import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
 import io.split.android.client.service.impressions.strategy.PeriodicTracker;
 import io.split.android.client.service.impressions.strategy.ProcessStrategy;
+import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
 import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.service.synchronizer.Synchronizer;
@@ -59,6 +64,7 @@ import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.StorageFactory;
+import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
@@ -98,6 +104,9 @@ public class SplitFactoryImpl implements SplitFactory {
     private final StrategyImpressionManager mImpressionManager;
     private final SplitTaskExecutor mSplitTaskExecutor;
     private final SplitClientConfig mConfig;
+
+    private AtomicReference<TargetingRulesChange> mCachedFetchRef = null;
+    private ReentrantLock mCachedFetchLock = null;
 
     public SplitFactoryImpl(@NonNull String apiToken, @NonNull Key key, @NonNull SplitClientConfig config, @NonNull Context context)
             throws URISyntaxException {
@@ -143,8 +152,45 @@ public class SplitFactoryImpl implements SplitFactory {
         mFactoryMonitor.add(apiToken);
         mApiKey = apiToken;
 
-        // Check if test database available
-        String databaseName = factoryHelper.getDatabaseName(config, apiToken, context);
+
+HttpClient defaultHttpClient = null;
+SplitApiFacade splitApiFacade = null;
+Pair<Map<SplitFilter.Type, SplitFilter>, String> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
+Map<SplitFilter.Type, SplitFilter> filters = filtersConfig.first;
+String splitsFilterQueryStringFromConfig = filtersConfig.second;
+
+String flagsSpec = getFlagsSpec(testingConfig);
+FlagSetsFilter flagSetsFilter = factoryHelper.getFlagSetsFilter(filters);
+WorkManagerWrapper workManagerWrapper = null;
+        String databaseName = SplitFactoryHelper.buildDatabaseName(config, apiToken);
+        File dbPath = context.getDatabasePath(databaseName);
+        if (!dbPath.exists() && testDatabase != null) {
+            System.out.println("Initializer: no DB; fresh install");
+            workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
+            defaultHttpClient = getHttpClient(apiToken, config, context, httpClient, workManagerWrapper, factoryHelper, null);
+            splitApiFacade = factoryHelper.buildApiFacade(
+                    config, defaultHttpClient, splitsFilterQueryStringFromConfig);
+            // TODO -1 flow
+            final SplitApiFacade finalFacade = splitApiFacade;
+            mCachedFetchRef = new AtomicReference<>(null);
+            mCachedFetchLock = new ReentrantLock();
+            new Thread(() -> {
+                try {
+                    SplitsSyncHelper.fetchSplits(new SplitsSyncHelper.SinceChangeNumbers(-1L, -1L),
+                            true,
+                            flagsSpec,
+                            finalFacade.getSplitFetcher(),
+                            mCachedFetchRef,
+                            mCachedFetchLock);
+                    System.out.println("Initializer: finished fetch since start: " + (System.currentTimeMillis() - initializationStartTime));
+                } catch (HttpFetcherException e) {
+                    Logger.w("Error prefetching tr");
+                }
+            }).start();
+        }
+
+// Check if test database available
+//        String databaseName = factoryHelper.getDatabaseName(config, apiToken, context);
         SplitRoomDatabase splitDatabase;
         if (testDatabase == null) {
             splitDatabase = SplitRoomDatabase.getDatabase(context, databaseName);
@@ -172,43 +218,20 @@ public class SplitFactoryImpl implements SplitFactory {
 
         EventsManagerCoordinator mEventsManagerCoordinator = new EventsManagerCoordinator();
 
-        Pair<Map<SplitFilter.Type, SplitFilter>, String> filtersConfig = factoryHelper.getFilterConfiguration(config.syncConfig());
-        Map<SplitFilter.Type, SplitFilter> filters = filtersConfig.first;
-        String splitsFilterQueryStringFromConfig = filtersConfig.second;
-
-        String flagsSpec = getFlagsSpec(testingConfig);
-        FlagSetsFilter flagSetsFilter = factoryHelper.getFlagSetsFilter(filters);
-        WorkManagerWrapper workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
-
-        HttpClient defaultHttpClient;
-        if (httpClient == null) {
-            HttpClientImpl.Builder builder = new HttpClientImpl.Builder()
-                    .setConnectionTimeout(config.connectionTimeout())
-                    .setReadTimeout(config.readTimeout())
-                    .setDevelopmentSslConfig(config.developmentSslConfig())
-                    .setContext(context)
-                    .setProxyAuthenticator(config.authenticator());
-            if (config.proxy() != null) {
-                builder.setProxy(config.proxy());
-            }
-            if (config.certificatePinningConfiguration() != null) {
-                builder.setCertificatePinningConfiguration(config.certificatePinningConfiguration());
-            }
-
-            defaultHttpClient = builder.build();
-
-            SplitFactoryHelper.setupProxyForBackgroundSync(config, SplitFactoryHelper.getProxyConfigSaveTask(config, workManagerWrapper, mStorageContainer.getGeneralInfoStorage()));
-        } else {
-            defaultHttpClient = httpClient;
+        if (workManagerWrapper == null) {
+            workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
         }
-        defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
-        defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
-        SplitApiFacade splitApiFacade = factoryHelper.buildApiFacade(
-                config, defaultHttpClient, splitsFilterQueryStringFromConfig);
+
+        if (defaultHttpClient == null) {
+            defaultHttpClient = getHttpClient(apiToken, config, context, httpClient, workManagerWrapper, factoryHelper, mStorageContainer.getGeneralInfoStorage());
+            splitApiFacade = factoryHelper.buildApiFacade(
+                    config, defaultHttpClient, splitsFilterQueryStringFromConfig);
+        }
 
         SplitTaskFactory splitTaskFactory = new SplitTaskFactoryImpl(
                 config, splitApiFacade, mStorageContainer, splitsFilterQueryStringFromConfig,
-                getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter, testingConfig);
+                getFlagsSpec(testingConfig), mEventsManagerCoordinator, filters, flagSetsFilter,
+                testingConfig, mCachedFetchRef, mCachedFetchLock);
 
 
         SplitSingleThreadTaskExecutor splitSingleThreadTaskExecutor = new SplitSingleThreadTaskExecutor();
@@ -359,6 +382,45 @@ public class SplitFactoryImpl implements SplitFactory {
                 SplitFactoryImpl.this.destroy();
             }
         });
+    }
+
+    @NonNull
+    private static HttpClient getHttpClient(@NonNull String apiToken,
+                                            @NonNull SplitClientConfig config,
+                                            @NonNull Context context,
+                                            @Nullable HttpClient httpClient,
+                                            WorkManagerWrapper workManagerWrapper,
+                                            SplitFactoryHelper factoryHelper,
+                                            @Nullable GeneralInfoStorage generalInfoStorage) {
+        HttpClient defaultHttpClient;
+        if (httpClient == null) {
+            HttpClientImpl.Builder builder = new HttpClientImpl.Builder()
+                    .setConnectionTimeout(config.connectionTimeout())
+                    .setReadTimeout(config.readTimeout())
+                    .setDevelopmentSslConfig(config.developmentSslConfig())
+                    .setContext(context)
+                    .setProxyAuthenticator(config.authenticator());
+            if (config.proxy() != null) {
+                builder.setProxy(config.proxy());
+            }
+            if (config.certificatePinningConfiguration() != null) {
+                builder.setCertificatePinningConfiguration(config.certificatePinningConfiguration());
+            }
+
+            defaultHttpClient = builder.build();
+
+            if (config.proxy() != null && generalInfoStorage != null) {
+                SplitFactoryHelper.setupProxyForBackgroundSync(config,
+                        SplitFactoryHelper.getProxyConfigSaveTask(config,
+                                workManagerWrapper,
+                                generalInfoStorage));
+            }
+        } else {
+            defaultHttpClient = httpClient;
+        }
+        defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
+        defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
+        return defaultHttpClient;
     }
 
     private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {
