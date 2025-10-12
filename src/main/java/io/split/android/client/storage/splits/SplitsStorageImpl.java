@@ -28,6 +28,8 @@ import io.split.android.client.utils.Json;
 
 public class SplitsStorageImpl implements SplitsStorage {
 
+    private static final int ASYNC_WRITE_THRESHOLD = 50;
+
     private final PersistentSplitsStorage mPersistentStorage;
     private final Map<String, Split> mInMemorySplits;
     private final Map<String, Set<String>> mFlagSets;
@@ -164,7 +166,9 @@ public class SplitsStorageImpl implements SplitsStorage {
         mChangeNumber = splitChange.getChangeNumber();
         mUpdateTimestamp = splitChange.getUpdateTimestamp();
 
-        if (((activeSplits != null && activeSplits.size() > 50) || (archivedSplits != null && archivedSplits.size() > 50)) && mExecutor != null) {
+        // If the amount of elements is greater than the threshold,
+        // we will use the executor to update the persistent storage asynchronously
+        if (((activeSplits != null && activeSplits.size() > ASYNC_WRITE_THRESHOLD) || (archivedSplits != null && archivedSplits.size() > ASYNC_WRITE_THRESHOLD)) && mExecutor != null) {
             mExecutor.submit(() -> mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets));
         } else {
             mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets);

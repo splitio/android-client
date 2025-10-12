@@ -107,6 +107,7 @@ public class SplitFactoryImpl implements SplitFactory {
     private TargetingRulesCache mTargetingRulesCache = null;
 
     private final ExecutorService mInitExecutor = Executors.newFixedThreadPool(2);
+    private static final Object INIT_LOCK = new Object();
 
     public SplitFactoryImpl(@NonNull String apiToken, @NonNull Key key, @NonNull SplitClientConfig config, @NonNull Context context)
             throws URISyntaxException {
@@ -160,17 +161,19 @@ public class SplitFactoryImpl implements SplitFactory {
         String databaseName = SplitFactoryHelper.buildDatabaseName(config, apiToken);
 
         // Check if this is a fresh install (no database exists and not using test database)
-        File dbPath = context.getDatabasePath(databaseName);
-        boolean isFreshInstall = !dbPath.exists() && testDatabase == null;
-
         WorkManagerWrapper workManagerWrapper = null;
         HttpClient defaultHttpClient = null;
         SplitApiFacade splitApiFacade = null;
-        if (isFreshInstall) {
-            workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
-            defaultHttpClient = getHttpClient(apiToken, config, context, httpClient, workManagerWrapper, factoryHelper, null);
-            splitApiFacade = factoryHelper.buildApiFacade(config, defaultHttpClient, splitsFilterQueryStringFromConfig);
-            startFreshInstallPrefetch(splitApiFacade, flagsSpec, initializationStartTime);
+
+        // Locked for concurrent factory inits
+        synchronized (INIT_LOCK) {
+            File dbPath = context.getDatabasePath(databaseName);
+            if (!dbPath.exists() && testDatabase == null) {
+                workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);
+                defaultHttpClient = getHttpClient(apiToken, config, context, httpClient, workManagerWrapper, factoryHelper, null);
+                splitApiFacade = factoryHelper.buildApiFacade(config, defaultHttpClient, splitsFilterQueryStringFromConfig);
+                startFreshInstallPrefetch(splitApiFacade, flagsSpec, initializationStartTime);
+            }
         }
 
         SplitRoomDatabase splitDatabase;
