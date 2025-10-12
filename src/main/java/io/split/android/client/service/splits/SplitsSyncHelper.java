@@ -280,27 +280,24 @@ public class SplitsSyncHelper {
         return mSplitFetcher.execute(params, getHeaders(avoidCache));
     }
 
-    public static void fetchSplits(SinceChangeNumbers till,
-                                   boolean avoidCache,
-                                   String currentSpec,
-                                   HttpFetcher<TargetingRulesChange> fetcher,
-                                   @NonNull TargetingRulesCache cache) throws HttpFetcherException {
+    public static void fetchForFreshInstallCache(String currentSpec,
+                                                 HttpFetcher<TargetingRulesChange> fetcher,
+                                                 @NonNull TargetingRulesCache cache) throws HttpFetcherException {
         try {
             cache.setWithLock(() -> {
                 Map<String, Object> params = new LinkedHashMap<>();
                 if (currentSpec != null && !currentSpec.trim().isEmpty()) {
                     params.put(FLAGS_SPEC_PARAM, currentSpec);
                 }
-                params.put(SINCE_PARAM, till.getFlagsSince());
-                params.put(RBS_SINCE_PARAM, till.getRbsSince());
+                params.put(SINCE_PARAM, -1);
+                params.put(RBS_SINCE_PARAM, -1);
 
-                return fetcher.execute(params, getHeaders(avoidCache));
+                return fetcher.execute(params, getHeaders(true));
             });
         } catch (HttpFetcherException e) {
             throw e;
         } catch (Exception e) {
-            Logger.e("Unexpected error fetching splits: " + e.getMessage());
-            throw new HttpFetcherException("splits", "Unexpected error: " + e.getMessage());
+            Logger.v("Unexpected error pre fetching splits: " + e.getMessage());
         }
     }
 

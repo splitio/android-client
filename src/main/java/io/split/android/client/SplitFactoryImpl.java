@@ -423,17 +423,15 @@ public class SplitFactoryImpl implements SplitFactory {
 
         Runnable prefetch = () -> {
             try {
-                Logger.d("Fresh install detected - prefetching targeting rules");
-                SplitsSyncHelper.fetchSplits(
-                        new SplitsSyncHelper.SinceChangeNumbers(-1L, -1L),
-                        true,
+                Logger.v("Fresh install detected - prefetching targeting rules");
+                SplitsSyncHelper.fetchForFreshInstallCache(
                         flagsSpec,
                         splitApiFacade.getSplitFetcher(),
                         mTargetingRulesCache);
                 long elapsedTime = System.currentTimeMillis() - initializationStartTime;
-                Logger.d("Fresh install prefetch completed in " + elapsedTime + "ms");
+                Logger.v("Fresh install prefetch completed in " + elapsedTime + "ms");
             } catch (HttpFetcherException e) {
-                Logger.w("Error prefetching targeting rules on fresh install: " + e.getLocalizedMessage());
+                Logger.v("Error prefetching targeting rules on fresh install: " + e.getLocalizedMessage());
             }
         };
         mInitExecutor.submit(prefetch);
