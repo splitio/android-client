@@ -5,7 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 
-import androidx.test.core.app.ApplicationProvider;
+import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.work.Configuration;
 import androidx.work.testing.WorkManagerTestInitHelper;
 
@@ -54,7 +54,7 @@ public class SplitFactoryImplFreshInstallTest {
 
     @Before
     public void setUp() throws Exception {
-        mContext = ApplicationProvider.getApplicationContext();
+        mContext = InstrumentationRegistry.getInstrumentation().getContext();
         
         // Initialize WorkManager
         Configuration config = new Configuration.Builder()
