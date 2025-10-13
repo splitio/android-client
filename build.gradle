@@ -143,6 +143,8 @@ dependencies {
     def apacheCommonsVersion = '3.12.0'
     def kotlinVer = '1.5.31'
     def mockWebServerVersion = '4.12.0'
+    def robolectricVersion = '4.16'
+    def testCoreVersion = '1.5.0'
 
     def testRulesVersion = '1.4.0'
     def jUnitExtVersion = '1.1.3'
@@ -177,6 +179,9 @@ dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
     testImplementation "com.google.guava:guava:$guavaVersion"
+    testImplementation "org.robolectric:robolectric:$robolectricVersion"
+    testImplementation "androidx.test:core:$testCoreVersion"
+    testImplementation "androidx.work:work-testing:$workVersion"
 
     androidTestImplementation "androidx.test:rules:$testRulesVersion"
     androidTestImplementation "androidx.test.ext:junit:$jUnitExtVersion"

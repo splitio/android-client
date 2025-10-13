@@ -160,13 +160,13 @@ public class SplitFactoryImpl implements SplitFactory {
         FlagSetsFilter flagSetsFilter = factoryHelper.getFlagSetsFilter(filters);
         String databaseName = SplitFactoryHelper.buildDatabaseName(config, apiToken);
 
-        // Check if this is a fresh install (no database exists and not using test database)
         WorkManagerWrapper workManagerWrapper = null;
         HttpClient defaultHttpClient = null;
         SplitApiFacade splitApiFacade = null;
 
         // Locked for concurrent factory inits
         synchronized (INIT_LOCK) {
+            // Check if this is a fresh install (no database exists and not using test database)
             File dbPath = context.getDatabasePath(databaseName);
             if (!dbPath.exists() && testDatabase == null) {
                 workManagerWrapper = factoryHelper.buildWorkManagerWrapper(context, config, apiToken, databaseName, filters);

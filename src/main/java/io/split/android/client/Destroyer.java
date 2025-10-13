@@ -120,16 +120,6 @@ class Destroyer implements Runnable {
             Logger.d("Successful shutdown of task executor");
             mStorageContainer.getAttributesStorageContainer().destroy();
             mInitExecutor.shutdown();
-            try {
-                if (!mInitExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
-                    Logger.w("Init executor did not terminate in time");
-                    mInitExecutor.shutdownNow();
-                }
-            } catch (InterruptedException e) {
-                Logger.w("Interrupted while waiting for init executor shutdown");
-                mInitExecutor.shutdownNow();
-                Thread.currentThread().interrupt();
-            }
             Logger.d("Successful shutdown of attributes storage");
             mIsTerminated.set(true);
             Logger.d("SplitFactory has been destroyed");
