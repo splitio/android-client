@@ -178,7 +178,7 @@ dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
     testImplementation "com.google.guava:guava:$guavaVersion"
-    testImplementation "org.robolectric:robolectric:$robolectricVersion"
+//    testImplementation "org.robolectric:robolectric:$robolectricVersion"
     testImplementation "androidx.work:work-testing:$workVersion"
 
     androidTestImplementation "androidx.test:rules:$testRulesVersion"
