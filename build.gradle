@@ -178,7 +178,7 @@ dependencies {
     testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
     testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
     testImplementation "com.google.guava:guava:$guavaVersion"
-//    testImplementation "org.robolectric:robolectric:$robolectricVersion"
+    testImplementation "org.robolectric:robolectric:$robolectricVersion"
     testImplementation "androidx.work:work-testing:$workVersion"
 
     androidTestImplementation "androidx.test:rules:$testRulesVersion"
@@ -282,7 +282,6 @@ task printReleaseDependenciesToFile {
 preBuild.dependsOn printReleaseDependenciesToFile
 
 tasks.withType(Test) {
-    systemProperties['junit.jupiter.execution.parallel.enabled'] = true
     maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
     forkEvery = 100
     maxHeapSize = "1024m"

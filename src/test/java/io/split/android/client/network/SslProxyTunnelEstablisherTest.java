@@ -81,16 +81,16 @@ public class SslProxyTunnelEstablisherTest {
         testProxy = new TestSslProxy(0, proxyServerCert);
         testProxy.start();
 
-        // Wait for proxy to start
-        while (testProxy.getPort() == 0) {
-            Thread.sleep(10);
+        // Wait for proxy to start with proper timeout
+        if (!testProxy.awaitReady(10, TimeUnit.SECONDS)) {
+            throw new IllegalStateException("Test SSL proxy failed to start within 10 seconds");
         }
     }
 
     @After
     public void tearDown() throws Exception {
         if (testProxy != null) {
-            testProxy.stop();
+            testProxy.shutdown();
         }
     }
 
@@ -355,11 +355,13 @@ public class SslProxyTunnelEstablisherTest {
         private final HeldCertificate mServerCert;
         private SSLServerSocket mServerSocket;
         private final AtomicBoolean mRunning = new AtomicBoolean(true);
+        private final CountDownLatch mServerReady = new CountDownLatch(1);
         private final CountDownLatch mConnectRequestReceived = new CountDownLatch(1);
         private final CountDownLatch mAuthorizationHeaderReceived = new CountDownLatch(1);
         private final AtomicReference<String> mReceivedConnectLine = new AtomicReference<>();
         private final AtomicReference<String> mReceivedAuthHeader = new AtomicReference<>();
         private final AtomicReference<String> mConnectResponse = new AtomicReference<>("HTTP/1.1 200 Connection established");
+        private final AtomicReference<Exception> mStartupException = new AtomicReference<>();
 
         public TestSslProxy(int port, HeldCertificate serverCert) {
             mPort = port;
@@ -381,6 +383,9 @@ public class SslProxyTunnelEstablisherTest {
                 mServerSocket = (SSLServerSocket) sslContext.getServerSocketFactory().createServerSocket(mPort);
                 mServerSocket.setWantClientAuth(false);
                 mServerSocket.setNeedClientAuth(false);
+                
+                // Signal that server is ready to accept connections
+                mServerReady.countDown();
 
                 while (mRunning.get()) {
                     try {
@@ -393,6 +398,8 @@ public class SslProxyTunnelEstablisherTest {
                     }
                 }
             } catch (Exception e) {
+                mStartupException.set(e);
+                mServerReady.countDown(); // Signal even on failure so awaitReady doesn't hang
                 throw new RuntimeException("Failed to start test SSL proxy", e);
             }
         }
@@ -438,8 +445,28 @@ public class SslProxyTunnelEstablisherTest {
             }
         }
 
+        public boolean awaitReady(long timeout, TimeUnit unit) throws InterruptedException {
+            boolean ready = mServerReady.await(timeout, unit);
+            if (ready && mStartupException.get() != null) {
+                throw new RuntimeException("Test SSL proxy failed to start", mStartupException.get());
+            }
+            return ready;
+        }
+
         public int getPort() {
             return mServerSocket != null ? mServerSocket.getLocalPort() : 0;
+        }
+
+        public void shutdown() {
+            mRunning.set(false);
+            if (mServerSocket != null) {
+                try {
+                    mServerSocket.close();
+                } catch (IOException e) {
+                    // Ignore
+                }
+            }
+            interrupt();
         }
 
         public CountDownLatch getConnectRequestReceived() {

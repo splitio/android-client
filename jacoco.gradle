@@ -12,7 +12,14 @@ tasks.withType(Test) {
     jacoco {
         includeNoLocationClasses = true
         excludes = ['jdk.internal.*']
+        // Explicitly enable for Robolectric tests
+        enabled = true
     }
+    
+    // Configure system properties for Robolectric + JaCoCo compatibility
+    systemProperty 'robolectric.enabledSdks', '28,29,30,31,32,33'
+    systemProperty 'robolectric.offline', 'true'
+    
     finalizedBy jacocoTestReport
 }
 
@@ -37,13 +44,18 @@ tasks.register('jacocoTestReport', JacocoReport) {
         "${buildDir}/intermediates/javac/debug/classes",
         "${buildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes",
         "${buildDir}/intermediates/runtime_library_classes_dir/debug",
+        "${buildDir}/intermediates/classes/debug",
+        "${buildDir}/classes/java/main",
         "${buildDir}/tmp/kotlin-classes/debug"
     ]
     
     possibleClassDirs.each { dirPath ->
-        def classDir = fileTree(dir: dirPath, excludes: fileFilter)
-        if (classDir.files.size() > 0) {
-            classDirectoriesFiles.add(classDir)
+        def dir = file(dirPath)
+        if (dir.exists() && dir.isDirectory()) {
+            def classDir = fileTree(dir: dirPath, excludes: fileFilter)
+            if (classDir.files.size() > 0) {
+                classDirectoriesFiles.add(classDir)
+            }
         }
     }
     
@@ -57,12 +69,14 @@ tasks.register('jacocoTestReport', JacocoReport) {
     classDirectories.from = files(classDirectoriesFiles)
     
     // Include execution data files from multiple possible locations
-    executionData.from(fileTree(dir: "$buildDir", includes: [
+    def execFiles = fileTree(dir: "$buildDir", includes: [
         'jacoco/testDebugUnitTest.exec',
         'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec',
         'jacoco/*.exec',
         'outputs/**/**.exec'
-    ]))
+    ])
+    
+    executionData.from = files(execFiles.filter { it.exists() })
 
     outputs.upToDateWhen { false }
     
@@ -87,12 +101,12 @@ tasks.register('jacocoTestReport', JacocoReport) {
         }
         
         // Log execution data files
-        def execFiles = executionData.files
+        def execDataFiles = executionData.files
         logger.lifecycle("Execution data files:")
-        if (execFiles.isEmpty() || !execFiles.any { it.exists() }) {
+        if (execDataFiles.isEmpty() || !execDataFiles.any { it.exists() }) {
             logger.warn("  - No execution data files found - coverage report will be empty")
         } else {
-            execFiles.each { file ->
+            execDataFiles.each { file ->
                 if (file.exists()) {
                     logger.lifecycle("  - Found: $file (${file.length()} bytes)")
                 } else {
