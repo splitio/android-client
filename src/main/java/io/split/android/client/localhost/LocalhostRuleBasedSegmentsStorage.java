@@ -4,6 +4,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
@@ -18,7 +19,7 @@ public class LocalhostRuleBasedSegmentsStorage implements RuleBasedSegmentStorag
     }
 
     @Override
-    public boolean update(@NonNull Set<RuleBasedSegment> toAdd, @NonNull Set<RuleBasedSegment> toRemove, long changeNumber) {
+    public boolean update(@NonNull Set<RuleBasedSegment> toAdd, @NonNull Set<RuleBasedSegment> toRemove, long changeNumber, ExecutorService executor) {
         return false;
     }
 

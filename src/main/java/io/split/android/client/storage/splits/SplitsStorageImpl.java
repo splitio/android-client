@@ -20,12 +20,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.utils.Json;
 
 public class SplitsStorageImpl implements SplitsStorage {
+
+    private static final int ASYNC_WRITE_THRESHOLD = 50;
 
     private final PersistentSplitsStorage mPersistentStorage;
     private final Map<String, Split> mInMemorySplits;
@@ -124,7 +127,7 @@ public class SplitsStorageImpl implements SplitsStorage {
 
     @Override
     @WorkerThread
-    public boolean update(ProcessedSplitChange splitChange) {
+    public boolean update(ProcessedSplitChange splitChange, ExecutorService mExecutor) {
         if (splitChange == null) {
             return false;
         }
@@ -163,7 +166,13 @@ public class SplitsStorageImpl implements SplitsStorage {
         mChangeNumber = splitChange.getChangeNumber();
         mUpdateTimestamp = splitChange.getUpdateTimestamp();
 
-        mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets);
+        // If the amount of elements is greater than the threshold,
+        // we will use the executor to update the persistent storage asynchronously
+        if (((activeSplits != null && activeSplits.size() > ASYNC_WRITE_THRESHOLD) || (archivedSplits != null && archivedSplits.size() > ASYNC_WRITE_THRESHOLD)) && mExecutor != null) {
+            mExecutor.submit(() -> mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets));
+        } else {
+            mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets);
+        }
 
         return appliedUpdates;
     }

@@ -39,7 +39,7 @@ public class RuleBasedSegmentInPlaceUpdateTaskTest {
         long changeNumber = 123L;
 
         when(mChangeProcessor.process(ruleBasedSegment, changeNumber)).thenReturn(new ProcessedRuleBasedSegmentChange(Set.of(ruleBasedSegment), Collections.emptySet(), 123L, System.currentTimeMillis()));
-        when(mRuleBasedSegmentStorage.update(Set.of(ruleBasedSegment), Set.of(), changeNumber)).thenReturn(true);
+        when(mRuleBasedSegmentStorage.update(Set.of(ruleBasedSegment), Set.of(), changeNumber, null)).thenReturn(true);
 
         mTask = getTask(ruleBasedSegment, changeNumber);
 
@@ -54,7 +54,7 @@ public class RuleBasedSegmentInPlaceUpdateTaskTest {
         long changeNumber = 123L;
 
         when(mChangeProcessor.process(ruleBasedSegment, changeNumber)).thenReturn(new ProcessedRuleBasedSegmentChange(Set.of(ruleBasedSegment), Collections.emptySet(), 123L, System.currentTimeMillis()));
-        when(mRuleBasedSegmentStorage.update(Set.of(ruleBasedSegment), Set.of(), changeNumber)).thenReturn(false);
+        when(mRuleBasedSegmentStorage.update(Set.of(ruleBasedSegment), Set.of(), changeNumber, null)).thenReturn(false);
 
         mTask = getTask(ruleBasedSegment, changeNumber);
 
@@ -86,7 +86,7 @@ public class RuleBasedSegmentInPlaceUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mRuleBasedSegmentStorage).update(Set.of(ruleBasedSegment), Set.of(), changeNumber);
+        verify(mRuleBasedSegmentStorage).update(Set.of(ruleBasedSegment), Set.of(), changeNumber, null);
     }
 
     @NonNull

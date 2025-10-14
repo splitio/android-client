@@ -19,7 +19,7 @@ import io.split.android.client.utils.logger.Logger;
 
 class HttpRequestHelper {
 
-    private static final ProxyCacertConnectionHandler mConnectionHandler = new ProxyCacertConnectionHandler();
+    private static ProxyCacertConnectionHandler mConnectionHandler;
 
     static HttpURLConnection createConnection(@NonNull URL url,
                                               @Nullable Proxy proxy,
@@ -36,7 +36,7 @@ class HttpRequestHelper {
         // If a legacy authenticator proxy, we prefer the legacy path to preserve 407 retry behavior.
         if (httpProxy != null && sslSocketFactory != null && !httpProxy.isLegacy()) {
             try {
-                HttpResponse response = mConnectionHandler.executeRequest(
+                HttpResponse response = getConnectionHandler().executeRequest(
                         httpProxy,
                         url,
                         method,
@@ -53,6 +53,13 @@ class HttpRequestHelper {
         }
 
         return openConnection(proxy, httpProxy, proxyAuthenticator, url, method, headers, useProxyAuthentication);
+    }
+
+    private static ProxyCacertConnectionHandler getConnectionHandler() {
+        if (mConnectionHandler == null) {
+            mConnectionHandler = new ProxyCacertConnectionHandler();
+        }
+        return mConnectionHandler;
     }
 
     private static HttpURLConnection openConnection(@Nullable Proxy proxy,

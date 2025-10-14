@@ -43,6 +43,7 @@ import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
+import io.split.android.client.service.splits.TargetingRulesCache;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.service.telemetry.TelemetryConfigRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryStatsRecorderTask;
@@ -80,7 +81,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                                 ISplitEventsManager eventsManager,
                                 @Nullable Map<SplitFilter.Type, SplitFilter> filters,
                                 @Nullable FlagSetsFilter flagSetsFilter,
-                                @Nullable TestingConfig testingConfig) {
+                                @Nullable TestingConfig testingConfig,
+                                @Nullable TargetingRulesCache targetingRulesCache) {
 
         mSplitClientConfig = checkNotNull(splitClientConfig);
         mSplitApiFacade = checkNotNull(splitApiFacade);
@@ -103,7 +105,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mSplitsStorageContainer.getGeneralInfoStorage(),
                     mTelemetryRuntimeProducer,
                     new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()),
-                    flagsSpecFromConfig);
+                    flagsSpecFromConfig,
+                    targetingRulesCache);
         } else {
             mSplitsSyncHelper = new SplitsSyncHelper(mSplitApiFacade.getSplitFetcher(),
                     mSplitsStorageContainer.getSplitsStorage(),
@@ -113,7 +116,8 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     mSplitsStorageContainer.getGeneralInfoStorage(),
                     mTelemetryRuntimeProducer,
                     flagsSpecFromConfig,
-                    false);
+                    false,
+                    targetingRulesCache);
         }
 
         mFilters = (filters == null) ? new ArrayList<>() : new ArrayList<>(filters.values());

@@ -8,11 +8,14 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 
 public class RuleBasedSegmentStorageProducerImpl implements RuleBasedSegmentStorageProducer {
+
+    private static final int ASYNC_WRITE_THRESHOLD = 50;
 
     private final ConcurrentHashMap<String, RuleBasedSegment> mInMemorySegments;
     private final PersistentRuleBasedSegmentStorage mPersistentStorage;
@@ -27,7 +30,7 @@ public class RuleBasedSegmentStorageProducerImpl implements RuleBasedSegmentStor
     }
 
     @Override
-    public boolean update(@NonNull Set<RuleBasedSegment> toAdd, @NonNull Set<RuleBasedSegment> toRemove, long changeNumber) {
+    public boolean update(@NonNull Set<RuleBasedSegment> toAdd, @NonNull Set<RuleBasedSegment> toRemove, long changeNumber, ExecutorService executor) {
         boolean appliedUpdates = false;
 
         if (toAdd != null) {
@@ -53,7 +56,15 @@ public class RuleBasedSegmentStorageProducerImpl implements RuleBasedSegmentStor
         }
 
         mChangeNumberRef.set(changeNumber);
-        mPersistentStorage.update(toAdd, toRemove, changeNumber);
+        // If the amount of elements is greater than the threshold,
+        // we will use the executor to update the persistent storage asynchronously
+        if ((toAdd.size() > ASYNC_WRITE_THRESHOLD || toRemove.size() > ASYNC_WRITE_THRESHOLD) && executor != null) {
+            HashSet<RuleBasedSegment> finalToAdd = new HashSet<>(toAdd);
+            HashSet<RuleBasedSegment> finalToRemove = new HashSet<>(toRemove);
+            executor.submit(() -> mPersistentStorage.update(finalToAdd, finalToRemove, changeNumber));
+        } else {
+            mPersistentStorage.update(toAdd, toRemove, changeNumber);
+        }
 
         return appliedUpdates;
     }

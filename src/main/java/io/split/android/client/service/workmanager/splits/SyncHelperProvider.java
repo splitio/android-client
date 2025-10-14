@@ -1,10 +1,13 @@
 package io.split.android.client.service.workmanager.splits;
 
-import io.split.android.client.dtos.TargetingRulesChange;
+import androidx.annotation.Nullable;
+
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
+import io.split.android.client.service.splits.TargetingRulesCache;
+import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -19,7 +22,8 @@ class SyncHelperProvider {
                                              RuleBasedSegmentStorageProducer ruleBasedSegmentStorage,
                                              GeneralInfoStorage generalInfoStorage,
                                              TelemetryStorage telemetryStorage,
-                                             String mFlagsSpec) {
+                                             String mFlagsSpec,
+                                             @Nullable TargetingRulesCache targetingRulesCache) {
         return new SplitsSyncHelper(splitsFetcher,
                 splitsStorage,
                 splitChangeProcessor,
@@ -28,6 +32,7 @@ class SyncHelperProvider {
                 generalInfoStorage,
                 telemetryStorage,
                 mFlagsSpec,
-                true);
+                true,
+                targetingRulesCache);
     }
 }

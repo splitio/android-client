@@ -56,6 +56,7 @@ public class DestroyerTest {
     private Destroyer mDestroyer;
     private final String API_KEY = "test-api-key";
     private final long INIT_START_TIME = 1000L;
+    private ExecutorService mInitExecutor;
 
     @Before
     public void setup() {
@@ -76,6 +77,7 @@ public class DestroyerTest {
         mSplitManager = mock(SplitManager.class);
         mSplitTaskExecutor = mock(SplitTaskExecutor.class);
         mSplitSingleThreadTaskExecutor = mock(SplitTaskExecutor.class);
+        mInitExecutor = mock(ExecutorService.class);
         mIsTerminated = new AtomicBoolean(false);
 
         when(mStorageContainer.getTelemetryStorage()).thenReturn(mTelemetryStorage);
@@ -100,7 +102,8 @@ public class DestroyerTest {
             mSplitManager,
             mSplitTaskExecutor,
             mSplitSingleThreadTaskExecutor,
-            mIsTerminated
+            mInitExecutor,
+                mIsTerminated
         );
     }
 
@@ -170,7 +173,7 @@ public class DestroyerTest {
             mSplitManager,
             mSplitTaskExecutor,
             mSplitSingleThreadTaskExecutor,
-            mIsTerminated
+                mInitExecutor, mIsTerminated
         ) {
             @Override
             public void run() {
@@ -215,7 +218,8 @@ public class DestroyerTest {
             mSplitManager,
             mSplitTaskExecutor,
             mSplitSingleThreadTaskExecutor,
-            mAttributesStorageContainer
+            mAttributesStorageContainer,
+            mInitExecutor
         );
 
         inOrder.verify(mTelemetryStorage).recordSessionLength(anyLong());
@@ -233,6 +237,7 @@ public class DestroyerTest {
         inOrder.verify(mSplitTaskExecutor).stop();
         inOrder.verify(mSplitSingleThreadTaskExecutor).stop();
         inOrder.verify(mAttributesStorageContainer).destroy();
+        inOrder.verify(mInitExecutor).shutdown();
     }
 
     @Test

@@ -9,6 +9,7 @@ import androidx.annotation.WorkerThread;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 
 import io.split.android.client.dtos.RuleBasedSegment;
@@ -48,8 +49,8 @@ public class RuleBasedSegmentStorageImpl implements RuleBasedSegmentStorage {
     }
 
     @Override
-    public synchronized boolean update(@NonNull Set<RuleBasedSegment> toAdd, @NonNull Set<RuleBasedSegment> toRemove, long changeNumber) {
-        return mProducer.update(toAdd, toRemove, changeNumber);
+    public synchronized boolean update(@NonNull Set<RuleBasedSegment> toAdd, @NonNull Set<RuleBasedSegment> toRemove, long changeNumber, ExecutorService executor) {
+        return mProducer.update(toAdd, toRemove, changeNumber, null);
     }
 
     @Override

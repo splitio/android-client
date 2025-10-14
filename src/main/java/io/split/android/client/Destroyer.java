@@ -1,6 +1,7 @@
 package io.split.android.client;
 
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
@@ -36,6 +37,7 @@ class Destroyer implements Runnable {
     private final SplitManager mSplitManager;
     private final SplitTaskExecutor mSplitTaskExecutor;
     private final SplitTaskExecutor mSplitSingleThreadTaskExecutor;
+    private final ExecutorService mInitExecutor;
     private final AtomicBoolean mIsTerminated;
 
     Destroyer(
@@ -56,6 +58,7 @@ class Destroyer implements Runnable {
         SplitManager splitManager,
         SplitTaskExecutor splitTaskExecutor,
         SplitTaskExecutor splitSingleThreadTaskExecutor,
+        ExecutorService initExecutor,
         AtomicBoolean isTerminated
     ) {
         mInitLock = initLock;
@@ -75,6 +78,7 @@ class Destroyer implements Runnable {
         mSplitManager = splitManager;
         mSplitTaskExecutor = splitTaskExecutor;
         mSplitSingleThreadTaskExecutor = splitSingleThreadTaskExecutor;
+        mInitExecutor = initExecutor;
         mIsTerminated = isTerminated;
     }
 
@@ -115,6 +119,7 @@ class Destroyer implements Runnable {
             mSplitSingleThreadTaskExecutor.stop();
             Logger.d("Successful shutdown of task executor");
             mStorageContainer.getAttributesStorageContainer().destroy();
+            mInitExecutor.shutdown();
             Logger.d("Successful shutdown of attributes storage");
             mIsTerminated.set(true);
             Logger.d("SplitFactory has been destroyed");

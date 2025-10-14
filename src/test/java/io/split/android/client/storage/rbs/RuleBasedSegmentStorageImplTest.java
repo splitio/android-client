@@ -44,7 +44,7 @@ public class RuleBasedSegmentStorageImplTest {
     @Test
     public void get() {
         RuleBasedSegment segment = createRuleBasedSegment("segment1");
-        storage.update(Set.of(segment), null, 1);
+        storage.update(Set.of(segment), null, 1, null);
         assertNotNull(storage.get("segment1", "matchingKey"));
     }
 
@@ -57,14 +57,14 @@ public class RuleBasedSegmentStorageImplTest {
         toAdd.add(segment1);
         toAdd.add(segment2);
 
-        storage.update(toAdd, null, 2);
+        storage.update(toAdd, null, 2, null);
         assertNotNull(storage.get("segment1", "matchingKey"));
         assertNotNull(storage.get("segment2", "matchingKey"));
         assertEquals(2, storage.getChangeNumber());
 
         Set<RuleBasedSegment> toRemove = new HashSet<>();
         toRemove.add(segment1);
-        storage.update(null, toRemove, 3);
+        storage.update(null, toRemove, 3, null);
         assertNull(storage.get("segment1", "matchingKey"));
         assertNotNull(storage.get("segment2", "matchingKey"));
         assertEquals(3, storage.getChangeNumber());
@@ -77,7 +77,7 @@ public class RuleBasedSegmentStorageImplTest {
 
     @Test
     public void updateChangeNumber() {
-        storage.update(null, null, 5);
+        storage.update(null, null, 5, null);
         assertEquals(5, storage.getChangeNumber());
     }
 
@@ -85,7 +85,7 @@ public class RuleBasedSegmentStorageImplTest {
     public void contains() {
         RuleBasedSegment segment = createRuleBasedSegment("segment1");
         Set<RuleBasedSegment> segmentNames = Set.of(segment);
-        storage.update(segmentNames, null, 1);
+        storage.update(segmentNames, null, 1, null);
 
         Set<String> segmentNames2 = new HashSet<>();
         segmentNames2.add("segment1");
@@ -98,7 +98,7 @@ public class RuleBasedSegmentStorageImplTest {
     @Test
     public void clearRemovesAllSegments() {
         RuleBasedSegment segment = createRuleBasedSegment("segment1");
-        storage.update(Set.of(segment), null, 1);
+        storage.update(Set.of(segment), null, 1, null);
         storage.clear();
         assertNull(storage.get("segment1", "matchingKey"));
     }
@@ -106,7 +106,7 @@ public class RuleBasedSegmentStorageImplTest {
     @Test
     public void clearResetsChangeNumber() {
         RuleBasedSegment segment = createRuleBasedSegment("segment1");
-        storage.update(Set.of(segment), null, 10);
+        storage.update(Set.of(segment), null, 10, null);
         long preClearChangeNumber = storage.getChangeNumber();
 
         storage.clear();
@@ -118,7 +118,7 @@ public class RuleBasedSegmentStorageImplTest {
     @Test
     public void updateWithNullAddAndRemoveIsSafe() {
         long initialChangeNumber = storage.getChangeNumber();
-        storage.update(null, null, 10);
+        storage.update(null, null, 10, null);
         assertEquals(10, storage.getChangeNumber());
         assertNotEquals(initialChangeNumber, storage.getChangeNumber());
     }
@@ -131,14 +131,14 @@ public class RuleBasedSegmentStorageImplTest {
         Set<RuleBasedSegment> toAdd = new HashSet<>();
         toAdd.add(segment1);
         toAdd.add(segment2);
-        storage.update(toAdd, null, 1);
+        storage.update(toAdd, null, 1, null);
 
         assertNotNull(storage.get("segment1", "matchingKey"));
         assertNotNull(storage.get("segment2", "matchingKey"));
 
         Set<RuleBasedSegment> toRemove = new HashSet<>();
         toRemove.add(createRuleBasedSegment("segment1"));
-        storage.update(null, toRemove, 2);
+        storage.update(null, toRemove, 2, null);
 
         assertNull(storage.get("segment1", "matchingKey"));
         assertNotNull(storage.get("segment2", "matchingKey"));
@@ -149,7 +149,7 @@ public class RuleBasedSegmentStorageImplTest {
         RuleBasedSegment segment1 = createRuleBasedSegment("segment1");
         Set<RuleBasedSegment> segments = Collections.singleton(segment1);
 
-        storage.update(segments, segments, 1);
+        storage.update(segments, segments, 1, null);
         assertNull(storage.get("segment1", "matchingKey"));
         assertEquals(1, storage.getChangeNumber());
     }
@@ -162,7 +162,7 @@ public class RuleBasedSegmentStorageImplTest {
         toAdd.add(segment1);
         toAdd.add(segment2);
 
-        assertTrue(storage.update(toAdd, null, 1));
+        assertTrue(storage.update(toAdd, null, 1, null));
     }
 
     @Test
@@ -205,9 +205,9 @@ public class RuleBasedSegmentStorageImplTest {
         RuleBasedSegmentStorageProducer producer = mock(RuleBasedSegmentStorageProducer.class);
         storage = new RuleBasedSegmentStorageImpl(producer, mParser, new ConcurrentHashMap<>());
 
-        storage.update(null, null, 1);
+        storage.update(null, null, 1, null);
 
-        verify(producer).update(null, null, 1);
+        verify(producer).update(null, null, 1, null);
     }
 
     @Test
