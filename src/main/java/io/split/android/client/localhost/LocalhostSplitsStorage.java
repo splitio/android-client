@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.EventsManagerCoordinator;
@@ -90,7 +91,7 @@ public class LocalhostSplitsStorage implements SplitsStorage {
     }
 
     @Override
-    public boolean update(ProcessedSplitChange splitChange) {
+    public boolean update(ProcessedSplitChange splitChange, ExecutorService mExecutor) {
         return false;
     }
 

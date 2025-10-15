@@ -97,7 +97,7 @@ public class SplitsStorageTest {
             splits.add(split);
         }
         ProcessedSplitChange change = new ProcessedSplitChange(splits, new ArrayList<>(), 1L, 0L);
-        mSplitsStorage.update(change);
+        mSplitsStorage.update(change, null);
 
         for (int i = 0; i < 4; i++) {
             String splitName = "split-test-" + i;
@@ -120,7 +120,7 @@ public class SplitsStorageTest {
         Long newChangeNumber = INITIAL_CHANGE_NUMBER + 100;
         Long initialChangeNumber = mSplitsStorage.getTill();
         ProcessedSplitChange change = new ProcessedSplitChange(splits, splits, newChangeNumber, 0L);
-        mSplitsStorage.update(change);
+        mSplitsStorage.update(change, null);
         Long updatedChangeNumber = mSplitsStorage.getTill();
         Assert.assertEquals(INITIAL_CHANGE_NUMBER, initialChangeNumber);
         Assert.assertEquals(newChangeNumber, updatedChangeNumber);
@@ -131,7 +131,7 @@ public class SplitsStorageTest {
         mSplitsStorage.loadLocal();
         List<Split> splits = new ArrayList<>();
         ProcessedSplitChange change = new ProcessedSplitChange(splits, splits, 1L, 0L);
-        mSplitsStorage.update(change);
+        mSplitsStorage.update(change, null);
 
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
         long changeNumber = mSplitsStorage.getTill();
@@ -144,7 +144,7 @@ public class SplitsStorageTest {
     public void addNullSplitList() {
         mSplitsStorage.loadLocal();
         ProcessedSplitChange change = new ProcessedSplitChange(null, new ArrayList<>(), 1L, 0L);
-        mSplitsStorage.update(change);
+        mSplitsStorage.update(change, null);
 
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
         long changeNumber = mSplitsStorage.getTill();
@@ -157,7 +157,7 @@ public class SplitsStorageTest {
     public void deleteNullSplitList() {
         mSplitsStorage.loadLocal();
         ProcessedSplitChange change = new ProcessedSplitChange(new ArrayList<>(), null, 1L, 0L);
-        mSplitsStorage.update(change);
+        mSplitsStorage.update(change, null);
 
         Map<String, Split> loadedSplits = mSplitsStorage.getMany(null);
         long changeNumber = mSplitsStorage.getTill();
@@ -220,7 +220,7 @@ public class SplitsStorageTest {
                         }
                     }
                     ProcessedSplitChange change = new ProcessedSplitChange(activeSplits, archivedSplits, 1L, 0L);
-                    mSplitsStorage.update(change);
+                    mSplitsStorage.update(change, null);
                 }
                 latch.countDown();
             }
@@ -251,7 +251,7 @@ public class SplitsStorageTest {
                         }
                     }
                     ProcessedSplitChange change = new ProcessedSplitChange(activeSplits, archivedSplits, 1L, 0L);
-                    mSplitsStorage.update(change);
+                    mSplitsStorage.update(change, null);
                 }
                 latch.countDown();
             }
@@ -283,11 +283,11 @@ public class SplitsStorageTest {
         Split s2 = newSplit("s2", Status.ACTIVE, "mytt");
         Split s2ar = newSplit("s2", Status.ARCHIVED, "mytt");
 
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1), empty, 1L, 0L));
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s2), empty, 1L, 0L));
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s2), empty, 1L, 0L));
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s2), empty, 1L, 0L));
-        mSplitsStorage.update(new ProcessedSplitChange(empty, Arrays.asList(s2ar), 1L, 0L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1), empty, 1L, 0L), null);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s2), empty, 1L, 0L), null);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s2), empty, 1L, 0L), null);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s2), empty, 1L, 0L), null);
+        mSplitsStorage.update(new ProcessedSplitChange(empty, Arrays.asList(s2ar), 1L, 0L), null);
 
         assertTrue(mSplitsStorage.isValidTrafficType("tt"));
         assertFalse(mSplitsStorage.isValidTrafficType("mytt"));
@@ -302,10 +302,10 @@ public class SplitsStorageTest {
         Split s1t1 = newSplit(splitName, Status.ACTIVE, "tt");
         Split s1t2 = newSplit(splitName, Status.ACTIVE, "mytt");
 
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L));
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L));
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L));
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t2), empty, 1L, 0L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L), null);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L), null);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L), null);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t2), empty, 1L, 0L), null);
 
         assertFalse(mSplitsStorage.isValidTrafficType("tt"));
         assertTrue(mSplitsStorage.isValidTrafficType("mytt"));
@@ -321,11 +321,11 @@ public class SplitsStorageTest {
         Split s1t1 = newSplit(splitName, Status.ACTIVE, "tt");
         Split s1t2 = newSplit(splitName, Status.ACTIVE, "mytt");
 
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s0), empty, 1L, 0L));
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L));
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L));
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L));
-        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t2), empty, 1L, 0L));
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s0), empty, 1L, 0L), null);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L), null);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L), null);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t1), empty, 1L, 0L), null);
+        mSplitsStorage.update(new ProcessedSplitChange(Arrays.asList(s1t2), empty, 1L, 0L), null);
 
         assertTrue(mSplitsStorage.isValidTrafficType("tt"));
         assertTrue(mSplitsStorage.isValidTrafficType("mytt"));
@@ -361,7 +361,7 @@ public class SplitsStorageTest {
         mSplitsStorage.loadLocal();
 
         Split updatedSplit = newSplit("split_test", Status.ACTIVE, "new_type");
-        mSplitsStorage.update(new ProcessedSplitChange(Collections.singletonList(updatedSplit), Collections.emptyList(), 1L, 0L));
+        mSplitsStorage.update(new ProcessedSplitChange(Collections.singletonList(updatedSplit), Collections.emptyList(), 1L, 0L), null);
 
         assertFalse(mSplitsStorage.isValidTrafficType("test_type"));
         assertTrue(mSplitsStorage.isValidTrafficType("new_type"));
@@ -410,7 +410,7 @@ public class SplitsStorageTest {
 
         mSplitsStorage.update(new ProcessedSplitChange(
                 Collections.singletonList(newSplit("split_test", Status.ACTIVE, "test_type")), Collections.emptyList(),
-                1L, 0L));
+                1L, 0L), null);
 
         assertFalse(initialSet1.isEmpty());
         Assert.assertEquals(Collections.emptySet(), mSplitsStorage.getNamesByFlagSets(Collections.singletonList("set_1")));
@@ -448,7 +448,7 @@ public class SplitsStorageTest {
 
         ArrayList<Split> archivedSplits = new ArrayList<>();
         archivedSplits.add(newSplit("split_test", Status.ARCHIVED, "test_type"));
-        boolean update = mSplitsStorage.update(new ProcessedSplitChange(new ArrayList<>(), archivedSplits, 1L, 0L));
+        boolean update = mSplitsStorage.update(new ProcessedSplitChange(new ArrayList<>(), archivedSplits, 1L, 0L), null);
 
         assertTrue(update);
     }
@@ -461,7 +461,7 @@ public class SplitsStorageTest {
 
         ArrayList<Split> activeSplits = new ArrayList<>();
         activeSplits.add(newSplit("split_test_3", Status.ACTIVE, "test_type_2", Collections.singleton("set_2")));
-        boolean update = mSplitsStorage.update(new ProcessedSplitChange(activeSplits, new ArrayList<>(), 1L, 0L));
+        boolean update = mSplitsStorage.update(new ProcessedSplitChange(activeSplits, new ArrayList<>(), 1L, 0L), null);
 
         assertTrue(update);
     }
@@ -474,7 +474,7 @@ public class SplitsStorageTest {
 
         ArrayList<Split> activeSplits = new ArrayList<>();
         activeSplits.add(newSplit("split_test", Status.ACTIVE, "test_type", Collections.singleton("set_2")));
-        boolean update = mSplitsStorage.update(new ProcessedSplitChange(activeSplits, new ArrayList<>(), 1L, 0L));
+        boolean update = mSplitsStorage.update(new ProcessedSplitChange(activeSplits, new ArrayList<>(), 1L, 0L), null);
 
         assertTrue(update);
     }
@@ -487,7 +487,7 @@ public class SplitsStorageTest {
 
         ArrayList<Split> archivedSplits = new ArrayList<>();
         archivedSplits.add(newSplit("split_test_3", Status.ACTIVE, "test_type_2", Collections.singleton("set_2")));
-        boolean update = mSplitsStorage.update(new ProcessedSplitChange(new ArrayList<>(), archivedSplits, 1L, 0L));
+        boolean update = mSplitsStorage.update(new ProcessedSplitChange(new ArrayList<>(), archivedSplits, 1L, 0L), null);
 
         assertFalse(update);
     }

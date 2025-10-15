@@ -7,6 +7,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.RolloutDefinitionsCache;
@@ -20,7 +21,7 @@ public interface SplitsStorage extends RolloutDefinitionsCache {
     Map<String, Split> getAll();
 
     // Returns true if at least one split was updated
-    boolean update(ProcessedSplitChange splitChange);
+    boolean update(ProcessedSplitChange splitChange, ExecutorService mExecutor);
 
     void updateWithoutChecks(Split split);
 

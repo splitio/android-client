@@ -38,14 +38,14 @@ public class RuleBasedSegmentStorageProducerImplTest {
         toAdd.add(segment1);
         toAdd.add(segment2);
 
-        storage.update(toAdd, null, 2);
+        storage.update(toAdd, null, 2, null);
 
         verify(mPersistentStorage).update(argThat(argument -> argument.size() == 2), argThat(Set::isEmpty), eq(2L));
     }
 
     @Test
     public void updateChangeNumber() {
-        storage.update(null, null, 5);
+        storage.update(null, null, 5, null);
 
         verify(mPersistentStorage).update(argThat(Set::isEmpty), argThat(Set::isEmpty), eq(5L));
     }

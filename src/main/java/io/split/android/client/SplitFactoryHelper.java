@@ -115,7 +115,17 @@ class SplitFactoryHelper {
         return dbName;
     }
 
-    private String buildDatabaseName(SplitClientConfig config, String apiToken) {
+    @Nullable
+    private String getDbName(SplitClientConfig config, String apiToken, Context context) {
+        String dbName = buildDatabaseName(config, apiToken);
+        File dbPath = context.getDatabasePath(dbName);
+        if (dbPath.exists()) {
+            return dbName;
+        }
+        return null;
+    }
+
+    static String buildDatabaseName(SplitClientConfig config, String apiToken) {
         if (apiToken == null) {
             throw new IllegalArgumentException("SDK key cannot be null");
         }
