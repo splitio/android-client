@@ -33,8 +33,28 @@ pipeline:
             steps:
               - step:
                   type: Run
-                  name: Run_1
-                  identifier: Run_1
+                  name: Install Dependencies
+                  identifier: install_dependencies
                   spec:
                     shell: Sh
-                    command: exit 1
+                    command: |
+                      export ANDROID_HOME=/opt/android-sdk
+                      chmod +x .harness/scripts/install-deps.sh
+                      .harness/scripts/install-deps.sh
+              - step:
+                  type: Run
+                  name: Start Emulator and Run Tests
+                  identifier: start_emulator_and_run_tests
+                  spec:
+                    shell: Sh
+                    command: |
+                      export ANDROID_HOME=/opt/android-sdk
+                      export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+                      export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin"
+                      
+                      # Start emulator
+                      chmod +x .harness/scripts/start-emulator.sh
+                      .harness/scripts/start-emulator.sh
+                      
+                      # Run instrumented tests
+                      ./gradlew connectedCheck --continue
