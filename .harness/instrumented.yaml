@@ -29,6 +29,10 @@ pipeline:
             spec:
               size: large
               nestedVirtualization: true
+          variables:
+            - name: ANDROID_HOME
+              type: String
+              value: /opt/android-sdk
           execution:
             steps:
               - step:
@@ -38,7 +42,6 @@ pipeline:
                   spec:
                     shell: Sh
                     command: |
-                      export ANDROID_HOME=/opt/android-sdk
                       chmod +x .harness/scripts/install-deps.sh
                       .harness/scripts/install-deps.sh
               - step:
@@ -51,7 +54,9 @@ pipeline:
                     args: connectedCheck --continue
                     shell: Sh
                     preCommand: |
-                      export ANDROID_HOME=/opt/android-sdk
+                      # Unset conflicting SDK environment variable
+                      unset ANDROID_SDK_ROOT
+                      
                       export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
                       export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin"
 
