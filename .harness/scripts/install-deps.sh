@@ -11,21 +11,20 @@ echo ""
 # ============================================
 echo "=== Installing Java 17 ==="
 
-# Check if Java 17 is already installed
-if java -version 2>&1 | grep -q "openjdk version \"17"; then
-  echo "Java 17 already installed"
-  java -version
-else
-  echo "Installing OpenJDK 17..."
-  sudo apt-get update -qq
-  sudo apt-get install -y openjdk-17-jdk
-fi
+# Install Java 17
+echo "Installing OpenJDK 17..."
+sudo apt-get update -qq
+sudo apt-get install -y openjdk-17-jdk
 
-# Set JAVA_HOME
-export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+# Set JAVA_HOME to Java 17 explicitly
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+
+# Update alternatives to use Java 17 as default
+sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+sudo update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
 
 echo ""
-echo "Java installation complete:"
+echo "Java 17 installation complete:"
 java -version
 echo "JAVA_HOME: $JAVA_HOME"
 
