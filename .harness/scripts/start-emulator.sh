@@ -38,25 +38,29 @@ echo no | avdmanager create avd \
 echo "✓ AVD created successfully"
 echo ""
 
-# Verify AVD was created
+# Verify AVD was created and get its actual path
 echo "Verifying AVD creation..."
-echo "HOME: $HOME"
-echo "Contents of $HOME/.android/avd/:"
-ls -la "$HOME/.android/avd/" || echo "AVD directory does not exist!"
+echo "Listing available AVDs:"
+avdmanager list avd
 
-AVD_INI_FILE="$HOME/.android/avd/${AVD_NAME}.ini"
-AVD_CONFIG_PATH="$HOME/.android/avd/${AVD_NAME}.avd/config.ini"
+# Extract the actual AVD path from avdmanager output
+AVD_PATH=$(avdmanager list avd | grep -A 3 "Name: ${AVD_NAME}" | grep "Path:" | sed 's/.*Path: //')
 
-if [ ! -f "$AVD_INI_FILE" ]; then
-  echo "ERROR: AVD ini file not found at: $AVD_INI_FILE"
-  echo "Listing available AVDs:"
-  avdmanager list avd
+if [ -z "$AVD_PATH" ]; then
+  echo "ERROR: Could not find AVD path for: $AVD_NAME"
   exit 1
 fi
 
-echo "✓ AVD ini file found: $AVD_INI_FILE"
-echo "Contents:"
-cat "$AVD_INI_FILE"
+echo ""
+echo "✓ AVD found at: $AVD_PATH"
+
+# The .ini file should be in the parent directory
+AVD_DIR=$(dirname "$AVD_PATH")
+AVD_INI_FILE="${AVD_DIR}/${AVD_NAME}.ini"
+AVD_CONFIG_PATH="${AVD_PATH}/config.ini"
+
+echo "AVD ini file: $AVD_INI_FILE"
+echo "AVD config file: $AVD_CONFIG_PATH"
 echo ""
 
 # Configure AVD for CI environment (disable animations, reduce resources)
@@ -72,6 +76,11 @@ fi
 
 echo ""
 echo "Starting emulator in background..."
+echo ""
+
+# Set ANDROID_AVD_HOME so emulator can find the AVD
+export ANDROID_AVD_HOME="$AVD_DIR"
+echo "ANDROID_AVD_HOME set to: $ANDROID_AVD_HOME"
 echo ""
 
 # Start emulator with CI-friendly flags
