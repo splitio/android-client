@@ -38,14 +38,36 @@ echo no | avdmanager create avd \
 echo "✓ AVD created successfully"
 echo ""
 
-# Configure AVD for CI environment (disable animations, reduce resources)
+# Verify AVD was created
+echo "Verifying AVD creation..."
+echo "HOME: $HOME"
+echo "Contents of $HOME/.android/avd/:"
+ls -la "$HOME/.android/avd/" || echo "AVD directory does not exist!"
+
+AVD_INI_FILE="$HOME/.android/avd/${AVD_NAME}.ini"
 AVD_CONFIG_PATH="$HOME/.android/avd/${AVD_NAME}.avd/config.ini"
+
+if [ ! -f "$AVD_INI_FILE" ]; then
+  echo "ERROR: AVD ini file not found at: $AVD_INI_FILE"
+  echo "Listing available AVDs:"
+  avdmanager list avd
+  exit 1
+fi
+
+echo "✓ AVD ini file found: $AVD_INI_FILE"
+echo "Contents:"
+cat "$AVD_INI_FILE"
+echo ""
+
+# Configure AVD for CI environment (disable animations, reduce resources)
 if [ -f "$AVD_CONFIG_PATH" ]; then
   echo "Optimizing AVD configuration for CI..."
   # Increase RAM and heap for better performance
   echo "hw.ramSize=2048" >> "$AVD_CONFIG_PATH"
   echo "vm.heapSize=256" >> "$AVD_CONFIG_PATH"
   echo "✓ AVD configuration optimized"
+else
+  echo "WARNING: AVD config file not found at: $AVD_CONFIG_PATH"
 fi
 
 echo ""
