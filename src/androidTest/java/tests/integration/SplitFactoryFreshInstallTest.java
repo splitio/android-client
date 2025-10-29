@@ -1,4 +1,4 @@
-package io.split.android.client;
+package tests.integration;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -6,23 +6,22 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
-import androidx.work.Configuration;
-import androidx.work.testing.WorkManagerTestInitHelper;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.annotation.Config;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
+import io.split.android.client.ServiceEndpoints;
+import io.split.android.client.SplitClientConfig;
+import io.split.android.client.SplitFactory;
+import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Excluded;
 import io.split.android.client.dtos.RuleBasedSegment;
@@ -39,9 +38,7 @@ import okhttp3.mockwebserver.RecordedRequest;
 /**
  * Tests for SplitFactoryImpl fresh install prefetch functionality.
  */
-@RunWith(RobolectricTestRunner.class)
-@Config(sdk = 33, manifest = Config.NONE)
-public class SplitFactoryImplFreshInstallTest {
+public class SplitFactoryFreshInstallTest {
 
     @Rule
     public Timeout globalTimeout = Timeout.seconds(30);
@@ -55,11 +52,6 @@ public class SplitFactoryImplFreshInstallTest {
     @Before
     public void setUp() throws Exception {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-
-        // Initialize WorkManager
-        Configuration config = new Configuration.Builder()
-                .build();
-        WorkManagerTestInitHelper.initializeTestWorkManager(mContext, config);
 
         mMockWebServer = new MockWebServer();
         mMockWebServer.start();
@@ -235,8 +227,8 @@ public class SplitFactoryImplFreshInstallTest {
                 "test-fresh",
                 "testfres",
                 mApiToken != null && mApiToken.length() >= 4
-                    ? mApiToken.substring(0, 4) + "resh"
-                    : "testresh"
+                        ? mApiToken.substring(0, 4) + "resh"
+                        : "testresh"
         };
 
         for (String dbName : possibleDbNames) {
