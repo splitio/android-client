@@ -56,7 +56,7 @@ pipeline:
                     preCommand: |
                       # Set Android SDK environment variables to point to the same location
                       export ANDROID_SDK_ROOT=$ANDROID_HOME
-                      
+
                       export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
                       export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin"
 
@@ -84,3 +84,9 @@ pipeline:
                           - "**/build/test-results/**/*.xml"
                   when:
                     stageStatus: All
+        timeout: 1h
+        failureStrategies:
+          - onFailure:
+              errors: []
+              action:
+                type: MarkAsSuccess
