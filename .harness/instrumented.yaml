@@ -87,6 +87,7 @@ pipeline:
         timeout: 1h
         failureStrategies:
           - onFailure:
-              errors: []
+              errors:
+                - AllErrors
               action:
                 type: MarkAsSuccess
