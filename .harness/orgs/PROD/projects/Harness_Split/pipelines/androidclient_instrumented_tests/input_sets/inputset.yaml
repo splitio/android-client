@@ -1,0 +1,14 @@
+inputSet:
+  name: " inputset"
+  identifier: inputset
+  orgIdentifier: PROD
+  projectIdentifier: Harness_Split
+  pipeline:
+    identifier: androidclient_instrumented_tests
+    properties:
+      ci:
+        codebase:
+          build:
+            type: PR
+            spec:
+              number: <+trigger.prNumber>
