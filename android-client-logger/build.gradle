@@ -1,0 +1,44 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'com.android.library'
+    id 'kotlin-android'
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+android {
+    namespace 'io.split.android.client.logger'
+    compileSdk 33
+
+    defaultConfig {
+        minSdk 19
+        targetSdk 31
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+}
+
+dependencies {
+    // Test: Add an external dependency to verify it's included in fused library POM
+    implementation "androidx.annotation:annotation:1.2.0"
+    
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.mockito:mockito-core:4.8.0"
+}

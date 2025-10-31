@@ -1,0 +1,82 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'com.android.library'
+    id 'kotlin-android'
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+android {
+    namespace 'io.split.android.client.main'
+    compileSdk 33
+
+    defaultConfig {
+        minSdk 19
+        targetSdk 31
+        multiDexEnabled true
+        consumerProguardFiles 'consumer-rules.pro'
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    buildTypes {
+        debug {
+            buildConfigField("String", "SPLIT_VERSION_NAME", "\"5.4.2-rc1\"")
+        }
+        release {
+            buildConfigField("String", "SPLIT_VERSION_NAME", "\"5.4.2-rc1\"")
+        }
+    }
+
+    testOptions {
+        unitTests.returnDefaultValues = true
+    }
+}
+
+dependencies {
+    // Internal module dependencies
+    api project(':android-client-logger')
+
+    // External dependencies
+    implementation "androidx.room:room-runtime:2.4.3"
+    annotationProcessor "androidx.room:room-compiler:2.4.3"
+    implementation "androidx.work:work-runtime:2.7.1"
+    implementation "androidx.lifecycle:lifecycle-process:2.5.1"
+    implementation "androidx.annotation:annotation:1.2.0"
+    implementation "com.google.code.gson:gson:2.10.1"
+    implementation "org.yaml:snakeyaml:2.2"
+    implementation "com.google.android.gms:play-services-base:18.2.0"
+    implementation "androidx.multidex:multidex:2.0.1"
+
+    // Test dependencies
+    testImplementation "junit:junit:4.13.2"
+    testImplementation "org.mockito:mockito-core:4.8.0"
+    testImplementation "org.mockito:mockito-inline:4.8.0"
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+}
