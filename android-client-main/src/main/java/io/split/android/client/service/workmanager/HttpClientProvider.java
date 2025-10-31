@@ -6,7 +6,7 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import io.split.android.android_client.BuildConfig;
+import io.split.android.client.main.BuildConfig;
 import io.split.android.client.dtos.HttpProxyDto;
 import io.split.android.client.network.BasicCredentialsProvider;
 import io.split.android.client.network.BearerCredentialsProvider;

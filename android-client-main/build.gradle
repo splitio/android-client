@@ -42,10 +42,12 @@ android {
 
     buildTypes {
         debug {
-            buildConfigField("String", "SPLIT_VERSION_NAME", "\"5.4.2-rc1\"")
+            buildConfigField("String", "SPLIT_VERSION_NAME", "\"${project.parent.ext.splitVersion}\"")
+            buildConfigField("String", "FLAGS_SPEC", "\"1.3\"")
         }
         release {
-            buildConfigField("String", "SPLIT_VERSION_NAME", "\"5.4.2-rc1\"")
+            buildConfigField("String", "SPLIT_VERSION_NAME", "\"${project.parent.ext.splitVersion}\"")
+            buildConfigField("String", "FLAGS_SPEC", "\"1.3\"")
         }
     }
 
@@ -56,7 +58,11 @@ android {
 
 dependencies {
     // Internal module dependencies
-    api project(':android-client-logger')
+    // Detect if we're in a standalone build or part of a parent project
+    def isStandalone = rootProject.name == 'android-client'
+    def loggerModulePath = isStandalone ? ':android-client-logger' : ':android-client:android-client-logger'
+    
+    api project(loggerModulePath)
 
     // External dependencies
     implementation "androidx.room:room-runtime:2.4.3"

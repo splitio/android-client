@@ -1,6 +1,6 @@
 package io.split.android.client;
 
-import io.split.android.android_client.BuildConfig;
+import io.split.android.client.main.BuildConfig;
 import io.split.android.client.service.ServiceConstants;
 
 public class TestingConfig {

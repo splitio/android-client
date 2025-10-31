@@ -43,11 +43,18 @@ repositories {
 }
 
 dependencies {
+    // Detect if we're in a standalone build or part of a parent project
+    // If standalone (our settings.gradle defines root as 'android-client'), use local paths
+    // If part of parent project, use prefixed paths
+    def isStandalone = rootProject.name == 'android-client'
+    def mainModulePath = isStandalone ? ':android-client-main' : ':android-client:android-client-main'
+    def loggerModulePath = isStandalone ? ':android-client-logger' : ':android-client:android-client-logger'
+    
     // Include main module - contains all source code and will be bundled into the fused .aar
-    include project(':android-client-main')
+    include project(mainModulePath)
     
     // Include logger module - will be bundled into the fused .aar
-    include project(':android-client-logger')
+    include project(loggerModulePath)
 }
 
 def splitPOM = {

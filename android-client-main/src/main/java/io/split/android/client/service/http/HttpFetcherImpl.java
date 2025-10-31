@@ -8,7 +8,7 @@ import androidx.annotation.Nullable;
 import java.net.URI;
 import java.util.Map;
 
-import io.split.android.android_client.BuildConfig;
+import io.split.android.client.main.BuildConfig;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpException;
