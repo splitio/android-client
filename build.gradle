@@ -5,22 +5,27 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.9.3'
+        classpath 'com.android.tools.build:gradle:8.9.1'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
         classpath "com.vanniktech:gradle-maven-publish-plugin:0.33.0"
     }
 }
 
 apply plugin: 'com.android.fused-library'
+apply plugin: 'maven-publish'
 // Temporarily removed signing and vanniktech plugins to test fused library build
 // apply plugin: 'signing'
 // apply plugin: 'com.vanniktech.maven.publish'
 // spec.gradle and jacoco.gradle removed - not compatible with fused library
 
+group = 'io.split.client'
+
 ext {
-    splitVersion = '5.4.2-rc1'
+    splitVersion = '5.5.0-alpha.1'
     jacocoVersion = '0.8.8'
 }
+
+version = splitVersion
 
 // Define exclusions for JaCoCo coverage
 def coverageExclusions = [
@@ -43,18 +48,11 @@ repositories {
 }
 
 dependencies {
-    // Detect if we're in a standalone build or part of a parent project
-    // If standalone (our settings.gradle defines root as 'android-client'), use local paths
-    // If part of parent project, use prefixed paths
-    def isStandalone = rootProject.name == 'android-client'
-    def mainModulePath = isStandalone ? ':android-client-main' : ':android-client:android-client-main'
-    def loggerModulePath = isStandalone ? ':android-client-logger' : ':android-client:android-client-logger'
-    
     // Include main module - contains all source code and will be bundled into the fused .aar
-    include project(mainModulePath)
+    include project(':android-client-main')
     
     // Include logger module - will be bundled into the fused .aar
-    include project(loggerModulePath)
+    include project(':android-client-logger')
 }
 
 def splitPOM = {
@@ -94,3 +92,65 @@ def splitPOM = {
 
 // Note: sourcesJar and javadocJar tasks removed - fused library has no source sets
 // Tests are now in submodules
+
+// Publishing configuration for fused library - temporarily disabled to check available tasks
+// afterEvaluate {
+//     publishing {
+//         publications {
+//             release(MavenPublication) {
+//                 groupId = 'io.split.client'
+//                 artifactId = 'android-client'
+//                 version = splitVersion
+//                 
+//                 // Add the fused library AAR
+//                 artifact(tasks.named('bundleReleaseAar'))
+//                 
+//                 pom {
+//                     name = 'Split Android SDK'
+//                     description = 'Official Split Android SDK'
+//                     url = 'https://github.com/splitio/android-client'
+//                     
+//                     licenses {
+//                         license {
+//                             name = 'The Apache License, Version 2.0'
+//                             url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+//                         }
+//                     }
+//                     
+//                     developers {
+//                         developer {
+//                             id = 'sdks'
+//                             email = 'sdks@split.io'
+//                         }
+//                     }
+//                     
+//                     scm {
+//                         connection = 'scm:git:git@github.com:splitio/android-client.git'
+//                         developerConnection = 'scm:git@github.com:splitio/android-client.git'
+//                         url = 'https://github.com/splitio/android-client'
+//                     }
+//                     
+//                     // Add runtime dependencies from android-client-main
+//                     withXml {
+//                         def dependenciesNode = asNode().appendNode('dependencies')
+//                         
+//                         // Get dependencies from android-client-main
+//                         project(':android-client-main').configurations.api.allDependencies.each { dep ->
+//                             if (dep.group != null && dep.name != 'unspecified') {
+//                                 def dependencyNode = dependenciesNode.appendNode('dependency')
+//                                 dependencyNode.appendNode('groupId', dep.group)
+//                                 dependencyNode.appendNode('artifactId', dep.name)
+//                                 dependencyNode.appendNode('version', dep.version)
+//                                 dependencyNode.appendNode('scope', 'runtime')
+//                             }
+//                         }
+//                     }
+//                 }
+//             }
+//         }
+//         
+//         repositories {
+//             mavenLocal()
+//         }
+//     }
+// }
