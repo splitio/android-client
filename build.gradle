@@ -5,7 +5,10 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.9.1'
+        // AGP 9.0.0-alpha13 requires Gradle 9.0 and has a new minSdk API, but builds hang
+        // Staying with stable AGP 8.9.1 for now
+//        classpath 'com.android.tools.build:gradle:8.9.1'
+        classpath 'com.android.tools.build:gradle:9.0.0-alpha13'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
         classpath "com.vanniktech:gradle-maven-publish-plugin:0.33.0"
     }
@@ -39,7 +42,43 @@ def coverageExclusions = [
 
 androidFusedLibrary {
     namespace = 'io.split.android.android_client'
-    minSdk = 19
+    minSdk { version = release(19) }
+    // Note: AGP 9.0.0-alpha13 uses new API: minSdk { version = release(19) }
+}
+
+// Workaround: Fused library plugin doesn't include consumer ProGuard files in AAR
+// Manually copy the merged consumer proguard file into the AAR
+afterEvaluate {
+    tasks.named('bundle').configure {
+        doLast {
+            def aarFile = file("${buildDir}/outputs/aar/android-client.aar")
+            def proguardFile = file("${buildDir}/intermediates/merged_consumer_proguard_file/release/mergeReleaseConsumerProguardFiles/proguard.txt")
+            
+            if (aarFile.exists() && proguardFile.exists()) {
+                // Create temp directory to extract AAR
+                def tempDir = file("${buildDir}/tmp/aar-repack")
+                tempDir.deleteDir()
+                tempDir.mkdirs()
+                
+                // Extract AAR
+                copy {
+                    from zipTree(aarFile)
+                    into tempDir
+                }
+                
+                // Copy proguard.txt
+                copy {
+                    from proguardFile
+                    into tempDir
+                }
+                
+                // Repack AAR
+                ant.zip(destfile: aarFile, basedir: tempDir)
+                
+                println "Added consumer ProGuard rules to ${aarFile.name}"
+            }
+        }
+    }
 }
 
 repositories {
@@ -50,7 +89,7 @@ repositories {
 dependencies {
     // Include main module - contains all source code and will be bundled into the fused .aar
     include project(':android-client-main')
-    
+
     // Include logger module - will be bundled into the fused .aar
     include project(':android-client-logger')
 }
@@ -85,7 +124,7 @@ def splitPOM = {
 // mavenPublishing {
 //     coordinates("io.split.client", "android-client", splitVersion)
 //     pom(splitPOM)
-// 
+//
 //     publishToMavenCentral(false)
 //     signAllPublications()
 // }
@@ -101,39 +140,39 @@ def splitPOM = {
 //                 groupId = 'io.split.client'
 //                 artifactId = 'android-client'
 //                 version = splitVersion
-//                 
+//
 //                 // Add the fused library AAR
 //                 artifact(tasks.named('bundleReleaseAar'))
-//                 
+//
 //                 pom {
 //                     name = 'Split Android SDK'
 //                     description = 'Official Split Android SDK'
 //                     url = 'https://github.com/splitio/android-client'
-//                     
+//
 //                     licenses {
 //                         license {
 //                             name = 'The Apache License, Version 2.0'
 //                             url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
 //                         }
 //                     }
-//                     
+//
 //                     developers {
 //                         developer {
 //                             id = 'sdks'
 //                             email = 'sdks@split.io'
 //                         }
 //                     }
-//                     
+//
 //                     scm {
 //                         connection = 'scm:git:git@github.com:splitio/android-client.git'
 //                         developerConnection = 'scm:git@github.com:splitio/android-client.git'
 //                         url = 'https://github.com/splitio/android-client'
 //                     }
-//                     
+//
 //                     // Add runtime dependencies from android-client-main
 //                     withXml {
 //                         def dependenciesNode = asNode().appendNode('dependencies')
-//                         
+//
 //                         // Get dependencies from android-client-main
 //                         project(':android-client-main').configurations.api.allDependencies.each { dep ->
 //                             if (dep.group != null && dep.name != 'unspecified') {
@@ -148,7 +187,7 @@ def splitPOM = {
 //                 }
 //             }
 //         }
-//         
+//
 //         repositories {
 //             mavenLocal()
 //         }
