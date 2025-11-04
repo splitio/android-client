@@ -36,11 +36,6 @@ public class DatabaseInitializationTest {
     @Before
     public void setUp() throws IOException {
         mContext = InstrumentationRegistry.getInstrumentation().getContext();
-        // clear package data
-        String[] dbList = getDbList(mContext);
-        for (String db : dbList) {
-            DatabaseHelper.removeDatabaseFile(db);
-        }
         mHttpClientMock = new HttpClientMock(new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
@@ -195,10 +190,6 @@ public class DatabaseInitializationTest {
             throw new RuntimeException(e);
         }
         return Arrays.stream(context.databaseList())
-//                .map(db -> {
-//                    System.out.println("DB name: " + db);
-//                    return db;
-//                })
                 .filter(db -> !db.endsWith("-journal") && !db.endsWith("-wal") && !db.endsWith("-shm"))
                 .toArray(String[]::new);
     }
