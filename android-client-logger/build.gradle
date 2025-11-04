@@ -9,6 +9,10 @@ plugins {
     id 'com.android.library'
 }
 
+// Version inherited from parent project
+version = rootProject.ext.splitVersion
+group = 'io.split.client'
+
 repositories {
     google()
     mavenCentral()

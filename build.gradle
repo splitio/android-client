@@ -86,6 +86,54 @@ repositories {
     mavenCentral()
 }
 
+// Task to generate deps.txt with dependency tree
+tasks.register('generateDepsFile') {
+    description = 'Generates deps.txt file with the dependency tree'
+    group = 'documentation'
+    
+    doLast {
+        def depsFile = file("${projectDir}/deps.txt")
+        def output = new StringBuilder()
+        
+        output.append("------------------------------------------------------------\n")
+        output.append("Project '${project.path}'\n")
+        output.append("------------------------------------------------------------\n\n")
+        
+        // For fused library, get dependencies from the included modules
+        output.append("Fused Library Dependencies (from included modules)\n")
+        output.append("=".repeat(60) + "\n\n")
+        
+        // Get dependencies from android-client-main (where the real dependencies are)
+        def mainProject = project(':android-client-main')
+        def config = mainProject.configurations.findByName('releaseRuntimeClasspath')
+        
+        if (config != null) {
+            output.append("releaseRuntimeClasspath - Runtime classpath of compilation 'release' (target (androidJvm)).\n")
+            config.resolvedConfiguration.firstLevelModuleDependencies.each { dep ->
+                output.append("+--- ${dep.moduleGroup}:${dep.moduleName}:${dep.moduleVersion}\n")
+                printDependencyTree(dep, output, "|    ", true)
+            }
+        }
+        
+        depsFile.text = output.toString()
+        println "Generated deps.txt at ${depsFile.absolutePath}"
+    }
+}
+
+void printDependencyTree(dependency, output, prefix, isLast) {
+    dependency.children.eachWithIndex { child, index ->
+        def isLastChild = (index == dependency.children.size() - 1)
+        def connector = isLastChild ? "\\--- " : "+--- "
+        def nextPrefix = isLastChild ? "     " : "|    "
+        
+        output.append("${prefix}${connector}${child.moduleGroup}:${child.moduleName}:${child.moduleVersion}\n")
+        
+        if (!child.children.isEmpty()) {
+            printDependencyTree(child, output, prefix + nextPrefix, isLastChild)
+        }
+    }
+}
+
 dependencies {
     // Include main module - contains all source code and will be bundled into the fused .aar
     include project(':android-client-main')

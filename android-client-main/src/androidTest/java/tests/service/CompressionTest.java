@@ -126,5 +126,3 @@ public class CompressionTest {
         return Arrays.asList(content.split("\n"));
     }
 }
-
-

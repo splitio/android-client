@@ -253,4 +253,3 @@ public class PrerequisitesTest {
         return IntegrationHelper.loadSplitChanges(mContext, "splitchanges_prerequisites.json");
     }
 }
-

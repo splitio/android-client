@@ -9,6 +9,10 @@ plugins {
     id 'com.android.library'
 }
 
+// Version inherited from parent project
+version = rootProject.ext.splitVersion
+group = 'io.split.client'
+
 repositories {
     google()
     mavenCentral()
@@ -24,6 +28,11 @@ android {
         multiDexEnabled true
         consumerProguardFiles 'consumer-rules.pro'
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunnerArguments clearPackageData: 'true'
+
+        testOptions {
+            execution 'ANDROIDX_TEST_ORCHESTRATOR'
+        }
     }
 
     buildFeatures {
@@ -33,6 +42,15 @@ android {
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    sourceSets {
+        test {
+            java.srcDirs += 'src/sharedTest/java'
+        }
+        androidTest {
+            java.srcDirs += 'src/sharedTest/java'
+        }
     }
 
     buildTypes {
@@ -48,6 +66,15 @@ android {
 
     testOptions {
         unitTests.returnDefaultValues = true
+        execution 'ANDROIDX_TEST_ORCHESTRATOR'
+    }
+}
+
+configurations.all {
+    resolutionStrategy {
+        force "org.jetbrains.kotlin:kotlin-stdlib:1.8.0"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0"
     }
 }
 
@@ -70,6 +97,32 @@ dependencies {
     testImplementation "junit:junit:4.13.2"
     testImplementation "org.mockito:mockito-core:4.8.0"
     testImplementation "org.mockito:mockito-inline:4.8.0"
+    testImplementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.0"
+    testImplementation "org.jetbrains.kotlin:kotlin-test:1.8.0"
+    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:1.8.0"
+    testImplementation "org.hamcrest:hamcrest:2.2"
+    testImplementation "org.apache.commons:commons-lang3:3.12.0"
+    testImplementation "com.google.guava:guava:31.1-android"
+    testImplementation "com.squareup.okhttp3:mockwebserver:4.10.0"
+    testImplementation "com.squareup.okhttp3:okhttp-tls:4.10.0"
+//    testImplementation project(':android-client-logger')
+
+    // Android Test dependencies
+    androidTestImplementation "androidx.test.ext:junit:1.1.5"
+    androidTestImplementation "androidx.test:runner:1.5.2"
+    androidTestImplementation "androidx.test:rules:1.5.0"
+    androidTestImplementation "androidx.work:work-testing:2.7.1"
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-stdlib:1.8.0"
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-test:1.8.0"
+    androidTestImplementation "org.jetbrains.kotlin:kotlin-test-junit:1.8.0"
+    androidTestImplementation "org.mockito:mockito-core:4.8.0"
+    androidTestImplementation "org.mockito:mockito-android:4.8.0"
+    androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.10.0"
+    androidTestImplementation "com.squareup.okhttp3:okhttp-tls:4.10.0"
+    androidTestImplementation "com.google.guava:guava:31.1-android"
+//    androidTestImplementation project(':android-client-logger')
+
+    androidTestUtil "androidx.test:orchestrator:1.4.2"
 }
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
