@@ -1,3 +1,6 @@
+import com.vanniktech.maven.publish.AndroidFusedLibrary
+import org.gradle.api.publish.maven.MavenPublication
+
 buildscript {
     repositories {
         google()
@@ -10,16 +13,15 @@ buildscript {
 //        classpath 'com.android.tools.build:gradle:8.9.1'
         classpath 'com.android.tools.build:gradle:9.0.0-alpha13'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
-        classpath "com.vanniktech:gradle-maven-publish-plugin:0.33.0"
+        classpath "com.vanniktech:gradle-maven-publish-plugin:0.34.0"
     }
 }
 
 apply plugin: 'com.android.fused-library'
-apply plugin: 'maven-publish'
-// Temporarily removed signing and vanniktech plugins to test fused library build
-// apply plugin: 'signing'
-// apply plugin: 'com.vanniktech.maven.publish'
+apply plugin: 'com.vanniktech.maven.publish'
+
 // spec.gradle and jacoco.gradle removed - not compatible with fused library
+// Note: Signing plugin applied conditionally to avoid conflicts with fused-library plugin
 
 group = 'io.split.client'
 
@@ -135,11 +137,7 @@ void printDependencyTree(dependency, output, prefix, isLast) {
 }
 
 dependencies {
-    // Include main module - contains all source code and will be bundled into the fused .aar
     include project(':android-client-main')
-
-    // Include logger module - will be bundled into the fused .aar
-    include project(':android-client-logger')
 }
 
 def splitPOM = {
@@ -168,76 +166,56 @@ def splitPOM = {
     }
 }
 
-// mavenPublishing temporarily disabled for POC - need to re-enable with fused library component
-// mavenPublishing {
-//     coordinates("io.split.client", "android-client", splitVersion)
-//     pom(splitPOM)
-//
-//     publishToMavenCentral(false)
-//     signAllPublications()
-// }
-
 // Note: sourcesJar and javadocJar tasks removed - fused library has no source sets
 // Tests are now in submodules
 
-// Publishing configuration for fused library - temporarily disabled to check available tasks
-// afterEvaluate {
-//     publishing {
-//         publications {
-//             release(MavenPublication) {
-//                 groupId = 'io.split.client'
-//                 artifactId = 'android-client'
-//                 version = splitVersion
-//
-//                 // Add the fused library AAR
-//                 artifact(tasks.named('bundleReleaseAar'))
-//
-//                 pom {
-//                     name = 'Split Android SDK'
-//                     description = 'Official Split Android SDK'
-//                     url = 'https://github.com/splitio/android-client'
-//
-//                     licenses {
-//                         license {
-//                             name = 'The Apache License, Version 2.0'
-//                             url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-//                         }
-//                     }
-//
-//                     developers {
-//                         developer {
-//                             id = 'sdks'
-//                             email = 'sdks@split.io'
-//                         }
-//                     }
-//
-//                     scm {
-//                         connection = 'scm:git:git@github.com:splitio/android-client.git'
-//                         developerConnection = 'scm:git@github.com:splitio/android-client.git'
-//                         url = 'https://github.com/splitio/android-client'
-//                     }
-//
-//                     // Add runtime dependencies from android-client-main
-//                     withXml {
-//                         def dependenciesNode = asNode().appendNode('dependencies')
-//
-//                         // Get dependencies from android-client-main
-//                         project(':android-client-main').configurations.api.allDependencies.each { dep ->
-//                             if (dep.group != null && dep.name != 'unspecified') {
-//                                 def dependencyNode = dependenciesNode.appendNode('dependency')
-//                                 dependencyNode.appendNode('groupId', dep.group)
-//                                 dependencyNode.appendNode('artifactId', dep.name)
-//                                 dependencyNode.appendNode('version', dep.version)
-//                                 dependencyNode.appendNode('scope', 'runtime')
-//                             }
-//                         }
-//                     }
-//                 }
-//             }
-//         }
-//
-//         repositories {
-//             mavenLocal()
-//         }
-//     }
-// }
+// Configure maven publish plugin - similar to old build.gradle but adapted for fused library
+// The plugin should auto-detect Android Fused Library, but we configure coordinates and POM
+mavenPublishing {
+    coordinates("io.split.client", "android-client", splitVersion)
+    pom(splitPOM)
+    publishToMavenCentral(false)
+    // Note: Plugin auto-detects AndroidFusedLibrary
+    // For AGP 9.0.0-alpha9+, fusedLibraryComponent already includes sources,
+    // but the plugin might still add emptySourcesJar, causing a conflict
+}
+
+// Workaround: For AGP 9.0.0-alpha9+, fusedLibraryComponent already includes sources
+// The maven publish plugin should not add emptySourcesJar for AGP >= alpha9,
+// but if it does, we need to prevent the duplicate. The issue is that the plugin
+// condition checks CURRENT_AGP_VERSION < AndroidPluginVersion(9, 0, 0).alpha(9),
+// but for AGP 9.0.0-alpha13, this should be false, so withJavaSourcesJar shouldn't be called.
+// However, if emptySourcesJar is still being created, we'll suppress publication of duplicate artifacts.
+afterEvaluate {
+    // Check if we have both merged sources and empty sources
+    def emptySourcesJarTask = tasks.findByName("emptySourcesJar")
+    if (emptySourcesJarTask != null) {
+        // The plugin shouldn't have created this for AGP >= alpha9, but if it did,
+        // we need to ensure only one sources artifact is published
+        publishing.publications.withType(MavenPublication) { publication ->
+            if (publication.name == "maven") {
+                // Suppress the emptySourcesJar from being published
+                // Keep only the sources from fusedLibraryComponent
+                publication.artifacts.removeAll { artifact ->
+                    // Remove artifacts that match the emptySourcesJar task output
+                    try {
+                        def artifactFile = artifact.file
+                        if (artifactFile != null && artifactFile.exists()) {
+                            def emptySourcesFile = emptySourcesJarTask.archiveFile.get().asFile
+                            artifactFile == emptySourcesFile
+                        } else {
+                            // If we can't determine the file, check by classifier and if it's not from component
+                            artifact.classifier == "sources" && artifact.extension == "jar" &&
+                            !publication.artifacts.any { 
+                                it != artifact && it.classifier == "sources" && 
+                                it.buildDependencies != null
+                            }
+                        }
+                    } catch (Exception e) {
+                        false
+                    }
+                }
+            }
+        }
+    }
+}
