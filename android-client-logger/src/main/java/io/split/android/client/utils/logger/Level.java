@@ -1,6 +1,6 @@
 package io.split.android.client.utils.logger;
 
-public class SplitLogLevel {
+class Level {
 
     /**
      * Priority constant for the println method; use Logger.v.

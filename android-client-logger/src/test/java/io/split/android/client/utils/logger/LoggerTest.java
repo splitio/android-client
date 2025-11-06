@@ -16,100 +16,100 @@ public class LoggerTest {
 
     @Test
     public void testNone() {
-        Logger.instance().setLevel(SplitLogLevel.NONE);
+        Logger.instance().setLevel(Level.NONE);
 
         logAll();
 
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.VERBOSE));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.DEBUG));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.INFO));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.WARNING));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.ERROR));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.ASSERT));
+        Assert.assertFalse(printer.isCalled(Level.VERBOSE));
+        Assert.assertFalse(printer.isCalled(Level.DEBUG));
+        Assert.assertFalse(printer.isCalled(Level.INFO));
+        Assert.assertFalse(printer.isCalled(Level.WARNING));
+        Assert.assertFalse(printer.isCalled(Level.ERROR));
+        Assert.assertFalse(printer.isCalled(Level.ASSERT));
     }
 
     @Test
     public void testVerbose() {
-        Logger.instance().setLevel(SplitLogLevel.VERBOSE);
+        Logger.instance().setLevel(Level.VERBOSE);
 
         logAll();
 
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.VERBOSE));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.DEBUG));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.INFO));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.WARNING));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.ERROR));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.ASSERT));
+        Assert.assertTrue(printer.isCalled(Level.VERBOSE));
+        Assert.assertTrue(printer.isCalled(Level.DEBUG));
+        Assert.assertTrue(printer.isCalled(Level.INFO));
+        Assert.assertTrue(printer.isCalled(Level.WARNING));
+        Assert.assertTrue(printer.isCalled(Level.ERROR));
+        Assert.assertTrue(printer.isCalled(Level.ASSERT));
     }
 
     @Test
     public void testDebug() {
-        Logger.instance().setLevel(SplitLogLevel.DEBUG);
+        Logger.instance().setLevel(Level.DEBUG);
 
         logAll();
 
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.VERBOSE));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.DEBUG));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.INFO));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.WARNING));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.ERROR));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.ASSERT));
+        Assert.assertFalse(printer.isCalled(Level.VERBOSE));
+        Assert.assertTrue(printer.isCalled(Level.DEBUG));
+        Assert.assertTrue(printer.isCalled(Level.INFO));
+        Assert.assertTrue(printer.isCalled(Level.WARNING));
+        Assert.assertTrue(printer.isCalled(Level.ERROR));
+        Assert.assertTrue(printer.isCalled(Level.ASSERT));
     }
 
     @Test
     public void testInfo() {
-        Logger.instance().setLevel(SplitLogLevel.INFO);
+        Logger.instance().setLevel(Level.INFO);
 
         logAll();
 
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.VERBOSE));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.DEBUG));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.INFO));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.WARNING));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.ERROR));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.ASSERT));
+        Assert.assertFalse(printer.isCalled(Level.VERBOSE));
+        Assert.assertFalse(printer.isCalled(Level.DEBUG));
+        Assert.assertTrue(printer.isCalled(Level.INFO));
+        Assert.assertTrue(printer.isCalled(Level.WARNING));
+        Assert.assertTrue(printer.isCalled(Level.ERROR));
+        Assert.assertTrue(printer.isCalled(Level.ASSERT));
     }
 
     @Test
     public void testWarning() {
-        Logger.instance().setLevel(SplitLogLevel.WARNING);
+        Logger.instance().setLevel(Level.WARNING);
 
         logAll();
 
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.VERBOSE));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.DEBUG));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.INFO));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.WARNING));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.ERROR));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.ASSERT));
+        Assert.assertFalse(printer.isCalled(Level.VERBOSE));
+        Assert.assertFalse(printer.isCalled(Level.DEBUG));
+        Assert.assertFalse(printer.isCalled(Level.INFO));
+        Assert.assertTrue(printer.isCalled(Level.WARNING));
+        Assert.assertTrue(printer.isCalled(Level.ERROR));
+        Assert.assertTrue(printer.isCalled(Level.ASSERT));
     }
 
     @Test
     public void testError() {
-        Logger.instance().setLevel(SplitLogLevel.ERROR);
+        Logger.instance().setLevel(Level.ERROR);
 
         logAll();
 
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.VERBOSE));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.DEBUG));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.INFO));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.WARNING));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.ERROR));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.ASSERT));
+        Assert.assertFalse(printer.isCalled(Level.VERBOSE));
+        Assert.assertFalse(printer.isCalled(Level.DEBUG));
+        Assert.assertFalse(printer.isCalled(Level.INFO));
+        Assert.assertFalse(printer.isCalled(Level.WARNING));
+        Assert.assertTrue(printer.isCalled(Level.ERROR));
+        Assert.assertTrue(printer.isCalled(Level.ASSERT));
     }
 
     @Test
     public void testAssert() {
-        Logger.instance().setLevel(SplitLogLevel.ASSERT);
+        Logger.instance().setLevel(Level.ASSERT);
 
         logAll();
 
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.VERBOSE));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.DEBUG));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.INFO));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.WARNING));
-        Assert.assertFalse(printer.isCalled(SplitLogLevel.ERROR));
-        Assert.assertTrue(printer.isCalled(SplitLogLevel.ASSERT));
+        Assert.assertFalse(printer.isCalled(Level.VERBOSE));
+        Assert.assertFalse(printer.isCalled(Level.DEBUG));
+        Assert.assertFalse(printer.isCalled(Level.INFO));
+        Assert.assertFalse(printer.isCalled(Level.WARNING));
+        Assert.assertFalse(printer.isCalled(Level.ERROR));
+        Assert.assertTrue(printer.isCalled(Level.ASSERT));
     }
 
     void logAll() {
