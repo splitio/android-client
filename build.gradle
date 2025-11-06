@@ -180,6 +180,201 @@ mavenPublishing {
     // but the plugin might still add emptySourcesJar, causing a conflict
 }
 
+// Manual GPG signing task - Gradle signing plugin doesn't work with fused library
+tasks.register('signArtifacts') {
+    description = 'Signs all Maven artifacts with GPG'
+    group = 'publishing'
+    
+    doLast {
+        // Task 2: Determine artifact directory path
+        def groupPath = project.group.toString().replace('.', '/')
+        def artifactId = 'android-client'
+        def versionStr = project.version.toString()
+        def artifactDir = file("${buildDir}/publishing/mavenCentral/${groupPath}/${artifactId}/${versionStr}")
+        
+        println "Signing artifacts in: ${artifactDir}"
+        
+        if (!artifactDir.exists()) {
+            println "WARNING: Artifact directory does not exist: ${artifactDir}"
+            println "Skipping signing. Run publishAllPublicationsToMavenCentralRepository first."
+            return
+        }
+        
+        // Task 4: Read GPG configuration from gradle.properties
+        def keyId = project.findProperty('signing.keyId')
+        def password = project.findProperty('signing.password')
+        
+        // Validate GPG configuration
+        if (!keyId) {
+            throw new GradleException("signing.keyId property is not set in gradle.properties")
+        }
+        if (!password) {
+            throw new GradleException("signing.password property is not set in gradle.properties")
+        }
+        
+        println "Using GPG key ID: ${keyId}"
+        println "Using default GPG keyring"
+        
+        // Task 3: Find all artifacts to sign
+        def artifactsToSign = []
+        artifactDir.eachFile { file ->
+            def name = file.name
+            // Sign .aar, .jar, .pom, and .module files, but skip already signed .asc files
+            if ((name.endsWith('.aar') || name.endsWith('.jar') || name.endsWith('.pom') || name.endsWith('.module')) && !name.endsWith('.asc')) {
+                artifactsToSign << file
+            }
+        }
+        
+        if (artifactsToSign.isEmpty()) {
+            println "WARNING: No artifacts found to sign in ${artifactDir}"
+            return
+        }
+        
+        println "Found ${artifactsToSign.size()} artifact(s) to sign:"
+        artifactsToSign.each { println "  - ${it.name}" }
+        
+        // Task 7: Find GPG executable
+        def gpgCommand = null
+        def gpgPaths = [
+            '/opt/homebrew/bin/gpg',  // macOS Homebrew on Apple Silicon - try first
+            '/usr/local/bin/gpg',
+            '/usr/bin/gpg',
+            '/opt/local/bin/gpg'  // MacPorts
+        ]
+        
+        // First, check if files exist
+        for (path in gpgPaths) {
+            def gpgFile = new File(path)
+            if (gpgFile.exists() && gpgFile.canExecute()) {
+                gpgCommand = path
+                println "Found GPG at: ${gpgCommand}"
+                break
+            }
+        }
+        
+        // If not found in common paths, try using 'gpg' from PATH
+        if (gpgCommand == null) {
+            try {
+                def process = new ProcessBuilder(['gpg', '--version'])
+                    .redirectErrorStream(true)
+                    .start()
+                def exitCode = process.waitFor()
+                if (exitCode == 0) {
+                    gpgCommand = 'gpg'
+                    println "Found GPG in PATH"
+                }
+            } catch (Exception e) {
+                // GPG not in PATH
+            }
+        }
+        
+        if (gpgCommand == null) {
+            throw new GradleException("GPG is not installed or not found in common locations.\n" +
+                "Please install GPG:\n" +
+                "  macOS: brew install gnupg\n" +
+                "  Linux: apt-get install gnupg or yum install gnupg\n" +
+                "Searched in: ${gpgPaths.join(', ')}\n" +
+                "If GPG is installed elsewhere, you can configure the path in the task.")
+        }
+        
+        println "Using GPG: ${gpgCommand}"
+        
+        // Task 5: Sign each artifact
+        artifactsToSign.each { artifact ->
+            def ascFile = new File(artifact.parentFile, "${artifact.name}.asc")
+            
+            // Skip if already signed
+            if (ascFile.exists()) {
+                println "Signature already exists for ${artifact.name}, skipping"
+                return
+            }
+            
+            println "Signing: ${artifact.name}"
+            
+            try {
+                // Use ProcessBuilder for GPG execution (avoids Gradle exec issues)
+                // Note: Using default GPG keyring (GPG 2.1+ ignores --keyring option)
+                def cmd = [
+                    gpgCommand,
+                    '--batch',
+                    '--yes',
+                    '--no-tty',
+                    '--passphrase', password,
+                    '--pinentry-mode', 'loopback',
+                    '--local-user', keyId,
+                    '--detach-sign',
+                    '--armor',
+                    artifact.absolutePath
+                ]
+                
+                // Set GPG_TTY to avoid agent issues
+                def processEnv = new ProcessBuilder().environment()
+                processEnv.put('GPG_TTY', '')
+                
+                def process = new ProcessBuilder(cmd)
+                    .redirectErrorStream(true)
+                    .start()
+                
+                def exitCode = process.waitFor()
+                
+                if (exitCode != 0) {
+                    def output = process.inputStream.text
+                    throw new GradleException("Failed to sign ${artifact.name}. Exit code: ${exitCode}\nOutput: ${output}")
+                }
+                
+                // Verify the signature was created
+                if (!ascFile.exists()) {
+                    throw new GradleException("Signature file was not created for ${artifact.name}")
+                }
+                
+                println "  ✓ Created signature: ${ascFile.name}"
+                
+                // Verify the signature
+                def verifyCmd = [
+                    gpgCommand,
+                    '--verify',
+                    ascFile.absolutePath,
+                    artifact.absolutePath
+                ]
+                
+                def verifyProcess = new ProcessBuilder(verifyCmd)
+                    .redirectErrorStream(true)
+                    .start()
+                
+                def verifyExitCode = verifyProcess.waitFor()
+                
+                if (verifyExitCode == 0) {
+                    println "  ✓ Signature verified successfully"
+                } else {
+                    println "  ⚠ Warning: Could not verify signature"
+                }
+                
+            } catch (Exception e) {
+                throw new GradleException("Failed to sign artifact ${artifact.name}: ${e.message}", e)
+            }
+        }
+        
+        println "Successfully signed ${artifactsToSign.size()} artifact(s)"
+    }
+}
+
+// Task 6: Configure task dependencies
+// Make signArtifacts run after artifacts are published but before upload
+afterEvaluate {
+    def signTask = tasks.findByName('signArtifacts')
+    def publishTask = tasks.findByName('publishAllPublicationsToMavenCentralRepository')
+    
+    if (signTask && publishTask) {
+        // signArtifacts depends on publishing (so artifacts exist)
+        signTask.dependsOn(publishTask)
+        
+        // Make publish task finalize with signing
+        publishTask.finalizedBy(signTask)
+        
+        println "Configured signArtifacts task to run after publishAllPublicationsToMavenCentralRepository"
+    }
+}
+
 // Workaround: For AGP 9.0.0-alpha9+, fusedLibraryComponent already includes sources
 // The maven publish plugin should not add emptySourcesJar for AGP >= alpha9,
 // but if it does, we need to prevent the duplicate. The issue is that the plugin
