@@ -26,7 +26,7 @@ apply plugin: 'com.vanniktech.maven.publish'
 group = 'io.split.client'
 
 ext {
-    splitVersion = '5.5.0-alpha.1'
+    splitVersion = '5.4.3-rc1'
     jacocoVersion = '0.8.8'
 }
 
@@ -138,6 +138,7 @@ void printDependencyTree(dependency, output, prefix, isLast) {
 
 dependencies {
     include project(':android-client-main')
+    include project(':android-client-logger')
 }
 
 def splitPOM = {
