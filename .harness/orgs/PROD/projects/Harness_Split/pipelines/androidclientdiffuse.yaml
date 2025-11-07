@@ -12,6 +12,19 @@ pipeline:
         type: CI
         spec:
           cloneCodebase: true
+          caching:
+            enabled: true
+            override: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          variables:
+            - name: ANDROID_HOME
+              type: String
+              value: /opt/android-sdk
           execution:
             steps:
               - step:
@@ -84,6 +97,18 @@ pipeline:
                       cat /harness/pr_info.sh
               - step:
                   type: Run
+                  name: Install Dependencies
+                  identifier: install_dependencies
+                  spec:
+                    connectorRef: <+input>
+                    image: ubuntu:22.04
+                    shell: Bash
+                    command: |
+                      # Use the existing install-deps.sh script for consistent setup
+                      chmod +x .harness/scripts/install-deps.sh
+                      .harness/scripts/install-deps.sh
+              - step:
+                  type: Run
                   name: Run Diffuse Script with Branch Parameters
                   identifier: run_diffuse
                   spec:
@@ -93,6 +118,19 @@ pipeline:
                     envVariables:
                       GH_TOKEN: <+secrets.getValue("github-devops-token")>
                     command: |
+                      set -e
+                      
+                      # Set Android SDK environment variables (matching instrumented pipeline)
+                      export ANDROID_SDK_ROOT=$ANDROID_HOME
+                      export JAVA_HOME=$(dirname $(dirname $(readlink -f $(which java))))
+                      export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin"
+                      
+                      # Verify environment
+                      echo "=== Environment Verification ==="
+                      echo "JAVA_HOME: $JAVA_HOME"
+                      echo "ANDROID_HOME: $ANDROID_HOME"
+                      java -version
+                      
                       # Source the PR information
                       source /harness/pr_info.sh
 
@@ -221,14 +259,6 @@ pipeline:
                       echo "✅ Pipeline completed successfully"
                   when:
                     stageStatus: All
-          caching:
-            enabled: false
-          platform:
-            os: Linux
-            arch: Arm64
-          runtime:
-            type: Cloud
-            spec: {}
   properties:
     ci:
       codebase:
