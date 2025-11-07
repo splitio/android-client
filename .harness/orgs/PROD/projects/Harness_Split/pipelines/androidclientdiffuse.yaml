@@ -1,0 +1,239 @@
+pipeline:
+  name: android-client-diffuse
+  identifier: androidclientdiffuse
+  projectIdentifier: Harness_Split
+  orgIdentifier: PROD
+  tags: {}
+  stages:
+    - stage:
+        name: Build and Analyze
+        identifier: build_and_analyze
+        description: Clone repo, run diffuse script with PR branch parameters, and comment on PR
+        type: CI
+        spec:
+          cloneCodebase: true
+          infrastructure:
+            type: KubernetesDirect
+            spec:
+              connectorRef: <+input>
+              namespace: <+input>
+              automountServiceAccountToken: true
+              nodeSelector: {}
+              os: Linux
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Setup Environment and Extract PR Info
+                  identifier: setup_environment
+                  spec:
+                    connectorRef: <+input>
+                    image: ubuntu:22.04
+                    shell: Bash
+                    envVariables:
+                      GH_TOKEN: <+secrets.getValue("github-devops-token")>
+                    command: |
+                      # Install required tools
+                      apt-get update
+                      apt-get install -y curl jq git
+
+                      # Extract PR information from trigger payload
+                      PR_NUMBER="<+trigger.payload.pull_request.number>"
+                      PR_TITLE="<+trigger.payload.pull_request.title>"
+                      PR_AUTHOR="<+trigger.payload.pull_request.user.login>"
+                      PR_HEAD_REF="<+trigger.payload.pull_request.head.ref>"
+                      PR_BASE_REF="<+trigger.payload.pull_request.base.ref>"
+                      PR_HEAD_SHA="<+trigger.payload.pull_request.head.sha>"
+                      REPO_FULL_NAME="<+trigger.payload.repository.full_name>"
+
+                      echo "=== PR Information ==="
+                      echo "PR Number: $PR_NUMBER"
+                      echo "PR Title: $PR_TITLE"
+                      echo "PR Author: $PR_AUTHOR"
+                      echo "Source Branch (HEAD): $PR_HEAD_REF"
+                      echo "Target Branch (BASE): $PR_BASE_REF"
+                      echo "Head SHA: $PR_HEAD_SHA"
+                      echo "Repository: $REPO_FULL_NAME"
+                      echo "=== End PR Info ==="
+
+                      # Check if this is a PR build
+                      if [ -n "$PR_NUMBER" ] && [ "$PR_NUMBER" != "null" ] && [ "$PR_NUMBER" != "" ]; then
+                        echo "✅ Detected PR build"
+                        SOURCE_BRANCH="$PR_HEAD_REF"
+                        TARGET_BRANCH="$PR_BASE_REF"
+                        IS_PR_BUILD="true"
+                      else
+                        echo "ℹ️ Not a PR build - using fallback values"
+                        SOURCE_BRANCH="<+codebase.branch>"
+                        TARGET_BRANCH="main"
+                        IS_PR_BUILD="false"
+                        PR_NUMBER=""
+                      fi
+
+                      echo "Final branch configuration:"
+                      echo "  Source Branch: $SOURCE_BRANCH"
+                      echo "  Target Branch: $TARGET_BRANCH"
+                      echo "  Is PR Build: $IS_PR_BUILD"
+
+                      # Export variables for subsequent steps
+                      cat > /harness/pr_info.sh << EOF
+                      export PR_NUMBER="$PR_NUMBER"
+                      export PR_TITLE="$PR_TITLE"
+                      export PR_AUTHOR="$PR_AUTHOR"
+                      export SOURCE_BRANCH="$SOURCE_BRANCH"
+                      export TARGET_BRANCH="$TARGET_BRANCH"
+                      export PR_HEAD_SHA="$PR_HEAD_SHA"
+                      export REPO_FULL_NAME="$REPO_FULL_NAME"
+                      export IS_PR_BUILD="$IS_PR_BUILD"
+                      EOF
+
+                      chmod +x /harness/pr_info.sh
+                      echo "=== Exported Variables ==="
+                      cat /harness/pr_info.sh
+              - step:
+                  type: Run
+                  name: Run Diffuse Script with Branch Parameters
+                  identifier: run_diffuse
+                  spec:
+                    connectorRef: <+input>
+                    image: ubuntu:22.04
+                    shell: Bash
+                    envVariables:
+                      GH_TOKEN: <+secrets.getValue("github-devops-token")>
+                    command: |
+                      # Source the PR information
+                      source /harness/pr_info.sh
+
+                      echo "=== Running Diffuse Analysis ==="
+                      echo "Source Branch: $SOURCE_BRANCH"
+                      echo "Target Branch: $TARGET_BRANCH"
+
+                      # Verify the script exists
+                      if [ ! -f "scripts/diffuse.sh" ]; then
+                        echo "❌ Error: scripts/diffuse.sh not found"
+                        echo "Available files in scripts/:"
+                        ls -la scripts/ || echo "scripts/ directory not found"
+                        exit 1
+                      fi
+
+                      # Make the script executable
+                      chmod +x scripts/diffuse.sh
+
+                      # Run the diffuse script with branch parameters
+                      echo "Executing: ./scripts/diffuse.sh --source '$SOURCE_BRANCH' --target '$TARGET_BRANCH'"
+                      ./scripts/diffuse.sh --source "$SOURCE_BRANCH" --target "$TARGET_BRANCH" > diffuse_output.txt 2>&1
+
+                      # Store the exit code
+                      DIFFUSE_EXIT_CODE=$?
+
+                      # Display the output
+                      echo "=== Diffuse Script Output ==="
+                      cat diffuse_output.txt
+                      echo "=== End of Output ==="
+                      echo "Script exit code: $DIFFUSE_EXIT_CODE"
+
+                      # Save exit code and output for the comment step
+                      echo "$DIFFUSE_EXIT_CODE" > /harness/diffuse_exit_code.txt
+                      cp diffuse_output.txt /harness/diffuse_output.txt
+
+                      # Don't fail the step here - let the comment step handle it
+                      exit 0
+              - step:
+                  type: Run
+                  name: Comment on PR
+                  identifier: comment_on_pr
+                  spec:
+                    connectorRef: <+input>
+                    image: ubuntu:22.04
+                    shell: Bash
+                    envVariables:
+                      GH_TOKEN: <+secrets.getValue("github-devops-token")>
+                    command: |
+                      # Source PR information
+                      source /harness/pr_info.sh
+
+                      # Check if this is a PR build
+                      if [ "$IS_PR_BUILD" != "true" ] || [ -z "$PR_NUMBER" ]; then
+                        echo "ℹ️ Not a PR build, skipping comment"
+                        exit 0
+                      fi
+
+                      # Get the diffuse script exit code
+                      DIFFUSE_EXIT_CODE=$(cat /harness/diffuse_exit_code.txt 2>/dev/null || echo "unknown")
+
+                      # Read the diffuse output
+                      if [ -f /harness/diffuse_output.txt ]; then
+                        DIFFUSE_OUTPUT=$(cat /harness/diffuse_output.txt)
+                      else
+                        DIFFUSE_OUTPUT="Diffuse script output not found"
+                      fi
+
+                      # Determine status emoji and message
+                      if [ "$DIFFUSE_EXIT_CODE" = "0" ]; then
+                        STATUS_EMOJI="✅"
+                        STATUS_TEXT="Success"
+                      else
+                        STATUS_EMOJI="❌"
+                        STATUS_TEXT="Failed (exit code: $DIFFUSE_EXIT_CODE)"
+                      fi
+
+                      # Create the comment body
+                      COMMENT_BODY="## 📱 Android Diffuse Analysis Results $STATUS_EMOJI
+
+                      **Status:** $STATUS_TEXT
+                      **Source Branch:** \`$SOURCE_BRANCH\`
+                      **Target Branch:** \`$TARGET_BRANCH\`
+                      **Commit:** \`$PR_HEAD_SHA\`
+
+                      ### Script Output:
+                      \`\`\`
+                      $DIFFUSE_OUTPUT
+                      \`\`\`
+
+                      ---
+                      *Generated by Harness CI Pipeline: [\`android-client-diffuse\`](<+pipeline.execution.url>)*
+                      *Triggered by: @$PR_AUTHOR*"
+
+                      # Escape the comment body for JSON
+                      ESCAPED_COMMENT=$(echo "$COMMENT_BODY" | jq -Rs .)
+
+                      # Post comment to GitHub
+                      echo "Posting comment to PR #$PR_NUMBER in $REPO_FULL_NAME..."
+
+                      RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+                        -H "Authorization: token $GH_TOKEN" \
+                        -H "Content-Type: application/json" \
+                        -H "Accept: application/vnd.github.v3+json" \
+                        -d "{\"body\": $ESCAPED_COMMENT}" \
+                        "https://api.github.com/repos/$REPO_FULL_NAME/issues/$PR_NUMBER/comments")
+
+                      # Extract HTTP code from response
+                      HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+                      RESPONSE_BODY=$(echo "$RESPONSE" | head -n -1)
+
+                      if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+                        echo "✅ Comment posted successfully to PR #$PR_NUMBER"
+                        echo "Comment URL: $(echo "$RESPONSE_BODY" | jq -r '.html_url // "N/A"')"
+                      else
+                        echo "❌ Failed to post comment. HTTP code: $HTTP_CODE"
+                        echo "Response: $RESPONSE_BODY"
+                        # Don't fail the pipeline for comment failures
+                      fi
+
+                      # Fail the pipeline if diffuse script failed
+                      if [ "$DIFFUSE_EXIT_CODE" != "0" ] && [ "$DIFFUSE_EXIT_CODE" != "unknown" ]; then
+                        echo "❌ Failing pipeline due to diffuse script failure (exit code: $DIFFUSE_EXIT_CODE)"
+                        exit 1
+                      fi
+
+                      echo "✅ Pipeline completed successfully"
+                  when:
+                    stageStatus: All
+          caching:
+            enabled: false
+  properties:
+    ci:
+      codebase:
+        connectorRef: <+input>
+        repoName: <+input>
+        build: <+input>
