@@ -104,6 +104,10 @@ pipeline:
                     envVariables:
                       ANDROID_HOME: <+stage.variables.ANDROID_HOME>
                     command: |
+                      # Install basic tools needed by install-deps.sh
+                      apt-get update -qq
+                      apt-get install -y curl unzip
+                      
                       # Export ANDROID_HOME to ensure it's available to the script
                       export ANDROID_HOME="$ANDROID_HOME"
                       
