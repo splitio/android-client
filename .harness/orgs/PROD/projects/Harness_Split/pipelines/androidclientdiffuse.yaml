@@ -101,7 +101,12 @@ pipeline:
                   spec:
                     image: ubuntu:22.04
                     shell: Bash
+                    envVariables:
+                      ANDROID_HOME: <+stage.variables.ANDROID_HOME>
                     command: |
+                      # Export ANDROID_HOME to ensure it's available to the script
+                      export ANDROID_HOME="$ANDROID_HOME"
+                      
                       # Use the existing install-deps.sh script for consistent setup
                       chmod +x .harness/scripts/install-deps.sh
                       .harness/scripts/install-deps.sh
@@ -114,6 +119,7 @@ pipeline:
                     shell: Bash
                     envVariables:
                       GH_TOKEN: <+secrets.getValue("github-devops-token")>
+                      ANDROID_HOME: <+stage.variables.ANDROID_HOME>
                     command: |
                       set -e
                       
