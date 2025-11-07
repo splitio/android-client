@@ -12,14 +12,6 @@ pipeline:
         type: CI
         spec:
           cloneCodebase: true
-          infrastructure:
-            type: KubernetesDirect
-            spec:
-              connectorRef: <+input>
-              namespace: <+input>
-              automountServiceAccountToken: true
-              nodeSelector: {}
-              os: Linux
           execution:
             steps:
               - step:
@@ -231,6 +223,12 @@ pipeline:
                     stageStatus: All
           caching:
             enabled: false
+          platform:
+            os: Linux
+            arch: Arm64
+          runtime:
+            type: Cloud
+            spec: {}
   properties:
     ci:
       codebase:
