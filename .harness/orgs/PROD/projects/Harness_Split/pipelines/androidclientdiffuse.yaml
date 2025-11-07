@@ -32,7 +32,6 @@ pipeline:
                   name: Setup Environment and Extract PR Info
                   identifier: setup_environment
                   spec:
-                    connectorRef: <+input>
                     image: ubuntu:22.04
                     shell: Bash
                     envVariables:
@@ -100,7 +99,6 @@ pipeline:
                   name: Install Dependencies
                   identifier: install_dependencies
                   spec:
-                    connectorRef: <+input>
                     image: ubuntu:22.04
                     shell: Bash
                     command: |
@@ -112,7 +110,6 @@ pipeline:
                   name: Run Diffuse Script with Branch Parameters
                   identifier: run_diffuse
                   spec:
-                    connectorRef: <+input>
                     image: ubuntu:22.04
                     shell: Bash
                     envVariables:
@@ -173,7 +170,6 @@ pipeline:
                   name: Comment on PR
                   identifier: comment_on_pr
                   spec:
-                    connectorRef: <+input>
                     image: ubuntu:22.04
                     shell: Bash
                     envVariables:
