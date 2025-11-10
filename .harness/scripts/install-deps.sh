@@ -11,17 +11,24 @@ echo ""
 # ============================================
 echo "=== Installing Java 17 ==="
 
+# Detect if we need sudo (not running as root)
+if [ "$EUID" -eq 0 ] || [ "$(id -u)" -eq 0 ]; then
+  SUDO=""
+else
+  SUDO="sudo"
+fi
+
 # Install Java 17
 echo "Installing OpenJDK 17..."
-sudo apt-get update -qq
-sudo apt-get install -y openjdk-17-jdk
+$SUDO apt-get update -qq
+$SUDO apt-get install -y openjdk-17-jdk
 
 # Set JAVA_HOME to Java 17 explicitly
 export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 # Update alternatives to use Java 17 as default
-sudo update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
-sudo update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
+$SUDO update-alternatives --set java /usr/lib/jvm/java-17-openjdk-amd64/bin/java
+$SUDO update-alternatives --set javac /usr/lib/jvm/java-17-openjdk-amd64/bin/javac
 
 echo ""
 echo "Java 17 installation complete:"

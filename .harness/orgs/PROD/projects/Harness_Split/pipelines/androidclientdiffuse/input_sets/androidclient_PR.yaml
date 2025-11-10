@@ -1,0 +1,43 @@
+inputSet:
+  name: androidclient_PR
+  identifier: androidclient_PR
+  orgIdentifier: PROD
+  projectIdentifier: Harness_Split
+  pipeline:
+    identifier: androidclientdiffuse
+    stages:
+      - stage:
+          identifier: build_and_analyze
+          type: CI
+          spec:
+            infrastructure:
+              type: KubernetesDirect
+              spec:
+                connectorRef: ""
+                namespace: ""
+            execution:
+              steps:
+                - step:
+                    identifier: setup_environment
+                    type: Run
+                    spec:
+                      connectorRef: ""
+                - step:
+                    identifier: run_diffuse
+                    type: Run
+                    spec:
+                      connectorRef: ""
+                - step:
+                    identifier: comment_on_pr
+                    type: Run
+                    spec:
+                      connectorRef: ""
+    properties:
+      ci:
+        codebase:
+          connectorRef: fmegithubrunnersci
+          repoName: android-client
+          build:
+            type: PR
+            spec:
+              number: <+trigger.prNumber>
