@@ -105,8 +105,8 @@ tasks.register('generateDepsFile') {
         output.append("Fused Library Dependencies (from included modules)\n")
         output.append("=".repeat(60) + "\n\n")
         
-        // Get dependencies from android-client-main (where the real dependencies are)
-        def mainProject = project(':android-client-main')
+        // Get dependencies from main
+        def mainProject = project(':main')
         def config = mainProject.configurations.findByName('releaseRuntimeClasspath')
         
         if (config != null) {
@@ -137,8 +137,8 @@ void printDependencyTree(dependency, output, prefix, isLast) {
 }
 
 dependencies {
-    include project(':android-client-main')
-    include project(':android-client-logger')
+    include project(':main')
+    include project(':logger')
 }
 
 def splitPOM = {

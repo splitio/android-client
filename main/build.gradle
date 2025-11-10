@@ -80,7 +80,7 @@ configurations.all {
 
 dependencies {
     // Internal module dependencies
-    api project(':android-client-logger')
+    api project(':logger')
 
     // External dependencies
     implementation "androidx.room:room-runtime:2.4.3"
@@ -105,7 +105,6 @@ dependencies {
     testImplementation "com.google.guava:guava:31.1-android"
     testImplementation "com.squareup.okhttp3:mockwebserver:4.10.0"
     testImplementation "com.squareup.okhttp3:okhttp-tls:4.10.0"
-//    testImplementation project(':android-client-logger')
 
     // Android Test dependencies
     androidTestImplementation "androidx.test.ext:junit:1.1.5"
@@ -120,7 +119,6 @@ dependencies {
     androidTestImplementation "com.squareup.okhttp3:mockwebserver:4.10.0"
     androidTestImplementation "com.squareup.okhttp3:okhttp-tls:4.10.0"
     androidTestImplementation "com.google.guava:guava:31.1-android"
-//    androidTestImplementation project(':android-client-logger')
 
     androidTestUtil "androidx.test:orchestrator:1.4.2"
 }
