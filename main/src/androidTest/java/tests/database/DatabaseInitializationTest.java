@@ -8,7 +8,6 @@ import android.content.Context;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,7 +20,6 @@ import fake.HttpClientMock;
 import fake.HttpResponseMock;
 import fake.HttpResponseMockDispatcher;
 import fake.HttpStreamResponseMock;
-import helper.DatabaseHelper;
 import helper.IntegrationHelper;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
