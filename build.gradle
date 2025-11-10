@@ -20,7 +20,7 @@ apply plugin: 'com.vanniktech.maven.publish'
 group = 'io.split.client'
 
 ext {
-    splitVersion = '5.4.3-rc1'
+    splitVersion = '5.4.3-rc2'
     jacocoVersion = '0.8.8'
 }
 
@@ -354,6 +354,17 @@ afterEvaluate {
                     }
                 }
             }
+        }
+    }
+
+    // Disable Gradle Module Metadata (.module file) to avoid variant ambiguity
+    // Disable all GenerateModuleMetadata tasks by name pattern
+    tasks.configureEach { task ->
+        // Match tasks related to module metadata generation
+        if (task.name.startsWith('generateMetadataFileFor') || 
+            task.name == 'generateModuleMetadata' ||
+            task.class.name.endsWith('GenerateModuleMetadata')) {
+            task.enabled = false
         }
     }
 }
