@@ -149,16 +149,15 @@ pipeline:
 
                       # Run the diffuse script with branch parameters
                       echo "Executing: ./scripts/diffuse.sh --source '$SOURCE_BRANCH' --target '$TARGET_BRANCH'"
-                      ./scripts/diffuse.sh --source "$SOURCE_BRANCH" --target "$TARGET_BRANCH" > diffuse_output.txt 2>&1
-
-                      # Store the exit code
+                      
+                      # Run without capturing output first to see live output, then capture for comment
+                      set +e  # Don't exit on error
+                      ./scripts/diffuse.sh --source "$SOURCE_BRANCH" --target "$TARGET_BRANCH" 2>&1 | tee diffuse_output.txt
                       DIFFUSE_EXIT_CODE=$?
+                      set -e
 
-                      # Display the output
-                      echo "=== Diffuse Script Output ==="
-                      cat diffuse_output.txt
-                      echo "=== End of Output ==="
-                      echo "Script exit code: $DIFFUSE_EXIT_CODE"
+                      echo ""
+                      echo "=== Diffuse Script Exit Code: $DIFFUSE_EXIT_CODE ==="
 
                       # Save exit code and output for the comment step
                       echo "$DIFFUSE_EXIT_CODE" > /harness/diffuse_exit_code.txt
