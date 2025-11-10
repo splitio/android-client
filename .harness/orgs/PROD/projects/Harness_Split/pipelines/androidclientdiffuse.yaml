@@ -137,14 +137,11 @@ pipeline:
                       echo "Target Branch: $TARGET_BRANCH"
                       
                       # Fetch all branches from remote so diffuse.sh can access them
-                      echo "Fetching all branches from remote..."
-                      git fetch origin --prune
-                      git fetch origin "$SOURCE_BRANCH:$SOURCE_BRANCH" 2>/dev/null || echo "Source branch already available"
-                      git fetch origin "$TARGET_BRANCH:$TARGET_BRANCH" 2>/dev/null || echo "Target branch already available"
-                      
-                      # Show available branches for debugging
-                      echo "Available local branches:"
-                      git branch -a | head -20
+                      echo "Fetching branches from remote..."
+                      git fetch origin --prune > /dev/null 2>&1
+                      git fetch origin "$SOURCE_BRANCH:$SOURCE_BRANCH" > /dev/null 2>&1 || true
+                      git fetch origin "$TARGET_BRANCH:$TARGET_BRANCH" > /dev/null 2>&1 || true
+                      echo "✓ Branches fetched"
 
                       # Verify the script exists
                       if [ ! -f "scripts/diffuse.sh" ]; then
@@ -160,21 +157,33 @@ pipeline:
                       # Run the diffuse script with branch parameters
                       echo "Executing: ./scripts/diffuse.sh --source '$SOURCE_BRANCH' --target '$TARGET_BRANCH'"
                       
-                      # Run without capturing output first to see live output, then capture for comment
+                      # Run and capture output
                       set +e  # Don't exit on error
-                      ./scripts/diffuse.sh --source "$SOURCE_BRANCH" --target "$TARGET_BRANCH" 2>&1 | tee diffuse_output.txt
+                      ./scripts/diffuse.sh --source "$SOURCE_BRANCH" --target "$TARGET_BRANCH" > diffuse_output_full.txt 2>&1
                       DIFFUSE_EXIT_CODE=$?
                       set -e
 
                       echo ""
                       echo "=== Diffuse Script Exit Code: $DIFFUSE_EXIT_CODE ==="
 
-                      # Save exit code and output for the comment step
+                      # Extract only the tables from the output (filter out verbose logs)
+                      # Look for lines starting with table characters or containing the table headers
+                      grep -E '(AAR|JAR|old.*new.*diff|─|┼|│)' diffuse_output_full.txt > diffuse_output.txt || echo "No table output found"
+                      
+                      # Display the filtered output
+                      echo "=== Diffuse Analysis Results ==="
+                      cat diffuse_output.txt
+                      echo ""
+
+                      # Save exit code and filtered output for the comment step
                       echo "$DIFFUSE_EXIT_CODE" > /harness/diffuse_exit_code.txt
                       cp diffuse_output.txt /harness/diffuse_output.txt
 
-                      # Don't fail the step here - let the comment step handle it
-                      exit 0
+                      # Fail the step if diffuse failed
+                      if [ "$DIFFUSE_EXIT_CODE" != "0" ]; then
+                        echo "❌ Diffuse script failed with exit code: $DIFFUSE_EXIT_CODE"
+                        exit "$DIFFUSE_EXIT_CODE"
+                      fi
               - step:
                   type: Run
                   name: Comment on PR
