@@ -129,8 +129,8 @@ pipeline:
                       echo "ANDROID_HOME: $ANDROID_HOME"
                       java -version
                       
-                      # Source the PR information
-                      source /harness/pr_info.sh
+                      # Source the PR information (use . for sh compatibility)
+                      . /harness/pr_info.sh
 
                       echo "=== Running Diffuse Analysis ==="
                       echo "Source Branch: $SOURCE_BRANCH"
@@ -175,8 +175,8 @@ pipeline:
                     envVariables:
                       GH_TOKEN: <+secrets.getValue("github-devops-token")>
                     command: |
-                      # Source PR information
-                      source /harness/pr_info.sh
+                      # Source PR information (use . for sh compatibility)
+                      . /harness/pr_info.sh
 
                       # Check if this is a PR build
                       if [ "$IS_PR_BUILD" != "true" ] || [ -z "$PR_NUMBER" ]; then
