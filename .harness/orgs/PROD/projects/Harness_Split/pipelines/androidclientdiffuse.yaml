@@ -32,8 +32,7 @@ pipeline:
                   name: Setup Environment and Extract PR Info
                   identifier: setup_environment
                   spec:
-                    image: ubuntu:22.04
-                    shell: Bash
+                    shell: Sh
                     envVariables:
                       GH_TOKEN: <+secrets.getValue("github-devops-token")>
                     command: |
@@ -99,17 +98,11 @@ pipeline:
                   name: Install Dependencies
                   identifier: install_dependencies
                   spec:
-                    image: ubuntu:22.04
-                    shell: Bash
-                    envVariables:
-                      ANDROID_HOME: <+stage.variables.ANDROID_HOME>
+                    shell: Sh
                     command: |
                       # Install basic tools needed by install-deps.sh
                       apt-get update -qq
                       apt-get install -y curl unzip
-                      
-                      # Export ANDROID_HOME to ensure it's available to the script
-                      export ANDROID_HOME="$ANDROID_HOME"
                       
                       # Use the existing install-deps.sh script for consistent setup
                       chmod +x .harness/scripts/install-deps.sh
@@ -119,11 +112,9 @@ pipeline:
                   name: Run Diffuse Script with Branch Parameters
                   identifier: run_diffuse
                   spec:
-                    image: ubuntu:22.04
-                    shell: Bash
+                    shell: Sh
                     envVariables:
                       GH_TOKEN: <+secrets.getValue("github-devops-token")>
-                      ANDROID_HOME: <+stage.variables.ANDROID_HOME>
                     command: |
                       set -e
                       
@@ -180,8 +171,7 @@ pipeline:
                   name: Comment on PR
                   identifier: comment_on_pr
                   spec:
-                    image: ubuntu:22.04
-                    shell: Bash
+                    shell: Sh
                     envVariables:
                       GH_TOKEN: <+secrets.getValue("github-devops-token")>
                     command: |
