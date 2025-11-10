@@ -8,9 +8,6 @@ buildscript {
     }
 
     dependencies {
-        // AGP 9.0.0-alpha13 requires Gradle 9.0 and has a new minSdk API, but builds hang
-        // Staying with stable AGP 8.9.1 for now
-//        classpath 'com.android.tools.build:gradle:8.9.1'
         classpath 'com.android.tools.build:gradle:9.0.0-alpha13'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
         classpath "com.vanniktech:gradle-maven-publish-plugin:0.34.0"
@@ -19,9 +16,6 @@ buildscript {
 
 apply plugin: 'com.android.fused-library'
 apply plugin: 'com.vanniktech.maven.publish'
-
-// spec.gradle and jacoco.gradle removed - not compatible with fused library
-// Note: Signing plugin applied conditionally to avoid conflicts with fused-library plugin
 
 group = 'io.split.client'
 
@@ -45,7 +39,6 @@ def coverageExclusions = [
 androidFusedLibrary {
     namespace = 'io.split.android.android_client'
     minSdk { version = release(19) }
-    // Note: AGP 9.0.0-alpha13 uses new API: minSdk { version = release(19) }
 }
 
 // Workaround: Fused library plugin doesn't include consumer ProGuard files in AAR
@@ -86,40 +79,6 @@ afterEvaluate {
 repositories {
     google()
     mavenCentral()
-}
-
-// Task to generate deps.txt with dependency tree
-tasks.register('generateDepsFile') {
-    description = 'Generates deps.txt file with the dependency tree'
-    group = 'documentation'
-    
-    doLast {
-        def depsFile = file("${projectDir}/deps.txt")
-        def output = new StringBuilder()
-        
-        output.append("------------------------------------------------------------\n")
-        output.append("Project '${project.path}'\n")
-        output.append("------------------------------------------------------------\n\n")
-        
-        // For fused library, get dependencies from the included modules
-        output.append("Fused Library Dependencies (from included modules)\n")
-        output.append("=".repeat(60) + "\n\n")
-        
-        // Get dependencies from main
-        def mainProject = project(':main')
-        def config = mainProject.configurations.findByName('releaseRuntimeClasspath')
-        
-        if (config != null) {
-            output.append("releaseRuntimeClasspath - Runtime classpath of compilation 'release' (target (androidJvm)).\n")
-            config.resolvedConfiguration.firstLevelModuleDependencies.each { dep ->
-                output.append("+--- ${dep.moduleGroup}:${dep.moduleName}:${dep.moduleVersion}\n")
-                printDependencyTree(dep, output, "|    ", true)
-            }
-        }
-        
-        depsFile.text = output.toString()
-        println "Generated deps.txt at ${depsFile.absolutePath}"
-    }
 }
 
 void printDependencyTree(dependency, output, prefix, isLast) {
@@ -167,21 +126,15 @@ def splitPOM = {
     }
 }
 
-// Note: sourcesJar and javadocJar tasks removed - fused library has no source sets
-// Tests are now in submodules
-
 // Configure maven publish plugin - similar to old build.gradle but adapted for fused library
 // The plugin should auto-detect Android Fused Library, but we configure coordinates and POM
 mavenPublishing {
     coordinates("io.split.client", "android-client", splitVersion)
     pom(splitPOM)
     publishToMavenCentral(false)
-    // Note: Plugin auto-detects AndroidFusedLibrary
-    // For AGP 9.0.0-alpha9+, fusedLibraryComponent already includes sources,
-    // but the plugin might still add emptySourcesJar, causing a conflict
 }
 
-// Manual GPG signing task - Gradle signing plugin doesn't work with fused library
+// GPG signing task
 tasks.register('signArtifacts') {
     description = 'Signs all Maven artifacts with GPG'
     group = 'publishing'
@@ -220,7 +173,7 @@ tasks.register('signArtifacts') {
         def artifactsToSign = []
         artifactDir.eachFile { file ->
             def name = file.name
-            // Sign .aar, .jar, .pom, and .module files, but skip already signed .asc files
+            // Sign .aar, .jar, .pom, and .module files
             if ((name.endsWith('.aar') || name.endsWith('.jar') || name.endsWith('.pom') || name.endsWith('.module')) && !name.endsWith('.asc')) {
                 artifactsToSign << file
             }
@@ -293,8 +246,6 @@ tasks.register('signArtifacts') {
             println "Signing: ${artifact.name}"
             
             try {
-                // Use ProcessBuilder for GPG execution (avoids Gradle exec issues)
-                // Note: Using default GPG keyring (GPG 2.1+ ignores --keyring option)
                 def cmd = [
                     gpgCommand,
                     '--batch',
@@ -376,21 +327,13 @@ afterEvaluate {
     }
 }
 
-// Workaround: For AGP 9.0.0-alpha9+, fusedLibraryComponent already includes sources
-// The maven publish plugin should not add emptySourcesJar for AGP >= alpha9,
-// but if it does, we need to prevent the duplicate. The issue is that the plugin
-// condition checks CURRENT_AGP_VERSION < AndroidPluginVersion(9, 0, 0).alpha(9),
-// but for AGP 9.0.0-alpha13, this should be false, so withJavaSourcesJar shouldn't be called.
-// However, if emptySourcesJar is still being created, we'll suppress publication of duplicate artifacts.
 afterEvaluate {
     // Check if we have both merged sources and empty sources
     def emptySourcesJarTask = tasks.findByName("emptySourcesJar")
     if (emptySourcesJarTask != null) {
-        // The plugin shouldn't have created this for AGP >= alpha9, but if it did,
-        // we need to ensure only one sources artifact is published
+        // Ensure only one sources artifact is published
         publishing.publications.withType(MavenPublication) { publication ->
             if (publication.name == "maven") {
-                // Suppress the emptySourcesJar from being published
                 // Keep only the sources from fusedLibraryComponent
                 publication.artifacts.removeAll { artifact ->
                     // Remove artifacts that match the emptySourcesJar task output
@@ -400,7 +343,6 @@ afterEvaluate {
                             def emptySourcesFile = emptySourcesJarTask.archiveFile.get().asFile
                             artifactFile == emptySourcesFile
                         } else {
-                            // If we can't determine the file, check by classifier and if it's not from component
                             artifact.classifier == "sources" && artifact.extension == "jar" &&
                             !publication.artifacts.any { 
                                 it != artifact && it.classifier == "sources" && 
