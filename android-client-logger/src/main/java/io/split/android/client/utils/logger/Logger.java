@@ -7,7 +7,7 @@ package io.split.android.client.utils.logger;
 public class Logger {
 
     private static final String TAG = "SplitSDK";
-    private int mLevel = Level.NONE;
+    private int mLevel = SplitLogLevel.NONE;
     private static volatile Logger instance;
     private LogPrinter mLogPrinter = new LogPrinterImpl();
 
@@ -35,33 +35,33 @@ public class Logger {
 
     private void log(int priority, String msg, Throwable tr) {
 
-        if (mLevel == Level.NONE || priority < Level.VERBOSE ||
+        if (mLevel == SplitLogLevel.NONE || priority < SplitLogLevel.VERBOSE ||
                 mLevel > priority) {
             return;
         }
 
         switch (priority) {
-            case Level.VERBOSE:
+            case SplitLogLevel.VERBOSE:
                 mLogPrinter.v(TAG, msg, tr);
                 break;
 
-            case Level.DEBUG:
+            case SplitLogLevel.DEBUG:
                 mLogPrinter.d(TAG, msg, tr);
                 break;
 
-            case Level.INFO:
+            case SplitLogLevel.INFO:
                 mLogPrinter.i(TAG, msg, tr);
                 break;
 
-            case Level.WARNING:
+            case SplitLogLevel.WARNING:
                 mLogPrinter.w(TAG, msg, tr);
                 break;
 
-            case Level.ERROR:
+            case SplitLogLevel.ERROR:
                 mLogPrinter.e(TAG, msg, tr);
                 break;
 
-            case Level.ASSERT:
+            case SplitLogLevel.ASSERT:
                 mLogPrinter.wtf(TAG, msg, tr);
                 break;
         }
@@ -79,11 +79,11 @@ public class Logger {
     }
 
     public static void v(String msg) {
-        instance().log(Level.VERBOSE, msg, null);
+        instance().log(SplitLogLevel.VERBOSE, msg, null);
     }
 
     public static void v(String msg, Throwable tr) {
-        instance().log(Level.VERBOSE, msg, tr);
+        instance().log(SplitLogLevel.VERBOSE, msg, tr);
     }
 
     public static void d(String msg, Object... args) {
@@ -91,11 +91,11 @@ public class Logger {
     }
 
     public static void d(String msg) {
-        instance().log(Level.DEBUG, msg, null);
+        instance().log(SplitLogLevel.DEBUG, msg, null);
     }
 
     public static void d(String msg, Throwable tr) {
-        instance().log(Level.DEBUG, msg, tr);
+        instance().log(SplitLogLevel.DEBUG, msg, tr);
     }
 
     public static void i(String msg, Object... args) {
@@ -103,11 +103,11 @@ public class Logger {
     }
 
     public static void i(String msg) {
-        instance().log(Level.INFO, msg, null);
+        instance().log(SplitLogLevel.INFO, msg, null);
     }
 
     public static void i(String msg, Throwable tr) {
-        instance().log(Level.INFO, msg, tr);
+        instance().log(SplitLogLevel.INFO, msg, tr);
     }
 
     public static void w(String msg, Object... args) {
@@ -119,11 +119,11 @@ public class Logger {
     }
 
     public static void w(String msg) {
-        instance().log(Level.WARNING, msg, null);
+        instance().log(SplitLogLevel.WARNING, msg, null);
     }
 
     public static void w(String msg, Throwable tr) {
-        instance().log(Level.WARNING, msg, tr);
+        instance().log(SplitLogLevel.WARNING, msg, tr);
     }
 
     public static void e(String msg, Object... args) {
@@ -135,15 +135,15 @@ public class Logger {
     }
 
     public static void e(String msg) {
-        instance().log(Level.ERROR, msg, null);
+        instance().log(SplitLogLevel.ERROR, msg, null);
     }
 
     public static void e(String msg, Throwable tr) {
-        instance().log(Level.ERROR, msg, tr);
+        instance().log(SplitLogLevel.ERROR, msg, tr);
     }
 
     public static void e(Throwable tr) {
-        instance().log(Level.ERROR, "", tr);
+        instance().log(SplitLogLevel.ERROR, "", tr);
     }
 
     public static void wtf(String msg, Object... args) {
@@ -151,10 +151,10 @@ public class Logger {
     }
 
     public static void wtf(String msg) {
-        instance().log(Level.ASSERT, msg, null);
+        instance().log(SplitLogLevel.ASSERT, msg, null);
     }
 
     public static void wtf(String msg, Throwable tr) {
-        instance().log(Level.ASSERT, msg, tr);
+        instance().log(SplitLogLevel.ASSERT, msg, tr);
     }
 }
