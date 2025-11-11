@@ -20,7 +20,7 @@ apply plugin: 'com.vanniktech.maven.publish'
 group = 'io.split.client'
 
 ext {
-    splitVersion = '5.4.3-rc2'
+    splitVersion = '5.4.3-rc3'
     jacocoVersion = '0.8.8'
 }
 
@@ -39,6 +39,16 @@ def coverageExclusions = [
 androidFusedLibrary {
     namespace = 'io.split.android.android_client'
     minSdk { version = release(19) }
+}
+
+// Disable lint JAR generation entirely - we have no custom lint rules
+// Empty/malformed lint.jar causes consumer build failures
+tasks.configureEach { task ->
+    if (task.name == 'packageLintJar' || 
+        task.name.contains('LintJar') ||
+        task.name.contains('LintModel')) {
+        task.enabled = false
+    }
 }
 
 // Workaround: Fused library plugin doesn't include consumer ProGuard files in AAR
@@ -65,6 +75,13 @@ afterEvaluate {
                 copy {
                     from proguardFile
                     into tempDir
+                }
+                
+                // Remove lint.jar if it exists (we don't have custom lint rules)
+                def lintJar = new File(tempDir, 'lint.jar')
+                if (lintJar.exists()) {
+                    lintJar.delete()
+                    println "Removed empty lint.jar from AAR"
                 }
                 
                 // Repack AAR
@@ -365,6 +382,17 @@ afterEvaluate {
             task.name == 'generateModuleMetadata' ||
             task.class.name.endsWith('GenerateModuleMetadata')) {
             task.enabled = false
+        }
+    }
+    
+    // Remove empty lint.jar from publication to prevent consumer lint crashes
+    // The fused library plugin generates an empty lint.jar without proper Lint-Registry-v2 manifest
+    // This causes lint to crash when consumers use checkDependencies: true
+    publishing.publications.withType(MavenPublication) { publication ->
+        if (publication.name == "maven") {
+            publication.artifacts.removeAll { artifact ->
+                artifact.file?.name?.endsWith('lint.jar') ?: false
+            }
         }
     }
 }
