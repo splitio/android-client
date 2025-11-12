@@ -30,7 +30,8 @@ import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity;
                 AttributesEntity.class, UniqueKeyEntity.class, ImpressionsObserverCacheEntity.class,
                 MyLargeSegmentEntity.class, RuleBasedSegmentEntity.class
         },
-        version = 7
+        version = 7,
+        exportSchema = false
 )
 public abstract class SplitRoomDatabase extends RoomDatabase {
 

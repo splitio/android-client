@@ -1,0 +1,127 @@
+apply plugin: 'jacoco'
+
+jacoco {
+    toolVersion = '0.8.8'
+}
+
+tasks.withType(Test) {
+    jacoco {
+        includeNoLocationClasses = true
+        excludes = ['jdk.internal.*']
+        enabled = true
+    }
+    systemProperty 'robolectric.enabledSdks', '28,29,30,31,32,33'
+    finalizedBy jacocoTestReport
+}
+
+tasks.register('jacocoTestReport', JacocoReport) {
+    dependsOn 'testDebugUnitTest'
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+
+    def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
+    def classDirectoriesFiles = []
+    def possibleClassDirs = [
+        "${buildDir}/intermediates/javac/debug/classes",
+        "${buildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes",
+        "${buildDir}/intermediates/runtime_library_classes_dir/debug",
+        "${buildDir}/intermediates/classes/debug",
+        "${buildDir}/classes/java/main",
+        "${buildDir}/tmp/kotlin-classes/debug"
+    ]
+    possibleClassDirs.each { dirPath ->
+        def dir = file(dirPath)
+        if (dir.exists() && dir.isDirectory()) {
+            def classDir = fileTree(dir: dirPath, excludes: fileFilter)
+            if (classDir.files.size() > 0) {
+                classDirectoriesFiles.add(classDir)
+            }
+        }
+    }
+
+    sourceDirectories.from = files(['src/main/java', 'src/main/kotlin'])
+    classDirectories.from = files(classDirectoriesFiles)
+
+    def execFiles = fileTree(dir: "$buildDir", includes: [
+        'jacoco/testDebugUnitTest.exec',
+        'outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec',
+        'jacoco/*.exec',
+        'outputs/**/**.exec'
+    ])
+    executionData.from = files(execFiles.filter { it.exists() })
+    outputs.upToDateWhen { false }
+
+    doFirst {
+        logger.lifecycle("=== JaCoCo Report Generation ===")
+        logger.lifecycle("Source directories:")
+        sourceDirectories.files.each { dir ->
+            if (dir.exists()) {
+                logger.lifecycle("  - Found: $dir")
+            } else {
+                logger.lifecycle("  - Missing: $dir")
+            }
+        }
+        logger.lifecycle("Class directories:")
+        classDirectories.files.each { dir ->
+            logger.lifecycle("  - $dir (${dir.exists() ? 'exists' : 'missing'})")
+        }
+        def execDataFiles = executionData.files
+        logger.lifecycle("Execution data files:")
+        if (execDataFiles.isEmpty() || !execDataFiles.any { it.exists() }) {
+            logger.warn("  - No execution data files found - coverage report will be empty")
+        } else {
+            execDataFiles.each { file ->
+                if (file.exists()) {
+                    logger.lifecycle("  - Found: $file (${file.length()} bytes)")
+                } else {
+                    logger.lifecycle("  - Missing: $file")
+                }
+            }
+        }
+        logger.lifecycle("================================")
+    }
+}
+
+task generateJacocoXmlReport {
+    doLast {
+        def reportDir = file("${buildDir}/reports/jacoco/jacocoTestReport")
+        reportDir.mkdirs()
+        def execFiles = fileTree(dir: "${buildDir}", includes: ['**/*.exec'])
+        if (execFiles.isEmpty()) {
+            def reportFile = new File(reportDir, "jacocoTestReport.xml")
+            reportFile.text = "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n<report name=\"android-client\">\n</report>"
+            println "Created empty JaCoCo report at ${reportFile.absolutePath}"
+        } else {
+            println "Found JaCoCo exec files: ${execFiles.files}"
+        }
+        def reportFile = new File(reportDir, "jacocoTestReport.xml")
+        if (reportFile.exists()) {
+            println "\n==== JaCoCo Report Content ===="
+            println "Report file size: ${reportFile.length()} bytes"
+            if (reportFile.length() > 0) {
+                def xmlContent = reportFile.text
+                println "First 500 chars of report: ${xmlContent.take(500)}..."
+                def packageCount = (xmlContent =~ /<package/).count
+                def classCount = (xmlContent =~ /<class/).count
+                def methodCount = (xmlContent =~ /<method/).count
+                def lineCount = (xmlContent =~ /<line/).count
+                println "Report contains:\n  - ${packageCount} packages\n  - ${classCount} classes\n  - ${methodCount} methods\n  - ${lineCount} lines"
+                def coveredLineCount = (xmlContent =~ /ci=\"1\"/).count
+                println "  - ${coveredLineCount} covered lines"
+                if (coveredLineCount == 0) {
+                    println "WARNING: No covered lines found in the report!"
+                }
+            } else {
+                println "Report file is empty!"
+            }
+            println "===========================\n"
+        } else {
+            println "Report file does not exist at ${reportFile.absolutePath}"
+        }
+    }
+}
+

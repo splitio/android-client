@@ -1,32 +1,11 @@
-buildscript {
-    repositories {
-        google()
-        mavenCentral()
-    }
-}
-
 plugins {
     id 'com.android.library'
 }
 
-// Version inherited from parent project
-version = rootProject.ext.splitVersion
-group = 'io.split.client'
-
-repositories {
-    google()
-    mavenCentral()
-}
+apply from: "$rootDir/gradle/common-android-library.gradle"
 
 android {
     namespace 'io.split.android.client.logger'
-    compileSdk 33
-
-    defaultConfig {
-        minSdk 19
-        targetSdk 31
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -36,8 +15,8 @@ android {
 
 dependencies {
     // Test: Add an external dependency to verify it's included in fused library POM
-    implementation "androidx.annotation:annotation:1.2.0"
+    implementation libs.annotation
     
-    testImplementation "junit:junit:4.13.2"
-    testImplementation "org.mockito:mockito-core:4.8.0"
+    testImplementation libs.junit4
+    testImplementation libs.mockitoCore
 }
