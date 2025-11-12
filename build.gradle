@@ -17,13 +17,12 @@ buildscript {
 apply plugin: 'com.android.fused-library'
 apply plugin: 'com.vanniktech.maven.publish'
 
-group = 'io.split.client'
-
 ext {
     splitVersion = '5.4.3-rc4'
     jacocoVersion = '0.8.8'
 }
 
+group = 'io.split.client'
 version = splitVersion
 
 // Centralize repositories and coordinates for all subprojects
@@ -32,8 +31,6 @@ allprojects {
         google()
         mavenCentral()
     }
-    group = 'io.split.client'
-    version = splitVersion
 }
 
 // Ensure Kotlin stdlib versions are consistent across modules
