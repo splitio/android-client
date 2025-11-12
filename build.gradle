@@ -33,16 +33,6 @@ allprojects {
     }
 }
 
-// Ensure Kotlin stdlib versions are consistent across modules
-subprojects {
-    configurations.all {
-        resolutionStrategy {
-            force "org.jetbrains.kotlin:kotlin-stdlib:1.8.0"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0"
-            force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0"
-        }
-    }
-}
 
 // Define exclusions for JaCoCo coverage
 def coverageExclusions = [

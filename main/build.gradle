@@ -93,3 +93,12 @@ dependencies {
 
     androidTestUtil libs.androidxTestOrchestrator
 }
+
+// Align Kotlin only for test and androidTest configurations to avoid duplicate classes
+configurations.matching { it.name.toLowerCase().contains("test") }.all {
+    resolutionStrategy {
+        force "org.jetbrains.kotlin:kotlin-stdlib:1.8.0"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk7:1.8.0"
+        force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0"
+    }
+}
