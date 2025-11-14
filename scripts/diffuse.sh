@@ -224,12 +224,27 @@ clone_repo() {
     
     git clone --tags "$repo_url" "$clone_dir" > /dev/null 2>&1 || error_exit "Failed to clone repository for $label"
     
-    # Fetch all remotes and tags from the original repo (in case of remote refs)
-    (cd "$clone_dir" && git remote set-url origin "$repo_url" > /dev/null 2>&1 || true)
-    (cd "$clone_dir" && git fetch --all --tags --prune > /dev/null 2>&1 || true)
-    
-    # Also fetch tags directly from the original repo to ensure we have all local tags
-    (cd "$clone_dir" && git fetch "$repo_url" "+refs/tags/*:refs/tags/*" > /dev/null 2>&1 || true)
+    # After cloning from local repo, we need to fetch from the actual remote origin
+    # to ensure all remote branches are properly available
+    (cd "$clone_dir" && {
+        # Get the actual remote origin URL from the source repo
+        ACTUAL_ORIGIN=$(cd "$REPO_PATH" && git remote get-url origin 2>/dev/null || echo "")
+        
+        if [ -n "$ACTUAL_ORIGIN" ]; then
+            log_verbose "Fetching from actual remote origin: $ACTUAL_ORIGIN"
+            # Update origin to point to the actual remote
+            git remote set-url origin "$ACTUAL_ORIGIN" > /dev/null 2>&1 || true
+            # Fetch all branches and tags from the actual remote
+            git fetch origin --all --tags --prune > /dev/null 2>&1 || true
+        else
+            # Fallback: fetch from local repo
+            git remote set-url origin "$repo_url" > /dev/null 2>&1 || true
+            git fetch --all --tags --prune > /dev/null 2>&1 || true
+        fi
+        
+        # Also fetch tags directly
+        git fetch origin "+refs/tags/*:refs/tags/*" > /dev/null 2>&1 || true
+    })
     
     log_verbose "✓ Repository cloned for $label"
 }
