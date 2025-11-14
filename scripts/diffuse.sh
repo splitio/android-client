@@ -32,7 +32,8 @@ GRADLE_TASK_CANDIDATES=("bundle" "bundleReleaseAar" "assembleRelease")
 
 # Temporary files
 TEMP_DIR=$(mktemp -d)
-CLONE_DIR="${TEMP_DIR}/repo"
+SOURCE_CLONE_DIR="${TEMP_DIR}/source-repo"
+TARGET_CLONE_DIR="${TEMP_DIR}/target-repo"
 TARGET_AAR="${TEMP_DIR}/target-branch.aar"
 SOURCE_AAR="${TEMP_DIR}/source-branch.aar"
 
@@ -199,15 +200,18 @@ get_repo_path() {
 
 # Clone repository to temporary directory
 clone_repo() {
-    log_verbose "Cloning repository to temporary directory..."
+    local clone_dir="$1"
+    local label="$2"
+    
+    log_verbose "Cloning repository to temporary directory ($label)..."
     
     # Clone the repository (using file:// protocol for local repos)
     # This creates a clean copy without affecting the original
-    if [ -d "$CLONE_DIR" ]; then
-        rm -rf "$CLONE_DIR"
+    if [ -d "$clone_dir" ]; then
+        rm -rf "$clone_dir"
     fi
     
-    log_verbose "Cloning to: $CLONE_DIR"
+    log_verbose "Cloning to: $clone_dir"
     # Use file:// protocol for local repository cloning
     local repo_url
     if [[ "$REPO_PATH" == /* ]]; then
@@ -218,16 +222,16 @@ clone_repo() {
         repo_url="file://$(cd "$REPO_PATH" && pwd)"
     fi
     
-    git clone --tags "$repo_url" "$CLONE_DIR" > /dev/null 2>&1 || error_exit "Failed to clone repository"
+    git clone --tags "$repo_url" "$clone_dir" > /dev/null 2>&1 || error_exit "Failed to clone repository for $label"
     
     # Fetch all remotes and tags from the original repo (in case of remote refs)
-    (cd "$CLONE_DIR" && git remote set-url origin "$repo_url" > /dev/null 2>&1 || true)
-    (cd "$CLONE_DIR" && git fetch --all --tags --prune > /dev/null 2>&1 || true)
+    (cd "$clone_dir" && git remote set-url origin "$repo_url" > /dev/null 2>&1 || true)
+    (cd "$clone_dir" && git fetch --all --tags --prune > /dev/null 2>&1 || true)
     
     # Also fetch tags directly from the original repo to ensure we have all local tags
-    (cd "$CLONE_DIR" && git fetch "$repo_url" "+refs/tags/*:refs/tags/*" > /dev/null 2>&1 || true)
+    (cd "$clone_dir" && git fetch "$repo_url" "+refs/tags/*:refs/tags/*" > /dev/null 2>&1 || true)
     
-    log_verbose "✓ Repository cloned"
+    log_verbose "✓ Repository cloned for $label"
 }
 
 # Download and setup Diffuse
@@ -499,13 +503,14 @@ run_diffuse() {
 
 # Build AAR for a specific branch/tag/commit
 build_aar() {
-    local ref="$1"
-    local output_aar="$2"
+    local clone_dir="$1"
+    local ref="$2"
+    local output_aar="$3"
     
     log_verbose "Building AAR for ref: ${ref}"
     
     # Change to cloned repository directory
-    cd "$CLONE_DIR" || error_exit "Failed to change to cloned repository directory"
+    cd "$clone_dir" || error_exit "Failed to change to cloned repository directory"
     
     # Verify ref exists (handles branches, tags, and commits)
     # First try to verify directly
@@ -585,12 +590,17 @@ build_aar() {
     
     # Build the fused AAR using the first available Gradle task
     # Clean first to avoid cross-branch artifacts affecting selection
+    # Use aggressive cleaning to ensure no cached artifacts remain
     log_verbose "Running: $gradle_cmd clean"
     if [ "$VERBOSE" = true ]; then
         "$gradle_cmd" clean --no-daemon || true
     else
         "$gradle_cmd" clean --quiet --no-daemon >/dev/null 2>&1 || true
     fi
+    
+    # Additional cleanup: remove build directories to ensure fresh build
+    log_verbose "Removing build directories for clean slate..."
+    rm -rf build/ */build/ .gradle/ */.gradle/ 2>/dev/null || true
     local build_ok=false
     local used_task=""
     for task in "${GRADLE_TASK_CANDIDATES[@]}"; do
@@ -669,7 +679,17 @@ build_aar() {
     
     # Copy AAR to temp location
     cp "$aar_path" "$output_aar"
-    log_verbose "✓ AAR built and copied for ref '${ref}': $(basename "$output_aar")"
+    
+    # Verify the AAR was copied and log its size and checksum
+    local aar_size
+    aar_size=$(stat -f%z "$output_aar" 2>/dev/null || stat -c%s "$output_aar" 2>/dev/null || echo "unknown")
+    local aar_sha=""
+    if command -v shasum >/dev/null 2>&1; then
+        aar_sha=$(shasum -a 256 "$output_aar" 2>/dev/null | awk '{print $1}')
+    elif command -v openssl >/dev/null 2>&1; then
+        aar_sha=$(openssl dgst -sha256 "$output_aar" 2>/dev/null | awk '{print $2}')
+    fi
+    log_verbose "✓ AAR built and copied for ref '${ref}': $(basename "$output_aar") (${aar_size} bytes${aar_sha:+, sha256: $aar_sha})"
     
     # Clean up temporary settings.gradle if we created one
     # (This is cleaned up here, but also safe if script fails - temp dir will be removed)
@@ -690,15 +710,17 @@ main() {
     local original_dir="$PWD"
     setup_diffuse
     
-    # Clone repository to temporary directory
-    clone_repo
+    # Clone repository twice - once for each branch to ensure complete isolation
+    # This prevents any build cache or Gradle state from affecting the comparison
+    clone_repo "$SOURCE_CLONE_DIR" "source"
+    clone_repo "$TARGET_CLONE_DIR" "target"
     
     # Build source branch AAR first (newer version)
     # This ensures we build the newer version first, which may have more dependencies
-    build_aar "$SOURCE_BRANCH" "$SOURCE_AAR"
+    build_aar "$SOURCE_CLONE_DIR" "$SOURCE_BRANCH" "$SOURCE_AAR"
     
-    # Build target branch AAR second (older version)
-    build_aar "$TARGET_BRANCH" "$TARGET_AAR"
+    # Build target branch AAR second (older version) in separate clone directory
+    build_aar "$TARGET_CLONE_DIR" "$TARGET_BRANCH" "$TARGET_AAR"
     
     # Summarize what will be compared (paths, sizes, hashes) to ensure distinct artifacts
     # Only show in verbose mode
