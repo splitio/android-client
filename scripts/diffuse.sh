@@ -226,25 +226,24 @@ clone_repo() {
     
     # After cloning from local repo, we need to fetch from the actual remote origin
     # to ensure all remote branches are properly available
-    (cd "$clone_dir" && {
-        # Get the actual remote origin URL from the source repo
-        ACTUAL_ORIGIN=$(cd "$REPO_PATH" && git remote get-url origin 2>/dev/null || echo "")
-        
-        if [ -n "$ACTUAL_ORIGIN" ]; then
-            log_verbose "Fetching from actual remote origin: $ACTUAL_ORIGIN"
-            # Update origin to point to the actual remote
-            git remote set-url origin "$ACTUAL_ORIGIN" > /dev/null 2>&1 || true
-            # Fetch all branches and tags from the actual remote
-            git fetch origin --all --tags --prune > /dev/null 2>&1 || true
-        else
-            # Fallback: fetch from local repo
-            git remote set-url origin "$repo_url" > /dev/null 2>&1 || true
-            git fetch --all --tags --prune > /dev/null 2>&1 || true
-        fi
-        
-        # Also fetch tags directly
-        git fetch origin "+refs/tags/*:refs/tags/*" > /dev/null 2>&1 || true
-    })
+    (
+      cd "$clone_dir" || error_exit "Failed to enter clone dir for $label"
+      
+      # Get the actual remote origin URL from the source repo
+      ACTUAL_ORIGIN=$(cd "$REPO_PATH" && git remote get-url origin 2>/dev/null || echo "")
+      
+      if [ -n "$ACTUAL_ORIGIN" ]; then
+          log_verbose "Fetching from actual remote origin: $ACTUAL_ORIGIN"
+          # Update origin to point to the actual remote
+          git remote set-url origin "$ACTUAL_ORIGIN" > /dev/null 2>&1 || true
+      else
+          log_verbose "Using local repository as origin: $repo_url"
+          git remote set-url origin "$repo_url" > /dev/null 2>&1 || true
+      fi
+      
+      # Fetch branches and tags for origin using default refspec
+      git fetch origin --prune --tags > /dev/null 2>&1 || true
+    )
     
     log_verbose "✓ Repository cloned for $label"
 }
@@ -528,22 +527,10 @@ build_aar() {
     cd "$clone_dir" || error_exit "Failed to change to cloned repository directory"
     
     # Verify ref exists (handles branches, tags, and commits)
-    # First try to verify directly
+    # At this point clone_repo has already fetched from origin, so the
+    # ref should exist if it exists on the remote.
     if ! git rev-parse --verify "$ref" > /dev/null 2>&1; then
-        # If that fails, try fetching the ref from origin
-        log_verbose "Ref not found locally, attempting to fetch..."
-        git fetch origin "$ref:$ref" > /dev/null 2>&1 || true
-        # Also try fetching as a tag
-        if [[ "$ref" =~ ^[0-9] ]]; then
-            git fetch origin "refs/tags/$ref:refs/tags/$ref" > /dev/null 2>&1 || true
-        fi
-        # Try again
-        if ! git rev-parse --verify "$ref" > /dev/null 2>&1; then
-            # List available tags for debugging
-            [ "$VERBOSE" = true ] && echo -e "${YELLOW}Available tags:${NC}"
-            [ "$VERBOSE" = true ] && git tag | grep -E "^5\.[34]" | head -10 || git tag | tail -10
-            error_exit "Ref does not exist: $ref (must be a branch, tag, or commit)"
-        fi
+        error_exit "Ref does not exist in cloned repo: $ref (ensure this branch/tag/SHA exists on origin)"
     fi
     
     # Checkout the ref (works for branches, tags, and commits)
