@@ -14,24 +14,23 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
 
-    private final Map<E, List<io.harness.events.EventHandler>> mSubscriptions = new ConcurrentHashMap<>();
+    private final Map<E, List<EventHandler<E, M>>> mSubscriptions = new ConcurrentHashMap<>();
     private final Map<E, Integer> mRemainingExecutions = new ConcurrentHashMap<>();
     protected final Set<E> mFired = Collections.newSetFromMap(new ConcurrentHashMap<E, Boolean>());
     private final Set<I> mSeenInternal = Collections.newSetFromMap(new ConcurrentHashMap<>());
-    private final Map<E, M> mLastMetadata = new ConcurrentHashMap<>();
 
-    private final TriggerDependencies<E, I> mTriggerDependencies;
+    private final EventsManagerConfig<E, I> mEventsManagerConfig;
     @NonNull
     private final EventDelivery<E, M> mDelivery;
     private final AtomicBoolean mRunning = new AtomicBoolean(false);
 
-    public EventsManagerCore(@Nullable TriggerDependencies<E, I> triggerDependencies, EventDelivery<E, M> delivery) {
-        mTriggerDependencies = triggerDependencies == null ? TriggerDependencies.empty() : triggerDependencies;
+    public EventsManagerCore(@Nullable EventsManagerConfig<E, I> eventsManagerConfig, EventDelivery<E, M> delivery) {
+        mEventsManagerConfig = eventsManagerConfig == null ? EventsManagerConfig.empty() : eventsManagerConfig;
         mDelivery = delivery;
     }
 
     @Override
-    public void register(E event, io.harness.events.EventHandler handler) {
+    public void register(E event, EventHandler handler) {
         // If the event was already triggered, we replay it
         if (eventAlreadyTriggered(event)) {
             mDelivery.deliver(handler, event, null);
@@ -39,7 +38,7 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
         }
 
         // Add new handler to the corresponding event's handlers
-        List<io.harness.events.EventHandler> list = mSubscriptions.get(event);
+        List<EventHandler> list = mSubscriptions.get(event);
         if (list == null) {
             synchronized (mSubscriptions) {
                 list = mSubscriptions.get(event);
@@ -62,7 +61,7 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     public void notifyInternalEvent(I event, M metadata) {
         mSeenInternal.add(event);
         // Evaluate AND external events
-        for (Map.Entry<E, Set<I>> entry : mTriggerDependencies.getRequireAll().entrySet()) {
+        for (Map.Entry<E, Set<I>> entry : mEventsManagerConfig.getRequireAll().entrySet()) {
             final E external = entry.getKey();
             final Set<I> required = entry.getValue();
             if (required == null) {
@@ -80,7 +79,7 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             trigger(external, metadata);
         }
         // Evaluate OR external events (requireAny)
-        for (Map.Entry<E, Set<I>> entry : mTriggerDependencies.getRequireAny().entrySet()) {
+        for (Map.Entry<E, Set<I>> entry : mEventsManagerConfig.getRequireAny().entrySet()) {
             final E external = entry.getKey();
             final Set<I> triggers = entry.getValue();
 
@@ -98,7 +97,7 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     }
 
     private void trigger(E event, M metadata) {
-        List<io.harness.events.EventHandler> handlersSnapshot;
+        List<EventHandler> handlersSnapshot;
         synchronized (this) {
             Integer remainingExecs = mRemainingExecutions.get(event);
             if (remainingExecs == null) {
@@ -117,20 +116,20 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
                 mRemainingExecutions.put(event, remainingExecs - 1);
             }
             mFired.add(event);
-            List<io.harness.events.EventHandler> handlers = mSubscriptions.get(event);
+            List<EventHandler> handlers = mSubscriptions.get(event);
             if (handlers == null || handlers.isEmpty()) {
                 handlersSnapshot = Collections.emptyList();
             } else {
                 handlersSnapshot = new ArrayList<EventHandler<E, M>>(handlers);
             }
         }
-        for (io.harness.events.EventHandler handler : handlersSnapshot) {
+        for (EventHandler<E, M> handler : handlersSnapshot) {
             mDelivery.deliver(handler, event, metadata);
         }
     }
 
     private int maxExecutions(E event) {
-        Integer maxExecutions = mTriggerDependencies.getExecutionLimits().get(event);
+        Integer maxExecutions = mEventsManagerConfig.getExecutionLimits().get(event);
         if (maxExecutions != null) {
             return maxExecutions;
         }
@@ -138,10 +137,10 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     }
 
     private boolean prerequisitesSatisfied(E external) {
-        if (mTriggerDependencies == null || mTriggerDependencies.getPrerequisites().isEmpty()) {
+        if (mEventsManagerConfig == null || mEventsManagerConfig.getPrerequisites().isEmpty()) {
             return true;
         }
-        final Set<E> prerequisite = mTriggerDependencies.getPrerequisites().get(external);
+        final Set<E> prerequisite = mEventsManagerConfig.getPrerequisites().get(external);
 
         if (prerequisite != null && !prerequisite.isEmpty()) {
             for (E e : prerequisite) {
@@ -154,7 +153,7 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     }
 
     private boolean isSuppressed(E external) {
-        final Set<E> set = mTriggerDependencies.getSuppressedBy().get(external);
+        final Set<E> set = mEventsManagerConfig.getSuppressedBy().get(external);
         if (set == null || set.isEmpty()) {
             return false;
         }

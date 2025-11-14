@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-public final class TriggerDependencies<E, I> {
+public final class EventsManagerConfig<E, I> {
     // External events that require ALL listed internals (AND)
     private final Map<E, Set<I>> mRequireAll;
     // External events triggered by ANY of the listed internals (OR)
@@ -19,7 +19,7 @@ public final class TriggerDependencies<E, I> {
     // Execution policy: max executions per external event (-1 = unlimited)
     private final Map<E, Integer> mExecutionLimits;
 
-    public TriggerDependencies(Map<E, Set<I>> requireAll,
+    public EventsManagerConfig(Map<E, Set<I>> requireAll,
                                Map<E, Set<I>> requireAny,
                                Map<E, Set<E>> prerequisites,
                                Map<E, Set<E>> suppressedBy,
@@ -41,8 +41,8 @@ public final class TriggerDependencies<E, I> {
                 : Collections.unmodifiableMap(new HashMap<>(executionLimits));
     }
 
-    public static <I, E> TriggerDependencies<E, I> empty() {
-        return new TriggerDependencies<>(Collections.emptyMap(),
+    public static <I, E> EventsManagerConfig<E, I> empty() {
+        return new EventsManagerConfig<>(Collections.emptyMap(),
                 Collections.emptyMap(),
                 Collections.emptyMap(),
                 Collections.emptyMap(),
