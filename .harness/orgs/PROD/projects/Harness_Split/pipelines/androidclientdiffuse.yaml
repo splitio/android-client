@@ -139,9 +139,23 @@ pipeline:
                       # Fetch all branches from remote so diffuse.sh can access them
                       echo "Fetching branches from remote..."
                       git fetch origin --prune > /dev/null 2>&1
-                      git fetch origin "$SOURCE_BRANCH:$SOURCE_BRANCH" > /dev/null 2>&1 || true
-                      git fetch origin "$TARGET_BRANCH:$TARGET_BRANCH" > /dev/null 2>&1 || true
+                      git fetch origin "$SOURCE_BRANCH" > /dev/null 2>&1 || true
+                      git fetch origin "$TARGET_BRANCH" > /dev/null 2>&1 || true
+                      
+                      # Debug: Show what branches/refs exist
+                      echo "=== Available branches and refs ==="
+                      git branch -r | grep -E "(${SOURCE_BRANCH}|${TARGET_BRANCH})" || true
+                      echo "Current HEAD: $(git rev-parse HEAD)"
+                      echo "origin/${SOURCE_BRANCH}: $(git rev-parse origin/${SOURCE_BRANCH} 2>/dev/null || echo 'NOT FOUND')"
+                      echo "origin/${TARGET_BRANCH}: $(git rev-parse origin/${TARGET_BRANCH} 2>/dev/null || echo 'NOT FOUND')"
+                      
+                      # Use remote branch references (origin/branch-name) for the diffuse script
+                      # This ensures we compare the actual remote branches, not local refs
+                      SOURCE_REF="origin/${SOURCE_BRANCH}"
+                      TARGET_REF="origin/${TARGET_BRANCH}"
+                      
                       echo "✓ Branches fetched"
+                      echo "Will compare: $SOURCE_REF (source) vs $TARGET_REF (target)"
 
                       # Verify the script exists
                       if [ ! -f "scripts/diffuse.sh" ]; then
@@ -154,17 +168,22 @@ pipeline:
                       # Make the script executable
                       chmod +x scripts/diffuse.sh
 
-                      # Run the diffuse script with branch parameters
-                      echo "Executing: ./scripts/diffuse.sh --source '$SOURCE_BRANCH' --target '$TARGET_BRANCH'"
+                      # Run the diffuse script with remote branch references in verbose mode for debugging
+                      echo "Executing: ./scripts/diffuse.sh --source '$SOURCE_REF' --target '$TARGET_REF' --verbose"
                       
                       # Run and capture output
                       set +e  # Don't exit on error
-                      ./scripts/diffuse.sh --source "$SOURCE_BRANCH" --target "$TARGET_BRANCH" > diffuse_output_full.txt 2>&1
+                      ./scripts/diffuse.sh --source "$SOURCE_REF" --target "$TARGET_REF" --verbose > diffuse_output_full.txt 2>&1
                       DIFFUSE_EXIT_CODE=$?
                       set -e
 
                       echo ""
                       echo "=== Diffuse Script Exit Code: $DIFFUSE_EXIT_CODE ==="
+                      
+                      # Show the full verbose output for debugging
+                      echo "=== Full Diffuse Output (for debugging) ==="
+                      cat diffuse_output_full.txt
+                      echo "=== End Full Output ==="
 
                       # Extract only the comparison tables from the output
                       sed 's/\x1b\[[0-9;]*m//g' diffuse_output_full.txt | \
