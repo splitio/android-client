@@ -1,0 +1,22 @@
+plugins {
+    id 'com.android.library'
+}
+
+apply from: "$rootDir/gradle/common-android-library.gradle"
+
+android {
+    namespace 'io.split.android.client.logger'
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    // Test: Add an external dependency to verify it's included in fused library POM
+    implementation libs.annotation
+
+    testImplementation libs.junit4
+    testImplementation libs.mockitoCore
+}
