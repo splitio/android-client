@@ -52,6 +52,7 @@ android {
 dependencies {
     // Internal module dependencies
     api project(':logger')
+    implementation project(':events')
 
     // External dependencies
     implementation libs.roomRuntime

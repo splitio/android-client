@@ -106,6 +106,7 @@ repositories {
 dependencies {
     include project(':main')
     include project(':logger')
+    include project(':events')
 }
 
 def splitPOM = {

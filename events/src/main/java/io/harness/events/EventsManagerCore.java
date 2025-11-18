@@ -38,7 +38,7 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
         }
 
         // Add new handler to the corresponding event's handlers
-        List<EventHandler> list = mSubscriptions.get(event);
+        List<EventHandler<E, M>> list = mSubscriptions.get(event);
         if (list == null) {
             synchronized (mSubscriptions) {
                 list = mSubscriptions.get(event);
@@ -97,7 +97,7 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     }
 
     private void trigger(E event, M metadata) {
-        List<EventHandler> handlersSnapshot;
+        List<EventHandler<E, M>> handlersSnapshot;
         synchronized (this) {
             Integer remainingExecs = mRemainingExecutions.get(event);
             if (remainingExecs == null) {
@@ -116,7 +116,7 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
                 mRemainingExecutions.put(event, remainingExecs - 1);
             }
             mFired.add(event);
-            List<EventHandler> handlers = mSubscriptions.get(event);
+            List<EventHandler<E, M>> handlers = mSubscriptions.get(event);
             if (handlers == null || handlers.isEmpty()) {
                 handlersSnapshot = Collections.emptyList();
             } else {
