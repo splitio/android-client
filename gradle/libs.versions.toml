@@ -1,0 +1,49 @@
+[versions]
+kotlin = "1.8.0"
+androidx-room = "2.4.3"
+androidx-work = "2.7.1"
+androidx-lifecycle-process = "2.5.1"
+androidx-annotation = "1.2.0"
+gson = "2.10.1"
+snakeyaml = "2.2"
+play-services-base = "18.2.0"
+multidex = "2.0.1"
+junit4 = "4.13.2"
+mockito = "4.8.0"
+hamcrest = "2.2"
+guava = "31.1-android"
+okhttp = "4.10.0"
+commons-lang3 = "3.12.0"
+androidx-test-ext-junit = "1.1.5"
+androidx-test-runner = "1.5.2"
+androidx-test-rules = "1.5.0"
+androidx-test-orchestrator = "1.4.2"
+
+[libraries]
+roomRuntime = { module = "androidx.room:room-runtime", version.ref = "androidx-room" }
+roomCompiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
+workRuntime = { module = "androidx.work:work-runtime", version.ref = "androidx-work" }
+workTesting = { module = "androidx.work:work-testing", version.ref = "androidx-work" }
+lifecycleProcess = { module = "androidx.lifecycle:lifecycle-process", version.ref = "androidx-lifecycle-process" }
+annotation = { module = "androidx.annotation:annotation", version.ref = "androidx-annotation" }
+gson = { module = "com.google.code.gson:gson", version.ref = "gson" }
+snakeyaml = { module = "org.yaml:snakeyaml", version.ref = "snakeyaml" }
+playServicesBase = { module = "com.google.android.gms:play-services-base", version.ref = "play-services-base" }
+multidex = { module = "androidx.multidex:multidex", version.ref = "multidex" }
+junit4 = { module = "junit:junit", version.ref = "junit4" }
+mockitoCore = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+mockitoInline = { module = "org.mockito:mockito-inline", version.ref = "mockito" }
+mockitoAndroid = { module = "org.mockito:mockito-android", version.ref = "mockito" }
+hamcrest = { module = "org.hamcrest:hamcrest", version.ref = "hamcrest" }
+commonsLang3 = { module = "org.apache.commons:commons-lang3", version.ref = "commons-lang3" }
+guava = { module = "com.google.guava:guava", version.ref = "guava" }
+okhttpMockwebserver = { module = "com.squareup.okhttp3:mockwebserver", version.ref = "okhttp" }
+okhttpTls = { module = "com.squareup.okhttp3:okhttp-tls", version.ref = "okhttp" }
+androidxTestExtJunit = { module = "androidx.test.ext:junit", version.ref = "androidx-test-ext-junit" }
+androidxTestRunner = { module = "androidx.test:runner", version.ref = "androidx-test-runner" }
+androidxTestRules = { module = "androidx.test:rules", version.ref = "androidx-test-rules" }
+androidxTestOrchestrator = { module = "androidx.test:orchestrator", version.ref = "androidx-test-orchestrator" }
+kotlinStdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
+kotlinTest = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
+kotlinTestJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
+

@@ -1,3 +1,6 @@
+import com.vanniktech.maven.publish.AndroidFusedLibrary
+import org.gradle.api.publish.maven.MavenPublication
+
 buildscript {
     repositories {
         google()
@@ -5,23 +8,31 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.7.3'
+        classpath 'com.android.tools.build:gradle:9.0.0-alpha13'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
-        classpath "com.vanniktech:gradle-maven-publish-plugin:0.33.0"
+        classpath "com.vanniktech:gradle-maven-publish-plugin:0.34.0"
     }
 }
 
-apply plugin: 'com.android.library'
-apply plugin: 'signing'
-apply plugin: 'kotlin-android'
+apply plugin: 'com.android.fused-library'
 apply plugin: 'com.vanniktech.maven.publish'
-apply from: 'spec.gradle'
-apply from: 'jacoco.gradle'
 
 ext {
-    splitVersion = '5.4.2'
+    splitVersion = '5.4.3-rc4'
     jacocoVersion = '0.8.8'
 }
+
+group = 'io.split.client'
+version = splitVersion
+
+// Centralize repositories and coordinates for all subprojects
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
 
 // Define exclusions for JaCoCo coverage
 def coverageExclusions = [
@@ -33,84 +44,57 @@ def coverageExclusions = [
         'android/**/*.*'
 ]
 
-android {
-    compileSdk 33
-    targetCompatibility = '1.8'
-    sourceCompatibility = '1.8'
+androidFusedLibrary {
+    namespace = 'io.split.android.android_client'
+    minSdk { version = release(19) }
+}
 
-    buildFeatures {
-        buildConfig true
+tasks.configureEach { task ->
+    if (task.name == 'packageLintJar' || 
+        task.name.contains('LintJar') ||
+        task.name.contains('LintModel')) {
+        task.enabled = false
     }
+}
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
-    }
-
-    defaultConfig {
-
-        minSdk 19
-        targetSdk 31
-        multiDexEnabled true
-
-        consumerProguardFiles 'split-proguard-rules.pro'
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        testInstrumentationRunnerArguments clearPackageData: 'true'
-
-        javaCompileOptions {
-            annotationProcessorOptions {
-                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
+// Manually copy the merged consumer proguard file into the AAR
+afterEvaluate {
+    tasks.named('bundle').configure {
+        doLast {
+            def aarFile = file("${buildDir}/outputs/aar/android-client.aar")
+            def proguardFile = file("${buildDir}/intermediates/merged_consumer_proguard_file/release/mergeReleaseConsumerProguardFiles/proguard.txt")
+            
+            if (aarFile.exists() && proguardFile.exists()) {
+                // Create temp directory to extract AAR
+                def tempDir = file("${buildDir}/tmp/aar-repack")
+                tempDir.deleteDir()
+                tempDir.mkdirs()
+                
+                // Extract AAR
+                copy {
+                    from zipTree(aarFile)
+                    into tempDir
+                }
+                
+                // Copy proguard.txt
+                copy {
+                    from proguardFile
+                    into tempDir
+                }
+                
+                // Remove lint.jar if it exists (we don't have custom lint rules)
+                def lintJar = new File(tempDir, 'lint.jar')
+                if (lintJar.exists()) {
+                    lintJar.delete()
+                    println "Removed empty lint.jar from AAR"
+                }
+                
+                // Repack AAR
+                ant.zip(destfile: aarFile, basedir: tempDir)
+                
+                println "Added consumer ProGuard rules to ${aarFile.name}"
             }
         }
-
-        testOptions {
-            execution 'ANDROIDX_TEST_ORCHESTRATOR'
-        }
-    }
-
-    configurations {
-        javadocDeps
-    }
-
-
-    testOptions {
-        unitTests.returnDefaultValues = true
-
-        // Configure JaCoCo for all test tasks
-        unitTests.all {
-            jacoco {
-                includeNoLocationClasses = true
-                excludes = ['jdk.internal.*']
-            }
-        }
-    }
-
-    sourceSets {
-        String sharedTestDir = 'src/sharedTest/java'
-        test {
-            java.srcDirs += 'src/test/kotlin'
-            java.srcDirs += sharedTestDir
-        }
-        androidTest {
-            java.srcDirs += sharedTestDir
-        }
-    }
-
-    buildTypes {
-        debug {
-            buildConfigField("String", "SPLIT_VERSION_NAME", "\"${splitVersion}\"")
-            buildConfigField("String", "FLAGS_SPEC", "\"${flagsSpec}\"")
-        }
-        release {
-            buildConfigField("String", "SPLIT_VERSION_NAME", "\"${splitVersion}\"")
-            buildConfigField("String", "FLAGS_SPEC", "\"${flagsSpec}\"")
-        }
-    }
-    namespace 'io.split.android.android_client'
-    lint {
-        abortOnError false
-        disable 'InvalidPackage'
     }
 }
 
@@ -119,78 +103,9 @@ repositories {
     mavenCentral()
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-    kotlinOptions {
-        jvmTarget = "1.8"
-    }
-}
-
 dependencies {
-
-    def roomVersion = '2.4.3'
-    def workVersion = '2.7.1'
-    def lifecycleVersion = '2.5.1'
-    def annotationVersion = '1.2.0'
-    def gsonVersion = '2.10.1'
-    def guavaVersion = '32.1.3-android'
-    def snakeYamlVersion = '2.2'
-    def playServicesVersion = '18.2.0'
-    def multidexVersion = '2.0.1'
-
-    def jUnitVersion = '4.13.2'
-    def mockitoVersion = '4.8.0'
-    def hamcrestVersion = '1.3'
-    def apacheCommonsVersion = '3.12.0'
-    def kotlinVer = '1.5.31'
-    def mockWebServerVersion = '4.12.0'
-
-    def testRulesVersion = '1.4.0'
-    def jUnitExtVersion = '1.1.3'
-    def testRunnerVersion = '1.5.1'
-    def orchestratorVersion = '1.4.2'
-
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-
-    implementation "androidx.room:room-runtime:$roomVersion"
-    annotationProcessor "androidx.room:room-compiler:$roomVersion"
-
-    implementation "androidx.work:work-runtime:$workVersion"
-
-    implementation "androidx.lifecycle:lifecycle-process:$lifecycleVersion"
-
-    implementation "androidx.annotation:annotation:$annotationVersion"
-
-    implementation "com.google.code.gson:gson:$gsonVersion"
-
-    implementation "org.yaml:snakeyaml:$snakeYamlVersion"
-    implementation "com.google.android.gms:play-services-base:$playServicesVersion"
-    implementation "androidx.multidex:multidex:$multidexVersion"
-
-    // Test
-    testImplementation "junit:junit:$jUnitVersion"
-    testImplementation "org.mockito:mockito-core:$mockitoVersion"
-    testImplementation "org.mockito:mockito-inline:$mockitoVersion"
-    testImplementation "org.hamcrest:hamcrest-all:$hamcrestVersion"
-    testImplementation "org.apache.commons:commons-lang3:$apacheCommonsVersion"
-    testImplementation "com.squareup.okhttp3:mockwebserver:$mockWebServerVersion"
-    testImplementation "com.squareup.okhttp3:okhttp-tls:$mockWebServerVersion"
-    testImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
-    testImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
-    testImplementation "com.google.guava:guava:$guavaVersion"
-
-    androidTestImplementation "androidx.test:rules:$testRulesVersion"
-    androidTestImplementation "androidx.test.ext:junit:$jUnitExtVersion"
-    androidTestImplementation "androidx.test:runner:$testRunnerVersion"
-    androidTestUtil "androidx.test:orchestrator:$orchestratorVersion"
-
-    androidTestImplementation "com.squareup.okhttp3:mockwebserver:$mockWebServerVersion"
-    androidTestImplementation "com.squareup.okhttp3:okhttp-tls:$mockWebServerVersion"
-    androidTestImplementation "androidx.room:room-testing:$roomVersion"
-    androidTestImplementation "androidx.work:work-testing:$workVersion"
-    androidTestImplementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlinVer"
-    androidTestImplementation "org.jetbrains.kotlin:kotlin-test-junit:$kotlinVer"
-    androidTestImplementation "com.google.guava:guava:$guavaVersion"
-    androidTestImplementation "org.mockito:mockito-android:$mockitoVersion"
+    include project(':main')
+    include project(':logger')
 }
 
 def splitPOM = {
@@ -222,64 +137,240 @@ def splitPOM = {
 mavenPublishing {
     coordinates("io.split.client", "android-client", splitVersion)
     pom(splitPOM)
-
     publishToMavenCentral(false)
-    signAllPublications()
 }
 
-task sourcesJar(type: Jar) {
-    archiveClassifier.set("sources")
-    from android.sourceSets.main.java.srcDirs
-}
-
-task javadoc(type: Javadoc) {
-    failOnError false
-    source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-    classpath += configurations.javadocDeps
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-//    archiveClassifier = 'javadoc'
-    archiveClassifier.set("javadoc")
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives sourcesJar
-    archives javadocJar
-}
-
-task printReleaseDependenciesToFile {
+// GPG signing task
+tasks.register('signArtifacts') {
+    description = 'Signs all Maven artifacts with GPG'
+    group = 'publishing'
+    
     doLast {
-        def outputFile = new File("$projectDir/deps.txt")
-        def processBuilder = new ProcessBuilder("./gradlew", ":android-client:dependencies", "--configuration", "releaseRuntimeClasspath", "-q")
-
-        outputFile.parentFile.mkdirs()
-        outputFile.text = '' // Clear the file before writing
-        processBuilder.redirectOutput(outputFile)
-        processBuilder.directory(project.rootDir)
-
-        try {
-            Process process = processBuilder.start()
-            process.waitFor()
-
-            def filteredLines = outputFile.readLines().findAll { !it.contains("BUILD SUCCESSFUL") }
-
-            // Write the filtered content back to the file
-            outputFile.withPrintWriter { writer ->
-                filteredLines.each(writer.&println)
-            }
-        } catch (Exception e) {
-            e.printStackTrace()
+        def groupPath = project.group.toString().replace('.', '/')
+        def artifactId = 'android-client'
+        def versionStr = project.version.toString()
+        def artifactDir = file("${buildDir}/publishing/mavenCentral/${groupPath}/${artifactId}/${versionStr}")
+        
+        println "Signing artifacts in: ${artifactDir}"
+        
+        if (!artifactDir.exists()) {
+            println "WARNING: Artifact directory does not exist: ${artifactDir}"
+            println "Skipping signing. Run publishAllPublicationsToMavenCentralRepository first."
+            return
         }
+        
+        def keyId = project.findProperty('signing.keyId')
+        def password = project.findProperty('signing.password')
+        
+        if (!keyId) {
+            throw new GradleException("signing.keyId property is not set in gradle.properties")
+        }
+        if (!password) {
+            throw new GradleException("signing.password property is not set in gradle.properties")
+        }
+        
+        println "Using GPG key ID: ${keyId}"
+        println "Using default GPG keyring"
+        
+        def artifactsToSign = []
+        artifactDir.eachFile { file ->
+            def name = file.name
+            // Sign .aar, .jar, .pom, and .module files
+            if ((name.endsWith('.aar') || name.endsWith('.jar') || name.endsWith('.pom') || name.endsWith('.module')) && !name.endsWith('.asc')) {
+                artifactsToSign << file
+            }
+        }
+        
+        if (artifactsToSign.isEmpty()) {
+            println "WARNING: No artifacts found to sign in ${artifactDir}"
+            return
+        }
+        
+        println "Found ${artifactsToSign.size()} artifact(s) to sign:"
+        artifactsToSign.each { println "  - ${it.name}" }
+        
+        def gpgCommand = null
+        def gpgPaths = [
+            '/opt/homebrew/bin/gpg',  // macOS Homebrew on Apple Silicon - try first
+            '/usr/local/bin/gpg',
+            '/usr/bin/gpg',
+            '/opt/local/bin/gpg'  // MacPorts
+        ]
+        
+        for (path in gpgPaths) {
+            def gpgFile = new File(path)
+            if (gpgFile.exists() && gpgFile.canExecute()) {
+                gpgCommand = path
+                println "Found GPG at: ${gpgCommand}"
+                break
+            }
+        }
+        
+        if (gpgCommand == null) {
+            try {
+                def process = new ProcessBuilder(['gpg', '--version'])
+                    .redirectErrorStream(true)
+                    .start()
+                def exitCode = process.waitFor()
+                if (exitCode == 0) {
+                    gpgCommand = 'gpg'
+                    println "Found GPG in PATH"
+                }
+            } catch (Exception e) {
+                // GPG not in PATH
+            }
+        }
+        
+        if (gpgCommand == null) {
+            throw new GradleException("GPG is not installed or not found in common locations.\n" +
+                "Please install GPG:\n" +
+                "  macOS: brew install gnupg\n" +
+                "  Linux: apt-get install gnupg or yum install gnupg\n" +
+                "Searched in: ${gpgPaths.join(', ')}\n" +
+                "If GPG is installed elsewhere, you can configure the path in the task.")
+        }
+        
+        println "Using GPG: ${gpgCommand}"
+        
+        artifactsToSign.each { artifact ->
+            def ascFile = new File(artifact.parentFile, "${artifact.name}.asc")
+            
+            // Skip if already signed
+            if (ascFile.exists()) {
+                println "Signature already exists for ${artifact.name}, skipping"
+                return
+            }
+            
+            println "Signing: ${artifact.name}"
+            
+            try {
+                def cmd = [
+                    gpgCommand,
+                    '--batch',
+                    '--yes',
+                    '--no-tty',
+                    '--passphrase', password,
+                    '--pinentry-mode', 'loopback',
+                    '--local-user', keyId,
+                    '--detach-sign',
+                    '--armor',
+                    artifact.absolutePath
+                ]
+                
+                // Set GPG_TTY to avoid agent issues
+                def processEnv = new ProcessBuilder().environment()
+                processEnv.put('GPG_TTY', '')
+                
+                def process = new ProcessBuilder(cmd)
+                    .redirectErrorStream(true)
+                    .start()
+                
+                def exitCode = process.waitFor()
+                
+                if (exitCode != 0) {
+                    def output = process.inputStream.text
+                    throw new GradleException("Failed to sign ${artifact.name}. Exit code: ${exitCode}\nOutput: ${output}")
+                }
+                
+                // Verify the signature was created
+                if (!ascFile.exists()) {
+                    throw new GradleException("Signature file was not created for ${artifact.name}")
+                }
+                
+                println "  ✓ Created signature: ${ascFile.name}"
+                
+                // Verify the signature
+                def verifyCmd = [
+                    gpgCommand,
+                    '--verify',
+                    ascFile.absolutePath,
+                    artifact.absolutePath
+                ]
+                
+                def verifyProcess = new ProcessBuilder(verifyCmd)
+                    .redirectErrorStream(true)
+                    .start()
+                
+                def verifyExitCode = verifyProcess.waitFor()
+                
+                if (verifyExitCode == 0) {
+                    println "  ✓ Signature verified successfully"
+                } else {
+                    println "  ⚠ Warning: Could not verify signature"
+                }
+                
+            } catch (Exception e) {
+                throw new GradleException("Failed to sign artifact ${artifact.name}: ${e.message}", e)
+            }
+        }
+        
+        println "Successfully signed ${artifactsToSign.size()} artifact(s)"
     }
 }
 
-preBuild.dependsOn printReleaseDependenciesToFile
+// Make signArtifacts run after artifacts are published but before upload
+afterEvaluate {
+    def signTask = tasks.findByName('signArtifacts')
+    def publishTask = tasks.findByName('publishAllPublicationsToMavenCentralRepository')
+    
+    if (signTask && publishTask) {
+        // signArtifacts depends on publishing (so artifacts exist)
+        signTask.dependsOn(publishTask)
+        
+        // Make publish task finalize with signing
+        publishTask.finalizedBy(signTask)
+        
+        println "Configured signArtifacts task to run after publishAllPublicationsToMavenCentralRepository"
+    }
+}
 
-tasks.withType(Test) {
-    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
-    forkEvery = 100
-    maxHeapSize = "1024m"
+afterEvaluate {
+    def emptySourcesJarTask = tasks.findByName("emptySourcesJar")
+    if (emptySourcesJarTask != null) {
+        // Ensure only one sources artifact is published
+        publishing.publications.withType(MavenPublication) { publication ->
+            if (publication.name == "maven") {
+                // Keep only the sources from fusedLibraryComponent
+                publication.artifacts.removeAll { artifact ->
+                    // Remove artifacts that match the emptySourcesJar task output
+                    try {
+                        def artifactFile = artifact.file
+                        if (artifactFile != null && artifactFile.exists()) {
+                            def emptySourcesFile = emptySourcesJarTask.archiveFile.get().asFile
+                            artifactFile == emptySourcesFile
+                        } else {
+                            artifact.classifier == "sources" && artifact.extension == "jar" &&
+                            !publication.artifacts.any { 
+                                it != artifact && it.classifier == "sources" && 
+                                it.buildDependencies != null
+                            }
+                        }
+                    } catch (Exception e) {
+                        false
+                    }
+                }
+            }
+        }
+    }
+
+    // Disable Gradle Module Metadata (.module file) to avoid variant ambiguity
+    tasks.configureEach { task ->
+        // Match tasks related to module metadata generation
+        if (task.name.startsWith('generateMetadataFileFor') || 
+            task.name == 'generateModuleMetadata' ||
+            task.class.name.endsWith('GenerateModuleMetadata')) {
+            task.enabled = false
+        }
+    }
+    
+    // Remove empty lint.jar from publication to prevent consumer lint crashes
+    // The fused library plugin generates an empty lint.jar without proper Lint-Registry-v2 manifest
+    // This causes lint to crash when consumers use checkDependencies: true
+    publishing.publications.withType(MavenPublication) { publication ->
+        if (publication.name == "maven") {
+            publication.artifacts.removeAll { artifact ->
+                artifact.file?.name?.endsWith('lint.jar') ?: false
+            }
+        }
+    }
 }

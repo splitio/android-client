@@ -1,0 +1,4 @@
+rootProject.name = 'android-client'
+
+include ':logger'
+include ':main'
