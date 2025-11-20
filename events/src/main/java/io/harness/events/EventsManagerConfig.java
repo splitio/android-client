@@ -7,6 +7,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * Contains the interdependencies between events and internal events.
+ *
+ * @param <E> external events type
+ * @param <I> internal events type
+ */
 public final class EventsManagerConfig<E, I> {
     // External events that require ALL listed internals (AND)
     private final Map<E, Set<I>> mRequireAll;
@@ -19,6 +25,15 @@ public final class EventsManagerConfig<E, I> {
     // Execution policy: max executions per external event (-1 = unlimited)
     private final Map<E, Integer> mExecutionLimits;
 
+    /**
+     * Creates a new EventsManagerConfig.
+     *
+     * @param requireAll      External events that require ALL listed internals (AND)
+     * @param requireAny      External events triggered by ANY of the listed internals (OR)
+     * @param prerequisites   External-event guards: prerequisites that must have fired before External can emit
+     * @param suppressedBy    External-event guards: if any of these have fired, suppress E
+     * @param executionLimits Execution policy: max executions per external event (-1 = unlimited)
+     */
     public EventsManagerConfig(Map<E, Set<I>> requireAll,
                                Map<E, Set<I>> requireAny,
                                Map<E, Set<E>> prerequisites,
