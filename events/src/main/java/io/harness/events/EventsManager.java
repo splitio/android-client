@@ -2,9 +2,8 @@ package io.harness.events;
 
 public interface EventsManager<E, I, M> {
 
-    void register(E event, EventHandler handler);
+    void register(E event, EventHandler<E, M> handler);
     void notifyInternalEvent(I event, M metadata);
-    void start();
-    void stop();
     boolean eventAlreadyTriggered(E event);
+    void destroy();
 }

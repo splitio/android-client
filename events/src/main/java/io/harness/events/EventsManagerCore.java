@@ -10,7 +10,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
 
@@ -19,25 +18,34 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     protected final Set<E> mFired = Collections.newSetFromMap(new ConcurrentHashMap<E, Boolean>());
     private final Set<I> mSeenInternal = Collections.newSetFromMap(new ConcurrentHashMap<>());
 
+    @NonNull
     private final EventsManagerConfig<E, I> mEventsManagerConfig;
     @NonNull
     private final EventDelivery<E, M> mDelivery;
-    private final AtomicBoolean mRunning = new AtomicBoolean(false);
 
-    public EventsManagerCore(@Nullable EventsManagerConfig<E, I> eventsManagerConfig, EventDelivery<E, M> delivery) {
+    public EventsManagerCore(@Nullable EventsManagerConfig<E, I> eventsManagerConfig, @NonNull EventDelivery<E, M> delivery) {
         mEventsManagerConfig = eventsManagerConfig == null ? EventsManagerConfig.empty() : eventsManagerConfig;
         mDelivery = delivery;
     }
 
     @Override
-    public void register(E event, EventHandler handler) {
+    public void register(E event, EventHandler<E, M> handler) {
         // If the event was already triggered, we replay it
         if (eventAlreadyTriggered(event)) {
             mDelivery.deliver(handler, event, null);
             return;
         }
 
-        // Add new handler to the corresponding event's handlers
+        addHandler(event, handler);
+
+        synchronized (mRemainingExecutions) {
+            if (!mRemainingExecutions.containsKey(event)) {
+                mRemainingExecutions.put(event, maxExecutions(event));
+            }
+        }
+    }
+
+    private void addHandler(E event, EventHandler<E, M> handler) {
         List<EventHandler<E, M>> list = mSubscriptions.get(event);
         if (list == null) {
             synchronized (mSubscriptions) {
@@ -49,12 +57,6 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             }
         }
         list.add(handler);
-
-        synchronized (mRemainingExecutions) {
-            if (!mRemainingExecutions.containsKey(event)) {
-                mRemainingExecutions.put(event, maxExecutions(event));
-            }
-        }
     }
 
     @Override
@@ -120,7 +122,7 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             if (handlers == null || handlers.isEmpty()) {
                 handlersSnapshot = Collections.emptyList();
             } else {
-                handlersSnapshot = new ArrayList<EventHandler<E, M>>(handlers);
+                handlersSnapshot = new ArrayList<>(handlers);
             }
         }
         for (EventHandler<E, M> handler : handlersSnapshot) {
@@ -137,7 +139,7 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     }
 
     private boolean prerequisitesSatisfied(E external) {
-        if (mEventsManagerConfig == null || mEventsManagerConfig.getPrerequisites().isEmpty()) {
+        if (mEventsManagerConfig.getPrerequisites().isEmpty()) {
             return true;
         }
         final Set<E> prerequisite = mEventsManagerConfig.getPrerequisites().get(external);
@@ -171,12 +173,10 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     }
 
     @Override
-    public void start() {
-        mRunning.compareAndSet(false, true);
-    }
-
-    @Override
-    public void stop() {
-        mRunning.compareAndSet(true, false);
+    public void destroy() {
+        mSubscriptions.clear();
+        mRemainingExecutions.clear();
+        mFired.clear();
+        mSeenInternal.clear();
     }
 }
