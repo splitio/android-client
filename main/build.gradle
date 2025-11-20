@@ -3,7 +3,6 @@ plugins {
 }
 
 apply from: "$rootDir/gradle/common-android-library.gradle"
-apply from: "$rootDir/gradle/jacoco-android.gradle"
 
 android {
     namespace 'io.split.android.client.main'

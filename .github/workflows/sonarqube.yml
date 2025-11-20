@@ -40,8 +40,8 @@ jobs:
           # Build the project
           ./gradlew assembleDebug --stacktrace
 
-          # Run tests with coverage - allow test failures
-          ./gradlew testDebugUnitTest jacocoTestReport --stacktrace
+          # Run tests with aggregate coverage - allow test failures
+          ./gradlew testDebugUnitTest jacocoRootReport --stacktrace
           TEST_RESULT=$?
           if [ $TEST_RESULT -ne 0 ]; then
             echo "Some tests failed, but continuing to check for coverage data..."
@@ -95,8 +95,8 @@ jobs:
           find build -name "*.xml" | grep jacoco || echo "No JaCoCo XML files found"
           find build -name "*.exec" | grep jacoco || echo "No JaCoCo exec files found"
 
-          echo "Contents of JaCoCo report directory:"
-          ls -la build/reports/jacoco/jacocoTestReport/ || echo "Directory not found"
+          echo "Contents of JaCoCo aggregate report directory:"
+          ls -la build/reports/jacoco/jacocoRootReport/ || echo "Directory not found"
 
           echo ""
           echo "Checking test execution results:"
@@ -114,19 +114,19 @@ jobs:
           fi
 
           echo ""
-          echo "Checking JaCoCo report content:"
-          if [ -f build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml ]; then
-            echo "Report file size: $(wc -c < build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml) bytes"
+          echo "Checking JaCoCo aggregate report content:"
+          if [ -f build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml ]; then
+            echo "Report file size: $(wc -c < build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml) bytes"
             echo "First 500 chars of report:"
-            head -c 500 build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml
+            head -c 500 build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml
             echo ""
             echo ""
             echo "Counting coverage elements:"
-            grep -c "<package" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No packages found"
-            grep -c "<class" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No classes found"
-            grep -c "<method" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No methods found"
-            grep -c "<line" build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No lines found"
-            grep -c 'ci="1"' build/reports/jacoco/jacocoTestReport/jacocoTestReport.xml || echo "No covered lines found"
+            grep -c "<package" build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml || echo "No packages found"
+            grep -c "<class" build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml || echo "No classes found"
+            grep -c "<method" build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml || echo "No methods found"
+            grep -c "<line" build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml || echo "No lines found"
+            grep -c 'ci="1"' build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml || echo "No covered lines found"
           else
             echo "JaCoCo report file not found"
           fi

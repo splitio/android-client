@@ -1,0 +1,73 @@
+import org.gradle.testing.jacoco.tasks.JacocoReport
+import org.gradle.api.tasks.testing.Test
+
+// Apply Jacoco at the root to support aggregate reporting
+apply plugin: 'jacoco'
+
+// Define exclusions for JaCoCo coverage
+def coverageExclusions = [
+        '**/R.class',
+        '**/R$*.class',
+        '**/BuildConfig.*',
+        '**/Manifest*.*',
+        '**/*Test*.*',
+        'android/**/*.*'
+]
+
+// Aggregate Jacoco coverage report for all Android library modules
+tasks.register('jacocoRootReport', JacocoReport) {
+    group = 'verification'
+    description = 'Generates an aggregate JaCoCo coverage report for all modules'
+
+    def fileFilter = coverageExclusions
+
+    // Collect class directories from all subprojects
+    def classDirs = subprojects.collectMany { proj ->
+        def b = proj.buildDir
+
+        // Prefer final compiled output locations to avoid duplicate classes
+        def possibleClassDirs = [
+                new File(b, "classes/java/main"),       // Java classes
+                new File(b, "tmp/kotlin-classes/debug") // Kotlin classes
+        ]
+
+        possibleClassDirs.findAll { it.exists() && it.isDirectory() }.collect { dir ->
+            proj.fileTree(dir: dir, excludes: fileFilter)
+        }
+    }
+    classDirectories.from = files(classDirs)
+
+    // Collect source directories from all subprojects
+    def srcDirs = subprojects.collectMany { proj ->
+        [proj.file("src/main/java"), proj.file("src/main/kotlin")]
+    }.findAll { it.exists() }
+    sourceDirectories.from = files(srcDirs)
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+
+        xml.outputLocation = file("$buildDir/reports/jacoco/jacocoRootReport/jacocoRootReport.xml")
+        html.outputLocation = file("$buildDir/reports/jacoco/jacocoRootReport/html")
+    }
+
+    // Always regenerate the report
+    outputs.upToDateWhen { false }
+}
+
+// Wire all module unit tests into the aggregate Jacoco report
+subprojects { proj ->
+    // Only consider projects that apply the Jacoco plugin
+    plugins.withId('jacoco') {
+        tasks.withType(Test).matching { it.name == 'testDebugUnitTest' }.configureEach { testTask ->
+            rootProject.tasks.named('jacocoRootReport') {
+                dependsOn(testTask)
+                // Let JacocoReport infer execution data from the test task outputs
+                executionData(testTask)
+            }
+        }
+    }
+}
+
+

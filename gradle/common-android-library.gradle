@@ -24,3 +24,6 @@ if (kotlinCompileClass != null) {
     }
 }
 
+// Enable Jacoco coverage configuration for all Android library modules
+apply from: "$rootDir/gradle/jacoco-android.gradle"
+
