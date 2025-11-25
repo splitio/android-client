@@ -1,5 +1,9 @@
 package io.harness.events;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -16,11 +20,11 @@ public class EventsManagerConfigTest {
         EventsManagerConfig<String, String> config =
                 new EventsManagerConfig<>(null, null, null, null, null);
 
-        Assert.assertTrue(config.getRequireAll().isEmpty());
-        Assert.assertTrue(config.getRequireAny().isEmpty());
-        Assert.assertTrue(config.getPrerequisites().isEmpty());
-        Assert.assertTrue(config.getSuppressedBy().isEmpty());
-        Assert.assertTrue(config.getExecutionLimits().isEmpty());
+        assertTrue(config.getRequireAll().isEmpty());
+        assertTrue(config.getRequireAny().isEmpty());
+        assertTrue(config.getPrerequisites().isEmpty());
+        assertTrue(config.getSuppressedBy().isEmpty());
+        assertTrue(config.getExecutionLimits().isEmpty());
     }
 
     @Test
@@ -56,23 +60,23 @@ public class EventsManagerConfigTest {
         Map<String, Set<String>> suppressedByFromConfig = config.getSuppressedBy();
         Map<String, Integer> executionLimitsFromConfig = config.getExecutionLimits();
 
-        Assert.assertEquals(1, requireAllFromConfig.size());
-        Assert.assertTrue(requireAllFromConfig.containsKey("E1"));
-        Assert.assertFalse(requireAllFromConfig.containsKey("E2"));
+        assertEquals(1, requireAllFromConfig.size());
+        assertTrue(requireAllFromConfig.containsKey("E1"));
+        assertFalse(requireAllFromConfig.containsKey("E2"));
 
-        Assert.assertEquals(1, requireAnyFromConfig.size());
-        Assert.assertTrue(requireAnyFromConfig.containsKey("E1"));
+        assertEquals(1, requireAnyFromConfig.size());
+        assertTrue(requireAnyFromConfig.containsKey("E1"));
 
-        Assert.assertEquals(1, prerequisitesFromConfig.size());
-        Assert.assertTrue(prerequisitesFromConfig.containsKey("E1"));
-        Assert.assertFalse(prerequisitesFromConfig.containsKey("E2"));
+        assertEquals(1, prerequisitesFromConfig.size());
+        assertTrue(prerequisitesFromConfig.containsKey("E1"));
+        assertFalse(prerequisitesFromConfig.containsKey("E2"));
 
-        Assert.assertEquals(1, suppressedByFromConfig.size());
-        Assert.assertTrue(suppressedByFromConfig.containsKey("E1"));
+        assertEquals(1, suppressedByFromConfig.size());
+        assertTrue(suppressedByFromConfig.containsKey("E1"));
 
-        Assert.assertEquals(1, executionLimitsFromConfig.size());
-        Assert.assertTrue(executionLimitsFromConfig.containsKey("E1"));
-        Assert.assertFalse(executionLimitsFromConfig.containsKey("E2"));
+        assertEquals(1, executionLimitsFromConfig.size());
+        assertTrue(executionLimitsFromConfig.containsKey("E1"));
+        assertFalse(executionLimitsFromConfig.containsKey("E2"));
     }
 
     @Test
@@ -135,11 +139,11 @@ public class EventsManagerConfigTest {
     public void emptyMethodReturnsEmptyUnmodifiableConfig() {
         EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>empty();
 
-        Assert.assertTrue(config.getRequireAll().isEmpty());
-        Assert.assertTrue(config.getRequireAny().isEmpty());
-        Assert.assertTrue(config.getPrerequisites().isEmpty());
-        Assert.assertTrue(config.getSuppressedBy().isEmpty());
-        Assert.assertTrue(config.getExecutionLimits().isEmpty());
+        assertTrue(config.getRequireAll().isEmpty());
+        assertTrue(config.getRequireAny().isEmpty());
+        assertTrue(config.getPrerequisites().isEmpty());
+        assertTrue(config.getSuppressedBy().isEmpty());
+        assertTrue(config.getExecutionLimits().isEmpty());
 
         try {
             config.getRequireAll().put("E1", Collections.singleton("I1"));
