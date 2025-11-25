@@ -28,13 +28,10 @@ tasks.register('jacocoTestReport', JacocoReport) {
 
     // Try multiple possible class directory locations for different AGP versions
     // Android Gradle Plugin may compile classes to different locations
+    // NOTE: If new modules use different compilation output directories, add them here
     def possibleClassDirs = [
-        "${buildDir}/classes/java/main",                                    // Standard location
-        "${buildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes",  // AGP intermediate location
-        "${buildDir}/intermediates/javac/debug/classes",                    // Alternative intermediate location
-        "${buildDir}/intermediates/runtime_library_classes_dir/debug",      // Runtime library classes
-        "${buildDir}/intermediates/classes/debug",                          // Legacy intermediate location
-        "${buildDir}/tmp/kotlin-classes/debug"                              // Kotlin classes
+        "${buildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes",  // AGP 9.0+ location (primary)
+        "${buildDir}/classes/java/main"                                             // Standard fallback location
     ]
 
     possibleClassDirs.each { dirPath ->

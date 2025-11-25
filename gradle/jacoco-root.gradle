@@ -26,13 +26,10 @@ tasks.register('jacocoRootReport', JacocoReport) {
         def b = proj.buildDir
 
         // Try multiple possible class directory locations for different AGP versions
+        // NOTE: If new modules use different compilation output directories, add them here
         def possibleClassDirs = [
-                new File(b, "classes/java/main"),                                    // Standard location
-                new File(b, "intermediates/javac/debug/compileDebugJavaWithJavac/classes"),  // AGP intermediate location
-                new File(b, "intermediates/javac/debug/classes"),                    // Alternative intermediate location
-                new File(b, "intermediates/runtime_library_classes_dir/debug"),      // Runtime library classes
-                new File(b, "intermediates/classes/debug"),                          // Legacy intermediate location
-                new File(b, "tmp/kotlin-classes/debug")                              // Kotlin classes
+                new File(b, "intermediates/javac/debug/compileDebugJavaWithJavac/classes"),  // AGP 9.0+ location (primary)
+                new File(b, "classes/java/main")                                             // Standard fallback location
         ]
 
         possibleClassDirs.findAll { it.exists() && it.isDirectory() }.collect { dir ->
@@ -46,6 +43,34 @@ tasks.register('jacocoRootReport', JacocoReport) {
         [proj.file("src/main/java"), proj.file("src/main/kotlin")]
     }.findAll { it.exists() }
     sourceDirectories.from = files(srcDirs)
+
+    // Collect execution data from all subprojects
+    def execFiles = subprojects.collectMany { proj ->
+        def b = proj.buildDir
+        [
+            new File(b, "jacoco/testDebugUnitTest.exec"),
+            new File(b, "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+        ].findAll { it.exists() }
+    }
+    executionData.from = files(execFiles)
+    
+    doFirst {
+        logger.lifecycle("=== JaCoCo Root Report Generation ===")
+        logger.lifecycle("Execution data files:")
+        def execDataFiles = executionData.files
+        if (execDataFiles.isEmpty() || !execDataFiles.any { it.exists() }) {
+            logger.warn("  - No execution data files found - coverage report will be empty")
+        } else {
+            execDataFiles.each { file ->
+                if (file.exists()) {
+                    logger.lifecycle("  - Found: $file (${file.length()} bytes)")
+                } else {
+                    logger.lifecycle("  - Missing: $file")
+                }
+            }
+        }
+        logger.lifecycle("=======================================")
+    }
 
     reports {
         xml.required = true
@@ -67,8 +92,6 @@ subprojects { proj ->
         tasks.withType(Test).matching { it.name == 'testDebugUnitTest' }.configureEach { testTask ->
             rootProject.tasks.named('jacocoRootReport') {
                 dependsOn(testTask)
-                // Let JacocoReport infer execution data from the test task outputs
-                executionData(testTask)
             }
         }
     }
