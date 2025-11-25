@@ -8,17 +8,12 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
 
 public class EventsManagerConfigTest {
 
     @Test
-    public void nullInputMapsCreateEmptyMaps() {
-        EventsManagerConfig<String, String> config =
-                new EventsManagerConfig<>(null, null, null, null, null);
+    public void emptyBuilderCreatesEmptyMaps() {
+        EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>builder().build();
 
         assertTrue(config.getRequireAll().isEmpty());
         assertTrue(config.getRequireAny().isEmpty());
@@ -28,76 +23,67 @@ public class EventsManagerConfigTest {
     }
 
     @Test
-    public void mutationsToInputMapsDoNotModifyConfig() {
-        Map<String, Set<String>> requireAll = new HashMap<>();
-        Map<String, Set<String>> requireAny = new HashMap<>();
-        Map<String, Set<String>> prerequisites = new HashMap<>();
-        Map<String, Set<String>> suppressedBy = new HashMap<>();
-        Map<String, Integer> executionLimits = new HashMap<>();
+    public void builderCreatesConfigWithAllFields() {
+        EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>builder()
+                .requireAll("E1", "I1", "I2")
+                .requireAny("E2", "I3")
+                .prerequisite("E1", "E0")
+                .suppressedBy("E1", "E2")
+                .executionLimit("E1", 3)
+                .build();
 
-        Set<String> internals = new HashSet<>();
-        internals.add("I1");
+        assertEquals(1, config.getRequireAll().size());
+        assertTrue(config.getRequireAll().get("E1").contains("I1"));
+        assertTrue(config.getRequireAll().get("E1").contains("I2"));
 
-        requireAll.put("E1", internals);
-        requireAny.put("E1", internals);
-        prerequisites.put("E1", Collections.singleton("E0"));
-        suppressedBy.put("E1", Collections.singleton("E2"));
-        executionLimits.put("E1", 3);
+        assertEquals(1, config.getRequireAny().size());
+        assertTrue(config.getRequireAny().get("E2").contains("I3"));
 
-        EventsManagerConfig<String, String> config =
-                new EventsManagerConfig<>(requireAll, requireAny, prerequisites, suppressedBy, executionLimits);
+        assertEquals(1, config.getPrerequisites().size());
+        assertTrue(config.getPrerequisites().get("E1").contains("E0"));
 
-        // Mutate the original maps after construction
-        requireAll.put("E2", Collections.singleton("I2"));
-        requireAny.clear();
-        prerequisites.put("E2", Collections.singleton("E3"));
-        suppressedBy.remove("E1");
-        executionLimits.put("E2", 5);
+        assertEquals(1, config.getSuppressedBy().size());
+        assertTrue(config.getSuppressedBy().get("E1").contains("E2"));
 
-        Map<String, Set<String>> requireAllFromConfig = config.getRequireAll();
-        Map<String, Set<String>> requireAnyFromConfig = config.getRequireAny();
-        Map<String, Set<String>> prerequisitesFromConfig = config.getPrerequisites();
-        Map<String, Set<String>> suppressedByFromConfig = config.getSuppressedBy();
-        Map<String, Integer> executionLimitsFromConfig = config.getExecutionLimits();
+        assertEquals(1, config.getExecutionLimits().size());
+        assertEquals(Integer.valueOf(3), config.getExecutionLimits().get("E1"));
+    }
 
-        assertEquals(1, requireAllFromConfig.size());
-        assertTrue(requireAllFromConfig.containsKey("E1"));
-        assertFalse(requireAllFromConfig.containsKey("E2"));
+    @Test
+    public void builderAllowsMultiplePrerequisites() {
+        EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>builder()
+                .prerequisite("E1", "E0")
+                .prerequisite("E1", "E2")
+                .build();
 
-        assertEquals(1, requireAnyFromConfig.size());
-        assertTrue(requireAnyFromConfig.containsKey("E1"));
+        assertEquals(1, config.getPrerequisites().size());
+        assertEquals(2, config.getPrerequisites().get("E1").size());
+        assertTrue(config.getPrerequisites().get("E1").contains("E0"));
+        assertTrue(config.getPrerequisites().get("E1").contains("E2"));
+    }
 
-        assertEquals(1, prerequisitesFromConfig.size());
-        assertTrue(prerequisitesFromConfig.containsKey("E1"));
-        assertFalse(prerequisitesFromConfig.containsKey("E2"));
+    @Test
+    public void builderAllowsMultipleSuppressors() {
+        EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>builder()
+                .suppressedBy("E1", "E2")
+                .suppressedBy("E1", "E3")
+                .build();
 
-        assertEquals(1, suppressedByFromConfig.size());
-        assertTrue(suppressedByFromConfig.containsKey("E1"));
-
-        assertEquals(1, executionLimitsFromConfig.size());
-        assertTrue(executionLimitsFromConfig.containsKey("E1"));
-        assertFalse(executionLimitsFromConfig.containsKey("E2"));
+        assertEquals(1, config.getSuppressedBy().size());
+        assertEquals(2, config.getSuppressedBy().get("E1").size());
+        assertTrue(config.getSuppressedBy().get("E1").contains("E2"));
+        assertTrue(config.getSuppressedBy().get("E1").contains("E3"));
     }
 
     @Test
     public void returnedMapsAreUnmodifiable() {
-        Map<String, Set<String>> requireAll = new HashMap<>();
-        requireAll.put("E1", Collections.singleton("I1"));
-
-        Map<String, Set<String>> requireAny = new HashMap<>();
-        requireAny.put("E1", Collections.singleton("I1"));
-
-        Map<String, Set<String>> prerequisites = new HashMap<>();
-        prerequisites.put("E1", Collections.singleton("E0"));
-
-        Map<String, Set<String>> suppressedBy = new HashMap<>();
-        suppressedBy.put("E1", Collections.singleton("E2"));
-
-        Map<String, Integer> executionLimits = new HashMap<>();
-        executionLimits.put("E1", 3);
-
-        EventsManagerConfig<String, String> config =
-                new EventsManagerConfig<>(requireAll, requireAny, prerequisites, suppressedBy, executionLimits);
+        EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>builder()
+                .requireAll("E1", "I1")
+                .requireAny("E1", "I1")
+                .prerequisite("E1", "E0")
+                .suppressedBy("E1", "E2")
+                .executionLimit("E1", 3)
+                .build();
 
         try {
             config.getRequireAll().put("E2", Collections.singleton("I2"));
