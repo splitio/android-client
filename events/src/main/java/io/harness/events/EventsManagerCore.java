@@ -68,6 +68,8 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             }
         }
 
+        // Replay if the limit has been reached. Don't add to subscriptions since
+        // it will not be triggered again (max executions reached).
         if (shouldReplay) {
             mDelivery.deliver(handler, event, null);
         }

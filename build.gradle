@@ -50,14 +50,7 @@ tasks.register('sonar') {
         def sonarOrg = System.getProperty('sonar.organization') ?: project.findProperty('sonar.organization')
         
         if (!sonarToken) {
-            throw new GradleException('''
-SonarQube token required. Run with:
-  ./gradlew sonar -Dsonar.token=YOUR_TOKEN
-
-Or configure in gradle.properties:
-  sonar.token=YOUR_TOKEN
-  sonar.host.url=https://sonarcloud.io
-''')
+            throw new GradleException('SonarQube token required')
         }
         
         // Find sonar-scanner
