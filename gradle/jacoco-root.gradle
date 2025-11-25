@@ -25,10 +25,14 @@ tasks.register('jacocoRootReport', JacocoReport) {
     def classDirs = subprojects.collectMany { proj ->
         def b = proj.buildDir
 
-        // Prefer final compiled output locations to avoid duplicate classes
+        // Try multiple possible class directory locations for different AGP versions
         def possibleClassDirs = [
-                new File(b, "classes/java/main"),       // Java classes
-                new File(b, "tmp/kotlin-classes/debug") // Kotlin classes
+                new File(b, "classes/java/main"),                                    // Standard location
+                new File(b, "intermediates/javac/debug/compileDebugJavaWithJavac/classes"),  // AGP intermediate location
+                new File(b, "intermediates/javac/debug/classes"),                    // Alternative intermediate location
+                new File(b, "intermediates/runtime_library_classes_dir/debug"),      // Runtime library classes
+                new File(b, "intermediates/classes/debug"),                          // Legacy intermediate location
+                new File(b, "tmp/kotlin-classes/debug")                              // Kotlin classes
         ]
 
         possibleClassDirs.findAll { it.exists() && it.isDirectory() }.collect { dir ->
