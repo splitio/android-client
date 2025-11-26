@@ -61,10 +61,6 @@ public class EventMetadataImplTest {
         assertTrue(metadata.values().isEmpty());
     }
 
-    // endregion
-
-    // region get() tests
-
     @Test
     public void getReturnsValueForExistingKey() {
         Map<String, Object> data = new HashMap<>();
@@ -104,10 +100,6 @@ public class EventMetadataImplTest {
 
         assertFalse(metadata.containsKey("nonExistingKey"));
     }
-
-    // endregion
-
-    // region toMap() tests
 
     @Test
     public void toMapReturnsACopyOfTheData() {
