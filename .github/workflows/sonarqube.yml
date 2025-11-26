@@ -42,10 +42,10 @@ jobs:
 
           # Run tests - continue even if some tests fail
           ./gradlew testDebugUnitTest --stacktrace || echo "Some tests failed, but continuing to generate coverage report..."
-          
+
           # Generate JaCoCo aggregate report separately (ensures it runs even if tests failed)
           ./gradlew jacocoRootReport --stacktrace
-          
+
           # Log report location for debugging
           REPORT_PATH="build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
           if [ -f "$REPORT_PATH" ]; then
