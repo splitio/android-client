@@ -8,7 +8,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:9.0.0-alpha13'
+        classpath 'com.android.tools.build:gradle:9.0.0-beta02'
         classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
         classpath "com.vanniktech:gradle-maven-publish-plugin:0.34.0"
     }
@@ -41,36 +41,36 @@ allprojects {
 tasks.register('sonar') {
     group = 'verification'
     description = 'Run SonarQube analysis (uses sonar-scanner CLI for AGP 9.0 compatibility)'
-
+    
     dependsOn 'jacocoRootReport'
-
+    
     doLast {
         def sonarToken = System.getProperty('sonar.token') ?: project.findProperty('sonar.token')
         def sonarHost = System.getProperty('sonar.host.url') ?: project.findProperty('sonar.host.url') ?: 'https://sonarcloud.io'
         def sonarOrg = System.getProperty('sonar.organization') ?: project.findProperty('sonar.organization')
-
+        
         if (!sonarToken) {
             throw new GradleException('SonarQube token required')
         }
-
+        
         // Find sonar-scanner
         def scannerPath = ['sonar-scanner', '/opt/homebrew/bin/sonar-scanner', '/usr/local/bin/sonar-scanner']
-            .find { path ->
+            .find { path -> 
                 try {
                     def proc = new ProcessBuilder(path, '--version').redirectErrorStream(true).start()
                     return proc.waitFor() == 0
                 } catch (Exception e) { return false }
             }
-
+        
         if (!scannerPath) {
             throw new GradleException('sonar-scanner not found. Install with: brew install sonar-scanner')
         }
-
+        
         println "Running sonar-scanner..."
         def cmd = [scannerPath, "-Dsonar.token=${sonarToken}", "-Dsonar.host.url=${sonarHost}"]
         if (sonarOrg) cmd.add("-Dsonar.organization=${sonarOrg}")
         cmd.add("-Dsonar.projectVersion=${splitVersion}")
-
+        
         def proc = new ProcessBuilder(cmd).directory(rootDir).inheritIO().start()
         if (proc.waitFor() != 0) {
             throw new GradleException("sonar-scanner failed")
