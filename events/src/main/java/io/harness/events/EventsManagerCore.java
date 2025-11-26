@@ -104,8 +104,11 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
         try {
             mProcessQueue.execute(latch::countDown);
             latch.await();
-        } catch (RejectedExecutionException | InterruptedException e) {
-            // If executor is shut down or interrupted, just check current state
+        } catch (RejectedExecutionException e) {
+            // Executor is shut down
+        } catch (InterruptedException e) {
+            // Restore interrupt status; check current state
+            Thread.currentThread().interrupt();
         }
 
         synchronized (mLock) {

@@ -222,9 +222,6 @@ public class EventsManagerTest {
         // ORDER_TIMED_OUT should be suppressed
         eventsManager.notifyInternalEvent(KitchenActivity.TIMEOUT_REACHED, null);
 
-        // Give some time for potential (incorrect) processing
-        Thread.sleep(100);
-
         assertEquals(0, timeoutCount.get());
         assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.ORDER_TIMED_OUT));
     }
