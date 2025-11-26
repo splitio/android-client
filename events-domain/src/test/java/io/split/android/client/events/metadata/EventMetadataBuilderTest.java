@@ -27,8 +27,6 @@ public class EventMetadataBuilderTest {
         MockitoAnnotations.openMocks(this);
     }
 
-    // region Validator usage tests
-
     @Test
     public void putStringUsesValidator() {
         when(mValidator.isValidValue(any())).thenReturn(true);
@@ -91,10 +89,6 @@ public class EventMetadataBuilderTest {
 
         assertEquals("value", metadata.get("key"));
     }
-
-    // endregion
-
-    // region Integration tests (with default validator)
 
     @Test
     public void buildCreatesEmptyMetadataWhenNothingAdded() {
@@ -202,9 +196,6 @@ public class EventMetadataBuilderTest {
         EventMetadata metadata1 = builder.build();
         EventMetadata metadata2 = builder.build();
 
-        // Both should have the same content but be different instances
         assertEquals(metadata1.get("key"), metadata2.get("key"));
     }
-
-    // endregion
 }
