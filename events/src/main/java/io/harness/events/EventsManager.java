@@ -1,6 +1,6 @@
 package io.harness.events;
 
-import androidx.annotation.Nullable;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Interface for events manager.

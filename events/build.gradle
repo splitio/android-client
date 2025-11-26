@@ -14,7 +14,7 @@ android {
 }
 
 dependencies {
-    implementation libs.annotation
+    compileOnly libs.jetbrainsAnnotations
 
     testImplementation libs.junit4
     testImplementation libs.mockitoCore

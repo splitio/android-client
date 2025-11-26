@@ -1,6 +1,6 @@
 package io.harness.events;
 
-import androidx.annotation.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,12 +27,12 @@ public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     private final Map<E, Integer> mTriggerCount = new HashMap<>();
     private final Set<I> mSeenInternal = new HashSet<>();
 
-    @NonNull
+    @NotNull
     private final EventsManagerConfig<E, I> mConfig;
-    @NonNull
+    @NotNull
     private final EventDelivery<E, M> mDelivery;
 
-    @NonNull
+    @NotNull
     private final ExecutorService mProcessQueue;
 
     private final Object mLock = new Object();
