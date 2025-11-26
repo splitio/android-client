@@ -25,19 +25,20 @@ tasks.register('jacocoTestReport', JacocoReport) {
 
     def fileFilter = ['**/R.class', '**/R$*.class', '**/BuildConfig.*', '**/Manifest*.*', '**/*Test*.*', 'android/**/*.*']
     def classDirectoriesFiles = []
+
+    // Try multiple possible class directory locations for different AGP versions
+    // Android Gradle Plugin may compile classes to different locations
+    // NOTE: If new modules use different compilation output directories, add them here
     def possibleClassDirs = [
-        "${buildDir}/intermediates/javac/debug/classes",
-        "${buildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes",
-        "${buildDir}/intermediates/runtime_library_classes_dir/debug",
-        "${buildDir}/intermediates/classes/debug",
-        "${buildDir}/classes/java/main",
-        "${buildDir}/tmp/kotlin-classes/debug"
+        "${buildDir}/intermediates/javac/debug/compileDebugJavaWithJavac/classes",  // AGP 9.0+ location (primary)
+        "${buildDir}/classes/java/main"                                             // Standard fallback location
     ]
+
     possibleClassDirs.each { dirPath ->
         def dir = file(dirPath)
         if (dir.exists() && dir.isDirectory()) {
             def classDir = fileTree(dir: dirPath, excludes: fileFilter)
-            if (classDir.files.size() > 0) {
+            if (!classDir.isEmpty()) {
                 classDirectoriesFiles.add(classDir)
             }
         }

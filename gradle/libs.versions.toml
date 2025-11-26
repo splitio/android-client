@@ -46,4 +46,3 @@ androidxTestOrchestrator = { module = "androidx.test:orchestrator", version.ref 
 kotlinStdlib = { module = "org.jetbrains.kotlin:kotlin-stdlib", version.ref = "kotlin" }
 kotlinTest = { module = "org.jetbrains.kotlin:kotlin-test", version.ref = "kotlin" }
 kotlinTestJunit = { module = "org.jetbrains.kotlin:kotlin-test-junit", version.ref = "kotlin" }
-
