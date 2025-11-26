@@ -141,6 +141,8 @@ dependencies {
     include project(':main')
     include project(':logger')
     include project(':events')
+    include project(':events-domain')
+    include project(':api')
 }
 
 def splitPOM = {
