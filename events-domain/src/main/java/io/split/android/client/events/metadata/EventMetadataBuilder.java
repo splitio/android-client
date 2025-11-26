@@ -14,15 +14,6 @@ import io.split.android.client.api.EventMetadata;
  * <p>
  * Values are validated during put operations. Only String, Number, Boolean,
  * and List&lt;String&gt; values are accepted. Invalid values will be silently ignored.
- * <p>
- * Example usage:
- * <pre>
- * EventMetadata metadata = new EventMetadataBuilder()
- *     .put("updatedFlags", Arrays.asList("flag_1", "flag_2"))
- *     .put("freshInstall", true)
- *     .put("lastUpdateTimestamp", 1234567890L)
- *     .build();
- * </pre>
  */
 public class EventMetadataBuilder {
 
@@ -45,7 +36,7 @@ public class EventMetadataBuilder {
      *
      * @param key   the key
      * @param value the String value
-     * @return this builder for chaining
+     * @return this builder
      */
     @NonNull
     public EventMetadataBuilder put(@NonNull String key, @NonNull String value) {
@@ -60,7 +51,7 @@ public class EventMetadataBuilder {
      *
      * @param key   the key
      * @param value the Number value (Integer, Long, Double, Float, etc.)
-     * @return this builder for chaining
+     * @return this builder
      */
     @NonNull
     public EventMetadataBuilder put(@NonNull String key, @NonNull Number value) {
@@ -75,7 +66,7 @@ public class EventMetadataBuilder {
      *
      * @param key   the key
      * @param value the Boolean value
-     * @return this builder for chaining
+     * @return this builder
      */
     @NonNull
     public EventMetadataBuilder put(@NonNull String key, boolean value) {
@@ -90,7 +81,7 @@ public class EventMetadataBuilder {
      *
      * @param key   the key
      * @param value the list of strings
-     * @return this builder for chaining
+     * @return this builder
      */
     @NonNull
     public EventMetadataBuilder put(@NonNull String key, @NonNull List<String> value) {

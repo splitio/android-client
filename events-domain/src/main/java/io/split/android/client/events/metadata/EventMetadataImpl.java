@@ -15,10 +15,6 @@ import io.split.android.client.api.EventMetadata;
 
 /**
  * Implementation of {@link EventMetadata}.
- * <p>
- * This class is immutable. Lists are defensively copied during construction
- * and wrapped as unmodifiable to prevent external mutation.
- * <p>
  * Use {@link EventMetadataBuilder} to create instances.
  */
 class EventMetadataImpl implements EventMetadata {
@@ -29,7 +25,6 @@ class EventMetadataImpl implements EventMetadata {
         Map<String, Object> copy = new HashMap<>();
         for (Map.Entry<String, Object> entry : data.entrySet()) {
             Object value = entry.getValue();
-            // Defensive copy for lists to ensure immutability
             if (value instanceof List) {
                 copy.put(entry.getKey(), Collections.unmodifiableList(new ArrayList<>((List<?>) value)));
             } else {
@@ -68,7 +63,6 @@ class EventMetadataImpl implements EventMetadata {
         Map<String, Object> copy = new HashMap<>();
         for (Map.Entry<String, Object> entry : mData.entrySet()) {
             Object value = entry.getValue();
-            // Return mutable copies of lists so callers can modify their copy
             if (value instanceof List) {
                 copy.put(entry.getKey(), new ArrayList<>((List<?>) value));
             } else {
