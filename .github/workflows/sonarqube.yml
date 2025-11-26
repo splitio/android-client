@@ -45,7 +45,7 @@ jobs:
           
           # Generate JaCoCo aggregate report separately (ensures it runs even if tests failed)
           ./gradlew jacocoRootReport
-          
+
           # Log report location for debugging
           REPORT_PATH="build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml"
           if [ -f "$REPORT_PATH" ]; then
