@@ -19,7 +19,7 @@ import java.util.concurrent.RejectedExecutionException;
  * @param <I> internal events type
  * @param <M> metadata type
  */
-public class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
+class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
 
     private static final int UNLIMITED = -1;
 

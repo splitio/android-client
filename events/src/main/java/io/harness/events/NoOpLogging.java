@@ -8,7 +8,6 @@ final class NoOpLogging implements Logging {
     static final Logging INSTANCE = new NoOpLogging();
 
     private NoOpLogging() {
-
     }
 
     @Override
