@@ -3,6 +3,7 @@ package io.split.android.client.events.delivery;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -22,6 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import io.harness.events.EventHandler;
 import io.harness.events.EventsManager;
+import io.harness.events.Logging;
 
 public class DualExecutorRegistrationTest {
 
@@ -150,6 +152,30 @@ public class DualExecutorRegistrationTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void exceptionInHandlerIsLogged() {
+        Logging mockLogging = mock(Logging.class);
+        DualExecutorRegistration<String, String, Void> registration = 
+                new DualExecutorRegistration<>(DIRECT_EXECUTOR, DIRECT_EXECUTOR, mockLogging);
+
+        ArgumentCaptor<EventHandler<String, Void>> captor = ArgumentCaptor.forClass(EventHandler.class);
+
+        registration.registerBackground(
+                mockEventsManager,
+                "testEvent",
+                (e, m) -> { throw new RuntimeException("Test exception message"); }
+        );
+
+        verify(mockEventsManager).register(eq("testEvent"), captor.capture());
+
+        // Invoke the handler that throws
+        captor.getValue().handle("testEvent", null);
+
+        // Verify logging was called with the exception message
+        verify(mockLogging).logError(contains("Test exception message"));
+    }
+
+    @Test
     public void registerIgnoresNullEventsManager() {
         DualExecutorRegistration<String, String, Void> registration = 
                 new DualExecutorRegistration<>(DIRECT_EXECUTOR, DIRECT_EXECUTOR);
@@ -199,6 +225,11 @@ public class DualExecutorRegistrationTest {
     @Test(expected = IllegalArgumentException.class)
     public void constructorThrowsOnNullMainThreadExecutor() {
         new DualExecutorRegistration<>(DIRECT_EXECUTOR, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void constructorThrowsOnNullLogging() {
+        new DualExecutorRegistration<>(DIRECT_EXECUTOR, DIRECT_EXECUTOR, null);
     }
 }
 

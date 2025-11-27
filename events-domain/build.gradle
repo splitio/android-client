@@ -18,6 +18,7 @@ dependencies {
 
     implementation project(':api')
     implementation project(':events')
+    implementation project(':logger')
 
     testImplementation libs.junit4
     testImplementation libs.mockitoCore

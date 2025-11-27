@@ -6,6 +6,8 @@ import java.util.concurrent.Executor;
 
 import io.harness.events.EventHandler;
 import io.harness.events.EventsManager;
+import io.harness.events.Logging;
+import io.split.android.client.events.logging.SplitLogging;
 
 /**
  * Utility for registering event handlers that need to execute on two different threads.
@@ -23,23 +25,44 @@ public class DualExecutorRegistration<E, I, M> {
     private final Executor mBackgroundExecutor;
     @NonNull
     private final Executor mMainThreadExecutor;
+    @NonNull
+    private final Logging mLogging;
 
     /**
-     * Creates a new DualExecutorRegistration.
+     * Creates a new DualExecutorRegistration with a {@link SplitLogging} instance.
      *
      * @param backgroundExecutor executor for background execution
      * @param mainThreadExecutor executor for main thread execution
      */
     public DualExecutorRegistration(@NonNull Executor backgroundExecutor,
                                     @NonNull Executor mainThreadExecutor) {
+        this(backgroundExecutor, mainThreadExecutor, new SplitLogging());
+    }
+
+    /**
+     * Creates a new DualExecutorRegistration.
+     * <p>
+     * Package-private for testing.
+     *
+     * @param backgroundExecutor executor for background execution
+     * @param mainThreadExecutor executor for main thread execution
+     * @param logging            logging instance
+     */
+    DualExecutorRegistration(@NonNull Executor backgroundExecutor,
+                             @NonNull Executor mainThreadExecutor,
+                             @NonNull Logging logging) {
         if (backgroundExecutor == null) {
             throw new IllegalArgumentException("backgroundExecutor cannot be null");
         }
         if (mainThreadExecutor == null) {
             throw new IllegalArgumentException("mainThreadExecutor cannot be null");
         }
+        if (logging == null) {
+            throw new IllegalArgumentException("logging cannot be null");
+        }
         mBackgroundExecutor = backgroundExecutor;
         mMainThreadExecutor = mainThreadExecutor;
+        mLogging = logging;
     }
 
     /**
@@ -86,8 +109,8 @@ public class DualExecutorRegistration<E, I, M> {
     /**
      * Registers a single handler for the main thread only.
      *
-     * @param eventsManager    the events manager to register with
-     * @param event            the event to register for
+     * @param eventsManager      the events manager to register with
+     * @param event              the event to register for
      * @param mainThreadCallback callback to execute on the main thread
      */
     public void registerMainThread(@NonNull EventsManager<E, I, M> eventsManager,
@@ -104,9 +127,8 @@ public class DualExecutorRegistration<E, I, M> {
             try {
                 handler.handle(event, metadata);
             } catch (Exception e) {
-                // Swallow exceptions to prevent one handler from affecting others
+                mLogging.logError("Exception in event handler: " + e.getMessage());
             }
         });
     }
 }
-
