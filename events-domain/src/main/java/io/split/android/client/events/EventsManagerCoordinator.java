@@ -1,6 +1,6 @@
 package io.split.android.client.events;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -18,7 +18,7 @@ public class EventsManagerCoordinator extends BaseEventsManager implements ISpli
 
     @Override
     public void notifyInternalEvent(SplitInternalEvent internalEvent) {
-        checkNotNull(internalEvent);
+        requireNonNull(internalEvent);
         try {
             mQueue.add(internalEvent);
         } catch (IllegalStateException e) {
