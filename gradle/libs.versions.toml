@@ -1,6 +1,6 @@
 [versions]
 kotlin = "1.8.0"
-jetbrains-annotations = "24.1.0"
+jetbrains-annotations = "26.0.2"
 androidx-room = "2.4.3"
 androidx-work = "2.7.1"
 androidx-lifecycle-process = "2.5.1"
