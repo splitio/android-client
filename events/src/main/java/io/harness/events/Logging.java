@@ -2,7 +2,7 @@ package io.harness.events;
 
 /**
  * Interface for optional logging in the events module.
- * Consumers can implement this interface to receive diagnostic output.
+ * Consumers can implement this interface to log messages.
  */
 public interface Logging {
 

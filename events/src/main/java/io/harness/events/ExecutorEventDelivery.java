@@ -25,7 +25,7 @@ public class ExecutorEventDelivery<E, M> implements EventDelivery<E, M> {
      *
      * @param executor the executor to use for delivering events. If null, a direct
      *                 executor (synchronous execution) will be used.
-     * @param logging  optional logging implementation for diagnostic output
+     * @param logging  optional logging implementation.
      */
     public ExecutorEventDelivery(@Nullable Executor executor, @Nullable Logging logging) {
         mExecutor = executor != null ? executor : Runnable::run;
