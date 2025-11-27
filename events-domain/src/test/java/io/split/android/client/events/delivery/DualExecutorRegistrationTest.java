@@ -3,7 +3,6 @@ package io.split.android.client.events.delivery;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -168,11 +167,9 @@ public class DualExecutorRegistrationTest {
 
         verify(mockEventsManager).register(eq("testEvent"), captor.capture());
 
-        // Invoke the handler that throws
         captor.getValue().handle("testEvent", null);
 
-        // Verify logging was called with the exception message
-        verify(mockLogging).logError(contains("Test exception message"));
+        verify(mockLogging).logError(eq("Exception in event handler: Test exception message"));
     }
 
     @Test
@@ -232,4 +229,3 @@ public class DualExecutorRegistrationTest {
         new DualExecutorRegistration<>(DIRECT_EXECUTOR, DIRECT_EXECUTOR, null);
     }
 }
-
