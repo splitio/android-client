@@ -7,21 +7,32 @@ final class NoOpLogging implements Logging {
 
     static final Logging INSTANCE = new NoOpLogging();
 
-    private NoOpLogging() {}
+    private NoOpLogging() {
+
+    }
 
     @Override
-    public void logError(String message) {}
+    public void logError(String message) {
+        // no-op
+    }
 
     @Override
-    public void logWarning(String message) {}
+    public void logWarning(String message) {
+        // no-op
+    }
 
     @Override
-    public void logInfo(String message) {}
+    public void logInfo(String message) {
+        // no-op
+    }
 
     @Override
-    public void logDebug(String message) {}
+    public void logDebug(String message) {
+        // no-op
+    }
 
     @Override
-    public void logVerbose(String message) {}
+    public void logVerbose(String message) {
+        // no-op
+    }
 }
-
