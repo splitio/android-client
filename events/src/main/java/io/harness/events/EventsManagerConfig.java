@@ -1,6 +1,6 @@
 package io.harness.events;
 
-import androidx.annotation.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -66,27 +66,27 @@ public final class EventsManagerConfig<E, I> {
                 Collections.emptyMap());
     }
 
-    @NonNull
+    @NotNull
     public Map<E, Set<I>> getRequireAll() {
         return mRequireAll;
     }
 
-    @NonNull
+    @NotNull
     public Map<E, Set<I>> getRequireAny() {
         return mRequireAny;
     }
 
-    @NonNull
+    @NotNull
     public Map<E, Set<E>> getPrerequisites() {
         return mPrerequisites;
     }
 
-    @NonNull
+    @NotNull
     public Map<E, Set<E>> getSuppressedBy() {
         return mSuppressedBy;
     }
 
-    @NonNull
+    @NotNull
     public Map<E, Integer> getExecutionLimits() {
         return mExecutionLimits;
     }
