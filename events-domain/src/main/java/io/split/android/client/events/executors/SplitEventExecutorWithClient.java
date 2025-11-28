@@ -1,6 +1,6 @@
 package io.split.android.client.events.executors;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import androidx.annotation.NonNull;
 
@@ -18,7 +18,7 @@ public class SplitEventExecutorWithClient implements SplitEventExecutor {
     public SplitEventExecutorWithClient(@NonNull SplitTaskExecutor taskExecutor,
                                         @NonNull SplitEventTask task,
                                         @NonNull SplitClient client) {
-        mSplitTaskExecutor = checkNotNull(taskExecutor);
+        mSplitTaskExecutor = requireNonNull(taskExecutor);
         mBackgroundSplitTask = new ClientEventSplitTask(task, client, false);
         mMainThreadSplitTask = new ClientEventSplitTask(task, client, true);
     }

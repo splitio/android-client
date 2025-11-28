@@ -1,6 +1,6 @@
 package io.split.android.client.events.executors;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import io.split.android.client.SplitClient;
 
@@ -14,7 +14,7 @@ public class SplitEventExecutorResourcesImpl implements SplitEventExecutorResour
 
     @Override
     public void setSplitClient(SplitClient client) {
-        mClient = checkNotNull(client);
+        mClient = requireNonNull(client);
     }
 
     @Override

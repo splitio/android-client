@@ -1,6 +1,6 @@
 package io.split.android.client.service.executor;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,9 +43,9 @@ public class SplitTaskExecutionInfo {
     private SplitTaskExecutionInfo(SplitTaskType taskType,
                                    @NonNull SplitTaskExecutionStatus status,
                                    @NonNull Map<String, Object> data) {
-        this.taskType = checkNotNull(taskType);
-        this.status = checkNotNull(status);
-        this.data = checkNotNull(data);
+        this.taskType = requireNonNull(taskType);
+        this.status = requireNonNull(status);
+        this.data = requireNonNull(data);
     }
 
     public SplitTaskExecutionStatus getStatus() {

@@ -1,6 +1,6 @@
 package io.split.android.client.service.executor;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,7 +12,7 @@ public class SplitTaskBatchItem {
     private final WeakReference<SplitTaskExecutionListener> listener;
 
     public SplitTaskBatchItem(@NonNull SplitTask task, @Nullable SplitTaskExecutionListener listener) {
-        this.task = checkNotNull(task);
+        this.task = requireNonNull(task);
         this.listener = new WeakReference<>(listener);
     }
 

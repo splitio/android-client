@@ -1,6 +1,6 @@
 package io.split.android.client.events;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import androidx.annotation.VisibleForTesting;
 
@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.executors.SplitEventExecutor;
 import io.split.android.client.events.executors.SplitEventExecutorFactory;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
@@ -26,10 +25,6 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
     private final Map<SplitEvent, Integer> mExecutionTimes;
 
     private final SplitTaskExecutor mSplitTaskExecutor;
-
-    public SplitEventsManager(SplitClientConfig config, SplitTaskExecutor splitTaskExecutor) {
-        this(splitTaskExecutor, config.blockUntilReady());
-    }
 
     public SplitEventsManager(SplitTaskExecutor splitTaskExecutor, final int blockUntilReady) {
         super();
@@ -83,7 +78,7 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
     @Override
     public void notifyInternalEvent(SplitInternalEvent internalEvent) {
-        checkNotNull(internalEvent);
+        requireNonNull(internalEvent);
         // Avoid adding to queue for fetched events if sdk is ready
         // These events were added to handle updated event logic in this component
         // and also to fix some issues when processing queue that made sdk update
@@ -103,8 +98,8 @@ public class SplitEventsManager extends BaseEventsManager implements ISplitEvent
 
     public void register(SplitEvent event, SplitEventTask task) {
 
-        checkNotNull(event);
-        checkNotNull(task);
+        requireNonNull(event);
+        requireNonNull(task);
 
         // If event is already triggered, execute the task
         if (mExecutionTimes.containsKey(event) && mExecutionTimes.get(event) == 0) {
