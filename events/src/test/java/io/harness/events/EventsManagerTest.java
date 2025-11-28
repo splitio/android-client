@@ -407,4 +407,40 @@ public class EventsManagerTest {
 
         assertEquals(0, hCount.get());
     }
+
+    @Test
+    public void eventAlreadyTriggeredRespectsExecutionLimits() throws InterruptedException {
+        // Config with both one-shot (DISH_SERVED) and unlimited (SEASONING_ADJUSTED) events
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, KitchenActivity.INGREDIENTS_PREPPED)
+                .requireAny(CookingEvent.SEASONING_ADJUSTED, KitchenActivity.SEASONING_ADDED)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .executionLimit(CookingEvent.SEASONING_ADJUSTED, -1)
+                .build();
+
+        CountDownLatch latch = new CountDownLatch(2);
+        EventDelivery<CookingEvent, Void> delivery = (handler, event, metadata) -> {
+            handler.handle(event, metadata);
+            latch.countDown();
+        };
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, delivery);
+
+        // Before any triggers
+        assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+        assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.SEASONING_ADJUSTED));
+
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> {});
+        eventsManager.register(CookingEvent.SEASONING_ADJUSTED, (event, metadata) -> {});
+
+        eventsManager.notifyInternalEvent(KitchenActivity.INGREDIENTS_PREPPED, null);
+        eventsManager.notifyInternalEvent(KitchenActivity.SEASONING_ADDED, null);
+
+        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+        // One-shot event returns true (completed all executions)
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+        // Unlimited event returns false (can still fire again)
+        assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.SEASONING_ADJUSTED));
+    }
 }
