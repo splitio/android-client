@@ -21,6 +21,8 @@ public enum SplitInternalEvent {
     /**
      * Synthetic event: fired when splits sync completes (either SPLITS_FETCHED or SPLITS_UPDATED).
      * Used internally to simplify SDK_READY condition evaluation.
+     * <p>
+     * TODO: This is a temporary adaptation before extending EventsManager requireAny.
      */
     SPLITS_SYNC_COMPLETE,
 
@@ -28,6 +30,8 @@ public enum SplitInternalEvent {
      * Synthetic event: fired when segments sync completes (any of MY_SEGMENTS_FETCHED,
      * MY_SEGMENTS_UPDATED, or MY_LARGE_SEGMENTS_UPDATED).
      * Used internally to simplify SDK_READY condition evaluation.
+     * <p>
+     * TODO: This is a temporary adaptation before extending EventsManager requireAny.
      */
     SEGMENTS_SYNC_COMPLETE,
 }

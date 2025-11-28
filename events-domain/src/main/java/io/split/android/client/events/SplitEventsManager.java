@@ -14,7 +14,9 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.api.EventMetadata;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.events.executors.SplitEventExecutorResourcesImpl;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.utils.logger.Logger;
 
 /**
@@ -262,44 +264,24 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     }
 
     private Executor createBackgroundExecutor(final SplitTaskExecutor taskExecutor) {
-        return new Executor() {
-            @Override
-            public void execute(@NonNull Runnable command) {
-                taskExecutor.submit(new io.split.android.client.service.executor.SplitTask() {
-                    @NonNull
-                    @Override
-                    public io.split.android.client.service.executor.SplitTaskExecutionInfo execute() {
-                        try {
-                            command.run();
-                        } catch (Exception e) {
-                            Logger.e("Error in background executor: " + e.getMessage());
-                        }
-                        return io.split.android.client.service.executor.SplitTaskExecutionInfo.success(
-                                io.split.android.client.service.executor.SplitTaskType.GENERIC_TASK);
-                    }
-                }, null);
+        return command -> taskExecutor.submit(() -> {
+            try {
+                command.run();
+            } catch (Exception e) {
+                Logger.e("Error in background executor: " + e.getMessage());
             }
-        };
+            return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
+        }, null);
     }
 
     private Executor createMainThreadExecutor(final SplitTaskExecutor taskExecutor) {
-        return new Executor() {
-            @Override
-            public void execute(@NonNull Runnable command) {
-                taskExecutor.submitOnMainThread(new io.split.android.client.service.executor.SplitTask() {
-                    @NonNull
-                    @Override
-                    public io.split.android.client.service.executor.SplitTaskExecutionInfo execute() {
-                        try {
-                            command.run();
-                        } catch (Exception e) {
-                            Logger.e("Error in main thread executor: " + e.getMessage());
-                        }
-                        return io.split.android.client.service.executor.SplitTaskExecutionInfo.success(
-                                io.split.android.client.service.executor.SplitTaskType.GENERIC_TASK);
-                    }
-                });
+        return command -> taskExecutor.submitOnMainThread(() -> {
+            try {
+                command.run();
+            } catch (Exception e) {
+                Logger.e("Error in main thread executor: " + e.getMessage());
             }
-        };
+            return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
+        });
     }
 }
