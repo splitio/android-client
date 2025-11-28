@@ -58,8 +58,7 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
         synchronized (mLock) {
             mTriggeredEvents.add(internalEvent);
 
-            // Fan out to all registered managers
-            for (ISplitEventsManager manager : getManagersSnapshot()) {
+            for (ISplitEventsManager manager : mManagers.values()) {
                 manager.notifyInternalEvent(internalEvent);
             }
         }
@@ -97,57 +96,11 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
         }
     }
 
-    /**
-     * Notifies a client-scoped internal event to a specific client.
-     * <p>
-     * Use this method for events that are specific to a single client,
-     * such as segments updates.
-     *
-     * @param key           the client key
-     * @param internalEvent the internal event to notify
-     */
-    public void notifyClientScopedEvent(Key key, SplitInternalEvent internalEvent) {
-        requireNonNull(key);
-        requireNonNull(internalEvent);
-
-        ISplitEventsManager manager = mManagers.get(key);
-        if (manager != null) {
-            manager.notifyInternalEvent(internalEvent);
-        }
-    }
-
-    /**
-     * Gets the events manager for a specific client key.
-     *
-     * @param key the client key
-     * @return the events manager, or null if not registered
-     */
-    public ISplitEventsManager getEventsManager(Key key) {
-        return mManagers.get(key);
-    }
-
-    /**
-     * Returns the number of registered event managers.
-     *
-     * @return the count of registered managers
-     */
-    public int getRegisteredCount() {
-        return mManagers.size();
-    }
-
-    // --- Private methods ---
-
     private void propagateTriggeredEvents(ISplitEventsManager splitEventsManager) {
         synchronized (mLock) {
             for (SplitInternalEvent event : mTriggeredEvents) {
                 splitEventsManager.notifyInternalEvent(event);
             }
         }
-    }
-
-    private Collection<ISplitEventsManager> getManagersSnapshot() {
-        // ConcurrentHashMap.values() returns a view that is weakly consistent,
-        // which is sufficient for our iteration needs
-        return mManagers.values();
     }
 }
