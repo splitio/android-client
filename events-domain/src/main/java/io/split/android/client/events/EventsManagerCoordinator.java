@@ -2,7 +2,7 @@ package io.split.android.client.events;
 
 import static java.util.Objects.requireNonNull;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,8 +34,8 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
     );
 
     private final ConcurrentMap<Key, ISplitEventsManager> mManagers = new ConcurrentHashMap<>();
-    private final Set<SplitInternalEvent> mTriggeredEvents = ConcurrentHashMap.newKeySet();
-    private final Object mLock = new Object();
+    private final Set<SplitInternalEvent> mTriggered = Collections.newSetFromMap(new ConcurrentHashMap<SplitInternalEvent, Boolean>());
+    private final Object mEventLock = new Object();
 
     /**
      * Notifies an SDK-scoped internal event.
@@ -55,8 +55,8 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
             return;
         }
 
-        synchronized (mLock) {
-            mTriggeredEvents.add(internalEvent);
+        synchronized (mEventLock) {
+            mTriggered.add(internalEvent);
 
             for (ISplitEventsManager manager : mManagers.values()) {
                 manager.notifyInternalEvent(internalEvent);
@@ -97,8 +97,8 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
     }
 
     private void propagateTriggeredEvents(ISplitEventsManager splitEventsManager) {
-        synchronized (mLock) {
-            for (SplitInternalEvent event : mTriggeredEvents) {
+        synchronized (mEventLock) {
+            for (SplitInternalEvent event : mTriggered) {
                 splitEventsManager.notifyInternalEvent(event);
             }
         }
