@@ -1,4 +1,4 @@
-package io.split.android.client.events.delivery;
+package io.split.android.client.events;
 
 import androidx.annotation.NonNull;
 
@@ -7,7 +7,6 @@ import java.util.concurrent.Executor;
 import io.harness.events.EventHandler;
 import io.harness.events.EventsManager;
 import io.harness.events.Logging;
-import io.split.android.client.events.logging.SplitLogging;
 
 /**
  * Utility for registering event handlers that need to execute on two different threads.

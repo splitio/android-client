@@ -1,4 +1,4 @@
-package io.split.android.client.events.logging;
+package io.split.android.client.events;
 
 import io.harness.events.Logging;
 import io.split.android.client.utils.logger.Logger;
