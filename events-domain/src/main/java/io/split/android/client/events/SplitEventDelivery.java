@@ -10,12 +10,8 @@ import io.split.android.client.api.EventMetadata;
 /**
  * Event delivery implementation for Split SDK events.
  * <p>
- * This delivery mechanism executes handlers directly and synchronously.
- * Thread-safety and execution context (background vs main thread) should be
- * handled at registration time using {@link DualExecutorRegistration}.
- * <p>
- * Exceptions thrown by handlers are caught and logged to prevent one failing
- * handler from affecting others.
+ * Execution context (background vs main thread) should be
+ * handled using {@link DualExecutorRegistration}.
  */
 class SplitEventDelivery implements EventDelivery<SplitEvent, EventMetadata> {
 

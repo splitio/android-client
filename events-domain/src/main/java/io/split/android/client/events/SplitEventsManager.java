@@ -85,7 +85,8 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     public void notifyInternalEvent(SplitInternalEvent internalEvent) {
         requireNonNull(internalEvent);
 
-        // Skip FETCHED events after SDK_READY to prevent unnecessary SDK_UPDATE triggers
+        // Skip FETCHED events after SDK_READY to prevent unnecessary SDK_UPDATE triggers.
+        // TODO: This is temporary until *_FETCHED and *_UPDATED events are unified.
         if ((internalEvent == SplitInternalEvent.SPLITS_FETCHED
                 || internalEvent == SplitInternalEvent.MY_SEGMENTS_FETCHED)
                 && eventAlreadyTriggered(SplitEvent.SDK_READY)) {
