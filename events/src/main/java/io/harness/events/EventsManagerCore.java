@@ -159,11 +159,19 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             }
         }
 
-        // Evaluate OR external events
-        for (Map.Entry<E, Set<I>> entry : mConfig.getRequireAny().entrySet()) {
+        // Evaluate OR-of-ANDs external events (requireAny)
+        // Each entry maps an external event to a set of groups (OR)
+        // Each group is a set of internal events that must ALL be seen (AND)
+        for (Map.Entry<E, Set<Set<I>>> entry : mConfig.getRequireAny().entrySet()) {
             E external = entry.getKey();
-            if (entry.getValue().contains(event)) {
-                triggerIfConditionsMet(external, metadata);
+            Set<Set<I>> groups = entry.getValue();
+
+            for (Set<I> group : groups) {
+                // Check if ALL events in this group have been seen
+                if (!group.isEmpty() && currentSeenInternal.containsAll(group)) {
+                    triggerIfConditionsMet(external, metadata);
+                    break; // Only need one group to match (OR semantics)
+                }
             }
         }
     }

@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -442,5 +444,244 @@ public class EventsManagerTest {
         assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
         // Unlimited event returns false (can still fire again)
         assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.SEASONING_ADJUSTED));
+    }
+
+    // ====================================================================================
+    // OR-of-ANDs tests (grouped requireAny)
+    // ====================================================================================
+
+    @Test
+    public void requireAnyWithGroupsFiresWhenFirstGroupComplete() throws InterruptedException {
+        // External event fires when EITHER:
+        // Group 1: INGREDIENTS_PREPPED AND SEASONING_ADDED
+        // OR
+        // Group 2: LEFTOVER_MEAT_FOUND AND LEFTOVER_VEGGIES_FOUND AND LEFTOVER_SAUCE_FOUND
+        Set<KitchenActivity> group1 = new HashSet<>();
+        group1.add(KitchenActivity.INGREDIENTS_PREPPED);
+        group1.add(KitchenActivity.SEASONING_ADDED);
+
+        Set<KitchenActivity> group2 = new HashSet<>();
+        group2.add(KitchenActivity.LEFTOVER_MEAT_FOUND);
+        group2.add(KitchenActivity.LEFTOVER_VEGGIES_FOUND);
+        group2.add(KitchenActivity.LEFTOVER_SAUCE_FOUND);
+
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, group1, group2)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .build();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicInteger callCount = new AtomicInteger(0);
+
+        EventDelivery<CookingEvent, Void> delivery = (handler, event, metadata) -> {
+            handler.handle(event, metadata);
+            latch.countDown();
+        };
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, delivery);
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> callCount.incrementAndGet());
+
+        // Complete first group
+        eventsManager.notifyInternalEvent(KitchenActivity.INGREDIENTS_PREPPED, null);
+        eventsManager.notifyInternalEvent(KitchenActivity.SEASONING_ADDED, null);
+
+        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(1, callCount.get());
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+    }
+
+    @Test
+    public void requireAnyWithGroupsFiresWhenSecondGroupComplete() throws InterruptedException {
+        // Same config as above, but complete the second group instead
+        Set<KitchenActivity> group1 = new HashSet<>();
+        group1.add(KitchenActivity.INGREDIENTS_PREPPED);
+        group1.add(KitchenActivity.SEASONING_ADDED);
+
+        Set<KitchenActivity> group2 = new HashSet<>();
+        group2.add(KitchenActivity.LEFTOVER_MEAT_FOUND);
+        group2.add(KitchenActivity.LEFTOVER_VEGGIES_FOUND);
+
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, group1, group2)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .build();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicInteger callCount = new AtomicInteger(0);
+
+        EventDelivery<CookingEvent, Void> delivery = (handler, event, metadata) -> {
+            handler.handle(event, metadata);
+            latch.countDown();
+        };
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, delivery);
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> callCount.incrementAndGet());
+
+        // Complete second group (not touching first group)
+        eventsManager.notifyInternalEvent(KitchenActivity.LEFTOVER_MEAT_FOUND, null);
+        eventsManager.notifyInternalEvent(KitchenActivity.LEFTOVER_VEGGIES_FOUND, null);
+
+        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(1, callCount.get());
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+    }
+
+    @Test
+    public void requireAnyWithGroupsDoesNotFireWithPartialGroup() throws InterruptedException {
+        Set<KitchenActivity> group1 = new HashSet<>();
+        group1.add(KitchenActivity.INGREDIENTS_PREPPED);
+        group1.add(KitchenActivity.SEASONING_ADDED);
+        group1.add(KitchenActivity.OVEN_PREHEATED);
+
+        Set<KitchenActivity> group2 = new HashSet<>();
+        group2.add(KitchenActivity.LEFTOVER_MEAT_FOUND);
+        group2.add(KitchenActivity.LEFTOVER_VEGGIES_FOUND);
+
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, group1, group2)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .build();
+
+        AtomicInteger callCount = new AtomicInteger(0);
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, SIMPLE_DELIVERY);
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> callCount.incrementAndGet());
+
+        // Partial completion of group 1 (missing OVEN_PREHEATED)
+        eventsManager.notifyInternalEvent(KitchenActivity.INGREDIENTS_PREPPED, null);
+        eventsManager.notifyInternalEvent(KitchenActivity.SEASONING_ADDED, null);
+
+        // Partial completion of group 2 (missing LEFTOVER_VEGGIES_FOUND)
+        eventsManager.notifyInternalEvent(KitchenActivity.LEFTOVER_MEAT_FOUND, null);
+
+        // Wait for processing to complete
+        eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED);
+
+        assertEquals(0, callCount.get());
+        assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+    }
+
+    @Test
+    public void requireAnyWithGroupsFiresOnceEvenWhenMultipleGroupsComplete() throws InterruptedException {
+        Set<KitchenActivity> group1 = new HashSet<>();
+        group1.add(KitchenActivity.INGREDIENTS_PREPPED);
+
+        Set<KitchenActivity> group2 = new HashSet<>();
+        group2.add(KitchenActivity.LEFTOVER_MEAT_FOUND);
+
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, group1, group2)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .build();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicInteger callCount = new AtomicInteger(0);
+
+        EventDelivery<CookingEvent, Void> delivery = (handler, event, metadata) -> {
+            handler.handle(event, metadata);
+            latch.countDown();
+        };
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, delivery);
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> callCount.incrementAndGet());
+
+        // Complete first group
+        eventsManager.notifyInternalEvent(KitchenActivity.INGREDIENTS_PREPPED, null);
+
+        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+
+        // Now complete second group as well
+        eventsManager.notifyInternalEvent(KitchenActivity.LEFTOVER_MEAT_FOUND, null);
+
+        // Wait for processing
+        eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED);
+
+        // Should only fire once due to execution limit
+        assertEquals(1, callCount.get());
+    }
+
+    @Test
+    public void requireAnyGroupedWithPrerequisite() throws InterruptedException {
+        // DISH_SERVED requires simple condition
+        // SEASONING_ADJUSTED uses OR-of-ANDs and requires DISH_SERVED first
+        Set<KitchenActivity> group1 = new HashSet<>();
+        group1.add(KitchenActivity.SEASONING_ADDED);
+
+        Set<KitchenActivity> group2 = new HashSet<>();
+        group2.add(KitchenActivity.LEFTOVER_MEAT_FOUND);
+        group2.add(KitchenActivity.LEFTOVER_VEGGIES_FOUND);
+
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, KitchenActivity.OVEN_PREHEATED)
+                .requireAny(CookingEvent.SEASONING_ADJUSTED, group1, group2)
+                .prerequisite(CookingEvent.SEASONING_ADJUSTED, CookingEvent.DISH_SERVED)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .executionLimit(CookingEvent.SEASONING_ADJUSTED, 1)
+                .build();
+
+        CountDownLatch seasoningLatch = new CountDownLatch(1);
+        AtomicInteger seasoningCount = new AtomicInteger(0);
+
+        EventDelivery<CookingEvent, Void> delivery = (handler, event, metadata) -> {
+            handler.handle(event, metadata);
+            if (event == CookingEvent.SEASONING_ADJUSTED) {
+                seasoningLatch.countDown();
+            }
+        };
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, delivery);
+        eventsManager.register(CookingEvent.SEASONING_ADJUSTED, (event, metadata) -> seasoningCount.incrementAndGet());
+
+        // Complete group 2 for SEASONING_ADJUSTED, but DISH_SERVED not fired yet
+        eventsManager.notifyInternalEvent(KitchenActivity.LEFTOVER_MEAT_FOUND, null);
+        eventsManager.notifyInternalEvent(KitchenActivity.LEFTOVER_VEGGIES_FOUND, null);
+
+        // Wait and verify SEASONING_ADJUSTED not fired
+        eventsManager.eventAlreadyTriggered(CookingEvent.SEASONING_ADJUSTED);
+        assertEquals(0, seasoningCount.get());
+
+        // Now trigger DISH_SERVED
+        eventsManager.notifyInternalEvent(KitchenActivity.OVEN_PREHEATED, null);
+
+        // Wait for DISH_SERVED
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+
+        // Now trigger something that completes group 1
+        eventsManager.notifyInternalEvent(KitchenActivity.SEASONING_ADDED, null);
+
+        assertTrue(seasoningLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(1, seasoningCount.get());
+    }
+
+    @Test
+    public void requireAnyGroupedWithSuppressor() throws InterruptedException {
+        Set<KitchenActivity> group1 = new HashSet<>();
+        group1.add(KitchenActivity.TIMEOUT_REACHED);
+
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, KitchenActivity.OVEN_PREHEATED)
+                .requireAny(CookingEvent.ORDER_TIMED_OUT, group1)
+                .suppressedBy(CookingEvent.ORDER_TIMED_OUT, CookingEvent.DISH_SERVED)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .executionLimit(CookingEvent.ORDER_TIMED_OUT, 1)
+                .build();
+
+        AtomicInteger timeoutCount = new AtomicInteger(0);
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, SIMPLE_DELIVERY);
+        eventsManager.register(CookingEvent.ORDER_TIMED_OUT, (event, metadata) -> timeoutCount.incrementAndGet());
+
+        // Trigger DISH_SERVED first
+        eventsManager.notifyInternalEvent(KitchenActivity.OVEN_PREHEATED, null);
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+
+        // Now trigger timeout - should be suppressed
+        eventsManager.notifyInternalEvent(KitchenActivity.TIMEOUT_REACHED, null);
+
+        // Wait for processing
+        eventsManager.eventAlreadyTriggered(CookingEvent.ORDER_TIMED_OUT);
+
+        assertEquals(0, timeoutCount.get());
+        assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.ORDER_TIMED_OUT));
     }
 }

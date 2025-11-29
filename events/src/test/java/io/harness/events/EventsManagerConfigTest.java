@@ -8,6 +8,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class EventsManagerConfigTest {
 
@@ -36,8 +38,11 @@ public class EventsManagerConfigTest {
         assertTrue(config.getRequireAll().get("E1").contains("I1"));
         assertTrue(config.getRequireAll().get("E1").contains("I2"));
 
+        // requireAny now stores Set<Set<I>> - single events are wrapped in singleton sets
         assertEquals(1, config.getRequireAny().size());
-        assertTrue(config.getRequireAny().get("E2").contains("I3"));
+        Set<Set<String>> requireAnyGroups = config.getRequireAny().get("E2");
+        assertEquals(1, requireAnyGroups.size());
+        assertTrue(requireAnyGroups.contains(Collections.singleton("I3")));
 
         assertEquals(1, config.getPrerequisites().size());
         assertTrue(config.getPrerequisites().get("E1").contains("E0"));
@@ -93,7 +98,7 @@ public class EventsManagerConfigTest {
         }
 
         try {
-            config.getRequireAny().put("E2", Collections.singleton("I2"));
+            config.getRequireAny().put("E2", Collections.singleton(Collections.singleton("I2")));
             Assert.fail("getRequireAny() should return an unmodifiable map");
         } catch (UnsupportedOperationException expected) {
             // expected
@@ -137,5 +142,61 @@ public class EventsManagerConfigTest {
         } catch (UnsupportedOperationException expected) {
             // expected
         }
+    }
+
+    @Test
+    public void requireAnyWithVarargsCreatesIndividualGroups() {
+        // When using requireAny(E, I...), each I should become its own singleton group
+        EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>builder()
+                .requireAny("E1", "I1", "I2", "I3")
+                .build();
+
+        Set<Set<String>> groups = config.getRequireAny().get("E1");
+        assertEquals(3, groups.size());
+        assertTrue(groups.contains(Collections.singleton("I1")));
+        assertTrue(groups.contains(Collections.singleton("I2")));
+        assertTrue(groups.contains(Collections.singleton("I3")));
+    }
+
+    @Test
+    public void requireAnyWithSetsCreatesAndGroups() {
+        // When using requireAny(E, Set<I>...), each Set is an AND group
+        Set<String> group1 = new HashSet<>();
+        group1.add("I1");
+        group1.add("I2");
+
+        Set<String> group2 = new HashSet<>();
+        group2.add("I3");
+        group2.add("I4");
+
+        EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>builder()
+                .requireAny("E1", group1, group2)
+                .build();
+
+        Set<Set<String>> groups = config.getRequireAny().get("E1");
+        assertEquals(2, groups.size());
+        assertTrue(groups.contains(group1));
+        assertTrue(groups.contains(group2));
+    }
+
+    @Test
+    public void requireAnyWithMixedGroupSizes() {
+        // Groups can have different sizes
+        Set<String> singletonGroup = Collections.singleton("I1");
+
+        Set<String> largeGroup = new HashSet<>();
+        largeGroup.add("I2");
+        largeGroup.add("I3");
+        largeGroup.add("I4");
+        largeGroup.add("I5");
+
+        EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>builder()
+                .requireAny("E1", singletonGroup, largeGroup)
+                .build();
+
+        Set<Set<String>> groups = config.getRequireAny().get("E1");
+        assertEquals(2, groups.size());
+        assertTrue(groups.contains(singletonGroup));
+        assertTrue(groups.contains(largeGroup));
     }
 }
