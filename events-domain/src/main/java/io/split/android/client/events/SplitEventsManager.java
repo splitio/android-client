@@ -28,10 +28,6 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     private final DualExecutorRegistration<SplitEvent, SplitInternalEvent, EventMetadata> mDualExecutorRegistration;
     private SplitEventExecutorResources mResources;
 
-    // Track sync completion for SDK_READY_FROM_CACHE triggering. TODO: This is a temporary adaptation before extending EventsManager requireAny.
-    private volatile boolean mSplitsSyncComplete = false;
-    private volatile boolean mSegmentsSyncComplete = false;
-
     /**
      * Creates a new SplitEventsManager.
      *
@@ -153,26 +149,23 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
      * Notifies the synthetic composite events based on the actual internal event.
      * These synthetic events simplify the SDK_READY condition evaluation.
      * <p>
-     * Also handles the special case where SDK_READY_FROM_CACHE should fire
-     * before SDK_READY when both sync events have completed.
+     * The EventsManagerConfig now handles SDK_READY_FROM_CACHE with OR-of-ANDs logic,
+     * so it will fire when either:
+     * - All cache events complete (cache path), OR
+     * - All sync events complete (sync path)
+     * <p>
+     * The prerequisite configuration ensures SDK_READY_FROM_CACHE always fires before SDK_READY.
      */
     private void notifySyntheticEventsIfNeeded(SplitInternalEvent internalEvent) {
         switch (internalEvent) {
             case SPLITS_UPDATED:
             case SPLITS_FETCHED:
-                mSplitsSyncComplete = true;
-                // Check if SDK_READY_FROM_CACHE should fire BEFORE notifying the sync complete
-                // to ensure correct ordering (SDK_READY_FROM_CACHE before SDK_READY)
-                triggerReadyFromCacheIfNeeded();
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_SYNC_COMPLETE, null);
                 break;
 
             case MY_SEGMENTS_UPDATED:
             case MY_SEGMENTS_FETCHED:
             case MY_LARGE_SEGMENTS_UPDATED:
-                mSegmentsSyncComplete = true;
-                // Check if SDK_READY_FROM_CACHE should fire BEFORE notifying the sync complete
-                triggerReadyFromCacheIfNeeded();
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.SEGMENTS_SYNC_COMPLETE, null);
                 break;
 
@@ -180,36 +173,6 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
                 // No synthetic event needed for other internal events
                 break;
         }
-    }
-
-    /**
-     * Triggers SDK_READY_FROM_CACHE if SDK_READY is about to fire (both sync events received)
-     * but SDK_READY_FROM_CACHE hasn't fired yet.
-     * <p>
-     * TODO: This is a temporary adaptation before extending EventsManager requireAny.
-     */
-    private void triggerReadyFromCacheIfNeeded() {
-        // Only trigger if both sync events have completed
-        if (!mSplitsSyncComplete || !mSegmentsSyncComplete) {
-            return;
-        }
-
-        // If SDK_READY_FROM_CACHE already triggered, nothing to do
-        if (mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)) {
-            return;
-        }
-
-        // If SDK_READY already triggered, nothing to do (too late)
-        if (mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY)) {
-            return;
-        }
-
-        // Both sync events received and SDK_READY_FROM_CACHE not yet fired
-        // Trigger it by firing all required cache events
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE, null);
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE, null);
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE, null);
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE, null);
     }
 
     private void startTimeoutThread(final int blockUntilReady) {
