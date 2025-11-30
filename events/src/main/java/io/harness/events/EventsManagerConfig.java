@@ -8,7 +8,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * Contains the interdependencies between events and internal events.
@@ -145,9 +144,10 @@ public final class EventsManagerConfig<E, I> {
         @SafeVarargs
         public final Builder<E, I> requireAny(E externalEvent, I... internalEvents) {
             // Convert each individual event to a singleton Set (group of one)
-            Set<Set<I>> groups = Arrays.stream(internalEvents)
-                    .map(Collections::singleton)
-                    .collect(Collectors.toSet());
+            Set<Set<I>> groups = new HashSet<>();
+            for (I internalEvent : internalEvents) {
+                groups.add(Collections.singleton(internalEvent));
+            }
             mRequireAny.put(externalEvent, groups);
             return this;
         }
