@@ -149,41 +149,73 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             currentSeenInternal = new HashSet<>(mSeenInternal);
         }
 
-        // Evaluate AND external events
-        for (Map.Entry<E, Set<I>> entry : mConfig.getRequireAll().entrySet()) {
-            E external = entry.getKey();
-            Set<I> required = entry.getValue();
+        // Track events fired in this processing cycle to avoid re-firing.
+        // This prevents infinite loops with unlimited events.
+        Set<E> firedInThisCycle = new HashSet<>();
 
-            if (!required.isEmpty() && currentSeenInternal.containsAll(required)) {
-                triggerIfConditionsMet(external, metadata);
-            }
-        }
+        // Keep evaluating until no more events fire.
+        // This handles cases where an external event firing satisfies a prerequisite
+        // for another external event.
+        boolean eventFired;
+        do {
+            eventFired = false;
 
-        // Evaluate OR-of-ANDs external events (requireAny)
-        // Each entry maps an external event to a set of groups (OR)
-        // Each group is a set of internal events that must ALL be seen (AND)
-        for (Map.Entry<E, Set<Set<I>>> entry : mConfig.getRequireAny().entrySet()) {
-            E external = entry.getKey();
-            Set<Set<I>> groups = entry.getValue();
+            // Evaluate AND external events
+            for (Map.Entry<E, Set<I>> entry : mConfig.getRequireAll().entrySet()) {
+                E external = entry.getKey();
+                if (firedInThisCycle.contains(external)) {
+                    continue; // Already fired in this cycle
+                }
+                Set<I> required = entry.getValue();
 
-            for (Set<I> group : groups) {
-                // Check if ALL events in this group have been seen
-                if (!group.isEmpty() && currentSeenInternal.containsAll(group)) {
-                    triggerIfConditionsMet(external, metadata);
-                    break; // Only need one group to match (OR semantics)
+                if (!required.isEmpty() && currentSeenInternal.containsAll(required)) {
+                    if (triggerIfConditionsMet(external, metadata)) {
+                        firedInThisCycle.add(external);
+                        eventFired = true;
+                    }
                 }
             }
-        }
+
+            // Evaluate OR-of-ANDs external events (requireAny)
+            // Each entry maps an external event to a set of groups (OR)
+            // Each group is a set of internal events that must ALL be seen (AND)
+            for (Map.Entry<E, Set<Set<I>>> entry : mConfig.getRequireAny().entrySet()) {
+                E external = entry.getKey();
+                if (firedInThisCycle.contains(external)) {
+                    continue; // Already fired in this cycle
+                }
+                Set<Set<I>> groups = entry.getValue();
+
+                for (Set<I> group : groups) {
+                    // Check if ALL events in this group have been seen
+                    if (!group.isEmpty() && currentSeenInternal.containsAll(group)) {
+                        if (triggerIfConditionsMet(external, metadata)) {
+                            firedInThisCycle.add(external);
+                            eventFired = true;
+                        }
+                        break; // Only need one group to match
+                    }
+                }
+            }
+        } while (eventFired);
     }
 
-    private void triggerIfConditionsMet(E event, M metadata) {
+    /**
+     * Triggers an external event if all conditions are met.
+     * @return true if the event was triggered, false otherwise
+     */
+    private boolean triggerIfConditionsMet(E event, M metadata) {
         if (!prerequisitesSatisfied(event) || isSuppressed(event)) {
-            return;
+            return false;
         }
-        trigger(event, metadata);
+        return trigger(event, metadata);
     }
 
-    private void trigger(E event, M metadata) {
+    /**
+     * Triggers an external event.
+     * @return true if the event was triggered, false if it was already at max executions
+     */
+    private boolean trigger(E event, M metadata) {
         Set<EventHandler<E, M>> handlersSnapshot = Collections.emptySet();
 
         synchronized (mLock) {
@@ -192,7 +224,7 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             int triggered = count != null ? count : 0;
 
             if (max != UNLIMITED && triggered >= max) {
-                return;
+                return false;
             }
 
             mTriggerCount.put(event, triggered + 1);
@@ -206,6 +238,7 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
         for (EventHandler<E, M> handler : handlersSnapshot) {
             mDelivery.deliver(handler, event, metadata);
         }
+        return true;
     }
 
     private int maxExecutions(E event) {

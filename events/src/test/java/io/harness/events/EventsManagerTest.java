@@ -126,10 +126,7 @@ public class EventsManagerTest {
 
         eventsManager.register(CookingEvent.SEASONING_ADJUSTED, (event, metadata) -> hCount.incrementAndGet());
 
-        // SEASONING_ADDED before DISH_SERVED - should not fire
-        eventsManager.notifyInternalEvent(KitchenActivity.SEASONING_ADDED, null);
-
-        // Trigger DISH_SERVED
+        // Trigger DISH_SERVED first (without SEASONING_ADDED)
         eventsManager.notifyInternalEvent(KitchenActivity.INGREDIENTS_PREPPED, null);
         eventsManager.notifyInternalEvent(KitchenActivity.LEFTOVER_SAUCE_FOUND, null);
         eventsManager.notifyInternalEvent(KitchenActivity.OVEN_PREHEATED, null);
@@ -137,7 +134,10 @@ public class EventsManagerTest {
         // Wait for DISH_SERVED to be processed
         assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
 
-        // Now SEASONING_ADDED should trigger SEASONING_ADJUSTED
+        // SEASONING_ADJUSTED should NOT have fired yet (no SEASONING_ADDED)
+        assertEquals(0, hCount.get());
+
+        // Now SEASONING_ADDED should trigger SEASONING_ADJUSTED (prerequisite is met)
         eventsManager.notifyInternalEvent(KitchenActivity.SEASONING_ADDED, null);
 
         assertTrue(seasoningLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
@@ -683,5 +683,172 @@ public class EventsManagerTest {
 
         assertEquals(0, timeoutCount.get());
         assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.ORDER_TIMED_OUT));
+    }
+
+    @Test
+    public void prerequisiteChainResolvedInSingleNotification() throws InterruptedException {
+        // DISH_SERVED fires when OVEN_PREHEATED
+        // SEASONING_ADJUSTED fires when OVEN_PREHEATED, but requires DISH_SERVED first
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, KitchenActivity.OVEN_PREHEATED)
+                .requireAny(CookingEvent.SEASONING_ADJUSTED, KitchenActivity.OVEN_PREHEATED)
+                .prerequisite(CookingEvent.SEASONING_ADJUSTED, CookingEvent.DISH_SERVED)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .executionLimit(CookingEvent.SEASONING_ADJUSTED, 1)
+                .build();
+
+        CountDownLatch bothFiredLatch = new CountDownLatch(2);
+        AtomicInteger dishServedCount = new AtomicInteger(0);
+        AtomicInteger seasoningCount = new AtomicInteger(0);
+
+        EventDelivery<CookingEvent, Void> delivery = (handler, event, metadata) -> {
+            handler.handle(event, metadata);
+            bothFiredLatch.countDown();
+        };
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, delivery);
+
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> dishServedCount.incrementAndGet());
+        eventsManager.register(CookingEvent.SEASONING_ADJUSTED, (event, metadata) -> seasoningCount.incrementAndGet());
+
+        // Single notification should trigger both events (A fires, then B fires because prerequisite is now met)
+        eventsManager.notifyInternalEvent(KitchenActivity.OVEN_PREHEATED, null);
+
+        assertTrue("Both events should fire from single notification", bothFiredLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(1, dishServedCount.get());
+        assertEquals(1, seasoningCount.get());
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.SEASONING_ADJUSTED));
+    }
+
+    @Test
+    public void prerequisiteChainWithOrOfAndsGroups() throws InterruptedException {
+        // DISH_SERVED = SDK_READY_FROM_CACHE (fires when sync group completes)
+        // LEFTOVERS_HEATED = SDK_READY (fires when sync completes, but requires DISH_SERVED first)
+
+        Set<KitchenActivity> syncGroup = new HashSet<>();
+        syncGroup.add(KitchenActivity.INGREDIENTS_PREPPED);
+        syncGroup.add(KitchenActivity.SEASONING_ADDED);
+
+        Set<KitchenActivity> cacheGroup = new HashSet<>();
+        cacheGroup.add(KitchenActivity.LEFTOVER_MEAT_FOUND);
+        cacheGroup.add(KitchenActivity.LEFTOVER_VEGGIES_FOUND);
+
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                // DISH_SERVED fires when either sync or cache group completes
+                .requireAny(CookingEvent.DISH_SERVED, syncGroup, cacheGroup)
+                // LEFTOVERS_HEATED requires the same sync events, but also DISH_SERVED as prerequisite
+                .requireAll(CookingEvent.LEFTOVERS_HEATED,
+                        KitchenActivity.INGREDIENTS_PREPPED,
+                        KitchenActivity.SEASONING_ADDED)
+                .prerequisite(CookingEvent.LEFTOVERS_HEATED, CookingEvent.DISH_SERVED)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .executionLimit(CookingEvent.LEFTOVERS_HEATED, 1)
+                .build();
+
+        CountDownLatch bothFiredLatch = new CountDownLatch(2);
+        AtomicInteger dishServedCount = new AtomicInteger(0);
+        AtomicInteger leftoversCount = new AtomicInteger(0);
+
+        EventDelivery<CookingEvent, Void> delivery = (handler, event, metadata) -> {
+            handler.handle(event, metadata);
+            bothFiredLatch.countDown();
+        };
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, delivery);
+
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> dishServedCount.incrementAndGet());
+        eventsManager.register(CookingEvent.LEFTOVERS_HEATED, (event, metadata) -> leftoversCount.incrementAndGet());
+
+        // First sync event
+        eventsManager.notifyInternalEvent(KitchenActivity.INGREDIENTS_PREPPED, null);
+
+        // Second sync event should trigger chain: DISH_SERVED -> LEFTOVERS_HEATED
+        eventsManager.notifyInternalEvent(KitchenActivity.SEASONING_ADDED, null);
+
+        assertTrue("Both events should fire when sync completes", bothFiredLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(1, dishServedCount.get());
+        assertEquals(1, leftoversCount.get());
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.LEFTOVERS_HEATED));
+    }
+
+    @Test
+    public void prerequisiteLoopTerminatesWhenNoMoreEventsCanFire() throws InterruptedException {
+        // Create a chain where only DISH_SERVED can fire (SEASONING_ADJUSTED requires a different trigger)
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, KitchenActivity.OVEN_PREHEATED)
+                .requireAny(CookingEvent.SEASONING_ADJUSTED, KitchenActivity.SEASONING_ADDED) // Different trigger!
+                .prerequisite(CookingEvent.SEASONING_ADJUSTED, CookingEvent.DISH_SERVED)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .executionLimit(CookingEvent.SEASONING_ADJUSTED, 1)
+                .build();
+
+        CountDownLatch dishServedLatch = new CountDownLatch(1);
+        AtomicInteger dishServedCount = new AtomicInteger(0);
+        AtomicInteger seasoningCount = new AtomicInteger(0);
+
+        EventDelivery<CookingEvent, Void> delivery = (handler, event, metadata) -> {
+            handler.handle(event, metadata);
+            if (event == CookingEvent.DISH_SERVED) {
+                dishServedLatch.countDown();
+            }
+        };
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, delivery);
+
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> dishServedCount.incrementAndGet());
+        eventsManager.register(CookingEvent.SEASONING_ADJUSTED, (event, metadata) -> seasoningCount.incrementAndGet());
+
+        // Only DISH_SERVED should fire, loop should terminate without firing SEASONING_ADJUSTED
+        eventsManager.notifyInternalEvent(KitchenActivity.OVEN_PREHEATED, null);
+
+        assertTrue(dishServedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(1, dishServedCount.get());
+        assertEquals(0, seasoningCount.get()); // Should NOT fire - different trigger
+
+        // Verify processing completed (no infinite loop)
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+        assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.SEASONING_ADJUSTED));
+    }
+
+    @Test
+    public void threeLevelPrerequisiteChain() throws InterruptedException {
+        // DISH_SERVED -> SEASONING_ADJUSTED -> ORDER_TIMED_OUT
+        // All triggered by the same internal event
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, KitchenActivity.OVEN_PREHEATED)
+                .requireAny(CookingEvent.SEASONING_ADJUSTED, KitchenActivity.OVEN_PREHEATED)
+                .requireAny(CookingEvent.ORDER_TIMED_OUT, KitchenActivity.OVEN_PREHEATED)
+                .prerequisite(CookingEvent.SEASONING_ADJUSTED, CookingEvent.DISH_SERVED)
+                .prerequisite(CookingEvent.ORDER_TIMED_OUT, CookingEvent.SEASONING_ADJUSTED)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .executionLimit(CookingEvent.SEASONING_ADJUSTED, 1)
+                .executionLimit(CookingEvent.ORDER_TIMED_OUT, 1)
+                .build();
+
+        CountDownLatch allFiredLatch = new CountDownLatch(3);
+        AtomicInteger dishServedCount = new AtomicInteger(0);
+        AtomicInteger seasoningCount = new AtomicInteger(0);
+        AtomicInteger timeoutCount = new AtomicInteger(0);
+
+        EventDelivery<CookingEvent, Void> delivery = (handler, event, metadata) -> {
+            handler.handle(event, metadata);
+            allFiredLatch.countDown();
+        };
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, delivery);
+
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> dishServedCount.incrementAndGet());
+        eventsManager.register(CookingEvent.SEASONING_ADJUSTED, (event, metadata) -> seasoningCount.incrementAndGet());
+        eventsManager.register(CookingEvent.ORDER_TIMED_OUT, (event, metadata) -> timeoutCount.incrementAndGet());
+
+        // Single notification should trigger all three events in chain
+        eventsManager.notifyInternalEvent(KitchenActivity.OVEN_PREHEATED, null);
+
+        assertTrue("All three events should fire from single notification", allFiredLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(1, dishServedCount.get());
+        assertEquals(1, seasoningCount.get());
+        assertEquals(1, timeoutCount.get());
     }
 }
