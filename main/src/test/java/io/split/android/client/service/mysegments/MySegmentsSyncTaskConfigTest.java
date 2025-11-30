@@ -16,7 +16,6 @@ public class MySegmentsSyncTaskConfigTest {
 
         assertEquals(config.getTaskType(), SplitTaskType.MY_SEGMENTS_SYNC);
         assertEquals(config.getUpdateEvent(), SplitInternalEvent.MY_SEGMENTS_UPDATED);
-        assertEquals(config.getFetchedEvent(), SplitInternalEvent.MY_SEGMENTS_FETCHED);
         assertEquals(config.getTelemetryOperationType(), OperationType.MY_SEGMENT);
     }
 }

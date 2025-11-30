@@ -125,10 +125,8 @@ public class SplitSyncTaskTest {
 
     @Test
     public void splitUpdatedNotified() throws HttpFetcherException {
-        // Check that syncing is done with changeNum retrieved from db
-        // Querystring is the same, so no clear sould be called
-        // And updateTimestamp is 0
-        // Retry is off, so splitSyncHelper.sync should be called
+        // Check that both SPLITS_SYNC_COMPLETE and SPLITS_UPDATED are notified
+        // when sync completes with data changes
         mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
                 mQueryString, mEventsManager, mTelemetryRuntimeProducer);
         when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
@@ -138,15 +136,14 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
+        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_SYNC_COMPLETE);
         verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
     }
 
     @Test
-    public void splitFetchdNotified() throws HttpFetcherException {
-        // Check that syncing is done with changeNum retrieved from db
-        // Querystring is the same, so no clear sould be called
-        // And updateTimestamp is 0
-        // Retry is off, so splitSyncHelper.sync should be called
+    public void splitSyncCompleteNotifiedWhenNoDataChange() throws HttpFetcherException {
+        // Check that SPLITS_SYNC_COMPLETE is notified when sync completes
+        // but no data changes (SPLITS_UPDATED should NOT be notified)
         mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
                 mQueryString, mEventsManager, mTelemetryRuntimeProducer);
         when(mSplitsStorage.getTill()).thenReturn(100L);
@@ -156,7 +153,8 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
+        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_SYNC_COMPLETE);
+        verify(mEventsManager, never()).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
     }
 
     @Test

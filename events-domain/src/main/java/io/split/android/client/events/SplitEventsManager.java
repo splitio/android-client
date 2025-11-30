@@ -80,20 +80,7 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     @Override
     public void notifyInternalEvent(SplitInternalEvent internalEvent) {
         requireNonNull(internalEvent);
-
-        // Skip FETCHED events after SDK_READY to prevent unnecessary SDK_UPDATE triggers.
-        // TODO: This is temporary until *_FETCHED and *_UPDATED events are unified.
-        if ((internalEvent == SplitInternalEvent.SPLITS_FETCHED
-                || internalEvent == SplitInternalEvent.MY_SEGMENTS_FETCHED)
-                && eventAlreadyTriggered(SplitEvent.SDK_READY)) {
-            return;
-        }
-
-        // Notify the actual internal event
         mEventsManager.notifyInternalEvent(internalEvent, null);
-
-        // Also notify the synthetic composite events for SDK_READY evaluation
-        notifySyntheticEventsIfNeeded(internalEvent);
     }
 
     /**
@@ -104,16 +91,7 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
      */
     public void notifyInternalEvent(SplitInternalEvent internalEvent, EventMetadata metadata) {
         requireNonNull(internalEvent);
-
-        // Skip FETCHED events after SDK_READY
-        if ((internalEvent == SplitInternalEvent.SPLITS_FETCHED
-                || internalEvent == SplitInternalEvent.MY_SEGMENTS_FETCHED)
-                && eventAlreadyTriggered(SplitEvent.SDK_READY)) {
-            return;
-        }
-
         mEventsManager.notifyInternalEvent(internalEvent, metadata);
-        notifySyntheticEventsIfNeeded(internalEvent);
     }
 
     @Override
@@ -141,32 +119,6 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
      */
     public void destroy() {
         mEventsManager.destroy();
-    }
-
-    /**
-     * Notifies the synthetic composite events based on the actual internal event.
-     * These synthetic events simplify the SDK_READY condition evaluation.
-     * The prerequisite configuration ensures SDK_READY_FROM_CACHE always fires before SDK_READY.
-     * <p>
-     * TODO: Remove this method once EventsManagerConfig is updated.
-     */
-    private void notifySyntheticEventsIfNeeded(SplitInternalEvent internalEvent) {
-        switch (internalEvent) {
-            case SPLITS_UPDATED:
-            case SPLITS_FETCHED:
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_SYNC_COMPLETE, null);
-                break;
-
-            case MY_SEGMENTS_UPDATED:
-            case MY_SEGMENTS_FETCHED:
-            case MY_LARGE_SEGMENTS_UPDATED:
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SEGMENTS_SYNC_COMPLETE, null);
-                break;
-
-            default:
-                // No synthetic event needed for other internal events
-                break;
-        }
     }
 
     private void startTimeoutThread(final int blockUntilReady) {
