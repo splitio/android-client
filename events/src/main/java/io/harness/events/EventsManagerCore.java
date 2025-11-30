@@ -153,51 +153,16 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
         // This prevents infinite loops with unlimited events.
         Set<E> firedInThisCycle = new HashSet<>();
 
-        // Keep evaluating until no more events fire.
-        // This handles cases where an external event firing satisfies a prerequisite
-        // for another external event.
-        boolean eventFired;
+        // Loop until no more events fire in an iteration.
+        // Without this loop, events would be missed if their external prerequisites
+        // aren't satisfied on the first pass, but become satisfied after other events fire.
+        boolean anyEventFiredThisIteration;
         do {
-            eventFired = false;
+            boolean requireAllEventsFired = evaluateRequireAllEvents(currentSeenInternal, firedInThisCycle, metadata);
+            boolean requireAnyEventsFired = evaluateRequireAnyEvents(currentSeenInternal, firedInThisCycle, metadata);
+            anyEventFiredThisIteration = requireAllEventsFired || requireAnyEventsFired;
 
-            // Evaluate AND external events
-            for (Map.Entry<E, Set<I>> entry : mConfig.getRequireAll().entrySet()) {
-                E external = entry.getKey();
-                if (firedInThisCycle.contains(external)) {
-                    continue; // Already fired in this cycle
-                }
-                Set<I> required = entry.getValue();
-
-                if (!required.isEmpty() && currentSeenInternal.containsAll(required)) {
-                    if (triggerIfConditionsMet(external, metadata)) {
-                        firedInThisCycle.add(external);
-                        eventFired = true;
-                    }
-                }
-            }
-
-            // Evaluate OR-of-ANDs external events (requireAny)
-            // Each entry maps an external event to a set of groups (OR)
-            // Each group is a set of internal events that must ALL be seen (AND)
-            for (Map.Entry<E, Set<Set<I>>> entry : mConfig.getRequireAny().entrySet()) {
-                E external = entry.getKey();
-                if (firedInThisCycle.contains(external)) {
-                    continue; // Already fired in this cycle
-                }
-                Set<Set<I>> groups = entry.getValue();
-
-                for (Set<I> group : groups) {
-                    // Check if ALL events in this group have been seen
-                    if (!group.isEmpty() && currentSeenInternal.containsAll(group)) {
-                        if (triggerIfConditionsMet(external, metadata)) {
-                            firedInThisCycle.add(external);
-                            eventFired = true;
-                        }
-                        break; // Only need one group to match
-                    }
-                }
-            }
-        } while (eventFired);
+        } while (anyEventFiredThisIteration);
     }
 
     /**
@@ -205,10 +170,14 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
      * @return true if the event was triggered, false otherwise
      */
     private boolean triggerIfConditionsMet(E event, M metadata) {
-        if (!prerequisitesSatisfied(event) || isSuppressed(event)) {
+        if (!canEventBeTriggered(event)) {
             return false;
         }
         return trigger(event, metadata);
+    }
+
+    private boolean canEventBeTriggered(E event) {
+        return prerequisitesSatisfied(event) && !isSuppressed(event);
     }
 
     /**
@@ -268,6 +237,67 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
                 if (mTriggerCount.containsKey(suppressor)) {
                     return true;
                 }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Evaluates events with AND logic: fire if ALL required internal events have been seen.
+     */
+    private boolean evaluateRequireAllEvents(Set<I> seenInternal, Set<E> firedInThisCycle, M metadata) {
+        boolean anyEventFired = false;
+        for (Map.Entry<E, Set<I>> entry : mConfig.getRequireAll().entrySet()) {
+            E externalEvent = entry.getKey();
+            if (hasAlreadyFiredInCycle(externalEvent, firedInThisCycle)) {
+                continue;
+            }
+            Set<I> requiredInternals = entry.getValue();
+
+            if (allInternalEventsSeen(requiredInternals, seenInternal)) {
+                if (triggerIfConditionsMet(externalEvent, metadata)) {
+                    firedInThisCycle.add(externalEvent);
+                    anyEventFired = true;
+                }
+            }
+        }
+        return anyEventFired;
+    }
+
+    /**
+     * Evaluates events with OR-of-ANDs logic: fire if ANY group has ALL its internal events seen.
+     */
+    private boolean evaluateRequireAnyEvents(Set<I> seenInternal, Set<E> firedInThisCycle, M metadata) {
+        boolean anyEventFired = false;
+        for (Map.Entry<E, Set<Set<I>>> entry : mConfig.getRequireAny().entrySet()) {
+            E externalEvent = entry.getKey();
+            if (hasAlreadyFiredInCycle(externalEvent, firedInThisCycle)) {
+                continue;
+            }
+            Set<Set<I>> requiredGroups = entry.getValue();
+
+            if (anyGroupSatisfied(requiredGroups, seenInternal)) {
+                if (triggerIfConditionsMet(externalEvent, metadata)) {
+                    firedInThisCycle.add(externalEvent);
+                    anyEventFired = true;
+                }
+            }
+        }
+        return anyEventFired;
+    }
+
+    private boolean hasAlreadyFiredInCycle(E event, Set<E> firedInThisCycle) {
+        return firedInThisCycle.contains(event);
+    }
+
+    private boolean allInternalEventsSeen(Set<I> requiredInternals, Set<I> seenInternal) {
+        return !requiredInternals.isEmpty() && seenInternal.containsAll(requiredInternals);
+    }
+
+    private boolean anyGroupSatisfied(Set<Set<I>> requiredGroups, Set<I> seenInternal) {
+        for (Set<I> group : requiredGroups) {
+            if (allInternalEventsSeen(group, seenInternal)) {
+                return true;
             }
         }
         return false;
