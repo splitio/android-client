@@ -184,6 +184,51 @@ public class SplitSyncTaskTest {
         verify(mTelemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.SPLITS), longThat(arg -> arg > 0));
     }
 
+    @Test
+    public void targetingRulesSyncCompleteIsAlwaysFiredOnSuccessfulSync() throws HttpFetcherException {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+    }
+
+    @Test
+    public void splitsUpdatedIsFiredWhenDataChanged() throws HttpFetcherException {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+
+        when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED));
+    }
+
+    @Test
+    public void splitsUpdatedIsNotFiredWhenDataUnchanged() throws HttpFetcherException {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        mTask.execute();
+
+        verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+    }
+
     @After
     public void tearDown() {
         reset(mSplitsStorage);
