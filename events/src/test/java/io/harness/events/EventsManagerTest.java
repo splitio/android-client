@@ -446,10 +446,6 @@ public class EventsManagerTest {
         assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.SEASONING_ADJUSTED));
     }
 
-    // ====================================================================================
-    // OR-of-ANDs tests (grouped requireAny)
-    // ====================================================================================
-
     @Test
     public void requireAnyWithGroupsFiresWhenFirstGroupComplete() throws InterruptedException {
         // External event fires when EITHER:

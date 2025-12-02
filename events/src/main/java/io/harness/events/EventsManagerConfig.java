@@ -19,8 +19,6 @@ public final class EventsManagerConfig<E, I> {
     // External events that require ALL listed internals (AND)
     private final Map<E, Set<I>> mRequireAll;
     // External events triggered by ANY of the listed internal groups (OR of ANDs)
-    // Each Set<I> is an AND group - all events in the group must occur
-    // The external event fires when ANY of these groups is satisfied (OR)
     private final Map<E, Set<Set<I>>> mRequireAny;
     // External-event guards: prerequisites that must have fired before External can emit
     private final Map<E, Set<E>> mPrerequisites;
@@ -39,10 +37,10 @@ public final class EventsManagerConfig<E, I> {
      * @param executionLimits Execution policy: max executions per external event (-1 = unlimited)
      */
     private EventsManagerConfig(Map<E, Set<I>> requireAll,
-                               Map<E, Set<Set<I>>> requireAny,
-                               Map<E, Set<E>> prerequisites,
-                               Map<E, Set<E>> suppressedBy,
-                               Map<E, Integer> executionLimits) {
+                                Map<E, Set<Set<I>>> requireAny,
+                                Map<E, Set<E>> prerequisites,
+                                Map<E, Set<E>> suppressedBy,
+                                Map<E, Integer> executionLimits) {
         mRequireAll = requireAll == null
                 ? Collections.emptyMap()
                 : Collections.unmodifiableMap(new HashMap<>(requireAll));
@@ -123,8 +121,8 @@ public final class EventsManagerConfig<E, I> {
         /**
          * Adds a requirement that ALL specified internal events must occur for the external event to fire.
          *
-         * @param externalEvent    the external event
-         * @param internalEvents   the internal events that must ALL occur
+         * @param externalEvent  the external event
+         * @param internalEvents the internal events that must ALL occur
          * @return this builder
          */
         @SafeVarargs
@@ -137,8 +135,8 @@ public final class EventsManagerConfig<E, I> {
          * Adds a requirement that ANY of the specified internal events will trigger the external event.
          * Each internal event is treated as a group of one (singleton).
          *
-         * @param externalEvent    the external event
-         * @param internalEvents   the internal events, any of which will trigger the external event
+         * @param externalEvent  the external event
+         * @param internalEvents the internal events, any of which will trigger the external event
          * @return this builder
          */
         @SafeVarargs
@@ -154,7 +152,7 @@ public final class EventsManagerConfig<E, I> {
 
         /**
          * Adds a requirement that ANY of the specified internal event groups will trigger the external event.
-         * Each group is an AND - all events in the group must occur.
+         * Each group is an AND:  all events in the group must occur.
          * The external event fires when ANY group is fully satisfied (OR of ANDs).
          * <p>
          * Example:

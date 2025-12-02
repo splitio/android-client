@@ -2,7 +2,6 @@ package io.split.android.client.events;
 
 import static java.util.Objects.requireNonNull;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.Executor;
@@ -10,7 +9,6 @@ import java.util.concurrent.Executor;
 import io.harness.events.EventHandler;
 import io.harness.events.EventsManager;
 import io.harness.events.EventsManagers;
-import io.split.android.client.SplitClient;
 import io.split.android.client.api.EventMetadata;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.events.executors.SplitEventExecutorResourcesImpl;
@@ -148,13 +146,9 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     /**
      * Notifies the synthetic composite events based on the actual internal event.
      * These synthetic events simplify the SDK_READY condition evaluation.
-     * <p>
-     * The EventsManagerConfig now handles SDK_READY_FROM_CACHE with OR-of-ANDs logic,
-     * so it will fire when either:
-     * - All cache events complete (cache path), OR
-     * - All sync events complete (sync path)
-     * <p>
      * The prerequisite configuration ensures SDK_READY_FROM_CACHE always fires before SDK_READY.
+     * <p>
+     * TODO: Remove this method once EventsManagerConfig is updated.
      */
     private void notifySyntheticEventsIfNeeded(SplitInternalEvent internalEvent) {
         switch (internalEvent) {
