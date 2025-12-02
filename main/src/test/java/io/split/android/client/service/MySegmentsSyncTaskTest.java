@@ -229,7 +229,7 @@ public class MySegmentsSyncTaskTest {
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.SEGMENTS_SYNC_COMPLETE);
+        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
         verify(mEventsManager, never()).notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
     }
 

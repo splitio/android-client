@@ -136,7 +136,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_SYNC_COMPLETE);
+        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
         verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
     }
 
@@ -153,7 +153,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_SYNC_COMPLETE);
+        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
         verify(mEventsManager, never()).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
     }
 

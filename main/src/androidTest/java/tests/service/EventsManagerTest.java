@@ -13,7 +13,6 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
-import io.split.android.client.service.synchronizer.ThreadUtils;
 
 public class EventsManagerTest {
     @Test
@@ -48,8 +47,8 @@ public class EventsManagerTest {
         eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
         // First make SDK_READY fire by completing sync
-        eventManager.notifyInternalEvent(SplitInternalEvent.SEGMENTS_SYNC_COMPLETE);
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
         // Then trigger SDK_UPDATE with a data change
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
 
@@ -110,8 +109,8 @@ public class EventsManagerTest {
         eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
         // Make SDK_READY fire
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_SYNC_COMPLETE);
-        eventManager.notifyInternalEvent(SplitInternalEvent.SEGMENTS_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
         // Then trigger SDK_UPDATE with a segment change
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
 
@@ -132,8 +131,8 @@ public class EventsManagerTest {
         eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
         // Make SDK_READY fire with only SYNC_COMPLETE events (no UPDATED)
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_SYNC_COMPLETE);
-        eventManager.notifyInternalEvent(SplitInternalEvent.SEGMENTS_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
         // No UPDATED events fired
 
         updateLatch.await(2, TimeUnit.SECONDS);

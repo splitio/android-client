@@ -18,8 +18,8 @@ public enum SplitInternalEvent {
     SPLIT_KILLED_NOTIFICATION,
 
     // Sync completion events (fired when sync completes, regardless of data change)
-    SPLITS_SYNC_COMPLETE,
-    SEGMENTS_SYNC_COMPLETE,
+    TARGETING_RULES_SYNC_COMPLETE,
+    MEMBERSHIPS_SYNC_COMPLETE,
 
     // Other events
     SDK_READY_TIMEOUT_REACHED,

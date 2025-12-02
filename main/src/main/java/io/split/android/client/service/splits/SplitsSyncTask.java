@@ -95,7 +95,7 @@ public class SplitsSyncTask implements SplitTask {
     private void notifyInternalEvent(long storedChangeNumber) {
         if (mEventsManager != null) {
             // Always fire SPLITS_SYNC_COMPLETE when sync succeeds
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_SYNC_COMPLETE);
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
 
             // Fire SPLITS_UPDATED only if data actually changed
             if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill())) {

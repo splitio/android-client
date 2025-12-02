@@ -264,7 +264,7 @@ public class MySegmentsSyncTask implements SplitTask {
         }
 
         // Always fire SEGMENTS_SYNC_COMPLETE when sync succeeds
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.SEGMENTS_SYNC_COMPLETE);
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
 
         // Check if data actually changed
         boolean segmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(segmentsResult.oldSegments, segmentsResult.newSegments);
