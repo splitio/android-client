@@ -254,11 +254,9 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             }
             Set<I> requiredInternals = entry.getValue();
 
-            if (allInternalEventsSeen(requiredInternals, seenInternal)) {
-                if (triggerIfConditionsMet(externalEvent, metadata)) {
-                    firedInThisCycle.add(externalEvent);
-                    anyEventFired = true;
-                }
+            if (allInternalEventsSeen(requiredInternals, seenInternal) && triggerIfConditionsMet(externalEvent, metadata)) {
+                firedInThisCycle.add(externalEvent);
+                anyEventFired = true;
             }
         }
         return anyEventFired;
@@ -276,11 +274,9 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             }
             Set<Set<I>> requiredGroups = entry.getValue();
 
-            if (anyGroupSatisfied(requiredGroups, seenInternal)) {
-                if (triggerIfConditionsMet(externalEvent, metadata)) {
-                    firedInThisCycle.add(externalEvent);
-                    anyEventFired = true;
-                }
+            if (anyGroupSatisfied(requiredGroups, seenInternal) && triggerIfConditionsMet(externalEvent, metadata)) {
+                firedInThisCycle.add(externalEvent);
+                anyEventFired = true;
             }
         }
         return anyEventFired;

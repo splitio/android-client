@@ -157,10 +157,10 @@ public final class EventsManagerConfig<E, I> {
          * <p>
          * Example:
          * <pre>
-         * .requireAny(SDK_READY_FROM_CACHE,
-         *     Set.of(SPLITS_LOADED, SEGMENTS_LOADED),  // Group 1: both must occur
-         *     Set.of(SPLITS_SYNC, SEGMENTS_SYNC))      // Group 2: both must occur
-         * // Fires when: (Group 1 all done) OR (Group 2 all done)
+         * .requireAny(DISH_SERVED,
+         *     Set.of(BOUGHT_INGREDIENTS, COOKED_MEAL),                    // Fresh cooking path
+         *     Set.of(ORDERED_DELIVERY, DELIVERY_ARRIVED))                 // Delivery path
+         * // Fires when: (fresh cooking done) OR (delivery arrived)
          * </pre>
          *
          * @param externalEvent       the external event
