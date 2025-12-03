@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.split.android.client.dtos.RuleBasedSegmentChange;
 import io.split.android.client.dtos.Split;
@@ -57,7 +58,7 @@ public class SplitsSyncHelper {
     private final OutdatedSplitProxyHandler mOutdatedSplitProxyHandler;
     private final ExecutorService mExecutor;
     private final TargetingRulesCache mTargetingRulesCache;
-    private volatile ProcessedSplitChange mLastProcessedSplitChange;
+    private final AtomicReference<ProcessedSplitChange> mLastProcessedSplitChange = new AtomicReference<>();
 
     public SplitsSyncHelper(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
                             @NonNull SplitsStorage splitsStorage,
@@ -312,7 +313,7 @@ public class SplitsSyncHelper {
             mRuleBasedSegmentStorage.clear();
         }
         ProcessedSplitChange processedSplitChange = mSplitChangeProcessor.process(splitChange);
-        mLastProcessedSplitChange = processedSplitChange;
+        mLastProcessedSplitChange.set(processedSplitChange);
         mSplitsStorage.update(processedSplitChange, mExecutor);
         updateRbsStorage(ruleBasedSegmentChange);
     }
@@ -325,7 +326,7 @@ public class SplitsSyncHelper {
      */
     @NonNull
     public List<String> getLastUpdatedFlagNames() {
-        ProcessedSplitChange lastChange = mLastProcessedSplitChange;
+        ProcessedSplitChange lastChange = mLastProcessedSplitChange.get();
         if (lastChange == null) {
             return Collections.emptyList();
         }
