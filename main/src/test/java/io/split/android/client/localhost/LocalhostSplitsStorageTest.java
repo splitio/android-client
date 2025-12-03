@@ -92,7 +92,7 @@ public class LocalhostSplitsStorageTest {
         // First load - should notify events with metadata
         mLocalhostSplitsStorage.loadLocal();
 
-        verify(mEventsManagerCoordinator).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE));
+        verify(mEventsManagerCoordinator).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE), any());
         verify(mEventsManagerCoordinator).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
         
         ArgumentCaptor<EventMetadata> metadataCaptor = ArgumentCaptor.forClass(EventMetadata.class);

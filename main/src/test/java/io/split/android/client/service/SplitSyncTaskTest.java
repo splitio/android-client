@@ -142,7 +142,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager, times(1)).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+        verify(mEventsManager, times(1)).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
         verify(mEventsManager, times(1)).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
     }
 
@@ -159,7 +159,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager, times(1)).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+        verify(mEventsManager, times(1)).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
         verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
     }
 
@@ -201,7 +201,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
     }
 
     @Test
@@ -232,7 +232,7 @@ public class SplitSyncTaskTest {
         mTask.execute();
 
         verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
     }
 
     @Test
