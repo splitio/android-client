@@ -89,6 +89,7 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
      * @param internalEvent the internal event
      * @param metadata      the event metadata
      */
+    @Override
     public void notifyInternalEvent(SplitInternalEvent internalEvent, EventMetadata metadata) {
         requireNonNull(internalEvent);
         mEventsManager.notifyInternalEvent(internalEvent, metadata);

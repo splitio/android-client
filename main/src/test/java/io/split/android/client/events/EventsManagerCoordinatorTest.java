@@ -1,5 +1,10 @@
 package io.split.android.client.events;
 
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 
@@ -9,6 +14,10 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.util.Arrays;
+import java.util.List;
+
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.api.Key;
 
 public class EventsManagerCoordinatorTest {
@@ -31,7 +40,7 @@ public class EventsManagerCoordinatorTest {
 
         delay();
 
-        verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), isNull());
     }
 
     @Test
@@ -42,7 +51,7 @@ public class EventsManagerCoordinatorTest {
 
         delay();
 
-        verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+        verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED), isNull());
     }
 
     @Test
@@ -53,7 +62,7 @@ public class EventsManagerCoordinatorTest {
 
         delay();
 
-        verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), isNull());
     }
 
     @Test
@@ -64,7 +73,7 @@ public class EventsManagerCoordinatorTest {
 
         delay();
 
-        verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE), isNull());
     }
 
     @Test
@@ -75,7 +84,7 @@ public class EventsManagerCoordinatorTest {
 
         delay();
 
-        verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION);
+        verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION), isNull());
     }
 
     @Test
@@ -87,10 +96,46 @@ public class EventsManagerCoordinatorTest {
 
         delay();
 
-        verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), isNull());
 
         mEventsManager.registerEventsManager(new Key("new_key", "bucketing"), newMockChildEventsManager);
-        verify(newMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        verify(newMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), isNull());
+    }
+
+    @Test
+    public void SPLITS_UPDATEDEventWithMetadataIsPassedDownToChildren() {
+        mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
+
+        List<String> updatedFlags = Arrays.asList("flag1", "flag2");
+        EventMetadata metadata = new io.split.android.client.events.metadata.EventMetadataBuilder()
+                .put("updatedFlags", updatedFlags)
+                .build();
+
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
+
+        delay();
+
+        verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(meta -> {
+            if (meta == null) return false;
+            assertTrue(meta.containsKey("updatedFlags"));
+            Object flagsValue = meta.get("updatedFlags");
+            assertNotNull(flagsValue);
+            assertTrue(flagsValue instanceof List);
+            @SuppressWarnings("unchecked")
+            List<String> flags = (List<String>) flagsValue;
+            return flags.size() == 2 && flags.contains("flag1") && flags.contains("flag2");
+        }));
+    }
+
+    @Test
+    public void SPLITS_UPDATEDEventWithNullMetadataIsPassedDownToChildren() {
+        mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
+
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, null);
+
+        delay();
+
+        verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), eq((EventMetadata) null));
     }
 
     private void delay() {

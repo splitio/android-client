@@ -1,9 +1,13 @@
 package io.split.android.client.service;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
@@ -15,6 +19,11 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -109,7 +118,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
     }
 
@@ -123,7 +132,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
     }
 
@@ -138,8 +147,37 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED));
+        verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+    }
+
+    @Test
+    public void splitsUpdatedIncludesMetadataWithUpdatedFlags() {
+        long storedChangeNumber = 100L;
+        when(mSplitsStorage.getTill()).thenReturn(storedChangeNumber).thenReturn(150L);
+        when(mRuleBasedSegmentStorage.getChangeNumber()).thenReturn(200L);
+        when(mSplitsSyncHelper.sync(any(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES)))
+                .thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        // Mock the updated split names
+        List<String> updatedSplitNames = Arrays.asList("flag1", "flag2");
+        when(mSplitsSyncHelper.getLastUpdatedSplitNames()).thenReturn(updatedSplitNames);
+
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
+            if (metadata == null) return false;
+            assertTrue(metadata.containsKey("updatedFlags"));
+            Object flagsValue = metadata.get("updatedFlags");
+            assertNotNull(flagsValue);
+            assertTrue(flagsValue instanceof List);
+            @SuppressWarnings("unchecked")
+            List<String> flags = (List<String>) flagsValue;
+            assertEquals(2, flags.size());
+            assertTrue(flags.contains("flag1"));
+            assertTrue(flags.contains("flag2"));
+            return true;
+        }));
     }
 
     @After

@@ -1,12 +1,17 @@
 package io.split.android.client.service.splits;
 
+import static io.split.android.client.service.splits.SplitsSyncHelper.extractSplitNames;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.util.List;
+
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadataBuilder;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -47,7 +52,8 @@ public class SplitInPlaceUpdateTask implements SplitTask {
             boolean triggerSdkUpdate = mSplitsStorage.update(processedSplitChange, null);
 
             if (triggerSdkUpdate) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+                EventMetadata metadata = createUpdatedFlagsMetadata(processedSplitChange);
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
             }
             mTelemetryRuntimeProducer.recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
 
@@ -58,5 +64,12 @@ public class SplitInPlaceUpdateTask implements SplitTask {
 
             return SplitTaskExecutionInfo.error(SplitTaskType.SPLITS_SYNC);
         }
+    }
+
+    private EventMetadata createUpdatedFlagsMetadata(ProcessedSplitChange processedSplitChange) {
+        List<String> updatedSplitNames = extractSplitNames(processedSplitChange);
+        return new EventMetadataBuilder()
+                .put("updatedFlags", updatedSplitNames)
+                .build();
     }
 }

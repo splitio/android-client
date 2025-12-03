@@ -1,5 +1,8 @@
 package io.split.android.fake;
 
+import androidx.annotation.Nullable;
+
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.ListenableEventsManager;
 import io.split.android.client.events.SplitEvent;
@@ -18,7 +21,12 @@ public class SplitEventsManagerStub implements ISplitEventsManager, ListenableEv
 
     @Override
     public void notifyInternalEvent(SplitInternalEvent internalEvent) {
+        notifyInternalEvent(internalEvent, null);
+    }
 
+    @Override
+    public void notifyInternalEvent(SplitInternalEvent internalEvent, @Nullable EventMetadata metadata) {
+        // Stub implementation - does nothing
     }
 
     @Override

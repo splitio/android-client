@@ -6,8 +6,12 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import java.util.List;
+
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadataBuilder;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -73,10 +77,18 @@ public class SplitsUpdateTask implements SplitTask {
             // Fire SPLITS_UPDATED only if data actually changed
             if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill()) ||
                 mChangeChecker.changeNumberIsNewer(storedRbsChangeNumber, mRuleBasedSegmentStorage.getChangeNumber())) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+                EventMetadata metadata = createUpdatedFlagsMetadata();
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
             }
         }
         return result;
+    }
+
+    private EventMetadata createUpdatedFlagsMetadata() {
+        List<String> updatedSplitNames = mSplitsSyncHelper.getLastUpdatedSplitNames();
+        return new EventMetadataBuilder()
+                .put("updatedFlags", updatedSplitNames)
+                .build();
     }
 
     @VisibleForTesting
