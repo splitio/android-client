@@ -71,8 +71,10 @@ public class SplitsUpdateTask implements SplitTask {
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(mChangeNumber, mRbsChangeNumber), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
         if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
-            // Always fire SPLITS_SYNC_COMPLETE when sync succeeds
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+            // Always fire TARGETING_RULES_SYNC_COMPLETE when sync succeeds
+            // Sync path metadata: freshInstall=true (synced from network), timestamp=null
+            EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
 
             // Fire SPLITS_UPDATED only if data actually changed
             if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill()) ||

@@ -92,7 +92,7 @@ public class SplitUpdateTaskTest {
     }
 
     @Test
-    public void targetingRulesSyncCompleteIsAlwaysFiredOnSuccessfulSync() {
+    public void targetingRulesSyncCompleteIsAlwaysFiredOnSuccessfulSyncWithSyncMetadata() {
         when(mSplitsStorage.getTill()).thenReturn(100L);
         when(mRuleBasedSegmentStorage.getChangeNumber()).thenReturn(200L);
         when(mSplitsSyncHelper.sync(any(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES)))
@@ -100,7 +100,14 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+        // Verify TARGETING_RULES_SYNC_COMPLETE is fired with sync metadata (freshInstall=true, lastUpdateTimestamp=null)
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), argThat(metadata -> {
+            if (metadata == null) return false;
+            assertTrue(metadata.containsKey("freshInstall"));
+            assertEquals(true, metadata.get("freshInstall"));
+            // lastUpdateTimestamp should not be present (null)
+            return !metadata.containsKey("lastUpdateTimestamp") || metadata.get("lastUpdateTimestamp") == null;
+        }));
     }
 
     @Test
@@ -114,7 +121,7 @@ public class SplitUpdateTaskTest {
         mTask.execute();
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
     }
 
     @Test
@@ -128,7 +135,7 @@ public class SplitUpdateTaskTest {
         mTask.execute();
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
     }
 
     @Test
@@ -143,7 +150,7 @@ public class SplitUpdateTaskTest {
         mTask.execute();
 
         verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
     }
 
     @Test

@@ -219,10 +219,12 @@ public class LocalhostSplitsStorage implements SplitsStorage {
                 }
             }
             if (!content.equals(mLastContentLoaded)) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+                // Cache path metadata: freshInstall=false (loaded from file), timestamp=null for localhost
+                EventMetadata cacheMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, false);
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE, cacheMetadata);
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
-                EventMetadata metadata = createUpdatedFlagsMetadata();
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
+                EventMetadata updateMetadata = createUpdatedFlagsMetadata();
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, updateMetadata);
             }
             mLastContentLoaded = content;
         }

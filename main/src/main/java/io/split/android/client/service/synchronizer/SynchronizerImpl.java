@@ -31,6 +31,7 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.common.StoragePusher;
+import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreamingEvent;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
@@ -69,7 +70,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                             @NonNull StrategyImpressionManager impressionManager,
                             @NonNull StoragePusher<Event> eventsStorage,
                             @NonNull ISplitEventsManager eventsManagerCoordinator,
-                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster) {
+                            @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                            @Nullable SplitsStorage splitsStorage) {
         this(splitClientConfig,
                 taskExecutor,
                 splitSingleThreadTaskExecutor,
@@ -85,7 +87,8 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
                         splitTaskFactory,
                         eventsManagerCoordinator,
                         retryBackoffCounterTimerFactory,
-                        pushManagerEventBroadcaster
+                        pushManagerEventBroadcaster,
+                        splitsStorage
                 ),
                 eventsStorage);
     }

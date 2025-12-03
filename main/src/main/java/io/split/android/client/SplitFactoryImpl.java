@@ -244,7 +244,8 @@ public class SplitFactoryImpl implements SplitFactory {
                 mImpressionManager,
                 mStorageContainer.getEventsStorage(),
                 mEventsManagerCoordinator,
-                streamingComponents.getPushManagerEventBroadcaster()
+                streamingComponents.getPushManagerEventBroadcaster(),
+                mStorageContainer.getSplitsStorage()
         );
         // Only available for integration tests
         if (synchronizerSpy != null) {
