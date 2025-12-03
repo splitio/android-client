@@ -13,6 +13,7 @@
 -keep class io.split.android.client.service.sseclient.SseAuthenticationResponse { *; }
 -keep class io.split.android.client.service.sseclient.notifications.** { *; }
 -keepattributes Signature
+-keepattributes MethodParameters
 -keep class com.google.gson.reflect.TypeToken { *; }
 -keep class * extends com.google.gson.reflect.TypeToken
 -dontwarn java.beans.BeanInfo
@@ -25,6 +26,9 @@
 # Gson uses generic type information stored in a class file when working with fields. Proguard
 # removes such information by default, so configure it to keep all of it.
 -keepattributes Signature
+
+# Preserve method parameter names so consumers see actual parameter names instead of s0, s1, s2, etc.
+-keepattributes MethodParameters
 
 # For using GSON @Expose annotation
 -keepattributes *Annotation*
