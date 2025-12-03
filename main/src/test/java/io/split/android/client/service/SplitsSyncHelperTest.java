@@ -564,19 +564,19 @@ public class SplitsSyncHelperTest {
     }
 
     @Test
-    public void getLastUpdatedSplitNamesReturnsEmptyListWhenNoSyncOccurred() {
-        List<String> result = mSplitsSyncHelper.getLastUpdatedSplitNames();
+    public void getLastUpdatedFlagNamesReturnsEmptyListWhenNoSyncOccurred() {
+        List<String> result = mSplitsSyncHelper.getLastUpdatedFlagNames();
         assertTrue(result.isEmpty());
     }
 
     @Test
-    public void extractSplitNamesReturnsEmptyListWhenChangeIsNull() {
-        List<String> result = SplitsSyncHelper.extractSplitNames(null);
+    public void extractFlagNamesReturnsEmptyListWhenChangeIsNull() {
+        List<String> result = SplitsSyncHelper.extractFlagNames(null);
         assertTrue(result.isEmpty());
     }
 
     @Test
-    public void extractSplitNamesReturnsActiveSplitNames() {
+    public void extractSplitNamesReturnsActiveFlagNames() {
         Split split1 = new Split();
         split1.name = "split1";
         Split split2 = new Split();
@@ -584,7 +584,7 @@ public class SplitsSyncHelperTest {
         List<Split> activeSplits = Arrays.asList(split1, split2);
         ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(activeSplits, new ArrayList<>(), 100L, System.currentTimeMillis());
 
-        List<String> result = SplitsSyncHelper.extractSplitNames(processedSplitChange);
+        List<String> result = SplitsSyncHelper.extractFlagNames(processedSplitChange);
 
         assertEquals(2, result.size());
         assertTrue(result.contains("split1"));
@@ -592,7 +592,7 @@ public class SplitsSyncHelperTest {
     }
 
     @Test
-    public void extractSplitNamesReturnsArchivedSplitNames() {
+    public void extractSplitNamesReturnsArchivedFlagNames() {
         Split archivedSplit1 = new Split();
         archivedSplit1.name = "archived1";
         Split archivedSplit2 = new Split();
@@ -600,7 +600,7 @@ public class SplitsSyncHelperTest {
         List<Split> archivedSplits = Arrays.asList(archivedSplit1, archivedSplit2);
         ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), archivedSplits, 100L, System.currentTimeMillis());
 
-        List<String> result = SplitsSyncHelper.extractSplitNames(processedSplitChange);
+        List<String> result = SplitsSyncHelper.extractFlagNames(processedSplitChange);
 
         assertEquals(2, result.size());
         assertTrue(result.contains("archived1"));
@@ -608,7 +608,7 @@ public class SplitsSyncHelperTest {
     }
 
     @Test
-    public void extractSplitNamesReturnsBothActiveAndArchivedSplitNames() {
+    public void extractSplitNamesReturnsBothActiveAndArchivedFlagNames() {
         Split activeSplit = new Split();
         activeSplit.name = "active_split";
         Split archivedSplit = new Split();
@@ -620,7 +620,7 @@ public class SplitsSyncHelperTest {
                 System.currentTimeMillis()
         );
 
-        List<String> result = SplitsSyncHelper.extractSplitNames(processedSplitChange);
+        List<String> result = SplitsSyncHelper.extractFlagNames(processedSplitChange);
 
         assertEquals(2, result.size());
         assertTrue(result.contains("active_split"));
@@ -628,20 +628,20 @@ public class SplitsSyncHelperTest {
     }
 
     @Test
-    public void extractSplitNamesHandlesNullSplitsInLists() {
+    public void extractFlagNamesHandlesNullSplitsInLists() {
         Split validSplit = new Split();
         validSplit.name = "valid_split";
         List<Split> activeSplits = Arrays.asList(null, validSplit, null);
         ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(activeSplits, new ArrayList<>(), 100L, System.currentTimeMillis());
 
-        List<String> result = SplitsSyncHelper.extractSplitNames(processedSplitChange);
+        List<String> result = SplitsSyncHelper.extractFlagNames(processedSplitChange);
 
         assertEquals(1, result.size());
         assertTrue(result.contains("valid_split"));
     }
 
     @Test
-    public void extractSplitNamesHandlesSplitsWithNullNames() {
+    public void extractFlagNamesHandlesSplitsWithNullNames() {
         Split splitWithNullName = new Split();
         splitWithNullName.name = null;
         Split validSplit = new Split();
@@ -649,32 +649,32 @@ public class SplitsSyncHelperTest {
         List<Split> activeSplits = Arrays.asList(splitWithNullName, validSplit);
         ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(activeSplits, new ArrayList<>(), 100L, System.currentTimeMillis());
 
-        List<String> result = SplitsSyncHelper.extractSplitNames(processedSplitChange);
+        List<String> result = SplitsSyncHelper.extractFlagNames(processedSplitChange);
 
         assertEquals(1, result.size());
         assertTrue(result.contains("valid_split"));
     }
 
     @Test
-    public void extractSplitNamesReturnsEmptyListWhenBothListsAreEmpty() {
+    public void extractFlagNamesReturnsEmptyListWhenBothListsAreEmpty() {
         ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 100L, System.currentTimeMillis());
 
-        List<String> result = SplitsSyncHelper.extractSplitNames(processedSplitChange);
+        List<String> result = SplitsSyncHelper.extractFlagNames(processedSplitChange);
 
         assertTrue(result.isEmpty());
     }
 
     @Test
-    public void extractSplitNamesHandlesNullLists() {
+    public void extractFlagNamesHandlesNullLists() {
         ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(null, null, 100L, System.currentTimeMillis());
 
-        List<String> result = SplitsSyncHelper.extractSplitNames(processedSplitChange);
+        List<String> result = SplitsSyncHelper.extractFlagNames(processedSplitChange);
 
         assertTrue(result.isEmpty());
     }
 
     @Test
-    public void getLastUpdatedSplitNamesReturnsSplitNamesAfterSync() throws HttpFetcherException {
+    public void getLastUpdatedSplitNamesReturnsFlagNamesAfterSync() throws HttpFetcherException {
         // Use the actual split change from loadSplitChanges which contains real splits
         SplitChange secondSplitChange = mTargetingRulesChange.getFeatureFlagsChange();
         secondSplitChange.since = mTargetingRulesChange.getFeatureFlagsChange().till;
@@ -685,7 +685,7 @@ public class SplitsSyncHelperTest {
 
         mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
-        List<String> result = mSplitsSyncHelper.getLastUpdatedSplitNames();
+        List<String> result = mSplitsSyncHelper.getLastUpdatedFlagNames();
         // The result should contain split names from the processed split change
         // Since we're using real processor, it will process the actual splits from mTargetingRulesChange
         assertNotNull(result);
@@ -693,7 +693,7 @@ public class SplitsSyncHelperTest {
     }
 
     @Test
-    public void getLastUpdatedSplitNamesIncludesArchivedSplits() throws HttpFetcherException {
+    public void getLastUpdatedFlagNamesIncludesArchivedSplits() throws HttpFetcherException {
         Split archivedSplit = new Split();
         archivedSplit.name = "archived_split";
         List<Split> archivedSplits = Arrays.asList(archivedSplit);
@@ -712,7 +712,7 @@ public class SplitsSyncHelperTest {
 
         mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
 
-        List<String> result = mSplitsSyncHelper.getLastUpdatedSplitNames();
+        List<String> result = mSplitsSyncHelper.getLastUpdatedFlagNames();
         assertEquals(1, result.size());
         assertTrue(result.contains("archived_split"));
     }

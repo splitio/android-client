@@ -9,7 +9,6 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.ArgumentMatchers.longThat;
 import static org.mockito.ArgumentMatchers.notNull;
 import static org.mockito.Mockito.mock;
@@ -29,8 +28,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.api.EventMetadata;
-import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -249,7 +246,7 @@ public class SplitSyncTaskTest {
 
         // Mock the updated split names
         List<String> updatedSplitNames = Arrays.asList("split1", "split2", "split3");
-        when(mSplitsSyncHelper.getLastUpdatedSplitNames()).thenReturn(updatedSplitNames);
+        when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(updatedSplitNames);
 
         mTask.execute();
 
@@ -279,7 +276,7 @@ public class SplitSyncTaskTest {
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
 
         // Mock empty updated split names
-        when(mSplitsSyncHelper.getLastUpdatedSplitNames()).thenReturn(new ArrayList<>());
+        when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(new ArrayList<>());
 
         mTask.execute();
 

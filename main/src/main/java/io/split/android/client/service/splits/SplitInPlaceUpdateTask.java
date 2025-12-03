@@ -1,6 +1,6 @@
 package io.split.android.client.service.splits;
 
-import static io.split.android.client.service.splits.SplitsSyncHelper.extractSplitNames;
+import static io.split.android.client.service.splits.SplitsSyncHelper.extractFlagNames;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
@@ -67,7 +67,7 @@ public class SplitInPlaceUpdateTask implements SplitTask {
     }
 
     private EventMetadata createUpdatedFlagsMetadata(ProcessedSplitChange processedSplitChange) {
-        List<String> updatedSplitNames = extractSplitNames(processedSplitChange);
+        List<String> updatedSplitNames = extractFlagNames(processedSplitChange);
         return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
     }
 }

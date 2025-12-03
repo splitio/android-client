@@ -318,18 +318,18 @@ public class SplitsSyncHelper {
     }
 
     /**
-     * Gets the list of updated split names from the last sync operation.
+     * Gets the list of updated flag names from the last sync operation.
      * This includes both active (added/modified) and archived (removed) splits.
      *
-     * @return list of updated split names, or empty list if no updates occurred
+     * @return list of updated flag names, or empty list if no updates occurred
      */
     @NonNull
-    public List<String> getLastUpdatedSplitNames() {
+    public List<String> getLastUpdatedFlagNames() {
         ProcessedSplitChange lastChange = mLastProcessedSplitChange;
         if (lastChange == null) {
             return Collections.emptyList();
         }
-        return extractSplitNames(lastChange);
+        return extractFlagNames(lastChange);
     }
 
     /**
@@ -340,7 +340,7 @@ public class SplitsSyncHelper {
      * @return list of split names, or empty list if change is null
      */
     @NonNull
-    public static List<String> extractSplitNames(@Nullable ProcessedSplitChange processedSplitChange) {
+    public static List<String> extractFlagNames(@Nullable ProcessedSplitChange processedSplitChange) {
         if (processedSplitChange == null) {
             return Collections.emptyList();
         }
