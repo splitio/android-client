@@ -3,12 +3,14 @@ package io.split.android.client.service.synchronizer;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import io.split.android.client.api.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
@@ -55,7 +57,7 @@ public class LoadLocalDataListenerTest {
 
         listener.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.LOAD_LOCAL_SPLITS));
 
-        verify(mEventsManager, org.mockito.Mockito.never()).notifyInternalEvent(any(), any());
+        verify(mEventsManager, never()).notifyInternalEvent(any(), any());
     }
 
     @Test
@@ -80,7 +82,6 @@ public class LoadLocalDataListenerTest {
 
         listener.taskExecuted(SplitTaskExecutionInfo.error(SplitTaskType.LOAD_LOCAL_SPLITS));
 
-        verify(provider, org.mockito.Mockito.never()).getMetadata();
+        verify(provider, never()).getMetadata();
     }
 }
-
