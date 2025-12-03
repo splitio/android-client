@@ -11,7 +11,7 @@ import java.util.List;
 import io.split.android.client.api.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
-import io.split.android.client.events.metadata.EventMetadataBuilder;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -86,9 +86,7 @@ public class SplitsUpdateTask implements SplitTask {
 
     private EventMetadata createUpdatedFlagsMetadata() {
         List<String> updatedSplitNames = mSplitsSyncHelper.getLastUpdatedSplitNames();
-        return new EventMetadataBuilder()
-                .put("updatedFlags", updatedSplitNames)
-                .build();
+        return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
     }
 
     @VisibleForTesting

@@ -15,14 +15,14 @@ import io.split.android.client.api.EventMetadata;
  * Values are validated during put operations. Only String, Number, Boolean,
  * and List&lt;String&gt; values are accepted. Invalid values will be silently ignored.
  */
-public class EventMetadataBuilder {
+class EventMetadataBuilder {
 
     private static final MetadataValidator DEFAULT_VALIDATOR = new MetadataValidatorImpl();
 
     private final Map<String, Object> mData = new HashMap<>();
     private final MetadataValidator mValidator;
 
-    public EventMetadataBuilder() {
+    EventMetadataBuilder() {
         this(DEFAULT_VALIDATOR);
     }
 

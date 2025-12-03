@@ -19,13 +19,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import io.split.android.client.api.EventMetadata;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.events.SplitInternalEvent;
-import io.split.android.client.events.metadata.EventMetadataBuilder;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
@@ -267,8 +266,6 @@ public class LocalhostSplitsStorage implements SplitsStorage {
 
     private EventMetadata createUpdatedFlagsMetadata() {
         List<String> updatedSplitNames = new ArrayList<>(mInMemorySplits.keySet());
-        return new EventMetadataBuilder()
-                .put("updatedFlags", updatedSplitNames)
-                .build();
+        return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
     }
 }

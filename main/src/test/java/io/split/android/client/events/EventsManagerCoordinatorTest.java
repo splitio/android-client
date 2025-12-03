@@ -107,9 +107,7 @@ public class EventsManagerCoordinatorTest {
         mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
 
         List<String> updatedFlags = Arrays.asList("flag1", "flag2");
-        EventMetadata metadata = new io.split.android.client.events.metadata.EventMetadataBuilder()
-                .put("updatedFlags", updatedFlags)
-                .build();
+        EventMetadata metadata = io.split.android.client.events.metadata.EventMetadataHelpers.createUpdatedFlagsMetadata(updatedFlags);
 
         mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
 
