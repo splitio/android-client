@@ -2,12 +2,15 @@ package io.split.android.client.events;
 
 import static java.util.Objects.requireNonNull;
 
+import androidx.annotation.Nullable;
+
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.api.Key;
 
 /**
@@ -48,6 +51,21 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
      */
     @Override
     public void notifyInternalEvent(SplitInternalEvent internalEvent) {
+        notifyInternalEvent(internalEvent, null);
+    }
+
+    /**
+     * Notifies an SDK-scoped internal event with metadata.
+     * <p>
+     * If the event is SDK-scoped (like splits updates), it will be propagated
+     * to all registered event managers. Client-scoped events are ignored and should
+     * be sent directly to the corresponding client's event manager.
+     *
+     * @param internalEvent the internal event to notify
+     * @param metadata      the event metadata, can be null
+     */
+    @Override
+    public void notifyInternalEvent(SplitInternalEvent internalEvent, @Nullable EventMetadata metadata) {
         requireNonNull(internalEvent);
 
         if (!SDK_SCOPED_EVENTS.contains(internalEvent)) {
@@ -59,7 +77,7 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
             mTriggered.add(internalEvent);
 
             for (ISplitEventsManager manager : mManagers.values()) {
-                manager.notifyInternalEvent(internalEvent);
+                manager.notifyInternalEvent(internalEvent, metadata);
             }
         }
     }
@@ -99,7 +117,7 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
     private void propagateTriggeredEvents(ISplitEventsManager splitEventsManager) {
         synchronized (mEventLock) {
             for (SplitInternalEvent event : mTriggered) {
-                splitEventsManager.notifyInternalEvent(event);
+                splitEventsManager.notifyInternalEvent(event, null);
             }
         }
     }

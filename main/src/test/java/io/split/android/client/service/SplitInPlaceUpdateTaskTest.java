@@ -1,7 +1,11 @@
 package io.split.android.client.service;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -13,7 +17,10 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -124,7 +131,62 @@ public class SplitInPlaceUpdateTaskTest {
 
         verify(mSplitChangeProcessor).process(mSplit, 123L);
         verify(mSplitsStorage).update(processedSplitChange, null);
-        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
         verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
+    }
+
+    @Test
+    public void splitsUpdatedIncludesMetadataWithUpdatedFlags() {
+        Split split1 = new Split();
+        split1.name = "test_split_1";
+        Split split2 = new Split();
+        split2.name = "test_split_2";
+        List<Split> activeSplits = Arrays.asList(split1, split2);
+        ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(activeSplits, new ArrayList<>(), 0L, 0);
+
+        when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
+        when(mSplitsStorage.update(processedSplitChange, null)).thenReturn(true);
+
+        mSplitInPlaceUpdateTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
+            if (metadata == null) return false;
+            assertTrue(metadata.containsKey("updatedFlags"));
+            Object flagsValue = metadata.get("updatedFlags");
+            assertNotNull(flagsValue);
+            assertTrue(flagsValue instanceof List);
+            @SuppressWarnings("unchecked")
+            List<String> flags = (List<String>) flagsValue;
+            assertEquals(2, flags.size());
+            assertTrue(flags.contains("test_split_1"));
+            assertTrue(flags.contains("test_split_2"));
+            return true;
+        }));
+    }
+
+    @Test
+    public void splitsUpdatedIncludesArchivedSplitsInMetadata() {
+        Split archivedSplit = new Split();
+        archivedSplit.name = "archived_split";
+        List<Split> archivedSplits = Arrays.asList(archivedSplit);
+        ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), archivedSplits, 0L, 0);
+
+        when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
+        when(mSplitsStorage.update(processedSplitChange, null)).thenReturn(true);
+
+        mSplitInPlaceUpdateTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
+            if (metadata == null) return false;
+            assertTrue(metadata.containsKey("updatedFlags"));
+            Object flagsValue = metadata.get("updatedFlags");
+            assertNotNull(flagsValue);
+            assertTrue(flagsValue instanceof List);
+            @SuppressWarnings("unchecked")
+            List<String> flags = (List<String>) flagsValue;
+            assertEquals(1, flags.size());
+            assertTrue(flags.contains("archived_split"));
+            return true;
+        }));
     }
 }
