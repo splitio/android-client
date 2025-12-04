@@ -41,13 +41,13 @@ final class SplitEventsManagerConfigFactory {
         cacheGroup.add(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
 
         Set<SplitInternalEvent> syncGroup = new HashSet<>();
-        syncGroup.add(SplitInternalEvent.SPLITS_SYNC_COMPLETE);
-        syncGroup.add(SplitInternalEvent.SEGMENTS_SYNC_COMPLETE);
+        syncGroup.add(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        syncGroup.add(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
 
         return EventsManagerConfig.<SplitEvent, SplitInternalEvent>builder()
                 .requireAll(SplitEvent.SDK_READY,
-                        SplitInternalEvent.SPLITS_SYNC_COMPLETE,
-                        SplitInternalEvent.SEGMENTS_SYNC_COMPLETE)
+                        SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE,
+                        SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE)
 
                 // SDK_READY_FROM_CACHE: OR of ANDs
                 // Fires when (cache group all done) OR (sync group all done)

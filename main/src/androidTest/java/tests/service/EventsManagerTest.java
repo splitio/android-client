@@ -13,7 +13,6 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
-import io.split.android.client.service.synchronizer.ThreadUtils;
 
 public class EventsManagerTest {
     @Test
@@ -37,7 +36,7 @@ public class EventsManagerTest {
     }
 
     @Test
-    public void testSdkFetchedUpdatedSplits() throws InterruptedException {
+    public void testSdkUpdateTriggersAfterReady() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorImpl(), cfg.blockUntilReady());
@@ -47,8 +46,10 @@ public class EventsManagerTest {
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
         eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
+        // First make SDK_READY fire by completing sync
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        // Then trigger SDK_UPDATE with a data change
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
 
         updateLatch.await(5, TimeUnit.SECONDS);
@@ -57,7 +58,7 @@ public class EventsManagerTest {
     }
 
     @Test
-    public void testSdkUpdatedFetchedSplits() throws InterruptedException {
+    public void testSdkUpdateDoesNotTriggerBeforeReady() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorImpl(), cfg.blockUntilReady());
@@ -67,12 +68,11 @@ public class EventsManagerTest {
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
         eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+        // Fire UPDATED before SDK_READY - should NOT trigger SDK_UPDATE due to prerequisite
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
 
-
-        updateLatch.await(5, TimeUnit.SECONDS);
+        updateLatch.await(2, TimeUnit.SECONDS);
 
         Assert.assertFalse(updateTask.onExecutedCalled);
     }
@@ -98,7 +98,7 @@ public class EventsManagerTest {
     }
 
     @Test
-    public void testSdkFetchedUpdatedSegments() throws InterruptedException {
+    public void testSdkUpdateTriggersOnSegmentChange() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorImpl(), cfg.blockUntilReady());
@@ -108,8 +108,10 @@ public class EventsManagerTest {
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
         eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
+        // Make SDK_READY fire
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        // Then trigger SDK_UPDATE with a segment change
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
 
         updateLatch.await(5, TimeUnit.SECONDS);
@@ -118,7 +120,7 @@ public class EventsManagerTest {
     }
 
     @Test
-    public void testSdkUpdatedFetchedSegments() throws InterruptedException {
+    public void testSdkUpdateRequiresDataChange() throws InterruptedException {
 
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorImpl(), cfg.blockUntilReady());
@@ -128,13 +130,14 @@ public class EventsManagerTest {
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
         eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
+        // Make SDK_READY fire with only SYNC_COMPLETE events (no UPDATED)
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        // No UPDATED events fired
 
+        updateLatch.await(2, TimeUnit.SECONDS);
 
-        updateLatch.await(5, TimeUnit.SECONDS);
-
+        // SDK_UPDATE should NOT fire because no data actually changed
         Assert.assertFalse(updateTask.onExecutedCalled);
     }
 

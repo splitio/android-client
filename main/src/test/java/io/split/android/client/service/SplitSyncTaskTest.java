@@ -125,10 +125,8 @@ public class SplitSyncTaskTest {
 
     @Test
     public void splitUpdatedNotified() throws HttpFetcherException {
-        // Check that syncing is done with changeNum retrieved from db
-        // Querystring is the same, so no clear sould be called
-        // And updateTimestamp is 0
-        // Retry is off, so splitSyncHelper.sync should be called
+        // Check that both SPLITS_SYNC_COMPLETE and SPLITS_UPDATED are notified
+        // when sync completes with data changes
         mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
                 mQueryString, mEventsManager, mTelemetryRuntimeProducer);
         when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
@@ -138,15 +136,14 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
+        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
         verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
     }
 
     @Test
-    public void splitFetchdNotified() throws HttpFetcherException {
-        // Check that syncing is done with changeNum retrieved from db
-        // Querystring is the same, so no clear sould be called
-        // And updateTimestamp is 0
-        // Retry is off, so splitSyncHelper.sync should be called
+    public void splitSyncCompleteNotifiedWhenNoDataChange() throws HttpFetcherException {
+        // Check that SPLITS_SYNC_COMPLETE is notified when sync completes
+        // but no data changes (SPLITS_UPDATED should NOT be notified)
         mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
                 mQueryString, mEventsManager, mTelemetryRuntimeProducer);
         when(mSplitsStorage.getTill()).thenReturn(100L);
@@ -156,7 +153,8 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
+        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        verify(mEventsManager, never()).notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
     }
 
     @Test
@@ -184,6 +182,51 @@ public class SplitSyncTaskTest {
         mTask.execute();
 
         verify(mTelemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.SPLITS), longThat(arg -> arg > 0));
+    }
+
+    @Test
+    public void targetingRulesSyncCompleteIsAlwaysFiredOnSuccessfulSync() throws HttpFetcherException {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
+    }
+
+    @Test
+    public void splitsUpdatedIsFiredWhenDataChanged() throws HttpFetcherException {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+
+        when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED));
+    }
+
+    @Test
+    public void splitsUpdatedIsNotFiredWhenDataUnchanged() throws HttpFetcherException {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        mTask.execute();
+
+        verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE));
     }
 
     @After

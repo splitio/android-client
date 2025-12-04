@@ -46,14 +46,14 @@ public class EventsManagerCoordinatorTest {
     }
 
     @Test
-    public void SPLITS_FETCHEDEventIsPassedDownToChildren() {
+    public void SPLITS_SYNC_COMPLETEEventIsPassedDownToChildren() {
         mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
 
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
 
         delay();
 
-        verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
+        verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
     }
 
     @Test
@@ -83,14 +83,14 @@ public class EventsManagerCoordinatorTest {
         ISplitEventsManager newMockChildEventsManager = mock(ISplitEventsManager.class);
         mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
 
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
 
         delay();
 
-        verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
+        verify(mMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
 
         mEventsManager.registerEventsManager(new Key("new_key", "bucketing"), newMockChildEventsManager);
-        verify(newMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
+        verify(newMockChildEventsManager).notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
     }
 
     private void delay() {

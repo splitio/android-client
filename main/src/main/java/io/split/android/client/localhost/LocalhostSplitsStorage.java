@@ -216,7 +216,7 @@ public class LocalhostSplitsStorage implements SplitsStorage {
             }
             if (!content.equals(mLastContentLoaded)) {
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
             }
             mLastContentLoaded = content;

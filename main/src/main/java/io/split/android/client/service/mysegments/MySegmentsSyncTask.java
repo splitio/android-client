@@ -50,7 +50,6 @@ public class MySegmentsSyncTask implements SplitTask {
 
     private final SplitTaskType mTaskType;
     private final SplitInternalEvent mUpdateEvent;
-    private final SplitInternalEvent mFetchedEvent;
     private final OperationType mTelemetryOperationType;
 
     private final boolean mAvoidCache;
@@ -105,7 +104,6 @@ public class MySegmentsSyncTask implements SplitTask {
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mTaskType = config.getTaskType();
         mUpdateEvent = config.getUpdateEvent();
-        mFetchedEvent = config.getFetchedEvent();
         mTelemetryOperationType = config.getTelemetryOperationType();
         mTargetSegmentsChangeNumber = targetSegmentsChangeNumber;
         mTargetLargeSegmentsChangeNumber = targetLargeSegmentsChangeNumber;
@@ -265,28 +263,21 @@ public class MySegmentsSyncTask implements SplitTask {
             return;
         }
 
-        // MY_SEGMENTS_UPDATED event when segments have changed
+        // Always fire SEGMENTS_SYNC_COMPLETE when sync succeeds
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+
+        // Check if data actually changed
         boolean segmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(segmentsResult.oldSegments, segmentsResult.newSegments);
         boolean largeSegmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(largeSegmentsResult.oldSegments, largeSegmentsResult.newSegments);
 
         if (segmentsHaveChanged) {
             Logger.v("New segments: " + segmentsResult.newSegments);
+            mEventsManager.notifyInternalEvent(mUpdateEvent);
         }
 
         if (largeSegmentsHaveChanged) {
             Logger.v("New large segments: " + largeSegmentsResult.newSegments);
-        }
-
-        if (segmentsHaveChanged) {
-            mEventsManager.notifyInternalEvent(mUpdateEvent);
-        } else {
-            // MY_LARGE_SEGMENTS_UPDATED event when large segments have changed
-            if (largeSegmentsHaveChanged) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
-            } else {
-                // otherwise, MY_SEGMENTS_FETCHED event
-                mEventsManager.notifyInternalEvent(mFetchedEvent);
-            }
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
         }
     }
 

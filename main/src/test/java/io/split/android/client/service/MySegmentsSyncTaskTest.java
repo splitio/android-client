@@ -222,14 +222,39 @@ public class MySegmentsSyncTaskTest {
     }
 
     @Test
-    public void fetchedEventIsEmittedWhenNoChangesInSegments() throws HttpFetcherException {
+    public void syncCompleteEventIsEmittedWhenNoChangesInSegments() throws HttpFetcherException {
         when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(false);
         when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
 
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
+        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        verify(mEventsManager, never()).notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+    }
+
+    @Test
+    public void membershipsSyncCompleteIsAlwaysFiredOnSuccessfulSync() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
+        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(true);
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        // Verify MEMBERSHIPS_SYNC_COMPLETE is always fired on successful sync, even when segments changed
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MY_SEGMENTS_UPDATED));
+    }
+
+    @Test
+    public void updateEventIsFiredWhenSegmentsHaveChanged() throws HttpFetcherException {
+        when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
+        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(true);
+
+        mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MY_SEGMENTS_UPDATED));
     }
 
     @Test

@@ -40,9 +40,10 @@ public class EventsManagerTest {
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorStub(), cfg.blockUntilReady());
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
+        // Fire SYNC_COMPLETE events to trigger SDK_READY
+        // This also triggers SDK_READY_FROM_CACHE via the sync path (OR-of-ANDs)
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
 
         boolean shouldStop = false;
         long maxExecutionTime = System.currentTimeMillis() + 10000;
@@ -84,10 +85,9 @@ public class EventsManagerTest {
         //At this line timeout has been reached
         assertTrue(eventManager.eventAlreadyTriggered(SplitEvent.SDK_READY_TIMED_OUT));
 
-        //But if after timeout event, the Splits and MySegments are ready, SDK_READY should be triggered
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
+        //But if after timeout event, the sync completes, SDK_READY should be triggered
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
 
         shouldStop = false;
         maxExecutionTime = System.currentTimeMillis() + 10000;
@@ -181,8 +181,9 @@ public class EventsManagerTest {
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorStub(), cfg.blockUntilReady());
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
+        // Fire SYNC_COMPLETE events to trigger SDK_READY
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
 
         boolean shouldStop = false;
         long maxExecutionTime = System.currentTimeMillis() + 10000;
@@ -213,8 +214,8 @@ public class EventsManagerTest {
             }
         });
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_FETCHED);
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
         boolean readyAwait = readyLatch.await(3, TimeUnit.SECONDS);
 
         eventManager.notifyInternalEvent(eventToCheck);

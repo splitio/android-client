@@ -26,7 +26,7 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
      */
     private static final Set<SplitInternalEvent> SDK_SCOPED_EVENTS = EnumSet.of(
             SplitInternalEvent.SPLITS_UPDATED,
-            SplitInternalEvent.SPLITS_FETCHED,
+            SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE,
             SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE,
             SplitInternalEvent.SPLIT_KILLED_NOTIFICATION,
             SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED,
