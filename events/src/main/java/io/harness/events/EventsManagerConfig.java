@@ -18,8 +18,8 @@ import java.util.Set;
 public final class EventsManagerConfig<E, I> {
     // External events that require ALL listed internals (AND)
     private final Map<E, Set<I>> mRequireAll;
-    // External events triggered by ANY of the listed internals (OR)
-    private final Map<E, Set<I>> mRequireAny;
+    // External events triggered by ANY of the listed internal groups (OR of ANDs)
+    private final Map<E, Set<Set<I>>> mRequireAny;
     // External-event guards: prerequisites that must have fired before External can emit
     private final Map<E, Set<E>> mPrerequisites;
     // External-event guards: if any of these have fired, suppress E
@@ -31,16 +31,16 @@ public final class EventsManagerConfig<E, I> {
      * Creates a new EventsManagerConfig.
      *
      * @param requireAll      External events that require ALL listed internals (AND)
-     * @param requireAny      External events triggered by ANY of the listed internals (OR)
+     * @param requireAny      External events triggered by ANY of the listed internal groups (OR of ANDs)
      * @param prerequisites   External-event guards: prerequisites that must have fired before External can emit
      * @param suppressedBy    External-event guards: if any of these have fired, suppress E
      * @param executionLimits Execution policy: max executions per external event (-1 = unlimited)
      */
     private EventsManagerConfig(Map<E, Set<I>> requireAll,
-                               Map<E, Set<I>> requireAny,
-                               Map<E, Set<E>> prerequisites,
-                               Map<E, Set<E>> suppressedBy,
-                               Map<E, Integer> executionLimits) {
+                                Map<E, Set<Set<I>>> requireAny,
+                                Map<E, Set<E>> prerequisites,
+                                Map<E, Set<E>> suppressedBy,
+                                Map<E, Integer> executionLimits) {
         mRequireAll = requireAll == null
                 ? Collections.emptyMap()
                 : Collections.unmodifiableMap(new HashMap<>(requireAll));
@@ -72,7 +72,7 @@ public final class EventsManagerConfig<E, I> {
     }
 
     @NotNull
-    public Map<E, Set<I>> getRequireAny() {
+    public Map<E, Set<Set<I>>> getRequireAny() {
         return mRequireAny;
     }
 
@@ -110,7 +110,7 @@ public final class EventsManagerConfig<E, I> {
      */
     public static final class Builder<E, I> {
         private final Map<E, Set<I>> mRequireAll = new HashMap<>();
-        private final Map<E, Set<I>> mRequireAny = new HashMap<>();
+        private final Map<E, Set<Set<I>>> mRequireAny = new HashMap<>();
         private final Map<E, Set<E>> mPrerequisites = new HashMap<>();
         private final Map<E, Set<E>> mSuppressedBy = new HashMap<>();
         private final Map<E, Integer> mExecutionLimits = new HashMap<>();
@@ -121,8 +121,8 @@ public final class EventsManagerConfig<E, I> {
         /**
          * Adds a requirement that ALL specified internal events must occur for the external event to fire.
          *
-         * @param externalEvent    the external event
-         * @param internalEvents   the internal events that must ALL occur
+         * @param externalEvent  the external event
+         * @param internalEvents the internal events that must ALL occur
          * @return this builder
          */
         @SafeVarargs
@@ -133,14 +133,45 @@ public final class EventsManagerConfig<E, I> {
 
         /**
          * Adds a requirement that ANY of the specified internal events will trigger the external event.
+         * Each internal event is treated as a group of one (singleton).
          *
-         * @param externalEvent    the external event
-         * @param internalEvents   the internal events, any of which will trigger the external event
+         * @param externalEvent  the external event
+         * @param internalEvents the internal events, any of which will trigger the external event
          * @return this builder
          */
         @SafeVarargs
         public final Builder<E, I> requireAny(E externalEvent, I... internalEvents) {
-            mRequireAny.put(externalEvent, new HashSet<>(Arrays.asList(internalEvents)));
+            // Convert each individual event to a singleton Set (group of one)
+            Set<Set<I>> groups = new HashSet<>();
+            for (I internalEvent : internalEvents) {
+                groups.add(Collections.singleton(internalEvent));
+            }
+            mRequireAny.put(externalEvent, groups);
+            return this;
+        }
+
+        /**
+         * Adds a requirement that ANY of the specified internal event groups will trigger the external event.
+         * Each group is an AND:  all events in the group must occur.
+         * The external event fires when ANY group is fully satisfied (OR of ANDs).
+         * <p>
+         * Example:
+         * <pre>
+         * .requireAny(DISH_SERVED,
+         *     Set.of(BOUGHT_INGREDIENTS, COOKED_MEAL),                    // Fresh cooking path
+         *     Set.of(ORDERED_DELIVERY, DELIVERY_ARRIVED))                 // Delivery path
+         * // Fires when: (fresh cooking done) OR (delivery arrived)
+         * </pre>
+         *
+         * @param externalEvent       the external event
+         * @param internalEventGroups the groups of internal events; all events in a group must occur (AND),
+         *                            and any group being satisfied triggers the external event (OR)
+         * @return this builder
+         */
+        @SafeVarargs
+        public final Builder<E, I> requireAny(E externalEvent, Set<I>... internalEventGroups) {
+            Set<Set<I>> groups = new HashSet<>(Arrays.asList(internalEventGroups));
+            mRequireAny.put(externalEvent, groups);
             return this;
         }
 

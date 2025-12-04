@@ -1,5 +1,8 @@
 package io.split.android.client.events;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import io.harness.events.EventsManagerConfig;
 
 /**
@@ -19,8 +22,8 @@ final class SplitEventsManagerConfigFactory {
      * <p>
      * Event rules:
      * <ul>
-     *   <li>SDK_READY: requires both splits and segments sync to complete</li>
-     *   <li>SDK_READY_FROM_CACHE: requires all cache loading events</li>
+     *   <li>SDK_READY: requires both splits and segments sync to complete, and SDK_READY_FROM_CACHE must fire first</li>
+     *   <li>SDK_READY_FROM_CACHE: fires when EITHER all cache loading events complete OR all sync events complete</li>
      *   <li>SDK_READY_TIMED_OUT: fires when timeout is reached (suppressed if SDK_READY fired first)</li>
      *   <li>SDK_UPDATE: fires on any data update after SDK_READY</li>
      * </ul>
@@ -28,16 +31,27 @@ final class SplitEventsManagerConfigFactory {
      * @return the configured EventsManagerConfig
      */
     static EventsManagerConfig<SplitEvent, SplitInternalEvent> create() {
+        // SDK_READY_FROM_CACHE fires when either:
+        // 1. Cache path: All cache loading events complete (AND), OR
+        // 2. Sync path: All sync events complete (AND)
+        Set<SplitInternalEvent> cacheGroup = new HashSet<>();
+        cacheGroup.add(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        cacheGroup.add(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
+        cacheGroup.add(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
+        cacheGroup.add(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+
+        Set<SplitInternalEvent> syncGroup = new HashSet<>();
+        syncGroup.add(SplitInternalEvent.SPLITS_SYNC_COMPLETE);
+        syncGroup.add(SplitInternalEvent.SEGMENTS_SYNC_COMPLETE);
+
         return EventsManagerConfig.<SplitEvent, SplitInternalEvent>builder()
                 .requireAll(SplitEvent.SDK_READY,
                         SplitInternalEvent.SPLITS_SYNC_COMPLETE,
                         SplitInternalEvent.SEGMENTS_SYNC_COMPLETE)
 
-                .requireAll(SplitEvent.SDK_READY_FROM_CACHE,
-                        SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE,
-                        SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE,
-                        SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE,
-                        SplitInternalEvent.ENCRYPTION_MIGRATION_DONE)
+                // SDK_READY_FROM_CACHE: OR of ANDs
+                // Fires when (cache group all done) OR (sync group all done)
+                .requireAny(SplitEvent.SDK_READY_FROM_CACHE, cacheGroup, syncGroup)
 
                 .requireAny(SplitEvent.SDK_READY_TIMED_OUT,
                         SplitInternalEvent.SDK_READY_TIMEOUT_REACHED)
@@ -49,6 +63,8 @@ final class SplitEventsManagerConfigFactory {
                         SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED,
                         SplitInternalEvent.SPLIT_KILLED_NOTIFICATION)
 
+                // SDK_READY requires SDK_READY_FROM_CACHE to fire first
+                .prerequisite(SplitEvent.SDK_READY, SplitEvent.SDK_READY_FROM_CACHE)
                 .prerequisite(SplitEvent.SDK_UPDATE, SplitEvent.SDK_READY)
 
                 .suppressedBy(SplitEvent.SDK_READY_TIMED_OUT, SplitEvent.SDK_READY)
