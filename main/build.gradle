@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         multiDexEnabled true
-        consumerProguardFiles 'consumer-rules.pro'
+        consumerProguardFiles "$rootDir/split-proguard-rules.pro"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
 
