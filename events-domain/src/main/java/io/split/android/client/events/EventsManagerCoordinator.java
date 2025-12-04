@@ -2,67 +2,98 @@ package io.split.android.client.events;
 
 import static java.util.Objects.requireNonNull;
 
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 import io.split.android.client.api.Key;
-import io.split.android.client.utils.logger.Logger;
 
 /**
- * Special case event manager which handles events that should be shared among all client instances.
+ * Coordinator for SDK-scoped events that should be propagated to all client event managers.
+ * <p>
+ * This coordinator keeps track of all registered {@link ISplitEventsManager} instances
+ * and forwards SDK-scoped internal events (like splits updates) to all of them.
+ * <p>
+ * Client-scoped events (like segments updates for a specific key) should be sent
+ * directly to the corresponding client's event manager.
  */
-public class EventsManagerCoordinator extends BaseEventsManager implements ISplitEventsManager, EventsManagerRegistry {
+public class EventsManagerCoordinator implements ISplitEventsManager, EventsManagerRegistry {
 
-    private final ConcurrentMap<Key, ISplitEventsManager> mChildren = new ConcurrentHashMap<>();
+    /**
+     * Set of SDK-scoped internal events that should be propagated to all registered managers.
+     */
+    private static final Set<SplitInternalEvent> SDK_SCOPED_EVENTS = EnumSet.of(
+            SplitInternalEvent.SPLITS_UPDATED,
+            SplitInternalEvent.SPLITS_FETCHED,
+            SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE,
+            SplitInternalEvent.SPLIT_KILLED_NOTIFICATION,
+            SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED,
+            SplitInternalEvent.ENCRYPTION_MIGRATION_DONE
+    );
+
+    private final ConcurrentMap<Key, ISplitEventsManager> mManagers = new ConcurrentHashMap<>();
+    private final Set<SplitInternalEvent> mTriggered = Collections.newSetFromMap(new ConcurrentHashMap<SplitInternalEvent, Boolean>());
     private final Object mEventLock = new Object();
 
+    /**
+     * Notifies an SDK-scoped internal event.
+     * <p>
+     * If the event is SDK-scoped (like splits updates), it will be propagated
+     * to all registered event managers. Client-scoped events are ignored and should
+     * be sent directly to the corresponding client's event manager.
+     *
+     * @param internalEvent the internal event to notify
+     */
     @Override
     public void notifyInternalEvent(SplitInternalEvent internalEvent) {
         requireNonNull(internalEvent);
-        try {
-            mQueue.add(internalEvent);
-        } catch (IllegalStateException e) {
-            Logger.d("Internal events queue is full");
-        }
-    }
 
-    @Override
-    protected void triggerEventsWhenAreAvailable() {
-        try {
-            SplitInternalEvent event = mQueue.take(); //Blocking method (waiting if necessary until an element becomes available.)
-            synchronized (mEventLock) {
-                mTriggered.add(event);
-                switch (event) {
-                    case SPLITS_UPDATED:
-                    case RULE_BASED_SEGMENTS_UPDATED:
-                    case SPLITS_FETCHED:
-                    case SPLITS_LOADED_FROM_STORAGE:
-                    case SPLIT_KILLED_NOTIFICATION:
-                    case ENCRYPTION_MIGRATION_DONE:
-                        for (ISplitEventsManager child : mChildren.values()) {
-                            child.notifyInternalEvent(event);
-                        }
-                        break;
-                }
+        if (!SDK_SCOPED_EVENTS.contains(internalEvent)) {
+            // Client-scoped events should be sent directly to the client's manager
+            return;
+        }
+
+        synchronized (mEventLock) {
+            mTriggered.add(internalEvent);
+
+            for (ISplitEventsManager manager : mManagers.values()) {
+                manager.notifyInternalEvent(internalEvent);
             }
-        } catch (InterruptedException e) {
-            //Catching the InterruptedException that can be thrown by _queue.take() if interrupted while waiting
-            // for further information read https://docs.oracle.com/javase/7/docs/api/java/util/concurrent/ArrayBlockingQueue.html#take()
-            Logger.d(e.getMessage());
         }
     }
 
+    /**
+     * Registers an events manager for a client key.
+     * <p>
+     * Any SDK-scoped events that occurred prior to registration will be propagated
+     * to the newly registered manager.
+     *
+     * @param key                 the client key
+     * @param splitEventsManager  the events manager for that client
+     */
     @Override
     public void registerEventsManager(Key key, ISplitEventsManager splitEventsManager) {
-        mChildren.put(key, splitEventsManager);
+        requireNonNull(key);
+        requireNonNull(splitEventsManager);
 
-        // Inform the newly registered events manager of any events that occurred prior to registration
+        mManagers.put(key, splitEventsManager);
+
+        // Propagate any events that occurred before registration
         propagateTriggeredEvents(splitEventsManager);
     }
 
+    /**
+     * Unregisters the events manager for a client key.
+     *
+     * @param key the client key to unregister
+     */
     @Override
     public void unregisterEventsManager(Key key) {
-        mChildren.remove(key);
+        if (key != null) {
+            mManagers.remove(key);
+        }
     }
 
     private void propagateTriggeredEvents(ISplitEventsManager splitEventsManager) {

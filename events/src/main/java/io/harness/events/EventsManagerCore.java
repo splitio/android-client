@@ -112,7 +112,19 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
         }
 
         synchronized (mLock) {
-            return mTriggerCount.containsKey(event);
+            Integer count = mTriggerCount.get(event);
+            if (count == null) {
+                return false;
+            }
+
+            // For unlimited events, return false since they can always fire again
+            int max = maxExecutions(event);
+            if (max == UNLIMITED) {
+                return false;
+            }
+
+            // For limited events, return true only if all executions are done
+            return count >= max;
         }
     }
 
