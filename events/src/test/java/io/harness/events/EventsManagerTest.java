@@ -446,6 +446,7 @@ public class EventsManagerTest {
         assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.SEASONING_ADJUSTED));
     }
 
+
     @Test
     public void requireAnyWithGroupsFiresWhenFirstGroupComplete() throws InterruptedException {
         // External event fires when EITHER:
