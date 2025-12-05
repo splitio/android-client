@@ -9,6 +9,7 @@ import java.util.List;
 
 import io.split.android.client.api.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.ServiceConstants;
@@ -97,17 +98,28 @@ public class SplitsSyncTask implements SplitTask {
     }
 
     private void notifyInternalEvent(long storedChangeNumber) {
-        if (mEventsManager != null) {
-            // Always fire TARGETING_RULES_SYNC_COMPLETE when sync succeeds
-            // Sync path metadata: freshInstall=true (synced from network), timestamp=null
+        if (mEventsManager == null) {
+            return;
+        }
+
+        // Before SDK_READY: fire SYNC_COMPLETE (initial load)
+        // After SDK_READY: fire UPDATED if data changed (update)
+        boolean sdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
+
+        if (!sdkReady) {
             EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
             mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
+            return;
+        }
 
-            // Fire SPLITS_UPDATED only if data actually changed
-            if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill())) {
-                EventMetadata metadata = createUpdatedFlagsMetadata();
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
-            }
+        // SDK is ready - check for actual updates
+        if (mSplitsSyncHelper.splitsHaveChanged()) {
+            EventMetadata metadata = createUpdatedFlagsMetadata();
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
+        }
+
+        if (mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()) {
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
         }
     }
 

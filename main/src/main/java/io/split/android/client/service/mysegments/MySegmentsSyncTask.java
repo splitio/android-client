@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.SegmentsChange;
+import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
@@ -263,10 +264,16 @@ public class MySegmentsSyncTask implements SplitTask {
             return;
         }
 
-        // Always fire SEGMENTS_SYNC_COMPLETE when sync succeeds
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        // Before SDK_READY: fire SYNC_COMPLETE (initial load)
+        // After SDK_READY: fire UPDATED if data changed (update)
+        boolean sdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
 
-        // Check if data actually changed
+        if (!sdkReady) {
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+            return;
+        }
+
+        // SDK is ready - check for actual updates
         boolean segmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(segmentsResult.oldSegments, segmentsResult.newSegments);
         boolean largeSegmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(largeSegmentsResult.oldSegments, largeSegmentsResult.newSegments);
 

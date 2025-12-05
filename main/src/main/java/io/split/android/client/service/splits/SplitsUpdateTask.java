@@ -77,10 +77,13 @@ public class SplitsUpdateTask implements SplitTask {
             mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
 
             // Fire SPLITS_UPDATED only if data actually changed
-            if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill()) ||
-                mChangeChecker.changeNumberIsNewer(storedRbsChangeNumber, mRuleBasedSegmentStorage.getChangeNumber())) {
+            if (mSplitsSyncHelper.splitsHaveChanged()) {
                 EventMetadata metadata = createUpdatedFlagsMetadata();
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
+            }
+
+            if (mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()) {
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
             }
         }
         return result;
