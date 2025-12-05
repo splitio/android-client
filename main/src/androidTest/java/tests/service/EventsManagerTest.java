@@ -26,8 +26,10 @@ public class EventsManagerTest {
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
         eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        // First make SDK_READY fire (prerequisite for SDK_UPDATE)
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        // Then trigger SDK_UPDATE
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
 
         updateLatch.await(5, TimeUnit.SECONDS);
@@ -88,8 +90,10 @@ public class EventsManagerTest {
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
         eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+        // First make SDK_READY fire (prerequisite for SDK_UPDATE)
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        // Then trigger SDK_UPDATE with segment change
         eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
 
         updateLatch.await(5, TimeUnit.SECONDS);
@@ -152,8 +156,10 @@ public class EventsManagerTest {
         TestingHelper.TestEventTask updateTask = TestingHelper.testTask(updateLatch);
         eventManager.register(SplitEvent.SDK_UPDATE, updateTask);
 
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
-        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+        // First make SDK_READY fire (prerequisite for SDK_UPDATE)
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        // Then trigger SDK_UPDATE with killed notification
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION);
 
         updateLatch.await(5, TimeUnit.SECONDS);
