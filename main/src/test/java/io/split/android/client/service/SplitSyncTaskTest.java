@@ -139,6 +139,8 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
+        when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(new ArrayList<>());
 
         mTask.execute();
 
@@ -213,6 +215,8 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
+        when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(new ArrayList<>());
 
         mTask.execute();
 
@@ -243,6 +247,7 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
 
         // Mock the updated split names
         List<String> updatedSplitNames = Arrays.asList("split1", "split2", "split3");
@@ -274,6 +279,7 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
 
         // Mock empty updated split names
         when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(new ArrayList<>());
