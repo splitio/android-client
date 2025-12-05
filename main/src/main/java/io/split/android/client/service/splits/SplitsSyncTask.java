@@ -102,13 +102,10 @@ public class SplitsSyncTask implements SplitTask {
             return;
         }
 
-        // Always fire sync complete. If SDK_READY hasn't fired, this helps satisfy it.
-        // If SDK_READY has fired, this event is ignored (max executions reached for SDK_READY).
-        EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
-
-        // Check for actual updates and fire updated events if necessary.
-        // These events trigger SDK_UPDATE, but only if SDK_READY has already fired (prerequisite).
+        // Fire *_UPDATED events BEFORE sync complete. This order is important:
+        // if we fire TARGETING_RULES_SYNC_COMPLETE first, it may trigger SDK_READY,
+        // and then the *_UPDATED events would immediately trigger SDK_UPDATE during initial sync.
+        // By firing *_UPDATED first (while SDK_READY hasn't triggered yet), they won't trigger SDK_UPDATE.
         if (mSplitsSyncHelper.splitsHaveChanged()) {
             EventMetadata metadata = createUpdatedFlagsMetadata();
             mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
@@ -117,6 +114,12 @@ public class SplitsSyncTask implements SplitTask {
         if (mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()) {
             mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
         }
+
+        // Fire sync complete AFTER update events. This ensures SDK_READY triggers after
+        // all *_UPDATED events have been processed (which won't trigger SDK_UPDATE because
+        // SDK_READY's prerequisite for SDK_UPDATE isn't met yet).
+        EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
     }
 
     private EventMetadata createUpdatedFlagsMetadata() {

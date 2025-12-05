@@ -58,6 +58,9 @@ final class SplitEventsManagerConfigFactory {
                 // Fires when (cache group all done) OR (sync group all done)
                 .requireAny(SplitEvent.SDK_READY_FROM_CACHE, cacheGroup, syncGroup)
 
+                .requireAny(SplitEvent.SDK_READY_TIMED_OUT,
+                        SplitInternalEvent.SDK_READY_TIMEOUT_REACHED)
+
                 // SDK_READY requires SDK_READY_FROM_CACHE to fire first
                 .prerequisite(SplitEvent.SDK_READY, SplitEvent.SDK_READY_FROM_CACHE)
                 .prerequisite(SplitEvent.SDK_UPDATE, SplitEvent.SDK_READY)

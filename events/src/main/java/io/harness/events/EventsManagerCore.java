@@ -154,7 +154,8 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
         // before their dependents, eliminating the need for multiple iterations.
         for (E externalEvent : mConfig.getEvaluationOrder()) {
             // Check if internal trigger conditions are met (RequireAll or RequireAny)
-            boolean internalConditionsMet = checkInternalTriggerConditions(externalEvent, currentSeenInternal);
+            // Pass the current event so we can check if THIS event specifically triggers requireAny
+            boolean internalConditionsMet = checkInternalTriggerConditions(externalEvent, currentSeenInternal, event);
             
             if (!internalConditionsMet) {
                 continue;
@@ -247,9 +248,14 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     /**
      * Checks if the internal trigger conditions are met for an external event.
      * Returns true if either RequireAll or RequireAny conditions are satisfied.
+     *
+     * @param externalEvent the external event to check
+     * @param seenInternal all internal events seen so far
+     * @param currentEvent the internal event that just arrived
      */
-    private boolean checkInternalTriggerConditions(E externalEvent, Set<I> seenInternal) {
+    private boolean checkInternalTriggerConditions(E externalEvent, Set<I> seenInternal, I currentEvent) {
         // Check RequireAll: ALL specified internal events must have been seen
+        // For requireAll, we accumulate events and trigger when all are present
         Set<I> requireAll = mConfig.getRequireAll().get(externalEvent);
         if (requireAll != null && !requireAll.isEmpty()) {
             if (seenInternal.containsAll(requireAll)) {
@@ -257,11 +263,13 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             }
         }
 
-        // Check RequireAny: ANY group must have ALL its internal events seen
+        // Check RequireAny: The CURRENT event must be in one of the groups,
+        // and all events in that group must have been seen.
         Set<Set<I>> requireAnyGroups = mConfig.getRequireAny().get(externalEvent);
         if (requireAnyGroups != null && !requireAnyGroups.isEmpty()) {
             for (Set<I> group : requireAnyGroups) {
-                if (!group.isEmpty() && seenInternal.containsAll(group)) {
+                // Only consider groups that contain the current event
+                if (!group.isEmpty() && group.contains(currentEvent) && seenInternal.containsAll(group)) {
                     return true;
                 }
             }
