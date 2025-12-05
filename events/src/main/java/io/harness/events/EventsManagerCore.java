@@ -149,20 +149,22 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             currentSeenInternal = new HashSet<>(mSeenInternal);
         }
 
-        // Track events fired in this processing cycle to avoid re-firing.
-        // This prevents infinite loops with unlimited events.
-        Set<E> firedInThisCycle = new HashSet<>();
+        // Single-pass evaluation using topologically sorted order.
+        // The sorted order guarantees that prerequisites and suppressors are evaluated
+        // before their dependents, eliminating the need for multiple iterations.
+        for (E externalEvent : mConfig.getEvaluationOrder()) {
+            // Check if internal trigger conditions are met (RequireAll or RequireAny)
+            boolean internalConditionsMet = checkInternalTriggerConditions(externalEvent, currentSeenInternal);
+            
+            if (!internalConditionsMet) {
+                continue;
+            }
 
-        // Loop until no more events fire in an iteration.
-        // Without this loop, events would be missed if their external prerequisites
-        // aren't satisfied on the first pass, but become satisfied after other events fire.
-        boolean anyEventFiredThisIteration;
-        do {
-            boolean requireAllEventsFired = evaluateRequireAllEvents(currentSeenInternal, firedInThisCycle, metadata);
-            boolean requireAnyEventsFired = evaluateRequireAnyEvents(currentSeenInternal, firedInThisCycle, metadata);
-            anyEventFiredThisIteration = requireAllEventsFired || requireAnyEventsFired;
-
-        } while (anyEventFiredThisIteration);
+            // Check external guards (prerequisites and suppression) and fire if all conditions met
+            // Note: Because of the sorted order, prerequisites and suppressors have already been
+            // evaluated and added to mTriggerCount if they fired, so the guards will work correctly.
+            triggerIfConditionsMet(externalEvent, metadata);
+        }
     }
 
     /**
@@ -243,59 +245,29 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     }
 
     /**
-     * Evaluates events with AND logic: fire if ALL required internal events have been seen.
+     * Checks if the internal trigger conditions are met for an external event.
+     * Returns true if either RequireAll or RequireAny conditions are satisfied.
      */
-    private boolean evaluateRequireAllEvents(Set<I> seenInternal, Set<E> firedInThisCycle, M metadata) {
-        boolean anyEventFired = false;
-        for (Map.Entry<E, Set<I>> entry : mConfig.getRequireAll().entrySet()) {
-            E externalEvent = entry.getKey();
-            if (hasAlreadyFiredInCycle(externalEvent, firedInThisCycle)) {
-                continue;
-            }
-            Set<I> requiredInternals = entry.getValue();
-
-            if (allInternalEventsSeen(requiredInternals, seenInternal) && triggerIfConditionsMet(externalEvent, metadata)) {
-                firedInThisCycle.add(externalEvent);
-                anyEventFired = true;
-            }
-        }
-        return anyEventFired;
-    }
-
-    /**
-     * Evaluates events with OR-of-ANDs logic: fire if ANY group has ALL its internal events seen.
-     */
-    private boolean evaluateRequireAnyEvents(Set<I> seenInternal, Set<E> firedInThisCycle, M metadata) {
-        boolean anyEventFired = false;
-        for (Map.Entry<E, Set<Set<I>>> entry : mConfig.getRequireAny().entrySet()) {
-            E externalEvent = entry.getKey();
-            if (hasAlreadyFiredInCycle(externalEvent, firedInThisCycle)) {
-                continue;
-            }
-            Set<Set<I>> requiredGroups = entry.getValue();
-
-            if (anyGroupSatisfied(requiredGroups, seenInternal) && triggerIfConditionsMet(externalEvent, metadata)) {
-                firedInThisCycle.add(externalEvent);
-                anyEventFired = true;
-            }
-        }
-        return anyEventFired;
-    }
-
-    private boolean hasAlreadyFiredInCycle(E event, Set<E> firedInThisCycle) {
-        return firedInThisCycle.contains(event);
-    }
-
-    private boolean allInternalEventsSeen(Set<I> requiredInternals, Set<I> seenInternal) {
-        return !requiredInternals.isEmpty() && seenInternal.containsAll(requiredInternals);
-    }
-
-    private boolean anyGroupSatisfied(Set<Set<I>> requiredGroups, Set<I> seenInternal) {
-        for (Set<I> group : requiredGroups) {
-            if (allInternalEventsSeen(group, seenInternal)) {
+    private boolean checkInternalTriggerConditions(E externalEvent, Set<I> seenInternal) {
+        // Check RequireAll: ALL specified internal events must have been seen
+        Set<I> requireAll = mConfig.getRequireAll().get(externalEvent);
+        if (requireAll != null && !requireAll.isEmpty()) {
+            if (seenInternal.containsAll(requireAll)) {
                 return true;
             }
         }
+
+        // Check RequireAny: ANY group must have ALL its internal events seen
+        Set<Set<I>> requireAnyGroups = mConfig.getRequireAny().get(externalEvent);
+        if (requireAnyGroups != null && !requireAnyGroups.isEmpty()) {
+            for (Set<I> group : requireAnyGroups) {
+                if (!group.isEmpty() && seenInternal.containsAll(group)) {
+                    return true;
+                }
+            }
+        }
+
         return false;
     }
+
 }
