@@ -264,16 +264,12 @@ public class MySegmentsSyncTask implements SplitTask {
             return;
         }
 
-        // Before SDK_READY: fire SYNC_COMPLETE (initial load)
-        // After SDK_READY: fire UPDATED if data changed (update)
-        boolean sdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
+        // Always fire sync complete. If SDK_READY hasn't fired, this helps satisfy it.
+        // If SDK_READY has fired, this event is ignored (max executions reached for SDK_READY).
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
 
-        if (!sdkReady) {
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
-            return;
-        }
-
-        // SDK is ready - check for actual updates
+        // Check for actual updates and fire updated events if necessary.
+        // These events trigger SDK_UPDATE, but only if SDK_READY has already fired (prerequisite).
         boolean segmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(segmentsResult.oldSegments, segmentsResult.newSegments);
         boolean largeSegmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(largeSegmentsResult.oldSegments, largeSegmentsResult.newSegments);
 

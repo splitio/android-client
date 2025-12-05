@@ -102,17 +102,13 @@ public class SplitsSyncTask implements SplitTask {
             return;
         }
 
-        // Before SDK_READY: fire SYNC_COMPLETE (initial load)
-        // After SDK_READY: fire UPDATED if data changed (update)
-        boolean sdkReady = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
+        // Always fire sync complete. If SDK_READY hasn't fired, this helps satisfy it.
+        // If SDK_READY has fired, this event is ignored (max executions reached for SDK_READY).
+        EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
 
-        if (!sdkReady) {
-            EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
-            return;
-        }
-
-        // SDK is ready - check for actual updates
+        // Check for actual updates and fire updated events if necessary.
+        // These events trigger SDK_UPDATE, but only if SDK_READY has already fired (prerequisite).
         if (mSplitsSyncHelper.splitsHaveChanged()) {
             EventMetadata metadata = createUpdatedFlagsMetadata();
             mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
