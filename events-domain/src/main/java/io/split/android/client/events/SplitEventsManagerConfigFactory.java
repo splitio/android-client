@@ -48,18 +48,20 @@ final class SplitEventsManagerConfigFactory {
                 .requireAll(SplitEvent.SDK_READY,
                         SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE,
                         SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE)
-                .requireAny(SplitEvent.SDK_UPDATE,
-                        SplitInternalEvent.SPLITS_UPDATED,
-                        SplitInternalEvent.MY_SEGMENTS_UPDATED,
-                        SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED,
-                        SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED,
-                        SplitInternalEvent.SPLIT_KILLED_NOTIFICATION)
+
                 // SDK_READY_FROM_CACHE: OR of ANDs
                 // Fires when (cache group all done) OR (sync group all done)
                 .requireAny(SplitEvent.SDK_READY_FROM_CACHE, cacheGroup, syncGroup)
 
                 .requireAny(SplitEvent.SDK_READY_TIMED_OUT,
                         SplitInternalEvent.SDK_READY_TIMEOUT_REACHED)
+
+                .requireAny(SplitEvent.SDK_UPDATE,
+                        SplitInternalEvent.SPLITS_UPDATED,
+                        SplitInternalEvent.MY_SEGMENTS_UPDATED,
+                        SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED,
+                        SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED,
+                        SplitInternalEvent.SPLIT_KILLED_NOTIFICATION)
 
                 // SDK_READY requires SDK_READY_FROM_CACHE to fire first
                 .prerequisite(SplitEvent.SDK_READY, SplitEvent.SDK_READY_FROM_CACHE)
