@@ -71,17 +71,21 @@ public class SplitsUpdateTask implements SplitTask {
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(mChangeNumber, mRbsChangeNumber), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
         if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
-            // Always fire TARGETING_RULES_SYNC_COMPLETE when sync succeeds
-            // Sync path metadata: freshInstall=true (synced from network), timestamp=null
-            EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
-
-            // Fire SPLITS_UPDATED only if data actually changed
-            if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill()) ||
-                mChangeChecker.changeNumberIsNewer(storedRbsChangeNumber, mRuleBasedSegmentStorage.getChangeNumber())) {
+            // Fire *_UPDATED events BEFORE sync complete. This order is important:
+            // if we fire TARGETING_RULES_SYNC_COMPLETE first, it may trigger SDK_READY,
+            // and then the *_UPDATED events would immediately trigger SDK_UPDATE during initial sync.
+            if (mSplitsSyncHelper.splitsHaveChanged()) {
                 EventMetadata metadata = createUpdatedFlagsMetadata();
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
             }
+
+            if (mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()) {
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+            }
+
+            // Fire sync complete AFTER update events
+            EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
         }
         return result;
     }

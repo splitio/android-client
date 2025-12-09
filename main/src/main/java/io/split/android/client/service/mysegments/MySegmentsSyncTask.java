@@ -16,6 +16,7 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.SegmentsChange;
+import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
@@ -263,10 +264,10 @@ public class MySegmentsSyncTask implements SplitTask {
             return;
         }
 
-        // Always fire SEGMENTS_SYNC_COMPLETE when sync succeeds
-        mEventsManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
-
-        // Check if data actually changed
+        // Check for actual updates and fire updated events BEFORE sync complete.
+        // This order is important: if we fire MEMBERSHIPS_SYNC_COMPLETE first, it may trigger SDK_READY,
+        // and then the *_UPDATED events would immediately trigger SDK_UPDATE during initial sync.
+        // By firing *_UPDATED first (while SDK_READY hasn't triggered yet), they won't trigger SDK_UPDATE.
         boolean segmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(segmentsResult.oldSegments, segmentsResult.newSegments);
         boolean largeSegmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(largeSegmentsResult.oldSegments, largeSegmentsResult.newSegments);
 
@@ -279,6 +280,11 @@ public class MySegmentsSyncTask implements SplitTask {
             Logger.v("New large segments: " + largeSegmentsResult.newSegments);
             mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
         }
+
+        // Fire sync complete AFTER update events. This ensures SDK_READY triggers after
+        // all *_UPDATED events have been processed (which won't trigger SDK_UPDATE because
+        // SDK_READY's prerequisite for SDK_UPDATE isn't met yet).
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
     }
 
     private static class UpdateSegmentsResult {

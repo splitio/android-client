@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,6 +27,8 @@ public final class EventsManagerConfig<E, I> {
     private final Map<E, Set<E>> mSuppressedBy;
     // Execution policy: max executions per external event (-1 = unlimited)
     private final Map<E, Integer> mExecutionLimits;
+    // Topologically sorted evaluation order (prerequisites and suppressors come before dependents)
+    private final List<E> mEvaluationOrder;
 
     /**
      * Creates a new EventsManagerConfig.
@@ -56,6 +59,8 @@ public final class EventsManagerConfig<E, I> {
         mExecutionLimits = executionLimits == null
                 ? Collections.emptyMap()
                 : Collections.unmodifiableMap(new HashMap<>(executionLimits));
+        
+        mEvaluationOrder = computeEvaluationOrder();
     }
 
     public static <I, E> EventsManagerConfig<E, I> empty() {
@@ -64,6 +69,17 @@ public final class EventsManagerConfig<E, I> {
                 Collections.emptyMap(),
                 Collections.emptyMap(),
                 Collections.emptyMap());
+    }
+
+    private List<E> computeEvaluationOrder() {
+        Set<E> allEvents = new HashSet<>();
+        allEvents.addAll(mRequireAll.keySet());
+        allEvents.addAll(mRequireAny.keySet());
+        allEvents.addAll(mPrerequisites.keySet());
+        allEvents.addAll(mSuppressedBy.keySet());
+        allEvents.addAll(mExecutionLimits.keySet());
+
+        return new EvaluationOrderComputer<>(allEvents, mPrerequisites, mSuppressedBy).compute();
     }
 
     @NotNull
@@ -89,6 +105,11 @@ public final class EventsManagerConfig<E, I> {
     @NotNull
     public Map<E, Integer> getExecutionLimits() {
         return mExecutionLimits;
+    }
+
+    @NotNull
+    public List<E> getEvaluationOrder() {
+        return mEvaluationOrder;
     }
 
     /**

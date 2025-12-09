@@ -3,12 +3,14 @@ package io.harness.events;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public class EventsManagerConfigTest {
@@ -198,5 +200,89 @@ public class EventsManagerConfigTest {
         assertEquals(2, groups.size());
         assertTrue(groups.contains(singletonGroup));
         assertTrue(groups.contains(largeGroup));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldThrowOnCircularPrerequisites() {
+        EventsManagerConfig.<String, String>builder()
+                .requireAll("A", "I1")
+                .requireAll("B", "I2")
+                .prerequisite("A", "B")
+                .prerequisite("B", "A")
+                .build();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldThrowOnCircularSuppression() {
+        EventsManagerConfig.<String, String>builder()
+                .requireAll("A", "I1")
+                .requireAll("B", "I2")
+                .suppressedBy("A", "B")
+                .suppressedBy("B", "A")
+                .build();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldThrowOnMixedCircularDependency() {
+        // A requires B, B suppressed by A (B -> A from prereq, A -> B from suppression)
+        EventsManagerConfig.<String, String>builder()
+                .requireAll("A", "I1")
+                .requireAll("B", "I2")
+                .prerequisite("A", "B")
+                .suppressedBy("B", "A")
+                .build();
+    }
+
+    @Test
+    public void shouldSortByPrerequisites() {
+        // A depends on B, B depends on C
+        // Expected order: C, B, A
+        EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>builder()
+                .requireAll("A", "I1")
+                .requireAll("B", "I2")
+                .requireAll("C", "I3")
+                .prerequisite("A", "B")
+                .prerequisite("B", "C")
+                .build();
+
+        List<String> order = config.getEvaluationOrder();
+        int idxA = order.indexOf("A");
+        int idxB = order.indexOf("B");
+        int idxC = order.indexOf("C");
+
+        assertTrue("C should come before B", idxC < idxB);
+        assertTrue("B should come before A", idxB < idxA);
+    }
+
+    @Test
+    public void shouldSortBySuppression() {
+        // A suppressed by B (B must run first to suppress A)
+        EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>builder()
+                .requireAll("A", "I1")
+                .requireAll("B", "I2")
+                .suppressedBy("A", "B")
+                .build();
+
+        List<String> order = config.getEvaluationOrder();
+        int idxA = order.indexOf("A");
+        int idxB = order.indexOf("B");
+
+        assertTrue("B (suppressor) should come before A (suppressed)", idxB < idxA);
+    }
+
+    @Test
+    public void shouldIncludeEventsFromAllSourcesInSort() {
+        // Events might only appear in prerequisites or suppression lists
+        // even if they don't have trigger conditions themselves
+        EventsManagerConfig<String, String> config = EventsManagerConfig.<String, String>builder()
+                .requireAll("A", "I1")
+                // B is not explicitly configured with requirements, but is a prerequisite
+                .prerequisite("A", "B")
+                .build();
+
+        List<String> order = config.getEvaluationOrder();
+        assertTrue(order.contains("A"));
+        assertTrue(order.contains("B"));
+        assertTrue(order.indexOf("B") < order.indexOf("A"));
     }
 }

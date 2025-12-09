@@ -446,6 +446,7 @@ public class EventsManagerTest {
         assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.SEASONING_ADJUSTED));
     }
 
+
     @Test
     public void requireAnyWithGroupsFiresWhenFirstGroupComplete() throws InterruptedException {
         // External event fires when EITHER:
@@ -846,5 +847,148 @@ public class EventsManagerTest {
         assertEquals(1, dishServedCount.get());
         assertEquals(1, seasoningCount.get());
         assertEquals(1, timeoutCount.get());
+    }
+
+    /**
+     * Tests that requireAny with unlimited execution only triggers when the CURRENT
+     * internal event is one of the triggers, not when historical events satisfy the condition.
+     * This prevents the scenario where:
+     * 1. Internal event A fires (is in requireAny for unlimited event X, but prerequisite not met)
+     * 2. Internal event B fires (satisfies prerequisite for X)
+     * 3. X incorrectly fires because A is in the seen set (but A was the trigger, not B)
+     */
+    @Test
+    public void requireAnyUnlimitedOnlyTriggersOnCurrentEvent() throws InterruptedException {
+        // DISH_SERVED fires when OVEN_PREHEATED (one-shot, acts as prerequisite)
+        // SEASONING_ADJUSTED fires when SEASONING_ADDED (unlimited, requires DISH_SERVED)
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, KitchenActivity.OVEN_PREHEATED)
+                .requireAny(CookingEvent.SEASONING_ADJUSTED, KitchenActivity.SEASONING_ADDED)
+                .prerequisite(CookingEvent.SEASONING_ADJUSTED, CookingEvent.DISH_SERVED)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .executionLimit(CookingEvent.SEASONING_ADJUSTED, -1) // Unlimited
+                .build();
+
+        CountDownLatch dishServedLatch = new CountDownLatch(1);
+        AtomicInteger seasoningCount = new AtomicInteger(0);
+
+        EventDelivery<CookingEvent, Void> delivery = (handler, event, metadata) -> {
+            handler.handle(event, metadata);
+            if (event == CookingEvent.DISH_SERVED) {
+                dishServedLatch.countDown();
+            }
+        };
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, delivery);
+
+        eventsManager.register(CookingEvent.SEASONING_ADJUSTED, (event, metadata) -> seasoningCount.incrementAndGet());
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> {});
+
+        // Step 1: Fire SEASONING_ADDED BEFORE DISH_SERVED
+        // This adds SEASONING_ADDED to seenInternal, but SEASONING_ADJUSTED can't fire (prerequisite not met)
+        eventsManager.notifyInternalEvent(KitchenActivity.SEASONING_ADDED, null);
+
+        // Wait for processing
+        eventsManager.eventAlreadyTriggered(CookingEvent.SEASONING_ADJUSTED);
+        assertEquals("SEASONING_ADJUSTED should NOT fire (prerequisite not met)", 0, seasoningCount.get());
+
+        // Step 2: Fire OVEN_PREHEATED to trigger DISH_SERVED
+        // The bug would be: SEASONING_ADDED is in seenInternal, so SEASONING_ADJUSTED incorrectly fires
+        eventsManager.notifyInternalEvent(KitchenActivity.OVEN_PREHEATED, null);
+
+        assertTrue(dishServedLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+
+        // Wait for any async processing
+        Thread.sleep(100);
+
+        // SEASONING_ADJUSTED should NOT have fired because OVEN_PREHEATED is not in its requireAny
+        assertEquals("SEASONING_ADJUSTED should NOT fire from OVEN_PREHEATED (wrong trigger)", 0, seasoningCount.get());
+
+        // Step 3: Now fire SEASONING_ADDED again - this should trigger SEASONING_ADJUSTED
+        CountDownLatch seasoningLatch = new CountDownLatch(1);
+        eventsManager.register(CookingEvent.SEASONING_ADJUSTED, (event, metadata) -> seasoningLatch.countDown());
+
+        eventsManager.notifyInternalEvent(KitchenActivity.SEASONING_ADDED, null);
+
+        assertTrue(seasoningLatch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals("SEASONING_ADJUSTED should fire when correct trigger arrives", 1, seasoningCount.get());
+    }
+
+    @Test
+    public void requireAnyDoesNotRetriggerFromHistoricalEvents() throws InterruptedException {
+        // Scenario: Multiple requireAny triggers for unlimited event
+        // Event should only fire when one of ITS triggers fires, not when other events fire
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAny(CookingEvent.DISH_SERVED, KitchenActivity.OVEN_PREHEATED, KitchenActivity.PLATES_RETRIEVED)
+                .requireAny(CookingEvent.SEASONING_ADJUSTED,
+                        KitchenActivity.SEASONING_ADDED,
+                        KitchenActivity.LEFTOVER_SAUCE_FOUND)
+                .prerequisite(CookingEvent.SEASONING_ADJUSTED, CookingEvent.DISH_SERVED)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .executionLimit(CookingEvent.SEASONING_ADJUSTED, -1)
+                .build();
+
+        AtomicInteger seasoningCount = new AtomicInteger(0);
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, SIMPLE_DELIVERY);
+
+        eventsManager.register(CookingEvent.SEASONING_ADJUSTED, (event, metadata) -> seasoningCount.incrementAndGet());
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> {});
+
+        // Fire a SEASONING_ADJUSTED trigger before prerequisite is met
+        eventsManager.notifyInternalEvent(KitchenActivity.SEASONING_ADDED, null);
+        assertEquals(0, seasoningCount.get());
+
+        // Satisfy prerequisite with OVEN_PREHEATED
+        eventsManager.notifyInternalEvent(KitchenActivity.OVEN_PREHEATED, null);
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+
+        // SEASONING_ADJUSTED should NOT have fired (OVEN_PREHEATED is not its trigger)
+        assertEquals("Historical SEASONING_ADDED should not cause trigger", 0, seasoningCount.get());
+
+        // Fire an unrelated internal event
+        eventsManager.notifyInternalEvent(KitchenActivity.LEFTOVER_MEAT_FOUND, null);
+        assertEquals("Unrelated event should not cause trigger", 0, seasoningCount.get());
+
+        // Now fire actual trigger - should work
+        eventsManager.notifyInternalEvent(KitchenActivity.LEFTOVER_SAUCE_FOUND, null);
+        Thread.sleep(100);
+        assertEquals("Correct trigger should fire event", 1, seasoningCount.get());
+    }
+
+    @Test
+    public void requireAllStillAccumulatesCorrectly() throws InterruptedException {
+        EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
+                .requireAll(CookingEvent.DISH_SERVED,
+                        KitchenActivity.INGREDIENTS_PREPPED,
+                        KitchenActivity.SEASONING_ADDED,
+                        KitchenActivity.OVEN_PREHEATED)
+                .executionLimit(CookingEvent.DISH_SERVED, 1)
+                .build();
+
+        CountDownLatch latch = new CountDownLatch(1);
+        AtomicInteger count = new AtomicInteger(0);
+
+        EventDelivery<CookingEvent, Void> delivery = (handler, event, metadata) -> {
+            handler.handle(event, metadata);
+            latch.countDown();
+        };
+
+        EventsManager<CookingEvent, KitchenActivity, Void> eventsManager = new EventsManagerCore<>(config, delivery);
+        eventsManager.register(CookingEvent.DISH_SERVED, (event, metadata) -> count.incrementAndGet());
+
+        // Fire events in any order - should accumulate
+        eventsManager.notifyInternalEvent(KitchenActivity.SEASONING_ADDED, null);
+        assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+
+        eventsManager.notifyInternalEvent(KitchenActivity.INGREDIENTS_PREPPED, null);
+        assertFalse(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
+
+        eventsManager.notifyInternalEvent(KitchenActivity.OVEN_PREHEATED, null);
+
+        assertTrue(latch.await(TIMEOUT_MS, TimeUnit.MILLISECONDS));
+        assertEquals(1, count.get());
+        assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
     }
 }

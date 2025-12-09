@@ -9,6 +9,7 @@ import java.util.List;
 
 import io.split.android.client.api.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.ServiceConstants;
@@ -97,18 +98,28 @@ public class SplitsSyncTask implements SplitTask {
     }
 
     private void notifyInternalEvent(long storedChangeNumber) {
-        if (mEventsManager != null) {
-            // Always fire TARGETING_RULES_SYNC_COMPLETE when sync succeeds
-            // Sync path metadata: freshInstall=true (synced from network), timestamp=null
-            EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
-
-            // Fire SPLITS_UPDATED only if data actually changed
-            if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill())) {
-                EventMetadata metadata = createUpdatedFlagsMetadata();
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
-            }
+        if (mEventsManager == null) {
+            return;
         }
+
+        // Fire *_UPDATED events BEFORE sync complete. This order is important:
+        // if we fire TARGETING_RULES_SYNC_COMPLETE first, it may trigger SDK_READY,
+        // and then the *_UPDATED events would immediately trigger SDK_UPDATE during initial sync.
+        // By firing *_UPDATED first (while SDK_READY hasn't triggered yet), they won't trigger SDK_UPDATE.
+        if (mSplitsSyncHelper.splitsHaveChanged()) {
+            EventMetadata metadata = createUpdatedFlagsMetadata();
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
+        }
+
+        if (mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()) {
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+        }
+
+        // Fire sync complete AFTER update events. This ensures SDK_READY triggers after
+        // all *_UPDATED events have been processed (which won't trigger SDK_UPDATE because
+        // SDK_READY's prerequisite for SDK_UPDATE isn't met yet).
+        EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
     }
 
     private EventMetadata createUpdatedFlagsMetadata() {

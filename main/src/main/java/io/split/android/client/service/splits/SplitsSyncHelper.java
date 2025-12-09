@@ -59,6 +59,8 @@ public class SplitsSyncHelper {
     private final ExecutorService mExecutor;
     private final TargetingRulesCache mTargetingRulesCache;
     private final AtomicReference<ProcessedSplitChange> mLastProcessedSplitChange = new AtomicReference<>();
+    private boolean mSplitsHaveChanged;
+    private boolean mRuleBasedSegmentsHaveChanged;
 
     public SplitsSyncHelper(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
                             @NonNull SplitsStorage splitsStorage,
@@ -142,6 +144,8 @@ public class SplitsSyncHelper {
     }
 
     private SplitTaskExecutionInfo sync(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
+        mSplitsHaveChanged = false;
+        mRuleBasedSegmentsHaveChanged = false;
         try {
             mOutdatedSplitProxyHandler.performProxyCheck();
             if (mOutdatedSplitProxyHandler.isRecoveryMode()) {
@@ -308,6 +312,14 @@ public class SplitsSyncHelper {
     }
 
     private void updateStorage(boolean clearBeforeUpdate, SplitChange splitChange, RuleBasedSegmentChange ruleBasedSegmentChange) {
+        if (splitChange != null && splitChange.splits != null && !splitChange.splits.isEmpty()) {
+            mSplitsHaveChanged = true;
+        }
+
+        if (ruleBasedSegmentChange != null && ruleBasedSegmentChange.getSegments() != null && !ruleBasedSegmentChange.getSegments().isEmpty()) {
+            mRuleBasedSegmentsHaveChanged = true;
+        }
+
         if (clearBeforeUpdate) {
             mSplitsStorage.clear();
             mRuleBasedSegmentStorage.clear();
@@ -415,6 +427,14 @@ public class SplitsSyncHelper {
                     ", rbs=" + mRbsSince +
                     '}';
         }
+    }
+
+    public boolean splitsHaveChanged() {
+        return mSplitsHaveChanged;
+    }
+
+    public boolean ruleBasedSegmentsHaveChanged() {
+        return mRuleBasedSegmentsHaveChanged;
     }
 
     private enum CdnByPassType {

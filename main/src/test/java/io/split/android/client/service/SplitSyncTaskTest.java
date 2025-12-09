@@ -139,6 +139,8 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
+        when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(new ArrayList<>());
 
         mTask.execute();
 
@@ -213,6 +215,8 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
+        when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(new ArrayList<>());
 
         mTask.execute();
 
@@ -243,6 +247,7 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
 
         // Mock the updated split names
         List<String> updatedSplitNames = Arrays.asList("split1", "split2", "split3");
@@ -274,6 +279,7 @@ public class SplitSyncTaskTest {
         when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
         when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
 
         // Mock empty updated split names
         when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(new ArrayList<>());
@@ -291,6 +297,36 @@ public class SplitSyncTaskTest {
             assertTrue(flags.isEmpty());
             return true;
         }));
+    }
+
+    @Test
+    public void ruleBasedSegmentsUpdatedIsFiredWhenRbsChanged() {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()).thenReturn(true);
+
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
+    }
+
+    @Test
+    public void ruleBasedSegmentsUpdatedIsNotFiredWhenRbsUnchanged() {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()).thenReturn(false);
+
+        mTask.execute();
+
+        verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
     }
 
     @After
