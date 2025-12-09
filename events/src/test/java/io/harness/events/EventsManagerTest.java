@@ -945,12 +945,10 @@ public class EventsManagerTest {
         assertTrue(eventsManager.eventAlreadyTriggered(CookingEvent.DISH_SERVED));
 
         // SEASONING_ADJUSTED should NOT have fired (OVEN_PREHEATED is not its trigger)
-        Thread.sleep(100);
         assertEquals("Historical SEASONING_ADDED should not cause trigger", 0, seasoningCount.get());
 
         // Fire an unrelated internal event
         eventsManager.notifyInternalEvent(KitchenActivity.LEFTOVER_MEAT_FOUND, null);
-        Thread.sleep(100);
         assertEquals("Unrelated event should not cause trigger", 0, seasoningCount.get());
 
         // Now fire actual trigger - should work

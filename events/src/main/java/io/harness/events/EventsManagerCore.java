@@ -251,10 +251,8 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
      */
     private boolean checkInternalTriggerConditions(E externalEvent, Set<I> seenInternal, I currentEvent) {
         Set<I> requireAll = mConfig.getRequireAll().get(externalEvent);
-        if (requireAll != null && !requireAll.isEmpty()) {
-            if (seenInternal.containsAll(requireAll)) {
-                return true;
-            }
+        if (requireAll != null && !requireAll.isEmpty() && seenInternal.containsAll(requireAll)) {
+            return true;
         }
 
         // Check RequireAny: The CURRENT internal event must be in one of the groups,
