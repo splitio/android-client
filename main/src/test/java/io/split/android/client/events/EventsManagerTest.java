@@ -1,6 +1,8 @@
 package io.split.android.client.events;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -11,13 +13,17 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.fake.SplitTaskExecutorStub;
 
 public class EventsManagerTest {
@@ -265,5 +271,177 @@ public class EventsManagerTest {
                 shouldStop = true;
             }
         }
+    }
+
+    @Test
+    public void sdkUpdateWithMetadataCallsMetadataMethod() throws InterruptedException {
+        SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorStub(), 0);
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        CountDownLatch updateLatch = new CountDownLatch(1);
+        AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
+
+        waitForSdkReady(eventManager, readyLatch);
+
+        eventManager.register(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+
+        EventMetadata metadata = createTestMetadata();
+        triggerSdkUpdateWithMetadata(eventManager, metadata);
+
+        boolean updateAwait = updateLatch.await(3, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE callback should be called", updateAwait);
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey("updatedFlags"));
+    }
+
+    @Test
+    public void sdkUpdateWithMetadataCallsMetadataMethodOnMainThread() throws InterruptedException {
+        SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorStub(), 0);
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        CountDownLatch updateLatch = new CountDownLatch(1);
+        AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
+
+        waitForSdkReady(eventManager, readyLatch);
+
+        eventManager.register(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecutionView(SplitClient client, EventMetadata metadata) {
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+
+        EventMetadata metadata = createTestMetadata();
+        triggerSdkUpdateWithMetadata(eventManager, metadata);
+
+        boolean updateAwait = updateLatch.await(3, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE callback should be called on main thread", updateAwait);
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey("updatedFlags"));
+    }
+
+    @Test
+    public void sdkUpdateCallsLegacyMethodWhenOnlyLegacyImplemented() throws InterruptedException {
+        SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorStub(), 0);
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        CountDownLatch updateLatch = new CountDownLatch(1);
+        final boolean[] nonMetadataMethodCalled = {false};
+
+        waitForSdkReady(eventManager, readyLatch);
+
+        eventManager.register(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                nonMetadataMethodCalled[0] = true;
+                updateLatch.countDown();
+            }
+        });
+
+        EventMetadata metadata = createTestMetadata();
+        triggerSdkUpdateWithMetadata(eventManager, metadata);
+
+        boolean updateAwait = updateLatch.await(3, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE callback should be called", updateAwait);
+        assertTrue("Legacy method should be called", nonMetadataMethodCalled[0]);
+    }
+
+    @Test
+    public void sdkUpdateCallsBothMethodsWhenBothImplemented() throws InterruptedException {
+        SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorStub(), 0);
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        CountDownLatch bothCalledLatch = new CountDownLatch(2);
+        final boolean[] metadataMethodCalled = {false};
+        final boolean[] legacyMethodCalled = {false};
+        AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
+
+        waitForSdkReady(eventManager, readyLatch);
+
+        eventManager.register(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                metadataMethodCalled[0] = true;
+                receivedMetadata.set(metadata);
+                bothCalledLatch.countDown();
+            }
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                legacyMethodCalled[0] = true;
+                bothCalledLatch.countDown();
+            }
+        });
+
+        EventMetadata metadata = createTestMetadata();
+        triggerSdkUpdateWithMetadata(eventManager, metadata);
+
+        boolean bothCalled = bothCalledLatch.await(3, TimeUnit.SECONDS);
+        assertTrue("Both callbacks should be called", bothCalled);
+        assertTrue("Metadata method should be called", metadataMethodCalled[0]);
+        assertTrue("Legacy method should also be called", legacyMethodCalled[0]);
+        assertNotNull("Metadata should be passed to metadata method", receivedMetadata.get());
+        assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey("updatedFlags"));
+    }
+
+    @Test
+    public void sdkReadyFromCacheCallsBothMethodsWhenBothImplemented() throws InterruptedException {
+        SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorStub(), 0);
+
+        CountDownLatch bothCalledLatch = new CountDownLatch(2); // Expect 2 calls
+        final boolean[] metadataMethodCalled = {false};
+        final boolean[] legacyMethodCalled = {false};
+
+        // Register a task that implements both versions
+        eventManager.register(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                metadataMethodCalled[0] = true;
+                bothCalledLatch.countDown();
+            }
+
+            @Override
+            public void onPostExecution(SplitClient client) {
+                legacyMethodCalled[0] = true;
+                bothCalledLatch.countDown();
+            }
+        });
+
+        // Trigger SDK_READY_FROM_CACHE
+        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.ATTRIBUTES_LOADED_FROM_STORAGE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.ENCRYPTION_MIGRATION_DONE);
+
+        boolean bothCalled = bothCalledLatch.await(3, TimeUnit.SECONDS);
+        assertTrue("Both callbacks should be called", bothCalled);
+        assertTrue("Metadata method should be called", metadataMethodCalled[0]);
+        assertTrue("Legacy method should also be called", legacyMethodCalled[0]);
+    }
+
+    private void waitForSdkReady(SplitEventsManager eventManager, CountDownLatch readyLatch) throws InterruptedException {
+        eventManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecutionView(SplitClient client) {
+                readyLatch.countDown();
+            }
+        });
+
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        boolean readyAwait = readyLatch.await(3, TimeUnit.SECONDS);
+        assertTrue("SDK_READY should be triggered", readyAwait);
+    }
+
+    private static EventMetadata createTestMetadata() {
+        return EventMetadataHelpers.createUpdatedFlagsMetadata(
+                Arrays.asList("flag1", "flag2"));
+    }
+
+    private static void triggerSdkUpdateWithMetadata(SplitEventsManager eventManager, EventMetadata metadata) {
+        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
     }
 }

@@ -145,30 +145,74 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     }
 
     private EventHandler<SplitEvent, EventMetadata> createBackgroundHandler(final SplitEventTask task) {
-        return new EventHandler<SplitEvent, EventMetadata>() {
+        return createEventHandler(task, "background", new TaskMethodCaller() {
             @Override
-            public void handle(SplitEvent event, EventMetadata metadata) {
-                try {
-                    task.onPostExecution(mResources.getSplitClient());
-                } catch (SplitEventTaskMethodNotImplementedException e) {
-                    // Method not implemented by client, ignore
-                } catch (Exception e) {
-                    Logger.e("Error executing background event task: " + e.getMessage());
-                }
+            public void callWithMetadata(EventMetadata metadata) {
+                task.onPostExecution(mResources.getSplitClient(), metadata);
             }
-        };
+
+            @Override
+            public void callWithoutMetadata() {
+                task.onPostExecution(mResources.getSplitClient());
+            }
+        });
     }
 
     private EventHandler<SplitEvent, EventMetadata> createMainThreadHandler(final SplitEventTask task) {
+        return createEventHandler(task, "main thread", new TaskMethodCaller() {
+            @Override
+            public void callWithMetadata(EventMetadata metadata) {
+                task.onPostExecutionView(mResources.getSplitClient(), metadata);
+            }
+
+            @Override
+            public void callWithoutMetadata() {
+                task.onPostExecutionView(mResources.getSplitClient());
+            }
+        });
+    }
+
+    /**
+     * Helper interface for calling task methods.
+     */
+    private interface TaskMethodCaller {
+        void callWithMetadata(EventMetadata metadata) throws Exception;
+        void callWithoutMetadata() throws Exception;
+    }
+
+    /**
+     * Creates an EventHandler that calls both metadata and legacy versions of the task method.
+     *
+     * @param task the task to execute
+     * @param threadType description of thread type for error messages
+     * @param caller interface for calling the appropriate task methods
+     * @return an EventHandler that handles both metadata and legacy callbacks
+     */
+    private EventHandler<SplitEvent, EventMetadata> createEventHandler(
+            final SplitEventTask task,
+            final String threadType,
+            final TaskMethodCaller caller) {
         return new EventHandler<SplitEvent, EventMetadata>() {
             @Override
             public void handle(SplitEvent event, EventMetadata metadata) {
+                executeTaskMethod(metadata, true, threadType, caller);
+                executeTaskMethod(metadata, false, threadType, caller);
+            }
+
+            private void executeTaskMethod(EventMetadata metadata, boolean withMetadata, String threadType, TaskMethodCaller caller) {
                 try {
-                    task.onPostExecutionView(mResources.getSplitClient());
+                    if (withMetadata) {
+                        caller.callWithMetadata(metadata);
+                    } else {
+                        caller.callWithoutMetadata();
+                    }
                 } catch (SplitEventTaskMethodNotImplementedException e) {
                     // Method not implemented by client, ignore
                 } catch (Exception e) {
-                    Logger.e("Error executing main thread event task: " + e.getMessage());
+                    String errorPrefix = withMetadata
+                            ? "Error executing " + threadType + " event task (with metadata): "
+                            : "Error executing " + threadType + " event task: ";
+                    Logger.e(errorPrefix + e.getMessage());
                 }
             }
         };
