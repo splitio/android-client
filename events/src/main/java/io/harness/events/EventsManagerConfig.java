@@ -2,7 +2,6 @@ package io.harness.events;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -72,104 +71,8 @@ public final class EventsManagerConfig<E, I> {
                 Collections.emptyMap());
     }
 
-    /**
-     * Computes the topological sort of external events based on prerequisites and suppression.
-     * 
-     * Edge direction: If A depends on B (prerequisite or suppression), then B -> A (B must come before A).
-     * 
-     * @return topologically sorted list of events
-     * @throws IllegalStateException if a circular dependency is detected
-     */
     private List<E> computeEvaluationOrder() {
-        // Step 1: Gather all events from all sources
-        Set<E> allEvents = new HashSet<>();
-        allEvents.addAll(mRequireAll.keySet());
-        allEvents.addAll(mRequireAny.keySet());
-        allEvents.addAll(mPrerequisites.keySet());
-        allEvents.addAll(mSuppressedBy.keySet());
-        allEvents.addAll(mExecutionLimits.keySet());
-        
-        // Also include events that appear as values (prerequisites, suppressors)
-        for (Set<E> prereqs : mPrerequisites.values()) {
-            allEvents.addAll(prereqs);
-        }
-        for (Set<E> suppressors : mSuppressedBy.values()) {
-            allEvents.addAll(suppressors);
-        }
-        
-        if (allEvents.isEmpty()) {
-            return Collections.emptyList();
-        }
-        
-        // Step 2: Build adjacency list for the dependency graph
-        // For each event, track which events must come before it
-        Map<E, Set<E>> dependencies = new HashMap<>();
-        for (E event : allEvents) {
-            dependencies.put(event, new HashSet<>());
-        }
-        
-        // Add edges: if A has prerequisite B, then B -> A (B must come before A)
-        for (Map.Entry<E, Set<E>> entry : mPrerequisites.entrySet()) {
-            E dependent = entry.getKey();
-            for (E prerequisite : entry.getValue()) {
-                dependencies.get(dependent).add(prerequisite);
-            }
-        }
-        
-        // Add edges: if A is suppressed by B, then B -> A (B must come before A)
-        for (Map.Entry<E, Set<E>> entry : mSuppressedBy.entrySet()) {
-            E suppressed = entry.getKey();
-            for (E suppressor : entry.getValue()) {
-                dependencies.get(suppressed).add(suppressor);
-            }
-        }
-        
-        // Step 3: Perform topological sort using DFS with cycle detection
-        List<E> result = new ArrayList<>();
-        Set<E> visited = new HashSet<>();
-        Set<E> visiting = new HashSet<>(); // For cycle detection
-        
-        for (E event : allEvents) {
-            if (!visited.contains(event)) {
-                visit(event, dependencies, visited, visiting, result);
-            }
-        }
-        
-        return Collections.unmodifiableList(result);
-    }
-    
-    /**
-     * DFS visit helper for topological sort with cycle detection.
-     * 
-     * @param node the current node to visit
-     * @param dependencies the dependency graph (node -> set of nodes that must come before it)
-     * @param visited set of permanently visited nodes
-     * @param visiting set of nodes currently being visited (for cycle detection)
-     * @param result the sorted result list
-     * @throws IllegalStateException if a cycle is detected
-     */
-    private void visit(E node, Map<E, Set<E>> dependencies, Set<E> visited, Set<E> visiting, List<E> result) {
-        if (visited.contains(node)) {
-            return; // Already processed
-        }
-        
-        if (visiting.contains(node)) {
-            throw new IllegalStateException("Circular dependency detected involving event: " + node);
-        }
-        
-        visiting.add(node);
-        
-        // Visit all dependencies first (events that must come before this one)
-        Set<E> deps = dependencies.get(node);
-        if (deps != null) {
-            for (E dep : deps) {
-                visit(dep, dependencies, visited, visiting, result);
-            }
-        }
-        
-        visiting.remove(node);
-        visited.add(node);
-        result.add(node);
+        return new EvaluationOrderComputer<>(mPrerequisites, mSuppressedBy).compute();
     }
 
     @NotNull
