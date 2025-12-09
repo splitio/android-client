@@ -180,14 +180,6 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
         void callWithoutMetadata() throws Exception;
     }
 
-    /**
-     * Creates an EventHandler that calls both metadata and legacy versions of the task method.
-     *
-     * @param task the task to execute
-     * @param threadType description of thread type for error messages
-     * @param caller interface for calling the appropriate task methods
-     * @return an EventHandler that handles both metadata and legacy callbacks
-     */
     private EventHandler<SplitEvent, EventMetadata> createEventHandler(
             final SplitEventTask task,
             final String threadType,
