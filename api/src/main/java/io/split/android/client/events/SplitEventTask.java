@@ -1,5 +1,7 @@
 package io.split.android.client.events;
 
+import androidx.annotation.Nullable;
+
 import io.split.android.client.SplitClient;
 import io.split.android.client.api.EventMetadata;
 
@@ -84,7 +86,7 @@ public class SplitEventTask {
      * @param metadata the event metadata, may be {@code null} for some events
      * @throws SplitEventTaskMethodNotImplementedException if not overridden (default behavior)
      */
-    public void onPostExecution(SplitClient client, EventMetadata metadata) {
+    public void onPostExecution(SplitClient client, @Nullable EventMetadata metadata) {
         throw new SplitEventTaskMethodNotImplementedException();
     }
 
@@ -105,7 +107,7 @@ public class SplitEventTask {
      * @param metadata the event metadata, may be {@code null} for some events
      * @throws SplitEventTaskMethodNotImplementedException if not overridden (default behavior)
      */
-    public void onPostExecutionView(SplitClient client, EventMetadata metadata) {
+    public void onPostExecutionView(SplitClient client, @Nullable EventMetadata metadata) {
         throw new SplitEventTaskMethodNotImplementedException();
     }
 }
