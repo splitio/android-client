@@ -674,6 +674,67 @@ public class SplitsSyncHelperTest {
     }
 
     @Test
+    public void splitsHaveChangedReturnsTrueWhenSplitsAreNonEmpty() throws HttpFetcherException {
+        Split split = new Split();
+        split.name = "test_split";
+        SplitChange splitChange = SplitChange.create(-1, 100L, Collections.singletonList(split));
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenReturn(TargetingRulesChange.create(splitChange, RuleBasedSegmentChange.create(-1, 100L, Collections.emptyList())))
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(100L, 100L, Collections.emptyList()), RuleBasedSegmentChange.create(100L, 100L, Collections.emptyList())));
+        when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
+        when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(100L);
+
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+
+        assertTrue(mSplitsSyncHelper.splitsHaveChanged());
+    }
+
+    @Test
+    public void splitsHaveChangedReturnsFalseWhenSplitsAreEmpty() throws HttpFetcherException {
+        SplitChange splitChange = SplitChange.create(-1, 100L, Collections.emptyList());
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenReturn(TargetingRulesChange.create(splitChange, RuleBasedSegmentChange.create(-1, 100L, Collections.emptyList())))
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(100L, 100L, Collections.emptyList()), RuleBasedSegmentChange.create(100L, 100L, Collections.emptyList())));
+        when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
+        when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(100L);
+
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+
+        assertTrue(!mSplitsSyncHelper.splitsHaveChanged());
+    }
+
+    @Test
+    public void ruleBasedSegmentsHaveChangedReturnsTrueWhenSegmentsAreNonEmpty() throws HttpFetcherException {
+        RuleBasedSegment segment = RuleBasedSegmentStorageImplTest.createRuleBasedSegment("test_segment");
+        SplitChange splitChange = SplitChange.create(-1, 100L, Collections.emptyList());
+        RuleBasedSegmentChange rbsChange = RuleBasedSegmentChange.create(-1, 100L, Collections.singletonList(segment));
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenReturn(TargetingRulesChange.create(splitChange, rbsChange))
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(100L, 100L, Collections.emptyList()), RuleBasedSegmentChange.create(100L, 100L, Collections.emptyList())));
+        when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
+        when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(100L);
+
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+
+        assertTrue(mSplitsSyncHelper.ruleBasedSegmentsHaveChanged());
+    }
+
+    @Test
+    public void ruleBasedSegmentsHaveChangedReturnsFalseWhenSegmentsAreEmpty() throws HttpFetcherException {
+        SplitChange splitChange = SplitChange.create(-1, 100L, Collections.emptyList());
+        RuleBasedSegmentChange rbsChange = RuleBasedSegmentChange.create(-1, 100L, Collections.emptyList());
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenReturn(TargetingRulesChange.create(splitChange, rbsChange))
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(100L, 100L, Collections.emptyList()), RuleBasedSegmentChange.create(100L, 100L, Collections.emptyList())));
+        when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
+        when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(100L);
+
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+
+        assertTrue(!mSplitsSyncHelper.ruleBasedSegmentsHaveChanged());
+    }
+
+    @Test
     public void getLastUpdatedSplitNamesReturnsFlagNamesAfterSync() throws HttpFetcherException {
         // Use the actual split change from loadSplitChanges which contains real splits
         SplitChange secondSplitChange = mTargetingRulesChange.getFeatureFlagsChange();

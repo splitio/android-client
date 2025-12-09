@@ -299,6 +299,36 @@ public class SplitSyncTaskTest {
         }));
     }
 
+    @Test
+    public void ruleBasedSegmentsUpdatedIsFiredWhenRbsChanged() {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()).thenReturn(true);
+
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
+    }
+
+    @Test
+    public void ruleBasedSegmentsUpdatedIsNotFiredWhenRbsUnchanged() {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()).thenReturn(false);
+
+        mTask.execute();
+
+        verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
+    }
+
     @After
     public void tearDown() {
         reset(mSplitsStorage);
