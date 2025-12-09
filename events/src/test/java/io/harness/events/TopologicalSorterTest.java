@@ -117,13 +117,6 @@ public class TopologicalSorterTest {
 
     @Test
     public void diamondDependencyResolved() {
-        //     B
-        //   /   \
-        // A       D
-        //   \   /
-        //     C
-        // A depends on B and C, B depends on D, C depends on D
-        // Expected: D before B and C, B and C before A
         Set<String> nodes = new HashSet<>();
         nodes.add("A");
         nodes.add("B");

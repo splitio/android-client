@@ -202,8 +202,6 @@ public class EventsManagerConfigTest {
         assertTrue(groups.contains(largeGroup));
     }
 
-    // RED (TDD): New tests for Topological Sort
-
     @Test(expected = IllegalStateException.class)
     public void shouldThrowOnCircularPrerequisites() {
         EventsManagerConfig.<String, String>builder()

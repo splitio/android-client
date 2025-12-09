@@ -149,7 +149,6 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             currentSeenInternal = new HashSet<>(mSeenInternal);
         }
 
-        // Single-pass evaluation using topologically sorted order.
         // The sorted order guarantees that prerequisites and suppressors are evaluated
         // before their dependents.
         for (E externalEvent : mConfig.getEvaluationOrder()) {

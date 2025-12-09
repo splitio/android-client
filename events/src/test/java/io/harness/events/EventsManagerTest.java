@@ -852,7 +852,6 @@ public class EventsManagerTest {
     /**
      * Tests that requireAny with unlimited execution only triggers when the CURRENT
      * internal event is one of the triggers, not when historical events satisfy the condition.
-     * <p>
      * This prevents the scenario where:
      * 1. Internal event A fires (is in requireAny for unlimited event X, but prerequisite not met)
      * 2. Internal event B fires (satisfies prerequisite for X)
@@ -916,10 +915,6 @@ public class EventsManagerTest {
         assertEquals("SEASONING_ADJUSTED should fire when correct trigger arrives", 1, seasoningCount.get());
     }
 
-    /**
-     * Tests that historical internal events don't cause re-triggering of unlimited events
-     * when a different internal event fires and happens to satisfy prerequisites.
-     */
     @Test
     public void requireAnyDoesNotRetriggerFromHistoricalEvents() throws InterruptedException {
         // Scenario: Multiple requireAny triggers for unlimited event
@@ -964,10 +959,6 @@ public class EventsManagerTest {
         assertEquals("Correct trigger should fire event", 1, seasoningCount.get());
     }
 
-    /**
-     * Tests that requireAll accumulation behavior still works correctly.
-     * RequireAll should wait for ALL events regardless of when they fire.
-     */
     @Test
     public void requireAllStillAccumulatesCorrectly() throws InterruptedException {
         EventsManagerConfig<CookingEvent, KitchenActivity> config = EventsManagerConfig.<CookingEvent, KitchenActivity>builder()
