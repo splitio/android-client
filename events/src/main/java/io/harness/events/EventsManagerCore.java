@@ -151,10 +151,9 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
 
         // Single-pass evaluation using topologically sorted order.
         // The sorted order guarantees that prerequisites and suppressors are evaluated
-        // before their dependents, eliminating the need for multiple iterations.
+        // before their dependents.
         for (E externalEvent : mConfig.getEvaluationOrder()) {
             // Check if internal trigger conditions are met (RequireAll or RequireAny)
-            // Pass the current event so we can check if THIS event specifically triggers requireAny
             boolean internalConditionsMet = checkInternalTriggerConditions(externalEvent, currentSeenInternal, event);
             
             if (!internalConditionsMet) {
@@ -162,8 +161,6 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             }
 
             // Check external guards (prerequisites and suppression) and fire if all conditions met
-            // Note: Because of the sorted order, prerequisites and suppressors have already been
-            // evaluated and added to mTriggerCount if they fired, so the guards will work correctly.
             triggerIfConditionsMet(externalEvent, metadata);
         }
     }
@@ -254,8 +251,6 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
      * @param currentEvent the internal event that just arrived
      */
     private boolean checkInternalTriggerConditions(E externalEvent, Set<I> seenInternal, I currentEvent) {
-        // Check RequireAll: ALL specified internal events must have been seen
-        // For requireAll, we accumulate events and trigger when all are present
         Set<I> requireAll = mConfig.getRequireAll().get(externalEvent);
         if (requireAll != null && !requireAll.isEmpty()) {
             if (seenInternal.containsAll(requireAll)) {
@@ -263,7 +258,7 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             }
         }
 
-        // Check RequireAny: The CURRENT event must be in one of the groups,
+        // Check RequireAny: The CURRENT internal event must be in one of the groups,
         // and all events in that group must have been seen.
         Set<Set<I>> requireAnyGroups = mConfig.getRequireAny().get(externalEvent);
         if (requireAnyGroups != null && !requireAnyGroups.isEmpty()) {

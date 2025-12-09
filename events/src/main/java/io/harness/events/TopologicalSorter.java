@@ -34,16 +34,16 @@ final class TopologicalSorter<T> {
      * <p>
      * The result is ordered such that for any node A that depends on node B,
      * B will appear before A in the returned list.
-     * 
+     * <p>
      * For example, the following dependency graph:
-     * 
+     * <p>
      * ```
      * A -> B // B is a prerequisite for A
      * B -> C // C is suppressed by B
      * ```
-     * 
+     * <p>
      * Will result in the following sorted list:
-     * 
+     * <p>
      * ```
      * [C, B, A]
      * ```
@@ -72,7 +72,7 @@ final class TopologicalSorter<T> {
     /**
      * Visit all dependencies first (nodes that must come before this one),
      * then add the current node to the result list.
-     * 
+     * <p>
      * If a cycle is detected, an exception is thrown.
      *
      * @param node     the current node to visit
@@ -105,4 +105,3 @@ final class TopologicalSorter<T> {
         result.add(node);
     }
 }
-

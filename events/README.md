@@ -26,9 +26,15 @@ Events are configured using `EventsManagerConfig.Builder`:
 
 The events system uses **topological sorting** to determine the order in which external events are evaluated. This is essential for correctness.
 
+### Evaluation Flow
+
+1. **Internal Event Arrives**: A single internal event can potentially satisfy conditions for multiple external events.
+2. **Single-Pass Evaluation**: The system iterates through a pre-computed list of external events (`mEvaluationOrder`).
+3. **Order Matters**: This list is topologically sorted so that events with dependencies (prerequisites/suppression) come *after* the events they depend on.
+
 ### Why It's Necessary
 
-When a single internal event notification could trigger multiple external events, they must be evaluated in the correct order based on their dependencies (`prerequisite` and `suppressedBy` relationships).
+When a single internal event notification could trigger multiple external events, they must be evaluated in the correct order based on their dependencies.
 
 #### Prerequisite Example
 
@@ -52,14 +58,16 @@ If both events' conditions are satisfied by the same internal event:
 - **Without sort**: If `SDK_READY_TIMED_OUT` is checked first, `isSuppressed()` returns `false` because `SDK_READY` hasn't fired yet. Both events fire incorrectly.
 - **With sort**: `SDK_READY` is evaluated first, fires, then `SDK_READY_TIMED_OUT` sees it's suppressed and doesn't fire.
 
-### Benefits
+### Implementation Details
 
-This ensures correctness and validates there are no cycles as a bonus.
+The sorting logic is split into:
 
-### Implementation
+- **`EventsManagerConfig`**: Holds the raw configuration.
+- **`EvaluationOrderComputer`**: Gathers all configured events and builds the dependency graph based on prerequisites and suppressors.
+- **`TopologicalSorter`**: A generic utility that performs the DFS-based topological sort with cycle detection.
 
-The topological sort treats both `prerequisite` and `suppressedBy` as dependency edges in a graph:
+The topological sort treats both `prerequisite` and `suppressedBy` as dependency edges:
 - If A has `prerequisite` B → B must be evaluated before A
 - If A is `suppressedBy` B → B must be evaluated before A
 
-This ensures that when checking whether an event can fire, all events it depends on have already been processed.
+**Note:** All configured events are included in the evaluation order, even those without dependencies. Independent events can appear anywhere in the list relative to each other, but always before/after their dependents/dependencies as required.

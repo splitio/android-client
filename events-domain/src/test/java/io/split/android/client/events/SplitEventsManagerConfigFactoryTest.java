@@ -11,12 +11,6 @@ import java.util.Set;
 
 import io.harness.events.EventsManagerConfig;
 
-/**
- * Tests for {@link SplitEventsManagerConfigFactory}.
- * <p>
- * Verifies that the Split SDK event configuration is set up correctly,
- * including triggers, prerequisites, suppressors, and execution limits.
- */
 public class SplitEventsManagerConfigFactoryTest {
 
     @Test
@@ -24,8 +18,6 @@ public class SplitEventsManagerConfigFactoryTest {
         EventsManagerConfig<SplitEvent, SplitInternalEvent> config = SplitEventsManagerConfigFactory.create();
         assertNotNull(config);
     }
-
-    // ===== SDK_READY =====
 
     @Test
     public void sdkReadyRequiresTargetingRulesSyncCompleteAndMembershipsSyncComplete() {
@@ -59,8 +51,6 @@ public class SplitEventsManagerConfigFactoryTest {
         assertEquals("SDK_READY should fire at most once", 1, (int) limit);
     }
 
-    // ===== SDK_READY_FROM_CACHE =====
-
     @Test
     public void sdkReadyFromCacheHasOrOfAndsConfiguration() {
         EventsManagerConfig<SplitEvent, SplitInternalEvent> config = SplitEventsManagerConfigFactory.create();
@@ -69,7 +59,6 @@ public class SplitEventsManagerConfigFactoryTest {
         assertNotNull("SDK_READY_FROM_CACHE should have requireAny configuration", requireAnyGroups);
         assertEquals("SDK_READY_FROM_CACHE should have 2 groups (cache and sync)", 2, requireAnyGroups.size());
 
-        // Find the cache group (4 events) and sync group (2 events)
         boolean hasCacheGroup = false;
         boolean hasSyncGroup = false;
         for (Set<SplitInternalEvent> group : requireAnyGroups) {
@@ -98,9 +87,6 @@ public class SplitEventsManagerConfigFactoryTest {
         assertNotNull("SDK_READY_FROM_CACHE should have execution limit", limit);
         assertEquals("SDK_READY_FROM_CACHE should fire at most once", 1, (int) limit);
     }
-
-    // ===== SDK_READY_TIMED_OUT =====
-
     @Test
     public void sdkReadyTimedOutRequiresTimeoutReached() {
         EventsManagerConfig<SplitEvent, SplitInternalEvent> config = SplitEventsManagerConfigFactory.create();
@@ -136,8 +122,6 @@ public class SplitEventsManagerConfigFactoryTest {
         assertNotNull("SDK_READY_TIMED_OUT should have execution limit", limit);
         assertEquals("SDK_READY_TIMED_OUT should fire at most once", 1, (int) limit);
     }
-
-    // ===== SDK_UPDATE =====
 
     @Test
     public void sdkUpdateHasCorrectTriggers() {
@@ -189,8 +173,6 @@ public class SplitEventsManagerConfigFactoryTest {
         assertEquals("SDK_UPDATE should have unlimited executions (-1)", -1, (int) limit);
     }
 
-    // ===== Evaluation Order =====
-
     @Test
     public void evaluationOrderIsNotEmpty() {
         EventsManagerConfig<SplitEvent, SplitInternalEvent> config = SplitEventsManagerConfigFactory.create();
@@ -200,7 +182,7 @@ public class SplitEventsManagerConfigFactoryTest {
     }
 
     @Test
-    public void evaluationOrderContainsAllConfiguredEvents() {
+    public void evaluationOrderContainsAllConfiguredExternalEvents() {
         EventsManagerConfig<SplitEvent, SplitInternalEvent> config = SplitEventsManagerConfigFactory.create();
 
         assertTrue("Evaluation order should contain SDK_READY",

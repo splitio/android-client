@@ -54,10 +54,6 @@ final class EvaluationOrderComputer<E> {
         return new TopologicalSorter<>(allEvents, dependencies).sort();
     }
 
-    /**
-     * Gathers all events that need to be in the evaluation order.
-     * This includes all configured events plus any events referenced in prerequisites/suppression.
-     */
     private Set<E> gatherAllEvents() {
         Set<E> allEvents = new HashSet<>(mAllEvents);
 
