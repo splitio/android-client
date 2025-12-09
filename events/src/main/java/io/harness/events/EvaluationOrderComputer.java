@@ -17,16 +17,19 @@ import java.util.Set;
  */
 final class EvaluationOrderComputer<E> {
 
+    private final Set<E> mAllEvents;
     private final Map<E, Set<E>> mPrerequisites;
     private final Map<E, Set<E>> mSuppressedBy;
 
     /**
      * Creates a new EvaluationOrderComputer.
      *
+     * @param allEvents     all events that need to be included in the evaluation order
      * @param prerequisites map from event to its prerequisites (events that must fire before it)
      * @param suppressedBy  map from event to its suppressors (events that, if fired, suppress it)
      */
-    EvaluationOrderComputer(Map<E, Set<E>> prerequisites, Map<E, Set<E>> suppressedBy) {
+    EvaluationOrderComputer(Set<E> allEvents, Map<E, Set<E>> prerequisites, Map<E, Set<E>> suppressedBy) {
+        mAllEvents = allEvents != null ? allEvents : Collections.emptySet();
         mPrerequisites = prerequisites != null ? prerequisites : Collections.emptyMap();
         mSuppressedBy = suppressedBy != null ? suppressedBy : Collections.emptyMap();
     }
@@ -52,19 +55,17 @@ final class EvaluationOrderComputer<E> {
     }
 
     /**
-     * Gathers all events that have dependencies.
+     * Gathers all events that need to be in the evaluation order.
+     * This includes all configured events plus any events referenced in prerequisites/suppression.
      */
     private Set<E> gatherAllEvents() {
-        Set<E> allEvents = new HashSet<>();
+        Set<E> allEvents = new HashSet<>(mAllEvents);
 
-        // Events from prerequisites (keys and values)
-        allEvents.addAll(mPrerequisites.keySet());
+        // Also include events that appear as values in prerequisites/suppression
+        // (they might not be configured themselves but need to be evaluated first)
         for (Set<E> prereqs : mPrerequisites.values()) {
             allEvents.addAll(prereqs);
         }
-
-        // Events from suppression (keys and values)
-        allEvents.addAll(mSuppressedBy.keySet());
         for (Set<E> suppressors : mSuppressedBy.values()) {
             allEvents.addAll(suppressors);
         }

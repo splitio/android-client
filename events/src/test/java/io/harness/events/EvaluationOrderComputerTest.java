@@ -15,8 +15,9 @@ import java.util.Set;
 public class EvaluationOrderComputerTest {
 
     @Test
-    public void emptyMapsReturnEmptyList() {
+    public void emptyInputsReturnEmptyList() {
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                Collections.emptySet(),
                 Collections.emptyMap(),
                 Collections.emptyMap()
         );
@@ -26,19 +27,42 @@ public class EvaluationOrderComputerTest {
     }
 
     @Test
-    public void nullMapsReturnEmptyList() {
-        EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(null, null);
+    public void nullInputsReturnEmptyList() {
+        EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(null, null, null);
 
         List<String> result = computer.compute();
         assertTrue(result.isEmpty());
     }
 
     @Test
-    public void gathersEventsFromPrerequisiteKeys() {
-        Map<String, Set<String>> prerequisites = new HashMap<>();
-        prerequisites.put("A", Collections.singleton("B"));
+    public void includesAllEventsFromInput() {
+        Set<String> allEvents = new HashSet<>();
+        allEvents.add("A");
+        allEvents.add("B");
+        allEvents.add("C");
 
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
+                Collections.emptyMap(),
+                Collections.emptyMap()
+        );
+        List<String> result = computer.compute();
+
+        assertEquals(3, result.size());
+        assertTrue(result.contains("A"));
+        assertTrue(result.contains("B"));
+        assertTrue(result.contains("C"));
+    }
+
+    @Test
+    public void includesEventsFromPrerequisiteValues() {
+        Set<String> allEvents = Collections.singleton("A");
+
+        Map<String, Set<String>> prerequisites = new HashMap<>();
+        prerequisites.put("A", Collections.singleton("B")); // B is only in values
+
+        EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
                 prerequisites,
                 Collections.emptyMap()
         );
@@ -50,11 +74,14 @@ public class EvaluationOrderComputerTest {
     }
 
     @Test
-    public void gathersEventsFromSuppressedByKeys() {
+    public void includesEventsFromSuppressorValues() {
+        Set<String> allEvents = Collections.singleton("A");
+
         Map<String, Set<String>> suppressedBy = new HashMap<>();
-        suppressedBy.put("A", Collections.singleton("B"));
+        suppressedBy.put("A", Collections.singleton("B")); // B is only in values
 
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
                 Collections.emptyMap(),
                 suppressedBy
         );
@@ -68,12 +95,18 @@ public class EvaluationOrderComputerTest {
     @Test
     public void buildsDependencyGraphFromPrerequisites() {
         // A depends on B, B depends on C
+        Set<String> allEvents = new HashSet<>();
+        allEvents.add("A");
+        allEvents.add("B");
+        allEvents.add("C");
+
         Map<String, Set<String>> prerequisites = new HashMap<>();
         prerequisites.put("A", Collections.singleton("B"));
         prerequisites.put("B", Collections.singleton("C"));
         prerequisites.put("C", Collections.emptySet());
 
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
                 prerequisites,
                 Collections.emptyMap()
         );
@@ -90,10 +123,15 @@ public class EvaluationOrderComputerTest {
     @Test
     public void buildsDependencyGraphFromSuppression() {
         // A suppressed by B (B must come before A)
+        Set<String> allEvents = new HashSet<>();
+        allEvents.add("A");
+        allEvents.add("B");
+
         Map<String, Set<String>> suppressedBy = new HashMap<>();
         suppressedBy.put("A", Collections.singleton("B"));
 
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
                 Collections.emptyMap(),
                 suppressedBy
         );
@@ -108,6 +146,11 @@ public class EvaluationOrderComputerTest {
     @Test
     public void combinesPrerequisitesAndSuppression() {
         // A depends on B (prerequisite), C suppressed by B
+        Set<String> allEvents = new HashSet<>();
+        allEvents.add("A");
+        allEvents.add("B");
+        allEvents.add("C");
+
         Map<String, Set<String>> prerequisites = new HashMap<>();
         prerequisites.put("A", Collections.singleton("B"));
 
@@ -115,6 +158,7 @@ public class EvaluationOrderComputerTest {
         suppressedBy.put("C", Collections.singleton("B"));
 
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
                 prerequisites,
                 suppressedBy
         );
@@ -131,6 +175,11 @@ public class EvaluationOrderComputerTest {
     @Test
     public void handlesMultiplePrerequisites() {
         // A depends on both B and C
+        Set<String> allEvents = new HashSet<>();
+        allEvents.add("A");
+        allEvents.add("B");
+        allEvents.add("C");
+
         Map<String, Set<String>> prerequisites = new HashMap<>();
         Set<String> aDeps = new HashSet<>();
         aDeps.add("B");
@@ -138,6 +187,7 @@ public class EvaluationOrderComputerTest {
         prerequisites.put("A", aDeps);
 
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
                 prerequisites,
                 Collections.emptyMap()
         );
@@ -154,6 +204,11 @@ public class EvaluationOrderComputerTest {
     @Test
     public void handlesMultipleSuppressors() {
         // A suppressed by both B and C
+        Set<String> allEvents = new HashSet<>();
+        allEvents.add("A");
+        allEvents.add("B");
+        allEvents.add("C");
+
         Map<String, Set<String>> suppressedBy = new HashMap<>();
         Set<String> aSuppressors = new HashSet<>();
         aSuppressors.add("B");
@@ -161,6 +216,7 @@ public class EvaluationOrderComputerTest {
         suppressedBy.put("A", aSuppressors);
 
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
                 Collections.emptyMap(),
                 suppressedBy
         );
@@ -176,11 +232,16 @@ public class EvaluationOrderComputerTest {
 
     @Test(expected = IllegalStateException.class)
     public void detectsCircularDependencyThroughPrerequisites() {
+        Set<String> allEvents = new HashSet<>();
+        allEvents.add("A");
+        allEvents.add("B");
+
         Map<String, Set<String>> prerequisites = new HashMap<>();
         prerequisites.put("A", Collections.singleton("B"));
         prerequisites.put("B", Collections.singleton("A"));
 
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
                 prerequisites,
                 Collections.emptyMap()
         );
@@ -189,11 +250,16 @@ public class EvaluationOrderComputerTest {
 
     @Test(expected = IllegalStateException.class)
     public void detectsCircularDependencyThroughSuppression() {
+        Set<String> allEvents = new HashSet<>();
+        allEvents.add("A");
+        allEvents.add("B");
+
         Map<String, Set<String>> suppressedBy = new HashMap<>();
         suppressedBy.put("A", Collections.singleton("B"));
         suppressedBy.put("B", Collections.singleton("A"));
 
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
                 Collections.emptyMap(),
                 suppressedBy
         );
@@ -203,6 +269,10 @@ public class EvaluationOrderComputerTest {
     @Test(expected = IllegalStateException.class)
     public void detectsCircularDependencyThroughMixedRelationships() {
         // A depends on B (prerequisite), B suppressed by A
+        Set<String> allEvents = new HashSet<>();
+        allEvents.add("A");
+        allEvents.add("B");
+
         Map<String, Set<String>> prerequisites = new HashMap<>();
         prerequisites.put("A", Collections.singleton("B"));
 
@@ -210,6 +280,7 @@ public class EvaluationOrderComputerTest {
         suppressedBy.put("B", Collections.singleton("A"));
 
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
                 prerequisites,
                 suppressedBy
         );
@@ -217,38 +288,30 @@ public class EvaluationOrderComputerTest {
     }
 
     @Test
-    public void includesEventsOnlyInPrerequisiteValues() {
-        // B is only mentioned as a prerequisite value, not as a key
+    public void eventsWithNoDependenciesAreIncluded() {
+        // Events without prerequisites or suppression should still be in the result
+        Set<String> allEvents = new HashSet<>();
+        allEvents.add("A");
+        allEvents.add("B");
+        allEvents.add("C");
+
+        // Only A has a dependency, B and C are independent
         Map<String, Set<String>> prerequisites = new HashMap<>();
         prerequisites.put("A", Collections.singleton("B"));
 
         EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
+                allEvents,
                 prerequisites,
                 Collections.emptyMap()
         );
         List<String> result = computer.compute();
 
-        assertEquals(2, result.size());
+        assertEquals(3, result.size());
         assertTrue(result.contains("A"));
         assertTrue(result.contains("B"));
-        assertTrue(result.indexOf("B") < result.indexOf("A"));
-    }
+        assertTrue(result.contains("C"));
 
-    @Test
-    public void includesEventsOnlyInSuppressorValues() {
-        // B is only mentioned as a suppressor value, not as a key
-        Map<String, Set<String>> suppressedBy = new HashMap<>();
-        suppressedBy.put("A", Collections.singleton("B"));
-
-        EvaluationOrderComputer<String> computer = new EvaluationOrderComputer<>(
-                Collections.emptyMap(),
-                suppressedBy
-        );
-        List<String> result = computer.compute();
-
-        assertEquals(2, result.size());
-        assertTrue(result.contains("A"));
-        assertTrue(result.contains("B"));
-        assertTrue(result.indexOf("B") < result.indexOf("A"));
+        // B should come before A (dependency), C can be anywhere
+        assertTrue("B should come before A", result.indexOf("B") < result.indexOf("A"));
     }
 }

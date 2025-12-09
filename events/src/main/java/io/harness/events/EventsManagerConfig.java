@@ -72,7 +72,14 @@ public final class EventsManagerConfig<E, I> {
     }
 
     private List<E> computeEvaluationOrder() {
-        return new EvaluationOrderComputer<>(mPrerequisites, mSuppressedBy).compute();
+        Set<E> allEvents = new HashSet<>();
+        allEvents.addAll(mRequireAll.keySet());
+        allEvents.addAll(mRequireAny.keySet());
+        allEvents.addAll(mPrerequisites.keySet());
+        allEvents.addAll(mSuppressedBy.keySet());
+        allEvents.addAll(mExecutionLimits.keySet());
+
+        return new EvaluationOrderComputer<>(allEvents, mPrerequisites, mSuppressedBy).compute();
     }
 
     @NotNull
