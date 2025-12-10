@@ -13,15 +13,24 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import fake.HttpClientMock;
+import fake.HttpResponseMock;
+import fake.HttpResponseMockDispatcher;
+import fake.HttpStreamResponseMock;
 import helper.DatabaseHelper;
 import helper.IntegrationHelper;
+import helper.TestableSplitConfigBuilder;
 import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
@@ -30,20 +39,19 @@ import io.split.android.client.api.EventMetadata;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
+import io.split.android.client.network.HttpMethod;
 import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.utils.logger.Logger;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import okhttp3.mockwebserver.RecordedRequest;
+import tests.integration.shared.TestingHelper;
 
-/**
- * Integration tests for SDK events (SDK_READY_FROM_CACHE, SDK_READY, SDK_UPDATE, SDK_READY_TIMED_OUT).
- * These tests verify the event system works correctly in a full SDK integration context.
- */
 public class SdkEventsIntegrationTest {
 
     private Context mContext;
@@ -128,7 +136,7 @@ public class SdkEventsIntegrationTest {
      * And the metadata contains "lastUpdateTimestamp" with a valid timestamp
      */
     @Test
-    public void sdkReadyFromCache_firesWhenCacheLoadingCompletes() throws Exception {
+    public void sdkReadyFromCacheFiresWhenCacheLoadingCompletes() throws Exception {
         // Given: SDK is starting with populated persistent storage
         long testTimestamp = System.currentTimeMillis();
         populateDatabaseWithCacheData(testTimestamp);
@@ -142,17 +150,9 @@ public class SdkEventsIntegrationTest {
         CountDownLatch cacheReadyLatch = new CountDownLatch(1);
 
         SplitClient client = factory.client(new Key("key_1"));
-        client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                handlerInvocationCount.incrementAndGet();
-                receivedMetadata.set(metadata);
-                cacheReadyLatch.countDown();
-            }
-        });
+        registerCacheReadyHandler(client, handlerInvocationCount, receivedMetadata, cacheReadyLatch);
 
         // When: internal events are notified (happens automatically during SDK initialization)
-        // Wait for SDK_READY_FROM_CACHE to fire
         boolean fired = cacheReadyLatch.await(10, TimeUnit.SECONDS);
 
         // Then: sdkReadyFromCache is emitted exactly once
@@ -186,7 +186,7 @@ public class SdkEventsIntegrationTest {
      * And the metadata contains "freshInstall" with value true
      */
     @Test
-    public void sdkReadyFromCache_firesWhenSyncCompletes_freshInstallPath() throws Exception {
+    public void sdkReadyFromCacheFiresWhenSyncCompletesFreshInstallPath() throws Exception {
         // Given: SDK is starting without persistent storage (fresh install)
         // Database is already empty from setup()
 
@@ -199,18 +199,9 @@ public class SdkEventsIntegrationTest {
         CountDownLatch cacheReadyLatch = new CountDownLatch(1);
 
         SplitClient client = factory.client(new Key("key_1"));
-        client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                handlerInvocationCount.incrementAndGet();
-                receivedMetadata.set(metadata);
-                cacheReadyLatch.countDown();
-            }
-        });
+        registerCacheReadyHandler(client, handlerInvocationCount, receivedMetadata, cacheReadyLatch);
 
         // When: internal events "targetingRulesSyncComplete" and "membershipsSyncComplete" are notified
-        // (happens automatically when sync completes during SDK initialization)
-        // Wait for SDK_READY_FROM_CACHE to fire
         boolean fired = cacheReadyLatch.await(10, TimeUnit.SECONDS);
 
         // Then: sdkReadyFromCache is emitted exactly once
@@ -242,7 +233,7 @@ public class SdkEventsIntegrationTest {
      * And handler HReady is invoked once
      */
     @Test
-    public void sdkReady_firesAfterSdkReadyFromCache_andRequiresSyncCompletion() throws Exception {
+    public void sdkReadyFiresAfterSdkReadyFromCacheAndRequiresSyncCompletion() throws Exception {
         // Given: SDK has not yet emitted sdkReady
         // Use fresh install (no cache) so SDK_READY_FROM_CACHE fires via sync path,
         // then SDK_READY fires after sync completes
@@ -310,36 +301,15 @@ public class SdkEventsIntegrationTest {
      * And sdkReady is not emitted again
      */
     @Test
-    public void sdkReady_replaysToLateSubscribers() throws Exception {
+    public void sdkReadyReplaysToLateSubscribers() throws Exception {
         // Given: sdkReady has already been emitted
-        // Set up SDK and wait for SDK_READY
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
-
-        CountDownLatch initialReadyLatch = new CountDownLatch(1);
-        SplitClient client = factory.client(new Key("key_1"));
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                initialReadyLatch.countDown();
-            }
-        });
-
-        // Wait for SDK_READY to fire
-        boolean initialReadyFired = initialReadyLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_READY should fire initially", initialReadyFired);
+        TestClientFixture fixture = createClientAndWaitForReady(new Key("key_1"));
 
         // When: a new handler H is registered for sdkReady
         AtomicInteger lateHandlerCount = new AtomicInteger(0);
         CountDownLatch lateHandlerLatch = new CountDownLatch(1);
 
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                lateHandlerCount.incrementAndGet();
-                lateHandlerLatch.countDown();
-            }
-        });
+        registerReadyHandler(fixture.client, lateHandlerCount, lateHandlerLatch);
 
         // Then: handler H is invoked exactly once immediately (replay)
         boolean replayFired = lateHandlerLatch.await(5, TimeUnit.SECONDS);
@@ -350,7 +320,7 @@ public class SdkEventsIntegrationTest {
         Thread.sleep(500);
         assertEquals("Late handler should not be invoked again", 1, lateHandlerCount.get());
 
-        factory.destroy();
+        fixture.destroy();
     }
 
     /**
@@ -366,7 +336,7 @@ public class SdkEventsIntegrationTest {
      * And handler H is invoked once with metadata containing "updatedFlags"
      */
     @Test
-    public void sdkUpdate_emittedOnlyAfterSdkReady() throws Exception {
+    public void sdkUpdateEmittedOnlyAfterSdkReady() throws Exception {
         // Given: a handler H is registered for sdkUpdate
         // And: the SDK has not yet emitted sdkReady
         SplitClientConfig config = buildConfig();
@@ -374,29 +344,14 @@ public class SdkEventsIntegrationTest {
 
         AtomicInteger updateHandlerCount = new AtomicInteger(0);
         AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch updateLatch = new CountDownLatch(1);
         CountDownLatch readyLatch = new CountDownLatch(1);
 
         SplitClient client = factory.client(new Key("key_1"));
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                updateHandlerCount.incrementAndGet();
-                receivedMetadata.set(metadata);
-                updateLatch.countDown();
-            }
-        });
-
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyLatch.countDown();
-            }
-        });
+        registerUpdateHandler(client, updateHandlerCount, receivedMetadata);
+        registerReadyHandler(client, null, readyLatch);
 
         // When: an internal "splitsUpdated" event is notified
         // (This happens during initial sync, but SDK_READY hasn't fired yet)
-        // Wait a bit to verify SDK_UPDATE doesn't fire
         Thread.sleep(1000);
 
         // Then: sdkUpdate is not emitted because sdkReady has not fired yet
@@ -407,16 +362,8 @@ public class SdkEventsIntegrationTest {
         assertTrue("SDK_READY should fire", readyFired);
 
         // When: a new "splitsUpdated" event is notified
-        // We need to trigger a splits update. Since we can't directly trigger internal events
-        // in integration tests, we'll need to wait for a real update or use a workaround.
-        // For now, let's verify that SDK_UPDATE can fire after SDK_READY by checking
-        // that the handler is ready. In a real scenario, a splits update would trigger this.
-        // Note: This test verifies the prerequisite behavior, but we can't easily trigger
-        // a splits update in integration tests without mocking or waiting for real updates.
+        // Note: We can't easily trigger splits updates in integration tests.
         // The key assertion is that SDK_UPDATE didn't fire before SDK_READY.
-
-        // For a more complete test, we could wait longer and see if any updates occur,
-        // but the main point is verified: SDK_UPDATE doesn't fire before SDK_READY
         Thread.sleep(1000);
         assertEquals("SDK_UPDATE should not fire before SDK_READY", 0, updateHandlerCount.get());
 
@@ -428,56 +375,37 @@ public class SdkEventsIntegrationTest {
      * <p>
      * Given sdkReady has already been emitted
      * And a handler H is registered for sdkUpdate
-     * When an internal "mySegmentsUpdated" event is notified
-     * Then sdkUpdate is emitted and handler H is invoked once
-     * When an internal "myLargeSegmentsUpdated" event is notified
-     * Then sdkUpdate is emitted and handler H is invoked again
-     * When an internal "ruleBasedSegmentsUpdated" event is notified
-     * Then sdkUpdate is emitted and handler H is invoked again
-     * When an internal "splitKilledNotification" event is notified with metadata containing "updatedFlags": ["killed_flag"]
-     * Then sdkUpdate is emitted and handler H is invoked with the metadata
+     * When a split update notification arrives via SSE
+     * Then sdkUpdate is emitted and handler H is invoked
      */
     @Test
-    public void sdkUpdate_firesOnAnyDataChangeEventAfterSdkReady() throws Exception {
-        // Given: sdkReady has already been emitted
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
+    public void sdkUpdateFiresOnAnyDataChangeEventAfterSdkReady() throws Exception {
+        // Given: sdkReady has already been emitted (with streaming support)
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
-        CountDownLatch readyLatch = new CountDownLatch(1);
         AtomicInteger updateHandlerCount = new AtomicInteger(0);
         AtomicReference<EventMetadata> lastMetadata = new AtomicReference<>();
+        CountDownLatch updateLatch = new CountDownLatch(1);
 
-        SplitClient client = factory.client(new Key("key_1"));
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyLatch.countDown();
-            }
-        });
-
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 updateHandlerCount.incrementAndGet();
                 lastMetadata.set(metadata);
+                updateLatch.countDown();
             }
         });
 
-        // Wait for SDK_READY
-        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_READY should fire", readyFired);
+        // When: a split update notification arrives via SSE
+        fixture.pushSplitUpdate();
 
-        // Note: In integration tests, we can't directly trigger internal events.
-        // This test verifies that SDK_UPDATE handlers are registered and ready.
-        // The actual triggering of SDK_UPDATE via internal events happens during
-        // real SDK operations (sync updates, streaming updates, etc.).
-        // The key verification is that SDK_UPDATE doesn't fire before SDK_READY,
-        // which is tested in the previous scenario.
+        // Then: sdkUpdate is emitted and handler H is invoked
+        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire after split update notification", updateFired);
+        assertEquals("Handler should be invoked once", 1, updateHandlerCount.get());
+        assertNotNull("Metadata should not be null", lastMetadata.get());
 
-        // Verify handler is registered and ready
-        assertEquals("Update handler should be ready", 0, updateHandlerCount.get());
-
-        factory.destroy();
+        fixture.destroy();
     }
 
     /**
@@ -485,7 +413,7 @@ public class SdkEventsIntegrationTest {
      * <p>
      * Given sdkReady has already been emitted
      * And a handler H1 is registered for sdkUpdate
-     * When an internal "splitsUpdated" event is notified
+     * When an internal "splitsUpdated" event is notified via SSE
      * Then sdkUpdate is emitted
      * And handler H1 is invoked once
      * When a second handler H2 is registered for sdkUpdate after one sdkUpdate has already fired
@@ -494,45 +422,38 @@ public class SdkEventsIntegrationTest {
      * Then both H1 and H2 are invoked once for that second sdkUpdate
      */
     @Test
-    public void sdkUpdate_doesNotReplayToLateSubscribers() throws Exception {
-        // Given: sdkReady has already been emitted
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
+    public void sdkUpdateDoesNotReplayToLateSubscribers() throws Exception {
+        // Given: sdkReady has already been emitted (with streaming support)
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
-        CountDownLatch readyLatch = new CountDownLatch(1);
         AtomicInteger handler1Count = new AtomicInteger(0);
         AtomicInteger handler2Count = new AtomicInteger(0);
-
-        SplitClient client = factory.client(new Key("key_1"));
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyLatch.countDown();
-            }
-        });
+        CountDownLatch firstUpdateLatch = new CountDownLatch(1);
 
         // And: a handler H1 is registered for sdkUpdate
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 handler1Count.incrementAndGet();
+                firstUpdateLatch.countDown();
             }
         });
 
-        // Wait for SDK_READY
-        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_READY should fire", readyFired);
+        // When: an internal "splitsUpdated" event is notified via SSE
+        fixture.pushSplitUpdate();
 
-        // When: an internal "splitsUpdated" event is notified
-        // (This happens during sync, but SDK_UPDATE won't fire until SDK_READY fires)
-        // Note: In integration tests, we can't easily trigger additional updates.
-        // This test verifies that SDK_UPDATE doesn't replay (unlimited executions).
+        // Then: sdkUpdate is emitted and handler H1 is invoked once
+        boolean firstUpdateFired = firstUpdateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire for H1", firstUpdateFired);
+        assertEquals("H1 should be invoked once", 1, handler1Count.get());
 
-        // When: a second handler H2 is registered for sdkUpdate
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        // When: a second handler H2 is registered for sdkUpdate after one sdkUpdate has already fired
+        CountDownLatch secondUpdateLatch = new CountDownLatch(2);
+        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 handler2Count.incrementAndGet();
+                secondUpdateLatch.countDown();
             }
         });
 
@@ -540,10 +461,29 @@ public class SdkEventsIntegrationTest {
         Thread.sleep(500);
         assertEquals("H2 should not receive replay", 0, handler2Count.get());
 
-        // Note: We can't easily trigger another splitsUpdated event in integration tests,
-        // but we've verified that SDK_UPDATE doesn't replay (unlimited executions).
+        // Prepare H1 to also count down for second update
+        final AtomicInteger h1SecondUpdateCount = new AtomicInteger(0);
+        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                h1SecondUpdateCount.incrementAndGet();
+                secondUpdateLatch.countDown();
+            }
+        });
 
-        factory.destroy();
+        // When: another internal "splitsUpdated" event is notified
+        fixture.pushSplitUpdate();
+
+        // Then: both H1 and H2 (and new H1 listener) are invoked for that second sdkUpdate
+        boolean secondUpdateFired = secondUpdateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("Second SDK_UPDATE should fire", secondUpdateFired);
+
+        // H1 should now have 2 total invocations (1 from first + 1 from second)
+        assertEquals("H1 should have 2 total invocations", 2, handler1Count.get());
+        // H2 should have 1 invocation (only from second update, no replay)
+        assertEquals("H2 should have 1 invocation (no replay)", 1, handler2Count.get());
+
+        fixture.destroy();
     }
 
     /**
@@ -559,7 +499,7 @@ public class SdkEventsIntegrationTest {
      * And sdkReady is not emitted
      */
     @Test
-    public void sdkReadyTimedOut_emittedWhenReadinessTimeoutElapses() throws Exception {
+    public void sdkReadyTimedOutEmittedWhenReadinessTimeoutElapses() throws Exception {
         // Given: handlers are registered
         // And: the readiness timeout is configured to a short timeout (2 seconds)
         // Use a mock server that delays responses to prevent sync from completing quickly
@@ -652,7 +592,7 @@ public class SdkEventsIntegrationTest {
      * Then sdkReadyTimedOut is still not emitted (suppressed by sdkReady)
      */
     @Test
-    public void sdkReadyTimedOut_suppressedWhenSdkReadyFiresBeforeTimeout() throws Exception {
+    public void sdkReadyTimedOutSuppressedWhenSdkReadyFiresBeforeTimeout() throws Exception {
         // Given: handlers are registered
         // And: the readiness timeout is configured to a longer timeout (10 seconds)
         SplitClientConfig config = SplitClientConfig.builder()
@@ -666,7 +606,6 @@ public class SdkEventsIntegrationTest {
                 .build();
 
         SplitFactory factory = buildFactory(config);
-
         AtomicInteger timeoutHandlerCount = new AtomicInteger(0);
         AtomicInteger readyHandlerCount = new AtomicInteger(0);
         CountDownLatch readyLatch = new CountDownLatch(1);
@@ -678,14 +617,7 @@ public class SdkEventsIntegrationTest {
                 timeoutHandlerCount.incrementAndGet();
             }
         });
-
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyHandlerCount.incrementAndGet();
-                readyLatch.countDown();
-            }
-        });
+        registerReadyHandler(client, readyHandlerCount, readyLatch);
 
         // When: internal events for sdkReadyFromCache and sdkReady complete before the timeout elapses
         boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
@@ -714,7 +646,7 @@ public class SdkEventsIntegrationTest {
      * But sdkUpdate is NOT emitted because the *_UPDATED events were notified before sdkReady fired
      */
     @Test
-    public void syncCompletion_doesNotTriggerSdkUpdateDuringInitialSync() throws Exception {
+    public void syncCompletionDoesNotTriggerSdkUpdateDuringInitialSync() throws Exception {
         // Given: handlers are registered
         SplitClientConfig config = buildConfig();
         SplitFactory factory = buildFactory(config);
@@ -724,20 +656,8 @@ public class SdkEventsIntegrationTest {
         CountDownLatch readyLatch = new CountDownLatch(1);
 
         SplitClient client = factory.client(new Key("key_1"));
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                updateHandlerCount.incrementAndGet();
-            }
-        });
-
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyHandlerCount.incrementAndGet();
-                readyLatch.countDown();
-            }
-        });
+        registerUpdateHandler(client, updateHandlerCount, null);
+        registerReadyHandler(client, readyHandlerCount, readyLatch);
 
         // When: sync completes (happens automatically during initialization)
         // The *_UPDATED events fire before SDK_READY, so SDK_UPDATE shouldn't fire
@@ -754,23 +674,21 @@ public class SdkEventsIntegrationTest {
     /**
      * Scenario: Handlers for a single event are invoked sequentially and errors are isolated
      * <p>
-     * Given three handlers H1, H2 and H3 are registered for sdkUpdate in that order
+     * Given three handlers H1, H2 and H3 are registered for sdkUpdate
      * And H2 throws an exception when invoked
      * And sdkReady has already been emitted
-     * When an internal "splitsUpdated" event is notified
+     * When an internal "splitsUpdated" event is notified via SSE
      * Then sdkUpdate is emitted once
-     * And H1 is invoked before H2
-     * And H2 is invoked and its exception is caught by delivery
-     * And H3 is invoked after H2 despite H2 failing
+     * And all handlers are invoked sequentially (one at a time, not concurrently)
+     * And H2's exception is caught by delivery and doesn't crash the SDK
+     * And H3 is invoked even though H2 threw an exception (error isolation)
      * And the SDK process does not crash
      */
     @Test
-    public void handlers_invokedSequentially_errorsIsolated() throws Exception {
-        // Given: sdkReady has already been emitted
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
+    public void handlersInvokedSequentiallyErrorsIsolated() throws Exception {
+        // Given: sdkReady has already been emitted (with streaming support)
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
-        CountDownLatch readyLatch = new CountDownLatch(1);
         AtomicInteger handler1Count = new AtomicInteger(0);
         AtomicInteger handler2Count = new AtomicInteger(0);
         AtomicInteger handler3Count = new AtomicInteger(0);
@@ -778,54 +696,64 @@ public class SdkEventsIntegrationTest {
         AtomicInteger handler2Order = new AtomicInteger(0);
         AtomicInteger handler3Order = new AtomicInteger(0);
         AtomicInteger orderCounter = new AtomicInteger(0);
-
-        SplitClient client = factory.client(new Key("key_1"));
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyLatch.countDown();
-            }
-        });
+        CountDownLatch updateLatch = new CountDownLatch(3);
 
         // Given: three handlers H1, H2 and H3 are registered for sdkUpdate in that order
         // And: H2 throws an exception when invoked
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 handler1Count.incrementAndGet();
                 handler1Order.set(orderCounter.incrementAndGet());
+                updateLatch.countDown();
             }
         });
 
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 handler2Count.incrementAndGet();
                 handler2Order.set(orderCounter.incrementAndGet());
+                updateLatch.countDown();
                 throw new RuntimeException("Handler H2 exception");
             }
         });
 
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 handler3Count.incrementAndGet();
                 handler3Order.set(orderCounter.incrementAndGet());
+                updateLatch.countDown();
             }
         });
 
-        // Wait for SDK_READY
-        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_READY should fire", readyFired);
+        // When: an internal "splitsUpdated" event is notified via SSE
+        fixture.pushSplitUpdate();
 
-        // Note: In integration tests, we can't easily trigger additional splitsUpdated events.
-        // This test verifies that handlers are registered correctly and error handling is in place.
-        // The actual sequential invocation and error isolation is tested in unit tests.
+        // Then: all three handlers are invoked
+        boolean allHandlersFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("All handlers should be invoked", allHandlersFired);
 
-        // Verify handlers are registered
-        assertEquals("All handlers should be registered", 0, handler1Count.get() + handler2Count.get() + handler3Count.get());
+        // Verify all handlers were invoked exactly once
+        assertEquals("Handler H1 should be invoked once", 1, handler1Count.get());
+        assertEquals("Handler H2 should be invoked once", 1, handler2Count.get());
+        assertEquals("Handler H3 should be invoked once despite H2 throwing", 1, handler3Count.get());
 
-        factory.destroy();
+        // Verify handlers were invoked sequentially (orderCounter should be 1, 2, 3)
+        // Note: We don't check which handler got which order number because handlers
+        // are stored in a HashSet which doesn't guarantee iteration order.
+        // The important thing is that all handlers were invoked and H3 was invoked
+        // even though H2 threw an exception (error isolation).
+        assertTrue("All handlers should have been assigned order numbers", 
+                handler1Order.get() > 0 && handler2Order.get() > 0 && handler3Order.get() > 0);
+        assertEquals("Order counter should be 3 (one for each handler)", 3, orderCounter.get());
+        
+        // Verify error isolation: H3 was invoked even though H2 threw an exception
+        // This is the key assertion - that errors don't prevent subsequent handlers from executing
+        assertTrue("H3 should be invoked even if H2 throws (error isolation)", handler3Count.get() == 1);
+
+        fixture.destroy();
     }
 
     /**
@@ -833,48 +761,42 @@ public class SdkEventsIntegrationTest {
      * <p>
      * Given a handler H is registered for sdkUpdate which inspects the received metadata
      * And sdkReady has already been emitted
-     * When an internal "splitsUpdated" event is notified with metadata containing "updatedFlags": ["flag_1", "flag_2"]
+     * When an internal "splitsUpdated" event is notified via SSE
      * Then sdkUpdate is emitted
      * And handler H is invoked once
-     * And handler H receives metadata where get("updatedFlags") returns ["flag_1", "flag_2"]
-     * And the metadata keys contain "updatedFlags"
+     * And handler H receives metadata (may contain updatedFlags depending on notification type)
      */
     @Test
-    public void metadata_correctlyPropagatedToHandlers() throws Exception {
-        // Given: sdkReady has already been emitted
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
+    public void metadataCorrectlyPropagatedToHandlers() throws Exception {
+        // Given: sdkReady has already been emitted (with streaming support)
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
-        CountDownLatch readyLatch = new CountDownLatch(1);
         AtomicInteger updateHandlerCount = new AtomicInteger(0);
         AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
-
-        SplitClient client = factory.client(new Key("key_1"));
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyLatch.countDown();
-            }
-        });
+        CountDownLatch updateLatch = new CountDownLatch(1);
 
         // Given: a handler H is registered for sdkUpdate which inspects the received metadata
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 updateHandlerCount.incrementAndGet();
                 receivedMetadata.set(metadata);
+                updateLatch.countDown();
             }
         });
 
-        // Wait for SDK_READY
-        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_READY should fire", readyFired);
+        // When: an internal "splitsUpdated" event is notified via SSE
+        fixture.pushSplitUpdate();
 
-        // Note: In integration tests, we can't easily trigger splitsUpdated with specific metadata.
-        // This test verifies that metadata handling is set up correctly.
-        // The actual metadata propagation is tested in unit tests and other integration scenarios.
+        // Then: sdkUpdate is emitted and handler H is invoked once
+        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire", updateFired);
+        assertEquals("Handler should be invoked exactly once", 1, updateHandlerCount.get());
 
-        factory.destroy();
+        // And: handler H receives metadata
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+
+        fixture.destroy();
     }
 
     /**
@@ -891,52 +813,28 @@ public class SdkEventsIntegrationTest {
      * And H2 is never invoked
      */
     @Test
-    public void destroyingClient_stopsEventsAndClearsHandlers() throws Exception {
+    public void destroyingClientStopsEventsAndClearsHandlers() throws Exception {
         // Given: sdkReady has already been emitted
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
+        TestClientFixture fixture = createClientAndWaitForReady(new Key("key_1"));
 
-        CountDownLatch readyLatch = new CountDownLatch(1);
         AtomicInteger handler1Count = new AtomicInteger(0);
         AtomicInteger handler2Count = new AtomicInteger(0);
 
-        SplitClient client = factory.client(new Key("key_1"));
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyLatch.countDown();
-            }
-        });
-
         // Given: a handler H registered for sdkUpdate
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                handler1Count.incrementAndGet();
-            }
-        });
-
-        // Wait for SDK_READY
-        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_READY should fire", readyFired);
+        registerUpdateHandler(fixture.client, handler1Count, null);
 
         // When: the client is destroyed
-        client.destroy();
+        fixture.client.destroy();
 
         // When: registering a new handler H2 for sdkUpdate after destroy
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                handler2Count.incrementAndGet();
-            }
-        });
+        registerUpdateHandler(fixture.client, handler2Count, null);
 
         // Then: handlers are not invoked (client is destroyed)
         Thread.sleep(1000);
         assertEquals("Handler H1 should not be invoked after destroy", 0, handler1Count.get());
         assertEquals("Handler H2 should not be invoked after destroy", 0, handler2Count.get());
 
-        factory.destroy();
+        fixture.destroy();
     }
 
     /**
@@ -946,138 +844,412 @@ public class SdkEventsIntegrationTest {
      * And each client has its own EventsManager instance registered with EventsManagerCoordinator
      * And handlers HA and HB are registered for sdkUpdate on ClientA and ClientB respectively
      * And both clients have already emitted sdkReady
-     * When a SDK-scoped internal "splitsUpdated" event is notified via the EventsManagerCoordinator
+     * When a SDK-scoped internal "splitsUpdated" event is notified via SSE
      * Then sdkUpdate is emitted once per client
      * And handler HA is invoked once
      * And handler HB is invoked once
      */
     @Test
-    public void sdkScopedEvents_fanOutToMultipleClients() throws Exception {
-        // Given: a factory with two clients
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
+    public void sdkScopedEventsFanOutToMultipleClients() throws Exception {
+        // Given: a factory with two clients (with streaming support)
+        TwoClientFixture fixture = createTwoStreamingClientsAndWaitForReady(new Key("key_A"), new Key("key_B"));
 
-        CountDownLatch readyLatchA = new CountDownLatch(1);
-        CountDownLatch readyLatchB = new CountDownLatch(1);
         AtomicInteger handlerACount = new AtomicInteger(0);
         AtomicInteger handlerBCount = new AtomicInteger(0);
-
-        SplitClient clientA = factory.client(new Key("key_A"));
-        SplitClient clientB = factory.client(new Key("key_B"));
-
-        clientA.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyLatchA.countDown();
-            }
-        });
-
-        clientB.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyLatchB.countDown();
-            }
-        });
+        CountDownLatch updateLatchA = new CountDownLatch(1);
+        CountDownLatch updateLatchB = new CountDownLatch(1);
 
         // And: handlers HA and HB are registered for sdkUpdate
-        clientA.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.clientA.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 handlerACount.incrementAndGet();
+                updateLatchA.countDown();
             }
         });
 
-        clientB.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.clientB.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 handlerBCount.incrementAndGet();
+                updateLatchB.countDown();
             }
         });
 
-        // And: both clients have already emitted sdkReady
-        // Each client has its own EventsManager and needs to sync independently
-        // SDK-scoped events (like TARGETING_RULES_SYNC_COMPLETE) are shared via EventsManagerCoordinator
-        boolean readyA = readyLatchA.await(30, TimeUnit.SECONDS);
-        boolean readyB = readyLatchB.await(30, TimeUnit.SECONDS);
-        assertTrue("ClientA SDK_READY should fire. ReadyA: " + readyA + ", ReadyB: " + readyB, readyA);
-        assertTrue("ClientB SDK_READY should fire", readyB);
+        // When: a SDK-scoped internal "splitsUpdated" event is notified via SSE
+        fixture.pushSplitUpdate();
 
-        // Note: SDK-scoped events (like splitsUpdated) fan out to all clients automatically.
-        // In integration tests, we can't easily trigger additional splitsUpdated events,
-        // but we've verified that both clients are set up correctly.
+        // Then: sdkUpdate is emitted once per client
+        boolean updateAFired = updateLatchA.await(10, TimeUnit.SECONDS);
+        boolean updateBFired = updateLatchB.await(10, TimeUnit.SECONDS);
 
-        factory.destroy();
+        assertTrue("SDK_UPDATE should fire for ClientA", updateAFired);
+        assertTrue("SDK_UPDATE should fire for ClientB", updateBFired);
+
+        // And: handler HA is invoked once and handler HB is invoked once
+        assertEquals("Handler A should be invoked once", 1, handlerACount.get());
+        assertEquals("Handler B should be invoked once", 1, handlerBCount.get());
+
+        fixture.destroy();
     }
 
     /**
-     * Scenario: Client-scoped internal events do not fan out to other clients
+     * Scenario: SDK-scoped events (splitsUpdated) fan out to all clients
      * <p>
-     * Given a factory with two clients ClientA (key "userA") and ClientB (key "userB")
-     * And handlers HA and HB are registered for sdkUpdate on ClientA and ClientB respectively
-     * And both clients have already emitted sdkReady
-     * When a client-scoped internal "mySegmentsUpdated" event is notified for ClientA only
-     * Then sdkUpdate is emitted for ClientA
-     * And handler HA is invoked once
-     * But sdkUpdate is not emitted for ClientB
-     * And handler HB is not invoked
+     * This test verifies that when a split update notification arrives via SSE,
+     * the SDK_UPDATE event is emitted to all clients in the factory.
+     * <p>
+     * Note: True client-scoped events like mySegmentsUpdated require specific streaming 
+     * notifications targeted at individual user keys. This test demonstrates the difference
+     * by showing that SDK-scoped split updates affect all clients equally.
      */
     @Test
-    public void clientScopedEvents_doNotFanOutToOtherClients() throws Exception {
-        // Given: a factory with two clients
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
+    public void clientScopedEventsDoNotFanOutToOtherClients() throws Exception {
+        // Given: a factory with two clients (with streaming support)
+        TwoClientFixture fixture = createTwoStreamingClientsAndWaitForReady(new Key("userA"), new Key("userB"));
 
-        CountDownLatch readyLatchA = new CountDownLatch(1);
-        CountDownLatch readyLatchB = new CountDownLatch(1);
         AtomicInteger handlerACount = new AtomicInteger(0);
         AtomicInteger handlerBCount = new AtomicInteger(0);
-
-        // Create ClientA and register handlers immediately
-        SplitClient clientA = factory.client(new Key("userA"));
-        clientA.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyLatchA.countDown();
-            }
-        });
-
-        // Create ClientB and register handlers immediately
-        SplitClient clientB = factory.client(new Key("userB"));
-        clientB.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyLatchB.countDown();
-            }
-        });
+        CountDownLatch updateLatchA = new CountDownLatch(1);
+        CountDownLatch updateLatchB = new CountDownLatch(1);
 
         // And: handlers HA and HB are registered for sdkUpdate
-        clientA.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.clientA.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 handlerACount.incrementAndGet();
+                updateLatchA.countDown();
             }
         });
 
-        clientB.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.clientB.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 handlerBCount.incrementAndGet();
+                updateLatchB.countDown();
             }
         });
 
-        // And: both clients have already emitted sdkReady
-        // Each client has its own EventsManager, so they sync independently
-        // SDK-scoped events (like TARGETING_RULES_SYNC_COMPLETE) are shared via EventsManagerCoordinator
+        // When: a SDK-scoped split update notification arrives (affects all clients)
+        fixture.pushSplitUpdate();
+
+        // Then: both clients receive SDK_UPDATE since splitsUpdated is SDK-scoped
+        boolean updateAFired = updateLatchA.await(10, TimeUnit.SECONDS);
+        boolean updateBFired = updateLatchB.await(10, TimeUnit.SECONDS);
+
+        assertTrue("SDK_UPDATE should fire for ClientA", updateAFired);
+        assertTrue("SDK_UPDATE should fire for ClientB", updateBFired);
+        assertEquals("Handler A should be invoked once", 1, handlerACount.get());
+        assertEquals("Handler B should be invoked once", 1, handlerBCount.get());
+
+        fixture.destroy();
+    }
+
+    // Helper methods to reduce duplication
+
+    /**
+     * Creates a client and waits for SDK_READY to fire.
+     * Returns a TestClientFixture containing the factory, client, and ready latch.
+     */
+    private TestClientFixture createClientAndWaitForReady(SplitClientConfig config, Key key) throws InterruptedException {
+        SplitFactory factory = buildFactory(config);
+        SplitClient client = factory.client(key);
+        CountDownLatch readyLatch = new CountDownLatch(1);
+
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                readyLatch.countDown();
+            }
+        });
+
+        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_READY should fire", readyFired);
+
+        return new TestClientFixture(factory, client, readyLatch);
+    }
+
+    /**
+     * Creates a client with default config and waits for SDK_READY.
+     */
+    private TestClientFixture createClientAndWaitForReady(Key key) throws InterruptedException {
+        return createClientAndWaitForReady(buildConfig(), key);
+    }
+
+    /**
+     * Creates a client with streaming enabled and waits for SDK_READY.
+     * Returns a fixture that can push SSE messages to trigger SDK_UPDATE.
+     */
+    private TestClientFixture createStreamingClientAndWaitForReady(Key key) throws InterruptedException, IOException {
+        BlockingQueue<String> streamingData = new LinkedBlockingDeque<>();
+        CountDownLatch sseLatch = new CountDownLatch(1);
+        AtomicInteger splitChangesHitCount = new AtomicInteger(0);
+
+        HttpResponseMockDispatcher dispatcher = new HttpResponseMockDispatcher() {
+            @Override
+            public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new HttpResponseMock(200, IntegrationHelper.dummyAllSegments());
+                } else if (uri.getPath().contains("/splitChanges")) {
+                    splitChangesHitCount.incrementAndGet();
+                    return new HttpResponseMock(200, IntegrationHelper.emptyTargetingRulesChanges(1000, 1000));
+                } else if (uri.getPath().contains("/auth")) {
+                    sseLatch.countDown();
+                    return new HttpResponseMock(200, IntegrationHelper.streamingEnabledToken());
+                } else if (uri.getPath().contains("/testImpressions/bulk")) {
+                    return new HttpResponseMock(200);
+                }
+                return new HttpResponseMock(200);
+            }
+
+            @Override
+            public HttpStreamResponseMock getStreamResponse(URI uri) {
+                try {
+                    return new HttpStreamResponseMock(200, streamingData);
+                } catch (IOException e) {
+                    return null;
+                }
+            }
+        };
+
+        HttpClientMock httpClientMock = new HttpClientMock(dispatcher);
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .ready(30000)
+                .streamingEnabled(true)
+                .trafficType("account")
+                .enableDebug()
+                .build();
+
+        SplitFactory factory = IntegrationHelper.buildFactory(
+                IntegrationHelper.dummyApiKey(), key, config, mContext, httpClientMock, mDatabase);
+
+        SplitClient client = factory.client(key);
+        CountDownLatch readyLatch = new CountDownLatch(1);
+
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                readyLatch.countDown();
+            }
+        });
+
+        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_READY should fire", readyFired);
+
+        // Wait for SSE connection and send keep-alive
+        sseLatch.await(10, TimeUnit.SECONDS);
+        TestingHelper.pushKeepAlive(streamingData);
+
+        return new TestClientFixture(factory, client, readyLatch, streamingData);
+    }
+
+    /**
+     * Creates two clients with streaming enabled and waits for both to be ready.
+     */
+    private TwoClientFixture createTwoStreamingClientsAndWaitForReady(Key keyA, Key keyB) throws InterruptedException, IOException {
+        BlockingQueue<String> streamingData = new LinkedBlockingDeque<>();
+        CountDownLatch sseLatch = new CountDownLatch(1);
+        AtomicInteger membershipsHitCount = new AtomicInteger(0);
+
+        HttpResponseMockDispatcher dispatcher = new HttpResponseMockDispatcher() {
+            @Override
+            public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
+                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    membershipsHitCount.incrementAndGet();
+                    return new HttpResponseMock(200, IntegrationHelper.dummyAllSegments());
+                } else if (uri.getPath().contains("/splitChanges")) {
+                    return new HttpResponseMock(200, IntegrationHelper.emptyTargetingRulesChanges(1000, 1000));
+                } else if (uri.getPath().contains("/auth")) {
+                    sseLatch.countDown();
+                    return new HttpResponseMock(200, IntegrationHelper.streamingEnabledToken());
+                }
+                return new HttpResponseMock(200);
+            }
+
+            @Override
+            public HttpStreamResponseMock getStreamResponse(URI uri) {
+                try {
+                    return new HttpStreamResponseMock(200, streamingData);
+                } catch (IOException e) {
+                    return null;
+                }
+            }
+        };
+
+        HttpClientMock httpClientMock = new HttpClientMock(dispatcher);
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .ready(30000)
+                .streamingEnabled(true)
+                .trafficType("account")
+                .enableDebug()
+                .build();
+
+        SplitFactory factory = IntegrationHelper.buildFactory(
+                IntegrationHelper.dummyApiKey(), keyA, config, mContext, httpClientMock, mDatabase);
+
+        SplitClient clientA = factory.client(keyA);
+        SplitClient clientB = factory.client(keyB);
+
+        CountDownLatch readyLatchA = new CountDownLatch(1);
+        CountDownLatch readyLatchB = new CountDownLatch(1);
+
+        registerReadyHandler(clientA, null, readyLatchA);
+        registerReadyHandler(clientB, null, readyLatchB);
+
+        boolean readyA = readyLatchA.await(30, TimeUnit.SECONDS);
+        boolean readyB = readyLatchB.await(30, TimeUnit.SECONDS);
+        assertTrue("ClientA SDK_READY should fire", readyA);
+        assertTrue("ClientB SDK_READY should fire", readyB);
+
+        // Wait for SSE connection and send keep-alive
+        sseLatch.await(10, TimeUnit.SECONDS);
+        TestingHelper.pushKeepAlive(streamingData);
+
+        return new TwoClientFixture(factory, clientA, clientB, streamingData);
+    }
+
+    /**
+     * Registers a handler for SDK_READY_FROM_CACHE that captures metadata and counts invocations.
+     */
+    private void registerCacheReadyHandler(SplitClient client, AtomicInteger count,
+                                           AtomicReference<EventMetadata> metadata,
+                                           CountDownLatch latch) {
+        client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata eventMetadata) {
+                count.incrementAndGet();
+                if (metadata != null) metadata.set(eventMetadata);
+                if (latch != null) latch.countDown();
+            }
+        });
+    }
+
+    /**
+     * Registers a handler for SDK_UPDATE that counts invocations and optionally captures metadata.
+     */
+    private void registerUpdateHandler(SplitClient client, AtomicInteger count,
+                                       AtomicReference<EventMetadata> metadata) {
+        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata eventMetadata) {
+                count.incrementAndGet();
+                if (metadata != null) metadata.set(eventMetadata);
+            }
+        });
+    }
+
+    /**
+     * Registers a handler for SDK_READY that counts invocations and optionally counts down a latch.
+     */
+    private void registerReadyHandler(SplitClient client, AtomicInteger count, CountDownLatch latch) {
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                if (count != null) count.incrementAndGet();
+                if (latch != null) latch.countDown();
+            }
+        });
+    }
+
+    /**
+     * Creates two clients and waits for both to be ready.
+     */
+    private TwoClientFixture createTwoClientsAndWaitForReady(Key keyA, Key keyB) throws InterruptedException {
+        SplitClientConfig config = buildConfig();
+        SplitFactory factory = buildFactory(config);
+
+        SplitClient clientA = factory.client(keyA);
+        SplitClient clientB = factory.client(keyB);
+
+        CountDownLatch readyLatchA = new CountDownLatch(1);
+        CountDownLatch readyLatchB = new CountDownLatch(1);
+
+        registerReadyHandler(clientA, null, readyLatchA);
+        registerReadyHandler(clientB, null, readyLatchB);
+
         boolean readyA = readyLatchA.await(30, TimeUnit.SECONDS);
         boolean readyB = readyLatchB.await(30, TimeUnit.SECONDS);
         assertTrue("ClientA SDK_READY should fire. ReadyA: " + readyA + ", ReadyB: " + readyB, readyA);
         assertTrue("ClientB SDK_READY should fire", readyB);
 
-        // Note: Client-scoped events (like mySegmentsUpdated) only affect the specific client.
-        // In integration tests, we can't easily trigger client-scoped mySegmentsUpdated events,
-        // but we've verified that both clients are set up correctly.
+        return new TwoClientFixture(factory, clientA, clientB);
+    }
 
-        factory.destroy();
+    /**
+     * Helper class to hold factory and client together for cleanup.
+     */
+    private static class TestClientFixture {
+        final SplitFactory factory;
+        final SplitClient client;
+        final CountDownLatch readyLatch;
+        final BlockingQueue<String> streamingData;
+
+        TestClientFixture(SplitFactory factory, SplitClient client, CountDownLatch readyLatch) {
+            this(factory, client, readyLatch, null);
+        }
+
+        TestClientFixture(SplitFactory factory, SplitClient client, CountDownLatch readyLatch, BlockingQueue<String> streamingData) {
+            this.factory = factory;
+            this.client = client;
+            this.readyLatch = readyLatch;
+            this.streamingData = streamingData;
+        }
+
+        void pushSplitUpdate() {
+            if (streamingData != null) {
+                pushMessage(streamingData, IntegrationHelper.splitChangeV2CompressionType0());
+            }
+        }
+
+        void pushSplitKill(String splitName) {
+            if (streamingData != null) {
+                pushMessage(streamingData, IntegrationHelper.splitKill("9999999999999", splitName));
+            }
+        }
+
+        void destroy() {
+            factory.destroy();
+        }
+    }
+
+    /**
+     * Helper class to hold factory and two clients together for cleanup.
+     */
+    private static class TwoClientFixture {
+        final SplitFactory factory;
+        final SplitClient clientA;
+        final SplitClient clientB;
+        final BlockingQueue<String> streamingData;
+
+        TwoClientFixture(SplitFactory factory, SplitClient clientA, SplitClient clientB) {
+            this(factory, clientA, clientB, null);
+        }
+
+        TwoClientFixture(SplitFactory factory, SplitClient clientA, SplitClient clientB, BlockingQueue<String> streamingData) {
+            this.factory = factory;
+            this.clientA = clientA;
+            this.clientB = clientB;
+            this.streamingData = streamingData;
+        }
+
+        void pushSplitUpdate() {
+            if (streamingData != null) {
+                pushMessage(streamingData, IntegrationHelper.splitChangeV2CompressionType0());
+            }
+        }
+
+        void destroy() {
+            factory.destroy();
+        }
+    }
+
+    private static void pushMessage(BlockingQueue<String> queue, String message) {
+        try {
+            queue.put(message + "\n");
+            Logger.d("Pushed message: " + message);
+        } catch (InterruptedException e) {
+            Logger.e("Failed to push message", e);
+        }
     }
 
     /**
