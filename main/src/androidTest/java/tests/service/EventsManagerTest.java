@@ -6,6 +6,8 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -174,6 +176,49 @@ public class EventsManagerTest {
         updateLatch.await(5, TimeUnit.SECONDS);
 
         Assert.assertTrue(updateTask.onExecutedCalled);
+    }
+
+    @Test
+    public void testKilledSplitWithMetadata() throws InterruptedException {
+        SplitClientConfig cfg = SplitClientConfig.builder().build();
+        SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorImpl(), cfg.blockUntilReady());
+        eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
+
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        CountDownLatch updateLatch = new CountDownLatch(1);
+        AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
+
+        // Wait for SDK_READY first
+        eventManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecutionView(SplitClient client) {
+                readyLatch.countDown();
+            }
+        });
+
+        // Register for SDK_UPDATE with metadata callback
+        eventManager.register(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+
+        // Make SDK_READY fire
+        eventManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+        eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        Assert.assertTrue("SDK_READY should fire", readyLatch.await(5, TimeUnit.SECONDS));
+
+        EventMetadata metadata = EventMetadataHelpers.createUpdatedFlagsMetadata(
+                Collections.singletonList("killed_flag"));
+        eventManager.notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION, metadata);
+
+        Assert.assertTrue("SDK_UPDATE should fire", updateLatch.await(5, TimeUnit.SECONDS));
+        Assert.assertNotNull("Metadata should not be null", receivedMetadata.get());
+        Assert.assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey("updatedFlags"));
+        List<String> metadataList = (List<String>) receivedMetadata.get().get("updatedFlags");
+        Assert.assertTrue("Metadata should contain only killed_flag", metadataList.size() == 1 && metadataList.contains("killed_flag"));
     }
 
     @Test
