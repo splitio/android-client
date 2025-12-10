@@ -429,6 +429,7 @@ public class SdkEventsIntegrationTest {
         AtomicInteger handler1Count = new AtomicInteger(0);
         AtomicInteger handler2Count = new AtomicInteger(0);
         CountDownLatch firstUpdateLatch = new CountDownLatch(1);
+        AtomicReference<CountDownLatch> secondUpdateLatchRef = new AtomicReference<>(null);
 
         // And: a handler H1 is registered for sdkUpdate
         fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
@@ -436,19 +437,30 @@ public class SdkEventsIntegrationTest {
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 handler1Count.incrementAndGet();
                 firstUpdateLatch.countDown();
+                // Count down second latch if it exists (second update)
+                CountDownLatch secondLatch = secondUpdateLatchRef.get();
+                if (secondLatch != null) {
+                    secondLatch.countDown();
+                }
             }
         });
 
         // When: an internal "splitsUpdated" event is notified via SSE
-        fixture.pushSplitUpdate();
+        // Use large change numbers to avoid any edge cases with change number validation
+        fixture.pushSplitUpdate("2000", "1000");
 
         // Then: sdkUpdate is emitted and handler H1 is invoked once
         boolean firstUpdateFired = firstUpdateLatch.await(10, TimeUnit.SECONDS);
         assertTrue("SDK_UPDATE should fire for H1", firstUpdateFired);
         assertEquals("H1 should be invoked once", 1, handler1Count.get());
 
+        // Wait to ensure first update is fully processed and stored
+        Thread.sleep(1000);
+
         // When: a second handler H2 is registered for sdkUpdate after one sdkUpdate has already fired
         CountDownLatch secondUpdateLatch = new CountDownLatch(2);
+        secondUpdateLatchRef.set(secondUpdateLatch);
+        
         fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
@@ -461,22 +473,23 @@ public class SdkEventsIntegrationTest {
         Thread.sleep(500);
         assertEquals("H2 should not receive replay", 0, handler2Count.get());
 
-        // Prepare H1 to also count down for second update
-        final AtomicInteger h1SecondUpdateCount = new AtomicInteger(0);
-        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                h1SecondUpdateCount.incrementAndGet();
-                secondUpdateLatch.countDown();
-            }
-        });
+        // Ensure handlers are registered and first update is fully processed before pushing second update
+        Thread.sleep(500);
+        
+        // Send keep-alive to ensure SSE connection is still active
+        if (fixture.streamingData != null) {
+            TestingHelper.pushKeepAlive(fixture.streamingData);
+        }
 
-        // When: another internal "splitsUpdated" event is notified
-        fixture.pushSplitUpdate();
+        // When: another internal "splitsUpdated" event is notified (with incrementing change number)
+        // Use a higher change number to ensure it's accepted after the first update
+        fixture.pushSplitUpdate("2001", "2000");
 
-        // Then: both H1 and H2 (and new H1 listener) are invoked for that second sdkUpdate
-        boolean secondUpdateFired = secondUpdateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("Second SDK_UPDATE should fire", secondUpdateFired);
+        // Then: both H1 and H2 are invoked for that second sdkUpdate
+        boolean secondUpdateFired = secondUpdateLatch.await(15, TimeUnit.SECONDS);
+        assertTrue("Second SDK_UPDATE should fire. H1 count: " + handler1Count.get() + 
+                ", H2 count: " + handler2Count.get() + 
+                ", secondUpdateLatch count: " + secondUpdateLatch.getCount(), secondUpdateFired);
 
         // H1 should now have 2 total invocations (1 from first + 1 from second)
         assertEquals("H1 should have 2 total invocations", 2, handler1Count.get());
@@ -1196,8 +1209,14 @@ public class SdkEventsIntegrationTest {
         }
 
         void pushSplitUpdate() {
+            pushSplitUpdate("9999999999999", "1000");
+        }
+
+        void pushSplitUpdate(String changeNumber, String previousChangeNumber) {
             if (streamingData != null) {
-                pushMessage(streamingData, IntegrationHelper.splitChangeV2CompressionType0());
+                String payload = "eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiJkNDMxY2RkMC1iMGJlLTExZWEtOGE4MC0xNjYwYWRhOWNlMzkiLCJuYW1lIjoibWF1cm9famF2YSIsInRyYWZmaWNBbGxvY2F0aW9uIjoxMDAsInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6LTkyMzkxNDkxLCJzZWVkIjotMTc2OTM3NzYwNCwic3RhdHVzIjoiQUNUSVZFIiwia2lsbGVkIjpmYWxzZSwiZGVmYXVsdFRyZWF0bWVudCI6Im9mZiIsImNoYW5nZU51bWJlciI6MTY4NDMyOTg1NDM4NSwiYWxnbyI6MiwiY29uZmlndXJhdGlvbnMiOnt9LCJjb25kaXRpb25zIjpbeyJjb25kaXRpb25UeXBlIjoiV0hJVEVMSVNUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7Im1hdGNoZXJUeXBlIjoiV0hJVEVMSVNUIiwibmVnYXRlIjpmYWxzZSwid2hpdGVsaXN0TWF0Y2hlckRhdGEiOnsid2hpdGVsaXN0IjpbImFkbWluIiwibWF1cm8iLCJuaWNvIl19fV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9XSwibGFiZWwiOiJ3aGl0ZWxpc3RlZCJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiSU5fU0VHTUVOVCIsIm5lZ2F0ZSI6ZmFsc2UsInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjp7InNlZ21lbnROYW1lIjoibWF1ci0yIn19XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImluIHNlZ21lbnQgbWF1ci0yIn0seyJjb25kaXRpb25UeXBlIjoiUk9MTE9VVCIsIm1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImRlZmF1bHQgcnVsZSJ9XX0=";
+                pushMessage(streamingData, IntegrationHelper.splitChangeV2(
+                        changeNumber, previousChangeNumber, "0", payload));
             }
         }
 
