@@ -40,7 +40,6 @@ import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.network.HttpMethod;
-import io.split.android.client.service.executor.SplitTaskExecutorImpl;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
@@ -95,7 +94,6 @@ public class SdkEventsIntegrationTest {
                 if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
                 } else if (path.contains("/splitChanges")) {
-                    // Return empty changes - we'll rely on cache for this test
                     long id = mCurSplitReqId++;
                     return new MockResponse().setResponseCode(200)
                             .setBody(IntegrationHelper.emptyTargetingRulesChanges(id, id));
@@ -1164,30 +1162,6 @@ public class SdkEventsIntegrationTest {
                 if (latch != null) latch.countDown();
             }
         });
-    }
-
-    /**
-     * Creates two clients and waits for both to be ready.
-     */
-    private TwoClientFixture createTwoClientsAndWaitForReady(Key keyA, Key keyB) throws InterruptedException {
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
-
-        SplitClient clientA = factory.client(keyA);
-        SplitClient clientB = factory.client(keyB);
-
-        CountDownLatch readyLatchA = new CountDownLatch(1);
-        CountDownLatch readyLatchB = new CountDownLatch(1);
-
-        registerReadyHandler(clientA, null, readyLatchA);
-        registerReadyHandler(clientB, null, readyLatchB);
-
-        boolean readyA = readyLatchA.await(30, TimeUnit.SECONDS);
-        boolean readyB = readyLatchB.await(30, TimeUnit.SECONDS);
-        assertTrue("ClientA SDK_READY should fire. ReadyA: " + readyA + ", ReadyB: " + readyB, readyA);
-        assertTrue("ClientB SDK_READY should fire", readyB);
-
-        return new TwoClientFixture(factory, clientA, clientB);
     }
 
     private static final String SPLIT_UPDATE_PAYLOAD = "eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiJkNDMxY2RkMC1iMGJlLTExZWEtOGE4MC0xNjYwYWRhOWNlMzkiLCJuYW1lIjoibWF1cm9famF2YSIsInRyYWZmaWNBbGxvY2F0aW9uIjoxMDAsInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6LTkyMzkxNDkxLCJzZWVkIjotMTc2OTM3NzYwNCwic3RhdHVzIjoiQUNUSVZFIiwia2lsbGVkIjpmYWxzZSwiZGVmYXVsdFRyZWF0bWVudCI6Im9mZiIsImNoYW5nZU51bWJlciI6MTY4NDMyOTg1NDM4NSwiYWxnbyI6MiwiY29uZmlndXJhdGlvbnMiOnt9LCJjb25kaXRpb25zIjpbeyJjb25kaXRpb25UeXBlIjoiV0hJVEVMSVNUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7Im1hdGNoZXJUeXBlIjoiV0hJVEVMSVNUIiwibmVnYXRlIjpmYWxzZSwid2hpdGVsaXN0TWF0Y2hlckRhdGEiOnsid2hpdGVsaXN0IjpbImFkbWluIiwibWF1cm8iLCJuaWNvIl19fV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9XSwibGFiZWwiOiJ3aGl0ZWxpc3RlZCJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiSU5fU0VHTUVOVCIsIm5lZ2F0ZSI6ZmFsc2UsInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjp7InNlZ21lbnROYW1lIjoibWF1ci0yIn19XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImluIHNlZ21lbnQgbWF1ci0yIn0seyJjb25kaXRpb25UeXBlIjoiUk9MTE9VVCIsIm1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImRlZmF1bHQgcnVsZSJ9XX0=";
