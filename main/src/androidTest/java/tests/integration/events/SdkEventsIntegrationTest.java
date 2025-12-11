@@ -152,7 +152,6 @@ public class SdkEventsIntegrationTest {
         SplitClient client = factory.client(new Key("key_1"));
         registerCacheReadyHandler(client, handlerInvocationCount, receivedMetadata, cacheReadyLatch);
 
-        // When: internal events are notified (happens automatically during SDK initialization)
         boolean fired = cacheReadyLatch.await(10, TimeUnit.SECONDS);
 
         // Then: sdkReadyFromCache is emitted exactly once
@@ -274,7 +273,6 @@ public class SdkEventsIntegrationTest {
         assertTrue("SDK_READY_FROM_CACHE should fire", cacheFired);
         assertEquals("Cache handler should be invoked once", 1, cacheHandlerCount.get());
 
-        // When: sync completes (already happened, but SDK_READY requires SDK_READY_FROM_CACHE prerequisite)
         // SDK_READY requires both SDK_READY_FROM_CACHE (prerequisite) and sync completion (requireAll)
         // Wait for SDK_READY to fire
         boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
@@ -286,8 +284,8 @@ public class SdkEventsIntegrationTest {
         assertEquals("Ready handler should be invoked exactly once", 1, readyHandlerCount.get());
         
         // Verify both events fired
-        assertTrue("SDK_READY_FROM_CACHE should fire", cacheHandlerCount.get() == 1);
-        assertTrue("SDK_READY should fire after SDK_READY_FROM_CACHE", readyHandlerCount.get() == 1);
+        assertEquals("SDK_READY_FROM_CACHE should fire", 1, cacheHandlerCount.get());
+        assertEquals("SDK_READY should fire after SDK_READY_FROM_CACHE", 1, readyHandlerCount.get());
 
         factory.destroy();
     }
@@ -328,46 +326,63 @@ public class SdkEventsIntegrationTest {
      * <p>
      * Given a handler H is registered for sdkUpdate
      * And the SDK has not yet emitted sdkReady
-     * When an internal "splitsUpdated" event is notified
+     * When an internal "splitsUpdated" event is notified during initial sync
      * Then sdkUpdate is not emitted because sdkReady has not fired yet
      * When internal events for sdkReadyFromCache and sdkReady are notified and both fire
-     * When a new "splitsUpdated" event is notified
+     * When a new "splitsUpdated" event is notified via SSE
      * Then sdkUpdate is emitted
-     * And handler H is invoked once with metadata containing "updatedFlags"
+     * And handler H is invoked once with metadata
      */
     @Test
     public void sdkUpdateEmittedOnlyAfterSdkReady() throws Exception {
-        // Given: a handler H is registered for sdkUpdate
-        // And: the SDK has not yet emitted sdkReady
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
+        // Given: Create streaming client but don't wait for SDK_READY
+        TestClientFixture fixture = createStreamingClient(new Key("key_1"));
 
         AtomicInteger updateHandlerCount = new AtomicInteger(0);
         AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
         CountDownLatch readyLatch = new CountDownLatch(1);
+        CountDownLatch updateLatch = new CountDownLatch(1);
 
-        SplitClient client = factory.client(new Key("key_1"));
-        registerUpdateHandler(client, updateHandlerCount, receivedMetadata);
-        registerReadyHandler(client, null, readyLatch);
+        // Register handlers BEFORE SDK_READY fires
+        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                updateHandlerCount.incrementAndGet();
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
 
-        // When: an internal "splitsUpdated" event is notified
-        // (This happens during initial sync, but SDK_READY hasn't fired yet)
+        fixture.client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                readyLatch.countDown();
+            }
+        });
+
+        // Wait a bit to see if SDK_UPDATE fires prematurely (during initial sync)
         Thread.sleep(1000);
 
         // Then: sdkUpdate is not emitted because sdkReady has not fired yet
         assertEquals("SDK_UPDATE should not fire before SDK_READY", 0, updateHandlerCount.get());
 
-        // When: internal events for sdkReadyFromCache and sdkReady are notified and both fire
+        // When: SDK_READY fires
         boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
         assertTrue("SDK_READY should fire", readyFired);
 
-        // When: a new "splitsUpdated" event is notified
-        // Note: We can't easily trigger splits updates in integration tests.
-        // The key assertion is that SDK_UPDATE didn't fire before SDK_READY.
-        Thread.sleep(1000);
-        assertEquals("SDK_UPDATE should not fire before SDK_READY", 0, updateHandlerCount.get());
+        // Wait for SSE connection
+        fixture.waitForSseConnection();
 
-        factory.destroy();
+        // When: a new "splitsUpdated" event is notified via SSE (after SDK_READY has fired)
+        fixture.pushSplitUpdate("2000", "1000");
+
+        // Then: sdkUpdate is emitted and handler H is invoked once
+        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire after SDK_READY when splits update arrives", updateFired);
+        assertEquals("Handler should be invoked exactly once", 1, updateHandlerCount.get());
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+
+        fixture.destroy();
     }
 
     /**
@@ -958,8 +973,6 @@ public class SdkEventsIntegrationTest {
         fixture.destroy();
     }
 
-    // Helper methods to reduce duplication
-
     /**
      * Creates a client and waits for SDK_READY to fire.
      * Returns a TestClientFixture containing the factory, client, and ready latch.
@@ -990,21 +1003,65 @@ public class SdkEventsIntegrationTest {
     }
 
     /**
+     * Creates a client with streaming enabled but does NOT wait for SDK_READY.
+     * Useful for tests that need to register handlers before SDK_READY fires.
+     * Returns a fixture that can push SSE messages to trigger SDK_UPDATE.
+     */
+    private TestClientFixture createStreamingClient(Key key) throws IOException {
+        BlockingQueue<String> streamingData = new LinkedBlockingDeque<>();
+        CountDownLatch sseLatch = new CountDownLatch(1);
+
+        HttpResponseMockDispatcher dispatcher = createStreamingDispatcher(streamingData, sseLatch);
+        HttpClientMock httpClientMock = new HttpClientMock(dispatcher);
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .ready(30000)
+                .streamingEnabled(true)
+                .trafficType("account")
+                .enableDebug()
+                .build();
+
+        SplitFactory factory = IntegrationHelper.buildFactory(
+                IntegrationHelper.dummyApiKey(), key, config, mContext, httpClientMock, mDatabase);
+
+        SplitClient client = factory.client(key);
+
+        return new TestClientFixture(factory, client, null, streamingData, sseLatch);
+    }
+
+    /**
      * Creates a client with streaming enabled and waits for SDK_READY.
      * Returns a fixture that can push SSE messages to trigger SDK_UPDATE.
      */
     private TestClientFixture createStreamingClientAndWaitForReady(Key key) throws InterruptedException, IOException {
-        BlockingQueue<String> streamingData = new LinkedBlockingDeque<>();
-        CountDownLatch sseLatch = new CountDownLatch(1);
-        AtomicInteger splitChangesHitCount = new AtomicInteger(0);
+        TestClientFixture fixture = createStreamingClient(key);
 
-        HttpResponseMockDispatcher dispatcher = new HttpResponseMockDispatcher() {
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        fixture.client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                readyLatch.countDown();
+            }
+        });
+
+        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_READY should fire", readyFired);
+
+        // Wait for SSE connection and send keep-alive
+        fixture.waitForSseConnection();
+
+        return new TestClientFixture(fixture.factory, fixture.client, readyLatch, fixture.streamingData, fixture.sseLatch);
+    }
+
+    /**
+     * Creates a standard streaming dispatcher for mock HTTP responses.
+     */
+    private HttpResponseMockDispatcher createStreamingDispatcher(BlockingQueue<String> streamingData, CountDownLatch sseLatch) {
+        return new HttpResponseMockDispatcher() {
             @Override
             public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
                 if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     return new HttpResponseMock(200, IntegrationHelper.dummyAllSegments());
                 } else if (uri.getPath().contains("/splitChanges")) {
-                    splitChangesHitCount.incrementAndGet();
                     return new HttpResponseMock(200, IntegrationHelper.emptyTargetingRulesChanges(1000, 1000));
                 } else if (uri.getPath().contains("/auth")) {
                     sseLatch.countDown();
@@ -1024,36 +1081,6 @@ public class SdkEventsIntegrationTest {
                 }
             }
         };
-
-        HttpClientMock httpClientMock = new HttpClientMock(dispatcher);
-        SplitClientConfig config = new TestableSplitConfigBuilder()
-                .ready(30000)
-                .streamingEnabled(true)
-                .trafficType("account")
-                .enableDebug()
-                .build();
-
-        SplitFactory factory = IntegrationHelper.buildFactory(
-                IntegrationHelper.dummyApiKey(), key, config, mContext, httpClientMock, mDatabase);
-
-        SplitClient client = factory.client(key);
-        CountDownLatch readyLatch = new CountDownLatch(1);
-
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                readyLatch.countDown();
-            }
-        });
-
-        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_READY should fire", readyFired);
-
-        // Wait for SSE connection and send keep-alive
-        sseLatch.await(10, TimeUnit.SECONDS);
-        TestingHelper.pushKeepAlive(streamingData);
-
-        return new TestClientFixture(factory, client, readyLatch, streamingData);
     }
 
     /**
@@ -1062,33 +1089,8 @@ public class SdkEventsIntegrationTest {
     private TwoClientFixture createTwoStreamingClientsAndWaitForReady(Key keyA, Key keyB) throws InterruptedException, IOException {
         BlockingQueue<String> streamingData = new LinkedBlockingDeque<>();
         CountDownLatch sseLatch = new CountDownLatch(1);
-        AtomicInteger membershipsHitCount = new AtomicInteger(0);
 
-        HttpResponseMockDispatcher dispatcher = new HttpResponseMockDispatcher() {
-            @Override
-            public HttpResponseMock getResponse(URI uri, HttpMethod method, String body) {
-                if (uri.getPath().contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
-                    membershipsHitCount.incrementAndGet();
-                    return new HttpResponseMock(200, IntegrationHelper.dummyAllSegments());
-                } else if (uri.getPath().contains("/splitChanges")) {
-                    return new HttpResponseMock(200, IntegrationHelper.emptyTargetingRulesChanges(1000, 1000));
-                } else if (uri.getPath().contains("/auth")) {
-                    sseLatch.countDown();
-                    return new HttpResponseMock(200, IntegrationHelper.streamingEnabledToken());
-                }
-                return new HttpResponseMock(200);
-            }
-
-            @Override
-            public HttpStreamResponseMock getStreamResponse(URI uri) {
-                try {
-                    return new HttpStreamResponseMock(200, streamingData);
-                } catch (IOException e) {
-                    return null;
-                }
-            }
-        };
-
+        HttpResponseMockDispatcher dispatcher = createStreamingDispatcher(streamingData, sseLatch);
         HttpClientMock httpClientMock = new HttpClientMock(dispatcher);
         SplitClientConfig config = new TestableSplitConfigBuilder()
                 .ready(30000)
@@ -1188,6 +1190,8 @@ public class SdkEventsIntegrationTest {
         return new TwoClientFixture(factory, clientA, clientB);
     }
 
+    private static final String SPLIT_UPDATE_PAYLOAD = "eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiJkNDMxY2RkMC1iMGJlLTExZWEtOGE4MC0xNjYwYWRhOWNlMzkiLCJuYW1lIjoibWF1cm9famF2YSIsInRyYWZmaWNBbGxvY2F0aW9uIjoxMDAsInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6LTkyMzkxNDkxLCJzZWVkIjotMTc2OTM3NzYwNCwic3RhdHVzIjoiQUNUSVZFIiwia2lsbGVkIjpmYWxzZSwiZGVmYXVsdFRyZWF0bWVudCI6Im9mZiIsImNoYW5nZU51bWJlciI6MTY4NDMyOTg1NDM4NSwiYWxnbyI6MiwiY29uZmlndXJhdGlvbnMiOnt9LCJjb25kaXRpb25zIjpbeyJjb25kaXRpb25UeXBlIjoiV0hJVEVMSVNUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7Im1hdGNoZXJUeXBlIjoiV0hJVEVMSVNUIiwibmVnYXRlIjpmYWxzZSwid2hpdGVsaXN0TWF0Y2hlckRhdGEiOnsid2hpdGVsaXN0IjpbImFkbWluIiwibWF1cm8iLCJuaWNvIl19fV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9XSwibGFiZWwiOiJ3aGl0ZWxpc3RlZCJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiSU5fU0VHTUVOVCIsIm5lZ2F0ZSI6ZmFsc2UsInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjp7InNlZ21lbnROYW1lIjoibWF1ci0yIn19XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImluIHNlZ21lbnQgbWF1ci0yIn0seyJjb25kaXRpb25UeXBlIjoiUk9MTE9VVCIsIm1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImRlZmF1bHQgcnVsZSJ9XX0=";
+
     /**
      * Helper class to hold factory and client together for cleanup.
      */
@@ -1196,16 +1200,30 @@ public class SdkEventsIntegrationTest {
         final SplitClient client;
         final CountDownLatch readyLatch;
         final BlockingQueue<String> streamingData;
+        final CountDownLatch sseLatch;
 
         TestClientFixture(SplitFactory factory, SplitClient client, CountDownLatch readyLatch) {
-            this(factory, client, readyLatch, null);
+            this(factory, client, readyLatch, null, null);
         }
 
         TestClientFixture(SplitFactory factory, SplitClient client, CountDownLatch readyLatch, BlockingQueue<String> streamingData) {
+            this(factory, client, readyLatch, streamingData, null);
+        }
+
+        TestClientFixture(SplitFactory factory, SplitClient client, CountDownLatch readyLatch, 
+                         BlockingQueue<String> streamingData, CountDownLatch sseLatch) {
             this.factory = factory;
             this.client = client;
             this.readyLatch = readyLatch;
             this.streamingData = streamingData;
+            this.sseLatch = sseLatch;
+        }
+
+        void waitForSseConnection() throws InterruptedException {
+            if (sseLatch != null) {
+                sseLatch.await(10, TimeUnit.SECONDS);
+                TestingHelper.pushKeepAlive(streamingData);
+            }
         }
 
         void pushSplitUpdate() {
@@ -1214,9 +1232,8 @@ public class SdkEventsIntegrationTest {
 
         void pushSplitUpdate(String changeNumber, String previousChangeNumber) {
             if (streamingData != null) {
-                String payload = "eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiJkNDMxY2RkMC1iMGJlLTExZWEtOGE4MC0xNjYwYWRhOWNlMzkiLCJuYW1lIjoibWF1cm9famF2YSIsInRyYWZmaWNBbGxvY2F0aW9uIjoxMDAsInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6LTkyMzkxNDkxLCJzZWVkIjotMTc2OTM3NzYwNCwic3RhdHVzIjoiQUNUSVZFIiwia2lsbGVkIjpmYWxzZSwiZGVmYXVsdFRyZWF0bWVudCI6Im9mZiIsImNoYW5nZU51bWJlciI6MTY4NDMyOTg1NDM4NSwiYWxnbyI6MiwiY29uZmlndXJhdGlvbnMiOnt9LCJjb25kaXRpb25zIjpbeyJjb25kaXRpb25UeXBlIjoiV0hJVEVMSVNUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7Im1hdGNoZXJUeXBlIjoiV0hJVEVMSVNUIiwibmVnYXRlIjpmYWxzZSwid2hpdGVsaXN0TWF0Y2hlckRhdGEiOnsid2hpdGVsaXN0IjpbImFkbWluIiwibWF1cm8iLCJuaWNvIl19fV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9XSwibGFiZWwiOiJ3aGl0ZWxpc3RlZCJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiSU5fU0VHTUVOVCIsIm5lZ2F0ZSI6ZmFsc2UsInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjp7InNlZ21lbnROYW1lIjoibWF1ci0yIn19XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImluIHNlZ21lbnQgbWF1ci0yIn0seyJjb25kaXRpb25UeXBlIjoiUk9MTE9VVCIsIm1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImRlZmF1bHQgcnVsZSJ9XX0=";
                 pushMessage(streamingData, IntegrationHelper.splitChangeV2(
-                        changeNumber, previousChangeNumber, "0", payload));
+                        changeNumber, previousChangeNumber, "0", SPLIT_UPDATE_PAYLOAD));
             }
         }
 
@@ -1277,14 +1294,17 @@ public class SdkEventsIntegrationTest {
     private void populateDatabaseWithCacheData(long timestamp) {
         // Populate splits
         List<SplitEntity> splitEntities = new ArrayList<>();
+        long finalChangeNumber = 1000L;
         for (int i = 0; i < 3; i++) {
             SplitEntity entity = new SplitEntity();
             entity.setName("split_" + i);
-            entity.setBody(String.format("{\"name\":\"split_%d\", \"changeNumber\": %d}", i, 1000L + i));
+            long cn = 1000L + i;
+            finalChangeNumber = cn;
+            entity.setBody(String.format("{\"name\":\"split_%d\", \"changeNumber\": %d}", i, cn));
             splitEntities.add(entity);
         }
         mDatabase.splitDao().insert(splitEntities);
-        mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, 1000L));
+        mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, finalChangeNumber));
         mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP, timestamp));
 
         // Populate segments for default key
