@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.EventMetadata;
+import io.split.android.client.api.SdkUpdateMetadataKeys;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.fake.SplitTaskExecutorStub;
@@ -296,7 +297,7 @@ public class EventsManagerTest {
         boolean updateAwait = updateLatch.await(3, TimeUnit.SECONDS);
         assertTrue("SDK_UPDATE callback should be called", updateAwait);
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey("updatedFlags"));
+        assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey(SdkUpdateMetadataKeys.UPDATED_FLAGS));
     }
 
     @Test
@@ -322,7 +323,7 @@ public class EventsManagerTest {
         boolean updateAwait = updateLatch.await(3, TimeUnit.SECONDS);
         assertTrue("SDK_UPDATE callback should be called on main thread", updateAwait);
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey("updatedFlags"));
+        assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey(SdkUpdateMetadataKeys.UPDATED_FLAGS));
     }
 
     @Test
@@ -384,7 +385,7 @@ public class EventsManagerTest {
         assertTrue("Metadata method should be called", metadataMethodCalled[0]);
         assertTrue("Legacy method should also be called", legacyMethodCalled[0]);
         assertNotNull("Metadata should be passed to metadata method", receivedMetadata.get());
-        assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey("updatedFlags"));
+        assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey(SdkUpdateMetadataKeys.UPDATED_FLAGS));
     }
 
     @Test

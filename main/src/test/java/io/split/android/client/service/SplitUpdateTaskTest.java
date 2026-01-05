@@ -21,6 +21,8 @@ import org.mockito.Mockito;
 import java.util.Arrays;
 import java.util.List;
 
+import io.split.android.client.api.SdkReadyFromCacheMetadataKeys;
+import io.split.android.client.api.SdkUpdateMetadataKeys;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -105,10 +107,9 @@ public class SplitUpdateTaskTest {
         // Verify TARGETING_RULES_SYNC_COMPLETE is fired with sync metadata (freshInstall=true, lastUpdateTimestamp=null)
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), argThat(metadata -> {
             if (metadata == null) return false;
-            assertTrue(metadata.containsKey("freshInstall"));
-            assertEquals(true, metadata.get("freshInstall"));
-            // lastUpdateTimestamp should not be present (null)
-            return !metadata.containsKey("lastUpdateTimestamp") || metadata.get("lastUpdateTimestamp") == null;
+            assertEquals(Boolean.TRUE, metadata.get(SdkReadyFromCacheMetadataKeys.FRESH_INSTALL));
+            // lastUpdateTimestamp should not be present (or should be null)
+            return metadata.get(SdkReadyFromCacheMetadataKeys.LAST_UPDATE_TIMESTAMP) == null;
         }));
     }
 
@@ -175,12 +176,8 @@ public class SplitUpdateTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            assertTrue(metadata.containsKey("updatedFlags"));
-            Object flagsValue = metadata.get("updatedFlags");
-            assertNotNull(flagsValue);
-            assertTrue(flagsValue instanceof List);
-            @SuppressWarnings("unchecked")
-            List<String> flags = (List<String>) flagsValue;
+            List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            assertNotNull(flags);
             assertEquals(2, flags.size());
             assertTrue(flags.contains("flag1"));
             assertTrue(flags.contains("flag2"));

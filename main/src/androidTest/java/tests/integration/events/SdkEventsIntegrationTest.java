@@ -37,6 +37,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.EventMetadata;
 import io.split.android.client.api.Key;
+import io.split.android.client.api.SdkReadyFromCacheMetadataKeys;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.network.HttpMethod;
@@ -158,14 +159,12 @@ public class SdkEventsIntegrationTest {
 
         // And: the metadata contains "freshInstall" with value false
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertTrue("Metadata should contain freshInstall key", receivedMetadata.get().containsKey("freshInstall"));
-        assertFalse("freshInstall should be false for cache path",
-                (Boolean) receivedMetadata.get().get("freshInstall"));
+        Boolean freshInstall = receivedMetadata.get().get(SdkReadyFromCacheMetadataKeys.FRESH_INSTALL);
+        assertNotNull("freshInstall should not be null", freshInstall);
+        assertFalse("freshInstall should be false for cache path", freshInstall);
 
         // And: the metadata contains "lastUpdateTimestamp" with a valid timestamp
-        assertTrue("Metadata should contain lastUpdateTimestamp key",
-                receivedMetadata.get().containsKey("lastUpdateTimestamp"));
-        Long lastUpdateTimestamp = (Long) receivedMetadata.get().get("lastUpdateTimestamp");
+        Long lastUpdateTimestamp = receivedMetadata.get().get(SdkReadyFromCacheMetadataKeys.LAST_UPDATE_TIMESTAMP);
         assertNotNull("lastUpdateTimestamp should not be null", lastUpdateTimestamp);
         assertTrue("lastUpdateTimestamp should be valid", lastUpdateTimestamp > 0);
 
@@ -207,9 +206,9 @@ public class SdkEventsIntegrationTest {
 
         // And: the metadata contains "freshInstall" with value true
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertTrue("Metadata should contain freshInstall key", receivedMetadata.get().containsKey("freshInstall"));
-        assertTrue("freshInstall should be true for sync path (fresh install)",
-                (Boolean) receivedMetadata.get().get("freshInstall"));
+        Boolean freshInstall = receivedMetadata.get().get(SdkReadyFromCacheMetadataKeys.FRESH_INSTALL);
+        assertNotNull("freshInstall should not be null", freshInstall);
+        assertTrue("freshInstall should be true for sync path (fresh install)", freshInstall);
 
         factory.destroy();
     }

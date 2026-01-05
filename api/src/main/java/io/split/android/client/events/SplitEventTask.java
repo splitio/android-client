@@ -31,7 +31,7 @@ import io.split.android.client.api.EventMetadata;
  * client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
  *     @Override
  *     public void onPostExecution(SplitClient client, EventMetadata metadata) {
- *         List<String> updatedFlags = (List<String>) metadata.get("updatedFlags");
+ *         List<String> updatedFlags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
  *         // Handle update with metadata
  *     }
  *

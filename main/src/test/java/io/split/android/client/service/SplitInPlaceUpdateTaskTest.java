@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.split.android.client.api.EventMetadata;
+import io.split.android.client.api.SdkUpdateMetadataKeys;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -151,12 +152,8 @@ public class SplitInPlaceUpdateTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            assertTrue(metadata.containsKey("updatedFlags"));
-            Object flagsValue = metadata.get("updatedFlags");
-            assertNotNull(flagsValue);
-            assertTrue(flagsValue instanceof List);
-            @SuppressWarnings("unchecked")
-            List<String> flags = (List<String>) flagsValue;
+            List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            assertNotNull(flags);
             assertEquals(2, flags.size());
             assertTrue(flags.contains("test_split_1"));
             assertTrue(flags.contains("test_split_2"));
@@ -178,12 +175,8 @@ public class SplitInPlaceUpdateTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            assertTrue(metadata.containsKey("updatedFlags"));
-            Object flagsValue = metadata.get("updatedFlags");
-            assertNotNull(flagsValue);
-            assertTrue(flagsValue instanceof List);
-            @SuppressWarnings("unchecked")
-            List<String> flags = (List<String>) flagsValue;
+            List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            assertNotNull(flags);
             assertEquals(1, flags.size());
             assertTrue(flags.contains("archived_split"));
             return true;

@@ -11,6 +11,7 @@ import org.mockito.Mockito;
 import java.util.List;
 
 import io.split.android.client.api.EventMetadata;
+import io.split.android.client.api.SdkUpdateMetadataKeys;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -79,8 +80,7 @@ public class SplitKillTaskTest {
                 eq(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION), metadataCaptor.capture());
         EventMetadata metadata = metadataCaptor.getValue();
         Assert.assertNotNull(metadata);
-        @SuppressWarnings("unchecked")
-        List<String> updatedFlags = (List<String>) metadata.get("updatedFlags");
+        List<String> updatedFlags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
         Assert.assertNotNull(updatedFlags);
         Assert.assertEquals(1, updatedFlags.size());
         Assert.assertTrue(updatedFlags.contains("split1"));

@@ -16,6 +16,8 @@ import java.util.Arrays;
 import java.util.List;
 
 import io.split.android.client.api.EventMetadata;
+import io.split.android.client.api.MetadataKey;
+import io.split.android.client.api.SdkUpdateMetadataKeys;
 
 public class EventMetadataBuilderTest {
 
@@ -76,7 +78,8 @@ public class EventMetadataBuilderTest {
                 .put("key", "value")
                 .build();
 
-        assertFalse(metadata.containsKey("key"));
+        MetadataKey<String> KEY = new MetadataKey<>("key");
+        assertFalse(metadata.containsKey(KEY));
     }
 
     @Test
@@ -87,14 +90,15 @@ public class EventMetadataBuilderTest {
                 .put("key", "value")
                 .build();
 
-        assertEquals("value", metadata.get("key"));
+        MetadataKey<String> KEY = new MetadataKey<>("key");
+        assertEquals("value", metadata.get(KEY));
     }
 
     @Test
     public void buildCreatesEmptyMetadataWhenNothingAdded() {
         EventMetadata metadata = new EventMetadataBuilder().build();
 
-        assertTrue(metadata.keys().isEmpty());
+        assertTrue(metadata.isEmpty());
     }
 
     @Test
@@ -103,7 +107,8 @@ public class EventMetadataBuilderTest {
                 .put("key", "value")
                 .build();
 
-        assertEquals("value", metadata.get("key"));
+        MetadataKey<String> KEY = new MetadataKey<>("key");
+        assertEquals("value", metadata.get(KEY));
     }
 
     @Test
@@ -112,7 +117,8 @@ public class EventMetadataBuilderTest {
                 .put("count", 42)
                 .build();
 
-        assertEquals(42, metadata.get("count"));
+        MetadataKey<Integer> COUNT = new MetadataKey<>("count");
+        assertEquals(Integer.valueOf(42), metadata.get(COUNT));
     }
 
     @Test
@@ -121,7 +127,8 @@ public class EventMetadataBuilderTest {
                 .put("timestamp", 1234567890L)
                 .build();
 
-        assertEquals(1234567890L, metadata.get("timestamp"));
+        MetadataKey<Long> TIMESTAMP = new MetadataKey<>("timestamp");
+        assertEquals(Long.valueOf(1234567890L), metadata.get(TIMESTAMP));
     }
 
     @Test
@@ -130,7 +137,8 @@ public class EventMetadataBuilderTest {
                 .put("rate", 3.14)
                 .build();
 
-        assertEquals(3.14, metadata.get("rate"));
+        MetadataKey<Double> RATE = new MetadataKey<>("rate");
+        assertEquals(Double.valueOf(3.14), metadata.get(RATE));
     }
 
     @Test
@@ -139,7 +147,8 @@ public class EventMetadataBuilderTest {
                 .put("enabled", true)
                 .build();
 
-        assertEquals(true, metadata.get("enabled"));
+        MetadataKey<Boolean> ENABLED = new MetadataKey<>("enabled");
+        assertEquals(Boolean.TRUE, metadata.get(ENABLED));
     }
 
     @Test
@@ -148,7 +157,8 @@ public class EventMetadataBuilderTest {
                 .put("disabled", false)
                 .build();
 
-        assertEquals(false, metadata.get("disabled"));
+        MetadataKey<Boolean> DISABLED = new MetadataKey<>("disabled");
+        assertEquals(Boolean.FALSE, metadata.get(DISABLED));
     }
 
     @Test
@@ -159,7 +169,7 @@ public class EventMetadataBuilderTest {
                 .put("updatedFlags", flags)
                 .build();
 
-        assertEquals(flags, metadata.get("updatedFlags"));
+        assertEquals(flags, metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS));
     }
 
     @Test
@@ -171,11 +181,11 @@ public class EventMetadataBuilderTest {
                 .put("list", Arrays.asList("a", "b"))
                 .build();
 
-        assertEquals(4, metadata.keys().size());
-        assertEquals("text", metadata.get("string"));
-        assertEquals(100, metadata.get("number"));
-        assertEquals(true, metadata.get("flag"));
-        assertEquals(Arrays.asList("a", "b"), metadata.get("list"));
+        assertEquals(4, metadata.size());
+        assertEquals("text", metadata.get(new MetadataKey<String>("string")));
+        assertEquals(Integer.valueOf(100), metadata.get(new MetadataKey<Integer>("number")));
+        assertEquals(Boolean.TRUE, metadata.get(new MetadataKey<Boolean>("flag")));
+        assertEquals(Arrays.asList("a", "b"), metadata.get(new MetadataKey<List<String>>("list")));
     }
 
     @Test
@@ -185,7 +195,8 @@ public class EventMetadataBuilderTest {
                 .put("key", "second")
                 .build();
 
-        assertEquals("second", metadata.get("key"));
+        MetadataKey<String> KEY = new MetadataKey<>("key");
+        assertEquals("second", metadata.get(KEY));
     }
 
     @Test
@@ -196,6 +207,7 @@ public class EventMetadataBuilderTest {
         EventMetadata metadata1 = builder.build();
         EventMetadata metadata2 = builder.build();
 
-        assertEquals(metadata1.get("key"), metadata2.get("key"));
+        MetadataKey<String> KEY = new MetadataKey<>("key");
+        assertEquals(metadata1.get(KEY), metadata2.get(KEY));
     }
 }

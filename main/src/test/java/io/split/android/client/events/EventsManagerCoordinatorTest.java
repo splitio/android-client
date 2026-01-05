@@ -19,6 +19,7 @@ import java.util.List;
 
 import io.split.android.client.api.EventMetadata;
 import io.split.android.client.api.Key;
+import io.split.android.client.api.SdkUpdateMetadataKeys;
 
 public class EventsManagerCoordinatorTest {
 
@@ -115,12 +116,8 @@ public class EventsManagerCoordinatorTest {
 
         verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(meta -> {
             if (meta == null) return false;
-            assertTrue(meta.containsKey("updatedFlags"));
-            Object flagsValue = meta.get("updatedFlags");
-            assertNotNull(flagsValue);
-            assertTrue(flagsValue instanceof List);
-            @SuppressWarnings("unchecked")
-            List<String> flags = (List<String>) flagsValue;
+            List<String> flags = meta.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            assertNotNull(flags);
             return flags.size() == 2 && flags.contains("flag1") && flags.contains("flag2");
         }));
     }

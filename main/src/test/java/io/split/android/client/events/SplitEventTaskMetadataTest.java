@@ -10,6 +10,8 @@ import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.SplitClient;
 import io.split.android.client.api.EventMetadata;
+import io.split.android.client.api.SdkReadyFromCacheMetadataKeys;
+import io.split.android.client.api.SdkUpdateMetadataKeys;
 import io.split.android.client.events.metadata.EventMetadataHelpers;
 
 public class SplitEventTaskMetadataTest {
@@ -86,7 +88,7 @@ public class SplitEventTaskMetadataTest {
             @Override
             public void onPostExecution(SplitClient client, EventMetadata metadata) {
                 metadataReceived[0] = metadata != null;
-                hasUpdatedFlags[0] = metadata != null && metadata.containsKey("updatedFlags");
+                hasUpdatedFlags[0] = metadata != null && metadata.containsKey(SdkUpdateMetadataKeys.UPDATED_FLAGS);
             }
         };
 
@@ -108,8 +110,8 @@ public class SplitEventTaskMetadataTest {
             @Override
             public void onPostExecutionView(SplitClient client, EventMetadata metadata) {
                 metadataReceived[0] = metadata != null;
-                hasTimestamp[0] = metadata != null && metadata.containsKey("lastUpdateTimestamp");
-                hasFreshInstall[0] = metadata != null && metadata.containsKey("freshInstall");
+                hasTimestamp[0] = metadata != null && metadata.containsKey(SdkReadyFromCacheMetadataKeys.LAST_UPDATE_TIMESTAMP);
+                hasFreshInstall[0] = metadata != null && metadata.containsKey(SdkReadyFromCacheMetadataKeys.FRESH_INSTALL);
             }
         };
 

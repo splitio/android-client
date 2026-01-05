@@ -4,8 +4,6 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Represents metadata associated with SDK events.
@@ -15,44 +13,38 @@ import java.util.Set;
 public interface EventMetadata {
 
     /**
-     * Returns the set of keys in this metadata.
-     *
-     * @return set of keys
+     * Returns the number of entries in this metadata.
      */
-    @NonNull
-    Set<String> keys();
+    int size();
+
+    /**
+     * Returns whether this metadata has no entries.
+     */
+    default boolean isEmpty() {
+        return size() == 0;
+    }
 
     /**
      * Returns the collection of values in this metadata.
-     *
-     * @return collection of values
      */
     @NonNull
     Collection<Object> values();
 
     /**
-     * Returns the value associated with the given key.
+     * Returns the value associated with the given typed key.
      *
-     * @param key the key to look up
-     * @return the value associated with the key, or null if not found
+     * @param key the typed key to look up
+     * @return the typed value associated with the key, or null if not found
      */
     @Nullable
-    Object get(@NonNull String key);
+    <T> T get(@NonNull MetadataKey<T> key);
 
     /**
-     * Returns whether this metadata contains the given key.
+     * Returns whether this metadata contains the given typed key.
      *
-     * @param key the key to check
+     * @param key the typed key to check
      * @return true if the key exists, false otherwise
      */
-    boolean containsKey(@NonNull String key);
-
-    /**
-     * Returns a copy of the underlying data as a Map.
-     *
-     * @return a copy of the metadata map
-     */
-    @NonNull
-    Map<String, Object> toMap();
+    boolean containsKey(@NonNull MetadataKey<?> key);
 }
 

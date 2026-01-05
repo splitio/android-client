@@ -18,6 +18,7 @@ import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.api.EventMetadata;
+import io.split.android.client.api.SdkUpdateMetadataKeys;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -216,8 +217,8 @@ public class EventsManagerTest {
 
         Assert.assertTrue("SDK_UPDATE should fire", updateLatch.await(5, TimeUnit.SECONDS));
         Assert.assertNotNull("Metadata should not be null", receivedMetadata.get());
-        Assert.assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey("updatedFlags"));
-        List<String> metadataList = (List<String>) receivedMetadata.get().get("updatedFlags");
+        Assert.assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey(SdkUpdateMetadataKeys.UPDATED_FLAGS));
+        List<String> metadataList = receivedMetadata.get().get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
         Assert.assertTrue("Metadata should contain only killed_flag", metadataList.size() == 1 && metadataList.contains("killed_flag"));
     }
 
@@ -373,8 +374,8 @@ public class EventsManagerTest {
         Assert.assertTrue("Main thread legacy method SHOULD run on main thread", mainThreadLegacyOnMainThread.get());
 
         Assert.assertNotNull("Background metadata should not be null", backgroundMetadata.get());
-        Assert.assertTrue("Background metadata should contain updatedFlags", backgroundMetadata.get().containsKey("updatedFlags"));
+        Assert.assertTrue("Background metadata should contain updatedFlags", backgroundMetadata.get().containsKey(SdkUpdateMetadataKeys.UPDATED_FLAGS));
         Assert.assertNotNull("Main thread metadata should not be null", mainThreadMetadata.get());
-        Assert.assertTrue("Main thread metadata should contain updatedFlags", mainThreadMetadata.get().containsKey("updatedFlags"));
+        Assert.assertTrue("Main thread metadata should contain updatedFlags", mainThreadMetadata.get().containsKey(SdkUpdateMetadataKeys.UPDATED_FLAGS));
     }
 }

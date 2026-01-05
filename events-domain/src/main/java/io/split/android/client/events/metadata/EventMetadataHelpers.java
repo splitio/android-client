@@ -7,6 +7,8 @@ import java.util.HashSet;
 import java.util.List;
 
 import io.split.android.client.api.EventMetadata;
+import io.split.android.client.api.SdkReadyFromCacheMetadataKeys;
+import io.split.android.client.api.SdkUpdateMetadataKeys;
 
 /**
  * Helper class for creating {@link EventMetadata} instances.
@@ -15,17 +17,13 @@ import io.split.android.client.api.EventMetadata;
  */
 public class EventMetadataHelpers {
 
-    private static final String KEY_UPDATED_FLAGS = "updatedFlags";
-    private static final String KEY_LAST_UPDATE_TIMESTAMP = "lastUpdateTimestamp";
-    private static final String KEY_FRESH_INSTALL = "freshInstall";
-
     private EventMetadataHelpers() {
         // Utility class
     }
 
     public static EventMetadata createUpdatedFlagsMetadata(List<String> updatedSplitNames) {
         return new EventMetadataBuilder()
-                .put(KEY_UPDATED_FLAGS, new ArrayList<>(new HashSet<>(updatedSplitNames)))
+                .put(SdkUpdateMetadataKeys.UPDATED_FLAGS.name(), new ArrayList<>(new HashSet<>(updatedSplitNames)))
                 .build();
     }
 
@@ -38,10 +36,10 @@ public class EventMetadataHelpers {
      */
     public static EventMetadata createCacheReadyMetadata(@Nullable Long lastUpdateTimestamp, boolean freshInstall) {
         EventMetadataBuilder builder = new EventMetadataBuilder()
-                .put(KEY_FRESH_INSTALL, freshInstall);
+                .put(SdkReadyFromCacheMetadataKeys.FRESH_INSTALL.name(), freshInstall);
 
         if (lastUpdateTimestamp != null) {
-            builder.put(KEY_LAST_UPDATE_TIMESTAMP, lastUpdateTimestamp);
+            builder.put(SdkReadyFromCacheMetadataKeys.LAST_UPDATE_TIMESTAMP.name(), lastUpdateTimestamp);
         }
 
         return builder.build();
