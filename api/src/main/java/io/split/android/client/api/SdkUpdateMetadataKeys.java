@@ -3,7 +3,7 @@ package io.split.android.client.api;
 import java.util.List;
 
 /**
- * Typed metadata keys for {@code sdkUpdate} event metadata.
+ * Typed metadata keys for {@code SplitEvent.SDK_UPDATE} event metadata.
  */
 public final class SdkUpdateMetadataKeys {
     private SdkUpdateMetadataKeys() {

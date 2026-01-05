@@ -1,7 +1,7 @@
 package io.split.android.client.api;
 
 /**
- * Typed metadata keys for {@code sdkReadyFromCache} event metadata.
+ * Typed metadata keys for {@code SplitEvent.SDK_READY_FROM_CACHE} event metadata.
  */
 public final class SdkReadyFromCacheMetadataKeys {
     private SdkReadyFromCacheMetadataKeys() {
@@ -20,5 +20,3 @@ public final class SdkReadyFromCacheMetadataKeys {
      */
     public static final MetadataKey<Long> LAST_UPDATE_TIMESTAMP = new MetadataKey<>("lastUpdateTimestamp");
 }
-
-
