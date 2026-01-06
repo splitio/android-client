@@ -92,7 +92,8 @@ public class SplitsUpdateTask implements SplitTask {
 
     private EventMetadata createUpdatedFlagsMetadata() {
         List<String> updatedSplitNames = mSplitsSyncHelper.getLastUpdatedFlagNames();
-        return EventMetadataHelpers.createFlagUpdateMetadata(updatedSplitNames, null);
+        Long changeNumber = mSplitsSyncHelper.getLastChangeNumber();
+        return EventMetadataHelpers.createFlagUpdateMetadata(updatedSplitNames, changeNumber);
     }
 
     @VisibleForTesting

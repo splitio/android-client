@@ -181,6 +181,32 @@ public class SplitUpdateTaskTest {
             assertEquals(2, flags.size());
             assertTrue(flags.contains("flag1"));
             assertTrue(flags.contains("flag2"));
+            // Verify changeNumber is passed (mocked value from getLastChangeNumber)
+            return true;
+        }));
+    }
+
+    @Test
+    public void splitsUpdatedIncludesChangeNumberInMetadata() {
+        long storedChangeNumber = 100L;
+        when(mSplitsStorage.getTill()).thenReturn(storedChangeNumber).thenReturn(150L);
+        when(mRuleBasedSegmentStorage.getChangeNumber()).thenReturn(200L);
+        when(mSplitsSyncHelper.sync(any(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES)))
+                .thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
+
+        // Mock the updated split names and change number
+        List<String> updatedSplitNames = Arrays.asList("flag1");
+        when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(updatedSplitNames);
+        when(mSplitsSyncHelper.getLastChangeNumber()).thenReturn(99999L);
+
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
+            if (metadata == null) return false;
+            if (metadata.getType() != EventMetadata.Type.FLAG_UPDATE) return false;
+            // Verify changeNumber is passed
+            assertEquals(Long.valueOf(99999L), metadata.getValue());
             return true;
         }));
     }

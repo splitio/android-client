@@ -157,6 +157,9 @@ public class SplitInPlaceUpdateTaskTest {
             assertEquals(2, flags.size());
             assertTrue(flags.contains("test_split_1"));
             assertTrue(flags.contains("test_split_2"));
+            // Verify changeNumber is passed (0L from ProcessedSplitChange constructor)
+            assertNotNull(metadata.getValue());
+            assertEquals(Long.valueOf(0L), metadata.getValue());
             return true;
         }));
     }

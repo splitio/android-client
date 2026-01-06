@@ -84,6 +84,8 @@ public class SplitKillTaskTest {
         Assert.assertNotNull(updatedFlags);
         Assert.assertEquals(1, updatedFlags.size());
         Assert.assertTrue(updatedFlags.contains("split1"));
+        // Verify changeNumber is passed from the killed split
+        Assert.assertEquals(Long.valueOf(1001L), metadata.getValue());
     }
 
     @Test

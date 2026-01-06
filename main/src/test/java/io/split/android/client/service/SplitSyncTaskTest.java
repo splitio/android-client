@@ -250,9 +250,10 @@ public class SplitSyncTaskTest {
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
         when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
 
-        // Mock the updated split names
+        // Mock the updated split names and change number
         List<String> updatedSplitNames = Arrays.asList("split1", "split2", "split3");
         when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(updatedSplitNames);
+        when(mSplitsSyncHelper.getLastChangeNumber()).thenReturn(12345L);
 
         mTask.execute();
 
@@ -265,6 +266,8 @@ public class SplitSyncTaskTest {
             assertTrue(flags.contains("split1"));
             assertTrue(flags.contains("split2"));
             assertTrue(flags.contains("split3"));
+            // Verify changeNumber is passed
+            assertEquals(Long.valueOf(12345L), metadata.getValue());
             return true;
         }));
     }

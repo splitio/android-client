@@ -346,6 +346,20 @@ public class SplitsSyncHelper {
     }
 
     /**
+     * Returns the change number from the last processed split change.
+     *
+     * @return the change number, or null if no updates occurred
+     */
+    @Nullable
+    public Long getLastChangeNumber() {
+        ProcessedSplitChange lastChange = mLastProcessedSplitChange.get();
+        if (lastChange == null) {
+            return null;
+        }
+        return lastChange.getChangeNumber();
+    }
+
+    /**
      * Extracts split names from a ProcessedSplitChange.
      * This includes both active (added/modified) and archived (removed) splits.
      *
