@@ -7,8 +7,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.api.EventMetadata;
-
 /**
  * Builder for creating {@link EventMetadata} instances.
  * <p>

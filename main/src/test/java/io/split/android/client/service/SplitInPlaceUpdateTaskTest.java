@@ -20,8 +20,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import io.split.android.client.api.EventMetadata;
-import io.split.android.client.api.SdkUpdateMetadataKeys;
+import io.split.android.client.events.SdkUpdateMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
+import io.split.android.client.events.metadata.TypedTaskConverter;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -152,7 +153,8 @@ public class SplitInPlaceUpdateTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
+            List<String> flags = typedMeta.getUpdatedFlags();
             assertNotNull(flags);
             assertEquals(2, flags.size());
             assertTrue(flags.contains("test_split_1"));
@@ -175,7 +177,8 @@ public class SplitInPlaceUpdateTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
+            List<String> flags = typedMeta.getUpdatedFlags();
             assertNotNull(flags);
             assertEquals(1, flags.size());
             assertTrue(flags.contains("archived_split"));

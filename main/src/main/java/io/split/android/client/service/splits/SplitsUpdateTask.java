@@ -8,7 +8,7 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.List;
 
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.events.metadata.EventMetadataHelpers;

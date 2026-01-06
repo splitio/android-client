@@ -172,6 +172,10 @@ public class AlwaysReturnControlSplitClient implements SplitClient {
     }
 
     @Override
+    public <T extends SplitEventTask> void on(io.split.android.client.events.SdkEvent<T> event, T task) {
+    }
+
+    @Override
     public boolean track(String trafficType, String eventType) {
         return false;
     }

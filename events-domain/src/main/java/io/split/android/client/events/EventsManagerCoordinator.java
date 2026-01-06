@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.api.Key;
 
 /**

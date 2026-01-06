@@ -28,7 +28,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.api.SdkUpdateMetadataKeys;
+import io.split.android.client.events.SdkUpdateMetadata;
+import io.split.android.client.events.metadata.TypedTaskConverter;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -258,7 +259,8 @@ public class SplitSyncTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
+            List<String> flags = typedMeta.getUpdatedFlags();
             assertNotNull(flags);
             assertEquals(3, flags.size());
             assertTrue(flags.contains("split1"));
@@ -285,7 +287,8 @@ public class SplitSyncTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
+            List<String> flags = typedMeta.getUpdatedFlags();
             assertNotNull(flags);
             assertTrue(flags.isEmpty());
             return true;

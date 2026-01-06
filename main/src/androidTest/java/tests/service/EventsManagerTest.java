@@ -17,7 +17,7 @@ import fake.SplitEventExecutorResourcesMock;
 import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.api.SdkUpdateMetadataKeys;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;

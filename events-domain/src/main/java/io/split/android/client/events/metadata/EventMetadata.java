@@ -1,4 +1,4 @@
-package io.split.android.client.api;
+package io.split.android.client.events.metadata;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -7,6 +7,10 @@ import java.util.Collection;
 
 /**
  * Represents metadata associated with SDK events.
+ * <p>
+ * This is an internal API for SDK infrastructure use.
+ * Consumers should use the typed metadata classes instead:
+ * {@code SdkUpdateMetadata} and {@code SdkReadyFromCacheMetadata}.
  * <p>
  * Values are sanitized to only allow String, Number, Boolean, or List&lt;String&gt;.
  */
@@ -31,20 +35,19 @@ public interface EventMetadata {
     Collection<Object> values();
 
     /**
-     * Returns the value associated with the given typed key.
+     * Returns the value associated with the given key.
      *
-     * @param key the typed key to look up
-     * @return the typed value associated with the key, or null if not found
+     * @param key the key to look up
+     * @return the value associated with the key, or null if not found
      */
     @Nullable
-    <T> T get(@NonNull MetadataKey<T> key);
+    Object get(@NonNull String key);
 
     /**
-     * Returns whether this metadata contains the given typed key.
+     * Returns whether this metadata contains the given key.
      *
-     * @param key the typed key to check
+     * @param key the key to check
      * @return true if the key exists, false otherwise
      */
-    boolean containsKey(@NonNull MetadataKey<?> key);
+    boolean containsKey(@NonNull String key);
 }
-

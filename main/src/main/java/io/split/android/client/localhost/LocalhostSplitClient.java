@@ -257,16 +257,22 @@ public final class LocalhostSplitClient implements SplitClient {
         return mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
     }
 
+    @Override
     public void on(SplitEvent event, SplitEventTask task) {
         checkNotNull(event);
         checkNotNull(task);
 
         if (!event.equals(SplitEvent.SDK_READY_FROM_CACHE) && mEventsManager.eventAlreadyTriggered(event)) {
-            Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won’t be emitted again. The callback won’t be executed.", event));
+            Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won't be emitted again. The callback won't be executed.", event));
             return;
         }
 
         mEventsManager.register(event, task);
+    }
+
+    @Override
+    public <T extends SplitEventTask> void on(io.split.android.client.events.SdkEvent<T> event, T task) {
+        on(event.toSplitEvent(), task);
     }
 
     @Override

@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.api.MetadataKey;
 
 public class EventMetadataImplTest {
 
@@ -28,9 +27,9 @@ public class EventMetadataImplTest {
         EventMetadataImpl metadata = new EventMetadataImpl(data);
 
         assertEquals(3, metadata.size());
-        assertTrue(metadata.containsKey(new MetadataKey<>("key1")));
-        assertTrue(metadata.containsKey(new MetadataKey<>("key2")));
-        assertTrue(metadata.containsKey(new MetadataKey<>("key3")));
+        assertTrue(metadata.containsKey("key1"));
+        assertTrue(metadata.containsKey("key2"));
+        assertTrue(metadata.containsKey("key3"));
     }
 
     @Test
@@ -68,7 +67,7 @@ public class EventMetadataImplTest {
 
         EventMetadataImpl metadata = new EventMetadataImpl(data);
 
-        assertEquals("value", metadata.get(new MetadataKey<String>("key")));
+        assertEquals("value", metadata.get("key"));
     }
 
     @Test
@@ -78,7 +77,7 @@ public class EventMetadataImplTest {
 
         EventMetadataImpl metadata = new EventMetadataImpl(data);
 
-        assertNull(metadata.get(new MetadataKey<String>("nonExistingKey")));
+        assertNull(metadata.get("nonExistingKey"));
     }
 
     @Test
@@ -88,7 +87,7 @@ public class EventMetadataImplTest {
 
         EventMetadataImpl metadata = new EventMetadataImpl(data);
 
-        assertTrue(metadata.containsKey(new MetadataKey<>("key")));
+        assertTrue(metadata.containsKey("key"));
     }
 
     @Test
@@ -98,7 +97,7 @@ public class EventMetadataImplTest {
 
         EventMetadataImpl metadata = new EventMetadataImpl(data);
 
-        assertFalse(metadata.containsKey(new MetadataKey<>("nonExistingKey")));
+        assertFalse(metadata.containsKey("nonExistingKey"));
     }
 
     @Test
@@ -112,11 +111,12 @@ public class EventMetadataImplTest {
         data.put("newKey", "newValue");
 
         // Metadata should not be affected
-        assertFalse(metadata.containsKey(new MetadataKey<>("newKey")));
+        assertFalse(metadata.containsKey("newKey"));
         assertEquals(1, metadata.size());
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void listIsDefensivelyCopiedDuringConstruction() {
         List<String> originalList = new ArrayList<>(Arrays.asList("flag_1", "flag_2"));
         Map<String, Object> data = new HashMap<>();
@@ -128,19 +128,20 @@ public class EventMetadataImplTest {
         originalList.add("flag_3");
 
         // Metadata should not be affected
-        List<String> storedList = metadata.get(new MetadataKey<List<String>>("flags"));
+        List<String> storedList = (List<String>) metadata.get("flags");
         assertEquals(2, storedList.size());
         assertEquals(Arrays.asList("flag_1", "flag_2"), storedList);
     }
 
     @Test(expected = UnsupportedOperationException.class)
+    @SuppressWarnings("unchecked")
     public void listReturnedByGetIsUnmodifiable() {
         Map<String, Object> data = new HashMap<>();
         data.put("flags", Arrays.asList("flag_1", "flag_2"));
 
         EventMetadataImpl metadata = new EventMetadataImpl(data);
 
-        List<String> list = metadata.get(new MetadataKey<List<String>>("flags"));
+        List<String> list = (List<String>) metadata.get("flags");
 
         // This should throw UnsupportedOperationException
         list.add("flag_3");

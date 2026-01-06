@@ -10,7 +10,9 @@ import io.harness.events.EventHandler;
 import io.harness.events.EventsManager;
 import io.harness.events.EventsManagers;
 
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.SplitClient;
+import io.split.android.client.events.metadata.EventMetadata;
+import io.split.android.client.events.metadata.TypedTaskConverter;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.events.executors.SplitEventExecutorResourcesImpl;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -145,69 +147,55 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     }
 
     private EventHandler<SplitEvent, EventMetadata> createBackgroundHandler(final SplitEventTask task) {
-        return createEventHandler(task, "background", new TaskMethodCaller() {
-            @Override
-            public void callWithMetadata(EventMetadata metadata) {
-                task.onPostExecution(mResources.getSplitClient(), metadata);
-            }
-
-            @Override
-            public void callWithoutMetadata() {
-                task.onPostExecution(mResources.getSplitClient());
-            }
-        });
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
+            executeBackgroundTask(task, client, metadata);
+        };
     }
 
     private EventHandler<SplitEvent, EventMetadata> createMainThreadHandler(final SplitEventTask task) {
-        return createEventHandler(task, "main thread", new TaskMethodCaller() {
-            @Override
-            public void callWithMetadata(EventMetadata metadata) {
-                task.onPostExecutionView(mResources.getSplitClient(), metadata);
-            }
-
-            @Override
-            public void callWithoutMetadata() {
-                task.onPostExecutionView(mResources.getSplitClient());
-            }
-        });
-    }
-
-    /**
-     * Helper interface for calling task methods.
-     */
-    private interface TaskMethodCaller {
-        void callWithMetadata(EventMetadata metadata) throws Exception;
-        void callWithoutMetadata() throws Exception;
-    }
-
-    private EventHandler<SplitEvent, EventMetadata> createEventHandler(
-            final SplitEventTask task,
-            final String threadType,
-            final TaskMethodCaller caller) {
-        return new EventHandler<SplitEvent, EventMetadata>() {
-            @Override
-            public void handle(SplitEvent event, EventMetadata metadata) {
-                executeTaskMethod(metadata, true, threadType, caller);
-                executeTaskMethod(metadata, false, threadType, caller);
-            }
-
-            private void executeTaskMethod(EventMetadata metadata, boolean withMetadata, String threadType, TaskMethodCaller caller) {
-                try {
-                    if (withMetadata) {
-                        caller.callWithMetadata(metadata);
-                    } else {
-                        caller.callWithoutMetadata();
-                    }
-                } catch (SplitEventTaskMethodNotImplementedException e) {
-                    // Method not implemented by client, ignore
-                } catch (Exception e) {
-                    String errorPrefix = withMetadata
-                            ? "Error executing " + threadType + " event task (with metadata): "
-                            : "Error executing " + threadType + " event task: ";
-                    Logger.e(errorPrefix + e.getMessage());
-                }
-            }
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
+            executeMainThreadTask(task, client, metadata);
         };
+    }
+
+    private void executeBackgroundTask(SplitEventTask task, SplitClient client, EventMetadata metadata) {
+        // Try typed methods first for typed tasks
+        if (task instanceof SdkUpdateEventTask) {
+            SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
+            executeMethod(() -> ((SdkUpdateEventTask) task).onPostExecution(client, typedMetadata));
+        } else if (task instanceof SdkReadyFromCacheEventTask) {
+            SdkReadyFromCacheMetadata typedMetadata = TypedTaskConverter.convertForSdkReadyFromCache(metadata);
+            executeMethod(() -> ((SdkReadyFromCacheEventTask) task).onPostExecution(client, typedMetadata));
+        }
+
+        // Always try the base method
+        executeMethod(() -> task.onPostExecution(client));
+    }
+
+    private void executeMainThreadTask(SplitEventTask task, SplitClient client, EventMetadata metadata) {
+        // Try typed methods first for typed tasks
+        if (task instanceof SdkUpdateEventTask) {
+            SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
+            executeMethod(() -> ((SdkUpdateEventTask) task).onPostExecutionView(client, typedMetadata));
+        } else if (task instanceof SdkReadyFromCacheEventTask) {
+            SdkReadyFromCacheMetadata typedMetadata = TypedTaskConverter.convertForSdkReadyFromCache(metadata);
+            executeMethod(() -> ((SdkReadyFromCacheEventTask) task).onPostExecutionView(client, typedMetadata));
+        }
+
+        // Always try the base method
+        executeMethod(() -> task.onPostExecutionView(client));
+    }
+
+    private void executeMethod(Runnable method) {
+        try {
+            method.run();
+        } catch (SplitEventTaskMethodNotImplementedException e) {
+            // Method not implemented by client, ignore
+        } catch (Exception e) {
+            Logger.e("Error executing event task: " + e.getMessage());
+        }
     }
 
     private Executor createBackgroundExecutor(final SplitTaskExecutor taskExecutor) {

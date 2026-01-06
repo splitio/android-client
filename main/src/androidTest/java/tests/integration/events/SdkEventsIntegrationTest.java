@@ -35,7 +35,7 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.api.Key;
 import io.split.android.client.api.SdkReadyFromCacheMetadataKeys;
 import io.split.android.client.events.SplitEvent;

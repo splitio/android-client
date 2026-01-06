@@ -5,7 +5,7 @@ import androidx.annotation.VisibleForTesting;
 import io.harness.events.EventDelivery;
 import io.harness.events.EventHandler;
 import io.harness.events.Logging;
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
 
 /**
  * Event delivery implementation for Split SDK events.

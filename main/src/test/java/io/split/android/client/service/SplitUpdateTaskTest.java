@@ -21,8 +21,9 @@ import org.mockito.Mockito;
 import java.util.Arrays;
 import java.util.List;
 
-import io.split.android.client.api.SdkReadyFromCacheMetadataKeys;
-import io.split.android.client.api.SdkUpdateMetadataKeys;
+import io.split.android.client.events.SdkReadyFromCacheMetadata;
+import io.split.android.client.events.SdkUpdateMetadata;
+import io.split.android.client.events.metadata.TypedTaskConverter;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -107,9 +108,10 @@ public class SplitUpdateTaskTest {
         // Verify TARGETING_RULES_SYNC_COMPLETE is fired with sync metadata (freshInstall=true, lastUpdateTimestamp=null)
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), argThat(metadata -> {
             if (metadata == null) return false;
-            assertEquals(Boolean.TRUE, metadata.get(SdkReadyFromCacheMetadataKeys.FRESH_INSTALL));
+            SdkReadyFromCacheMetadata typedMeta = TypedTaskConverter.convertForSdkReadyFromCache(metadata);
+            assertEquals(Boolean.TRUE, typedMeta.isFreshInstall());
             // lastUpdateTimestamp should not be present (or should be null)
-            return metadata.get(SdkReadyFromCacheMetadataKeys.LAST_UPDATE_TIMESTAMP) == null;
+            return typedMeta.getLastUpdateTimestamp() == null;
         }));
     }
 
@@ -176,7 +178,8 @@ public class SplitUpdateTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
+            List<String> flags = typedMeta.getUpdatedFlags();
             assertNotNull(flags);
             assertEquals(2, flags.size());
             assertTrue(flags.contains("flag1"));

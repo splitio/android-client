@@ -24,8 +24,9 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.List;
 
-import io.split.android.client.api.EventMetadata;
-import io.split.android.client.api.SdkUpdateMetadataKeys;
+import io.split.android.client.events.SdkUpdateMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
+import io.split.android.client.events.metadata.TypedTaskConverter;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.storage.legacy.FileStorage;
@@ -101,7 +102,8 @@ public class LocalhostSplitsStorageTest {
         
         EventMetadata metadata = metadataCaptor.getValue();
         assertNotNull("Metadata should not be null", metadata);
-        List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+        SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
+        List<String> flags = typedMetadata.getUpdatedFlags();
         assertNotNull("updatedFlags value should not be null", flags);
         assertTrue("Metadata should contain 'split1' flag", flags.contains("split1"));
     }

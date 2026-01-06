@@ -17,9 +17,9 @@ import org.mockito.MockitoAnnotations;
 import java.util.Arrays;
 import java.util.List;
 
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.api.Key;
-import io.split.android.client.api.SdkUpdateMetadataKeys;
+import io.split.android.client.events.metadata.TypedTaskConverter;
 
 public class EventsManagerCoordinatorTest {
 
@@ -116,7 +116,8 @@ public class EventsManagerCoordinatorTest {
 
         verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(meta -> {
             if (meta == null) return false;
-            List<String> flags = meta.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(meta);
+            List<String> flags = typedMeta.getUpdatedFlags();
             assertNotNull(flags);
             return flags.size() == 2 && flags.contains("flag1") && flags.contains("flag2");
         }));

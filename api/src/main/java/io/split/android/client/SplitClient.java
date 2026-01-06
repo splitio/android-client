@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.attributes.AttributesManager;
+import io.split.android.client.events.SdkEvent;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 
@@ -178,6 +179,28 @@ public interface SplitClient extends AttributesManager {
     boolean isReady();
 
     void on(SplitEvent event, SplitEventTask task);
+
+    /**
+     * Registers a type-safe event listener for SDK events.
+     * <p>
+     * This method provides compile-time type safety for event task registration.
+     * The event type parameter enforces the correct task type for each event.
+     * <p>
+     * Example usage:
+     * <pre>{@code
+     * client.on(SdkEvent.SDK_UPDATE, new SdkUpdateEventTask() {
+     *     @Override
+     *     public void onPostExecution(SplitClient client, SdkUpdateMetadata metadata) {
+     *         List<String> flags = metadata.getUpdatedFlags();
+     *     }
+     * });
+     * }</pre>
+     *
+     * @param event the type-safe event to listen for
+     * @param task  the task to execute when the event occurs
+     * @param <T>   the type of event task
+     */
+    <T extends SplitEventTask> void on(SdkEvent<T> event, T task);
 
     /**
      * Enqueue a new event to be sent to Split data collection services.

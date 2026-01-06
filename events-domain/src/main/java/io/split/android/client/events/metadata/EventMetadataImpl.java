@@ -10,9 +10,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.api.EventMetadata;
-import io.split.android.client.api.MetadataKey;
-
 /**
  * Implementation of {@link EventMetadata}.
  * Use {@link EventMetadataBuilder} to create instances.
@@ -47,13 +44,12 @@ class EventMetadataImpl implements EventMetadata {
 
     @Nullable
     @Override
-    public <T> T get(@NonNull MetadataKey<T> key) {
-        //noinspection unchecked
-        return (T) mData.get(key.name());
+    public Object get(@NonNull String key) {
+        return mData.get(key);
     }
 
     @Override
-    public boolean containsKey(@NonNull MetadataKey<?> key) {
-        return mData.containsKey(key.name());
+    public boolean containsKey(@NonNull String key) {
+        return mData.containsKey(key);
     }
 }
