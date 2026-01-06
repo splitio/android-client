@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.RuleBasedSegmentChange;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
@@ -59,6 +60,7 @@ public class SplitsSyncHelper {
     private final ExecutorService mExecutor;
     private final TargetingRulesCache mTargetingRulesCache;
     private final AtomicReference<ProcessedSplitChange> mLastProcessedSplitChange = new AtomicReference<>();
+    private final AtomicReference<ProcessedRuleBasedSegmentChange> mLastProcessedRbsChange = new AtomicReference<>();
     private boolean mSplitsHaveChanged;
     private boolean mRuleBasedSegmentsHaveChanged;
 
@@ -392,6 +394,7 @@ public class SplitsSyncHelper {
 
     private void updateRbsStorage(RuleBasedSegmentChange ruleBasedSegmentChange) {
         ProcessedRuleBasedSegmentChange change = mRuleBasedSegmentChangeProcessor.process(ruleBasedSegmentChange.getSegments(), ruleBasedSegmentChange.getTill());
+        mLastProcessedRbsChange.set(change);
         mRuleBasedSegmentStorage.update(change.getActive(), change.getArchived(), change.getChangeNumber(), mExecutor);
     }
 
@@ -449,6 +452,38 @@ public class SplitsSyncHelper {
 
     public boolean ruleBasedSegmentsHaveChanged() {
         return mRuleBasedSegmentsHaveChanged;
+    }
+
+    public List<String> getLastUpdatedRbsNames() {
+        ProcessedRuleBasedSegmentChange lastChange = mLastProcessedRbsChange.get();
+        if (lastChange == null) {
+            return Collections.emptyList();
+        }
+        return extractRbsNames(lastChange);
+    }
+
+    public Long getLastRbsChangeNumber() {
+        ProcessedRuleBasedSegmentChange lastChange = mLastProcessedRbsChange.get();
+        return lastChange != null ? lastChange.getChangeNumber() : null;
+    }
+
+    private List<String> extractRbsNames(ProcessedRuleBasedSegmentChange processedChange) {
+        List<String> updatedNames = new ArrayList<>();
+        if (processedChange.getActive() != null) {
+            for (RuleBasedSegment rbs : processedChange.getActive()) {
+                if (rbs != null && rbs.getName() != null) {
+                    updatedNames.add(rbs.getName());
+                }
+            }
+        }
+        if (processedChange.getArchived() != null) {
+            for (RuleBasedSegment rbs : processedChange.getArchived()) {
+                if (rbs != null && rbs.getName() != null) {
+                    updatedNames.add(rbs.getName());
+                }
+            }
+        }
+        return updatedNames;
     }
 
     private enum CdnByPassType {
