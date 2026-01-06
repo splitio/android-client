@@ -210,14 +210,14 @@ public class EventsManagerTest {
         eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
         Assert.assertTrue("SDK_READY should fire", readyLatch.await(5, TimeUnit.SECONDS));
 
-        EventMetadata metadata = EventMetadataHelpers.createUpdatedFlagsMetadata(
-                Collections.singletonList("killed_flag"));
+        EventMetadata metadata = EventMetadataHelpers.createFlagUpdateMetadata(
+                Collections.singletonList("killed_flag"), null);
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION, metadata);
 
         Assert.assertTrue("SDK_UPDATE should fire", updateLatch.await(5, TimeUnit.SECONDS));
         Assert.assertNotNull("Metadata should not be null", receivedMetadata.get());
-        Assert.assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey("updatedFlags"));
-        List<String> metadataList = (List<String>) receivedMetadata.get().get("updatedFlags");
+        Assert.assertEquals("Metadata should be FLAG_UPDATE type", EventMetadata.Type.FLAG_UPDATE, receivedMetadata.get().getType());
+        List<String> metadataList = receivedMetadata.get().getValues();
         Assert.assertTrue("Metadata should contain only killed_flag", metadataList.size() == 1 && metadataList.contains("killed_flag"));
     }
 
@@ -356,8 +356,8 @@ public class EventsManagerTest {
         Assert.assertTrue("SDK_READY should fire", readyLatch.await(5, TimeUnit.SECONDS));
 
         // Trigger SDK_UPDATE with metadata
-        EventMetadata metadata = EventMetadataHelpers.createUpdatedFlagsMetadata(
-                Arrays.asList("flag1", "flag2"));
+        EventMetadata metadata = EventMetadataHelpers.createFlagUpdateMetadata(
+                Arrays.asList("flag1", "flag2"), null);
         eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
 
         Assert.assertTrue("All four callbacks should be called", allCalledLatch.await(5, TimeUnit.SECONDS));
@@ -373,8 +373,8 @@ public class EventsManagerTest {
         Assert.assertTrue("Main thread legacy method SHOULD run on main thread", mainThreadLegacyOnMainThread.get());
 
         Assert.assertNotNull("Background metadata should not be null", backgroundMetadata.get());
-        Assert.assertTrue("Background metadata should contain updatedFlags", backgroundMetadata.get().containsKey("updatedFlags"));
+        Assert.assertEquals("Background metadata should be FLAG_UPDATE type", EventMetadata.Type.FLAG_UPDATE, backgroundMetadata.get().getType());
         Assert.assertNotNull("Main thread metadata should not be null", mainThreadMetadata.get());
-        Assert.assertTrue("Main thread metadata should contain updatedFlags", mainThreadMetadata.get().containsKey("updatedFlags"));
+        Assert.assertEquals("Main thread metadata should be FLAG_UPDATE type", EventMetadata.Type.FLAG_UPDATE, mainThreadMetadata.get().getType());
     }
 }

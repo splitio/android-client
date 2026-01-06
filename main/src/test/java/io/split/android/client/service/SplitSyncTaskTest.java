@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -249,24 +250,24 @@ public class SplitSyncTaskTest {
         when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
         when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
 
-        // Mock the updated split names
+        // Mock the updated split names and change number
         List<String> updatedSplitNames = Arrays.asList("split1", "split2", "split3");
         when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(updatedSplitNames);
+        when(mSplitsSyncHelper.getLastChangeNumber()).thenReturn(12345L);
 
         mTask.execute();
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            assertTrue(metadata.containsKey("updatedFlags"));
-            Object flagsValue = metadata.get("updatedFlags");
-            assertNotNull(flagsValue);
-            assertTrue(flagsValue instanceof List);
-            @SuppressWarnings("unchecked")
-            List<String> flags = (List<String>) flagsValue;
+            if (metadata.getType() != EventMetadata.Type.FLAG_UPDATE) return false;
+            List<String> flags = metadata.getValues();
+            assertNotNull(flags);
             assertEquals(3, flags.size());
             assertTrue(flags.contains("split1"));
             assertTrue(flags.contains("split2"));
             assertTrue(flags.contains("split3"));
+            // Verify changeNumber is passed
+            assertEquals(Long.valueOf(12345L), metadata.getValue());
             return true;
         }));
     }
@@ -288,12 +289,9 @@ public class SplitSyncTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            assertTrue(metadata.containsKey("updatedFlags"));
-            Object flagsValue = metadata.get("updatedFlags");
-            assertNotNull(flagsValue);
-            assertTrue(flagsValue instanceof List);
-            @SuppressWarnings("unchecked")
-            List<String> flags = (List<String>) flagsValue;
+            if (metadata.getType() != EventMetadata.Type.FLAG_UPDATE) return false;
+            List<String> flags = metadata.getValues();
+            assertNotNull(flags);
             assertTrue(flags.isEmpty());
             return true;
         }));
@@ -310,7 +308,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED), any());
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
     }
 

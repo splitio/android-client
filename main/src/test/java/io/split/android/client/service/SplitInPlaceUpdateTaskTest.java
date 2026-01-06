@@ -151,15 +151,15 @@ public class SplitInPlaceUpdateTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            assertTrue(metadata.containsKey("updatedFlags"));
-            Object flagsValue = metadata.get("updatedFlags");
-            assertNotNull(flagsValue);
-            assertTrue(flagsValue instanceof List);
-            @SuppressWarnings("unchecked")
-            List<String> flags = (List<String>) flagsValue;
+            if (metadata.getType() != EventMetadata.Type.FLAG_UPDATE) return false;
+            List<String> flags = metadata.getValues();
+            assertNotNull(flags);
             assertEquals(2, flags.size());
             assertTrue(flags.contains("test_split_1"));
             assertTrue(flags.contains("test_split_2"));
+            // Verify changeNumber is passed (0L from ProcessedSplitChange constructor)
+            assertNotNull(metadata.getValue());
+            assertEquals(Long.valueOf(0L), metadata.getValue());
             return true;
         }));
     }
@@ -178,12 +178,9 @@ public class SplitInPlaceUpdateTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            assertTrue(metadata.containsKey("updatedFlags"));
-            Object flagsValue = metadata.get("updatedFlags");
-            assertNotNull(flagsValue);
-            assertTrue(flagsValue instanceof List);
-            @SuppressWarnings("unchecked")
-            List<String> flags = (List<String>) flagsValue;
+            if (metadata.getType() != EventMetadata.Type.FLAG_UPDATE) return false;
+            List<String> flags = metadata.getValues();
+            assertNotNull(flags);
             assertEquals(1, flags.size());
             assertTrue(flags.contains("archived_split"));
             return true;

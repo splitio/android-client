@@ -100,12 +100,9 @@ public class LocalhostSplitsStorageTest {
         
         EventMetadata metadata = metadataCaptor.getValue();
         assertNotNull("Metadata should not be null", metadata);
-        assertTrue("Metadata should contain 'updatedFlags' key", metadata.containsKey("updatedFlags"));
-        Object flagsValue = metadata.get("updatedFlags");
-        assertNotNull("updatedFlags value should not be null", flagsValue);
-        assertTrue("updatedFlags should be a List", flagsValue instanceof List);
-        @SuppressWarnings("unchecked")
-        List<String> flags = (List<String>) flagsValue;
+        assertTrue("Metadata should be FLAG_UPDATE type", metadata.getType() == EventMetadata.Type.FLAG_UPDATE);
+        List<String> flags = metadata.getValues();
+        assertNotNull("values should not be null", flags);
         assertTrue("Metadata should contain 'split1' flag", flags.contains("split1"));
     }
 }

@@ -4,9 +4,13 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.util.Collections;
+
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -41,7 +45,8 @@ public class RuleBasedSegmentInPlaceUpdateTask implements SplitTask {
             boolean triggerSdkUpdate = mRuleBasedSegmentStorage.update(processedChange.getActive(), processedChange.getArchived(), mChangeNumber, null);
 
             if (triggerSdkUpdate) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+                EventMetadata metadata = createUpdatedSegmentsMetadata();
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED, metadata);
             }
 
             Logger.v("Updated rule based segment");
@@ -51,5 +56,10 @@ public class RuleBasedSegmentInPlaceUpdateTask implements SplitTask {
 
             return SplitTaskExecutionInfo.error(SplitTaskType.RULE_BASED_SEGMENT_SYNC);
         }
+    }
+
+    private EventMetadata createUpdatedSegmentsMetadata() {
+        return EventMetadataHelpers.createSegmentUpdateMetadata(
+                Collections.singletonList(mRuleBasedSegment.getName()), mChangeNumber);
     }
 }

@@ -156,16 +156,12 @@ public class SdkEventsIntegrationTest {
         assertTrue("SDK_READY_FROM_CACHE should fire", fired);
         assertEquals("Handler should be invoked exactly once", 1, handlerInvocationCount.get());
 
-        // And: the metadata contains "freshInstall" with value false
+        // And: the metadata contains type FROM_CACHE
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertTrue("Metadata should contain freshInstall key", receivedMetadata.get().containsKey("freshInstall"));
-        assertFalse("freshInstall should be false for cache path",
-                (Boolean) receivedMetadata.get().get("freshInstall"));
+        assertEquals("Metadata type should be FROM_CACHE", EventMetadata.Type.FROM_CACHE, receivedMetadata.get().getType());
 
         // And: the metadata contains "lastUpdateTimestamp" with a valid timestamp
-        assertTrue("Metadata should contain lastUpdateTimestamp key",
-                receivedMetadata.get().containsKey("lastUpdateTimestamp"));
-        Long lastUpdateTimestamp = (Long) receivedMetadata.get().get("lastUpdateTimestamp");
+        Long lastUpdateTimestamp = receivedMetadata.get().getValue();
         assertNotNull("lastUpdateTimestamp should not be null", lastUpdateTimestamp);
         assertTrue("lastUpdateTimestamp should be valid", lastUpdateTimestamp > 0);
 
@@ -205,11 +201,9 @@ public class SdkEventsIntegrationTest {
         assertTrue("SDK_READY_FROM_CACHE should fire", fired);
         assertEquals("Handler should be invoked exactly once", 1, handlerInvocationCount.get());
 
-        // And: the metadata contains "freshInstall" with value true
+        // And: the metadata contains type FRESH_INSTALL
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertTrue("Metadata should contain freshInstall key", receivedMetadata.get().containsKey("freshInstall"));
-        assertTrue("freshInstall should be true for sync path (fresh install)",
-                (Boolean) receivedMetadata.get().get("freshInstall"));
+        assertEquals("Metadata type should be FRESH_INSTALL", EventMetadata.Type.FRESH_INSTALL, receivedMetadata.get().getType());
 
         factory.destroy();
     }
@@ -783,17 +777,19 @@ public class SdkEventsIntegrationTest {
     }
 
     /**
-     * Scenario: Metadata is correctly propagated to handlers
+     * Scenario: Metadata is correctly propagated to handlers for FLAG_UPDATE
      * <p>
      * Given a handler H is registered for sdkUpdate which inspects the received metadata
      * And sdkReady has already been emitted
      * When an internal "splitsUpdated" event is notified via SSE
      * Then sdkUpdate is emitted
      * And handler H is invoked once
-     * And handler H receives metadata (may contain updatedFlags depending on notification type)
+     * And handler H receives metadata with type FLAG_UPDATE
+     * And metadata contains the updated flag names in getValues()
+     * And metadata contains the changeNumber in getValue()
      */
     @Test
-    public void metadataCorrectlyPropagatedToHandlers() throws Exception {
+    public void metadataCorrectlyPropagatedToHandlersForFlagUpdate() throws Exception {
         // Given: sdkReady has already been emitted (with streaming support)
         TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
@@ -812,6 +808,7 @@ public class SdkEventsIntegrationTest {
         });
 
         // When: an internal "splitsUpdated" event is notified via SSE
+        // The SPLIT_UPDATE_PAYLOAD contains a flag named "mauro_java" with changeNumber 1684329854385
         fixture.pushSplitUpdate();
 
         // Then: sdkUpdate is emitted and handler H is invoked once
@@ -819,8 +816,78 @@ public class SdkEventsIntegrationTest {
         assertTrue("SDK_UPDATE should fire", updateFired);
         assertEquals("Handler should be invoked exactly once", 1, updateHandlerCount.get());
 
-        // And: handler H receives metadata
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        // And: handler H receives metadata with type FLAG_UPDATE
+        EventMetadata metadata = receivedMetadata.get();
+        assertNotNull("Metadata should not be null", metadata);
+        assertEquals("Metadata type should be FLAG_UPDATE", EventMetadata.Type.FLAG_UPDATE, metadata.getType());
+
+        // And: metadata contains the updated flag names in getValues()
+        assertNotNull("Flag names list should not be null", metadata.getValues());
+        assertFalse("Flag names list should not be empty", metadata.getValues().isEmpty());
+        assertTrue("Flag names should contain the updated flag", metadata.getValues().contains("mauro_java"));
+
+        // And: metadata contains the changeNumber in getValue()
+        assertNotNull("Change number should not be null", metadata.getValue());
+        assertTrue("Change number should be positive", metadata.getValue() > 0);
+
+        fixture.destroy();
+    }
+
+    /**
+     * Scenario: Metadata is correctly propagated to handlers for SEGMENT_UPDATE (RBS only)
+     * <p>
+     * Given a handler H is registered for sdkUpdate which inspects the received metadata
+     * And sdkReady has already been emitted
+     * When an internal rule-based segment update event is notified via SSE
+     * Then sdkUpdate is emitted
+     * And handler H is invoked once
+     * And handler H receives metadata with type SEGMENT_UPDATE
+     * And metadata contains the updated segment names in getValues()
+     * And metadata contains the changeNumber in getValue()
+     * <p>
+     * Note: SEGMENT_UPDATE is for rule-based segments (RBS) only, NOT for memberships (my segments).
+     */
+    @Test
+    public void metadataCorrectlyPropagatedToHandlersForSegmentUpdate() throws Exception {
+        // Given: sdkReady has already been emitted (with streaming support)
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
+
+        AtomicInteger updateHandlerCount = new AtomicInteger(0);
+        AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        // Given: a handler H is registered for sdkUpdate which inspects the received metadata
+        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+                updateHandlerCount.incrementAndGet();
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+
+        // When: an internal rule-based segment update event is notified via SSE
+        // RBS payload: {"name":"rbs_test","status":"ACTIVE",...}
+        fixture.pushRbsUpdate();
+
+        // Then: sdkUpdate is emitted and handler H is invoked once
+        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire for RBS update", updateFired);
+        assertEquals("Handler should be invoked exactly once", 1, updateHandlerCount.get());
+
+        // And: handler H receives metadata with type SEGMENT_UPDATE
+        EventMetadata metadata = receivedMetadata.get();
+        assertNotNull("Metadata should not be null", metadata);
+        assertEquals("Metadata type should be SEGMENT_UPDATE", EventMetadata.Type.SEGMENT_UPDATE, metadata.getType());
+
+        // And: metadata contains the updated segment names in getValues()
+        assertNotNull("Segment names list should not be null", metadata.getValues());
+        assertFalse("Segment names list should not be empty", metadata.getValues().isEmpty());
+        assertTrue("Segment names should contain the updated segment", metadata.getValues().contains("rbs_test"));
+
+        // And: metadata contains the changeNumber in getValue()
+        assertNotNull("Change number should not be null", metadata.getValue());
+        assertTrue("Change number should be positive", metadata.getValue() > 0);
 
         fixture.destroy();
     }
@@ -1214,6 +1281,22 @@ public class SdkEventsIntegrationTest {
         void pushSplitKill(String splitName) {
             if (streamingData != null) {
                 pushMessage(streamingData, IntegrationHelper.splitKill("9999999999999", splitName));
+            }
+        }
+
+        /**
+         * Push a rule-based segment (RBS) update via SSE.
+         * Uses the RBS payload: {"name":"rbs_test","status":"ACTIVE",...}
+         */
+        void pushRbsUpdate() {
+            pushRbsUpdate("2000", "1000");
+        }
+
+        void pushRbsUpdate(String changeNumber, String previousChangeNumber) {
+            if (streamingData != null) {
+                // RBS_UPDATE_PAYLOAD: {"name":"rbs_test","status":"ACTIVE","trafficTypeName":"user","excluded":{"keys":[],"segments":[]},"conditions":[{"matcherGroup":{"combiner":"AND","matchers":[{"keySelector":{"trafficType":"user"},"matcherType":"ALL_KEYS","negate":false}]}}]}
+                String rbsPayload = "eyJuYW1lIjoicmJzX3Rlc3QiLCJzdGF0dXMiOiJBQ1RJVkUiLCJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiZXhjbHVkZWQiOnsia2V5cyI6W10sInNlZ21lbnRzIjpbXX0sImNvbmRpdGlvbnMiOlt7Im1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX19XX0=";
+                pushMessage(streamingData, IntegrationHelper.rbsChange(changeNumber, previousChangeNumber, rbsPayload));
             }
         }
 

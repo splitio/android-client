@@ -57,8 +57,8 @@ public class SplitKillTask implements SplitTask {
             splitToKill.changeNumber = mKilledSplit.changeNumber;
 
             mSplitsStorage.updateWithoutChecks(splitToKill);
-            EventMetadata metadata = EventMetadataHelpers.createUpdatedFlagsMetadata(
-                    Collections.singletonList(mKilledSplit.name));
+            EventMetadata metadata = EventMetadataHelpers.createFlagUpdateMetadata(
+                    Collections.singletonList(mKilledSplit.name), mKilledSplit.changeNumber);
             mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION, metadata);
         } catch (Exception e) {
             logError("Unknown error while updating killed feature flag: " + e.getLocalizedMessage());

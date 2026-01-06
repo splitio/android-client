@@ -21,6 +21,7 @@ import org.mockito.Mockito;
 import java.util.Arrays;
 import java.util.List;
 
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -102,13 +103,12 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        // Verify TARGETING_RULES_SYNC_COMPLETE is fired with sync metadata (freshInstall=true, lastUpdateTimestamp=null)
+        // Verify TARGETING_RULES_SYNC_COMPLETE is fired with FRESH_INSTALL metadata
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), argThat(metadata -> {
             if (metadata == null) return false;
-            assertTrue(metadata.containsKey("freshInstall"));
-            assertEquals(true, metadata.get("freshInstall"));
-            // lastUpdateTimestamp should not be present (null)
-            return !metadata.containsKey("lastUpdateTimestamp") || metadata.get("lastUpdateTimestamp") == null;
+            if (metadata.getType() != EventMetadata.Type.FRESH_INSTALL) return false;
+            // Value should be null for FRESH_INSTALL
+            return metadata.getValue() == null;
         }));
     }
 
@@ -139,7 +139,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED), any());
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
     }
 
@@ -175,15 +175,38 @@ public class SplitUpdateTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            assertTrue(metadata.containsKey("updatedFlags"));
-            Object flagsValue = metadata.get("updatedFlags");
-            assertNotNull(flagsValue);
-            assertTrue(flagsValue instanceof List);
-            @SuppressWarnings("unchecked")
-            List<String> flags = (List<String>) flagsValue;
+            if (metadata.getType() != EventMetadata.Type.FLAG_UPDATE) return false;
+            List<String> flags = metadata.getValues();
+            assertNotNull(flags);
             assertEquals(2, flags.size());
             assertTrue(flags.contains("flag1"));
             assertTrue(flags.contains("flag2"));
+            // Verify changeNumber is passed (mocked value from getLastChangeNumber)
+            return true;
+        }));
+    }
+
+    @Test
+    public void splitsUpdatedIncludesChangeNumberInMetadata() {
+        long storedChangeNumber = 100L;
+        when(mSplitsStorage.getTill()).thenReturn(storedChangeNumber).thenReturn(150L);
+        when(mRuleBasedSegmentStorage.getChangeNumber()).thenReturn(200L);
+        when(mSplitsSyncHelper.sync(any(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES)))
+                .thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
+
+        // Mock the updated split names and change number
+        List<String> updatedSplitNames = Arrays.asList("flag1");
+        when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(updatedSplitNames);
+        when(mSplitsSyncHelper.getLastChangeNumber()).thenReturn(99999L);
+
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
+            if (metadata == null) return false;
+            if (metadata.getType() != EventMetadata.Type.FLAG_UPDATE) return false;
+            // Verify changeNumber is passed
+            assertEquals(Long.valueOf(99999L), metadata.getValue());
             return true;
         }));
     }

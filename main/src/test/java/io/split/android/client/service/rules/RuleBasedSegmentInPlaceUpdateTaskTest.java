@@ -1,7 +1,10 @@
 package io.split.android.client.service.rules;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static io.split.android.client.storage.rbs.RuleBasedSegmentStorageImplTest.createRuleBasedSegment;
@@ -14,6 +17,7 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.Set;
 
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -34,7 +38,7 @@ public class RuleBasedSegmentInPlaceUpdateTaskTest {
     }
 
     @Test
-    public void splitEventsManagerIsNotifiedWithUpdateEvent() {
+    public void splitEventsManagerIsNotifiedWithUpdateEventAndMetadata() {
         RuleBasedSegment ruleBasedSegment = createRuleBasedSegment("segment1");
         long changeNumber = 123L;
 
@@ -45,7 +49,14 @@ public class RuleBasedSegmentInPlaceUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+        // Verify event is fired with SEGMENT_UPDATE metadata containing segment name and change number
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED), argThat(metadata -> {
+            if (metadata == null) return false;
+            if (metadata.getType() != EventMetadata.Type.SEGMENT_UPDATE) return false;
+            if (!metadata.getValues().contains("segment1")) return false;
+            if (metadata.getValue() == null || metadata.getValue() != 123L) return false;
+            return true;
+        }));
     }
 
     @Test
@@ -60,7 +71,7 @@ public class RuleBasedSegmentInPlaceUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager, times(0)).notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+        verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED), any());
     }
 
     @Test

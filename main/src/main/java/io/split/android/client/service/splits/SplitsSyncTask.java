@@ -112,19 +112,27 @@ public class SplitsSyncTask implements SplitTask {
         }
 
         if (mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()) {
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+            EventMetadata rbsMetadata = createUpdatedSegmentsMetadata();
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED, rbsMetadata);
         }
 
         // Fire sync complete AFTER update events. This ensures SDK_READY triggers after
         // all *_UPDATED events have been processed (which won't trigger SDK_UPDATE because
         // SDK_READY's prerequisite for SDK_UPDATE isn't met yet).
-        EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+        EventMetadata syncMetadata = EventMetadataHelpers.createFreshInstallMetadata();
         mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
     }
 
     private EventMetadata createUpdatedFlagsMetadata() {
         List<String> updatedSplitNames = mSplitsSyncHelper.getLastUpdatedFlagNames();
-        return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
+        Long changeNumber = mSplitsSyncHelper.getLastChangeNumber();
+        return EventMetadataHelpers.createFlagUpdateMetadata(updatedSplitNames, changeNumber);
+    }
+
+    private EventMetadata createUpdatedSegmentsMetadata() {
+        List<String> updatedSegmentNames = mSplitsSyncHelper.getLastUpdatedRbsNames();
+        Long changeNumber = mSplitsSyncHelper.getLastRbsChangeNumber();
+        return EventMetadataHelpers.createSegmentUpdateMetadata(updatedSegmentNames, changeNumber);
     }
 
     private boolean splitsFilterHasChanged(String storedSplitsFilterQueryString) {
