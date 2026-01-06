@@ -19,7 +19,6 @@ import java.util.List;
 
 import io.split.android.client.api.EventMetadata;
 import io.split.android.client.api.Key;
-import io.split.android.client.api.SdkUpdateMetadataKeys;
 
 public class EventsManagerCoordinatorTest {
 
@@ -108,7 +107,7 @@ public class EventsManagerCoordinatorTest {
         mEventsManager.registerEventsManager(new Key("key", "bucketing"), mMockChildEventsManager);
 
         List<String> updatedFlags = Arrays.asList("flag1", "flag2");
-        EventMetadata metadata = io.split.android.client.events.metadata.EventMetadataHelpers.createUpdatedFlagsMetadata(updatedFlags);
+        EventMetadata metadata = io.split.android.client.events.metadata.EventMetadataHelpers.createFlagUpdateMetadata(updatedFlags, null);
 
         mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
 
@@ -116,7 +115,8 @@ public class EventsManagerCoordinatorTest {
 
         verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(meta -> {
             if (meta == null) return false;
-            List<String> flags = meta.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            if (meta.getType() != EventMetadata.Type.FLAG_UPDATE) return false;
+            List<String> flags = meta.getValues();
             assertNotNull(flags);
             return flags.size() == 2 && flags.contains("flag1") && flags.contains("flag2");
         }));

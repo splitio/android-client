@@ -219,8 +219,8 @@ public class LocalhostSplitsStorage implements SplitsStorage {
                 }
             }
             if (!content.equals(mLastContentLoaded)) {
-                // Cache path metadata: freshInstall=false (loaded from file), timestamp=null for localhost
-                EventMetadata cacheMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, false);
+                // Localhost mode uses FROM_CACHE metadata (loaded from file), with timestamp 0 for localhost
+                EventMetadata cacheMetadata = EventMetadataHelpers.createFromCacheMetadata(0L);
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE, cacheMetadata);
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
                 EventMetadata updateMetadata = createUpdatedFlagsMetadata();
@@ -268,6 +268,6 @@ public class LocalhostSplitsStorage implements SplitsStorage {
 
     private EventMetadata createUpdatedFlagsMetadata() {
         List<String> updatedSplitNames = new ArrayList<>(mInMemorySplits.keySet());
-        return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
+        return EventMetadataHelpers.createFlagUpdateMetadata(updatedSplitNames, null);
     }
 }

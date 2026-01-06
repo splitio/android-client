@@ -95,9 +95,9 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
 
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), mSplitsSyncListener);
 
-        // Create metadata provider for cache path (freshInstall=false, lastUpdateTimestamp from storage)
+        // Create metadata provider for cache path (FROM_CACHE with lastUpdateTimestamp from storage)
         LoadLocalDataListener.MetadataProvider cacheMetadataProvider = splitsStorage != null
-                ? () -> EventMetadataHelpers.createCacheReadyMetadata(splitsStorage.getUpdateTimestamp(), false)
+                ? () -> EventMetadataHelpers.createFromCacheMetadata(splitsStorage.getUpdateTimestamp())
                 : null;
 
         mLoadLocalSplitsListener = new LoadLocalDataListener(

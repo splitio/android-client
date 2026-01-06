@@ -118,13 +118,13 @@ public class SplitsSyncTask implements SplitTask {
         // Fire sync complete AFTER update events. This ensures SDK_READY triggers after
         // all *_UPDATED events have been processed (which won't trigger SDK_UPDATE because
         // SDK_READY's prerequisite for SDK_UPDATE isn't met yet).
-        EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+        EventMetadata syncMetadata = EventMetadataHelpers.createFreshInstallMetadata();
         mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
     }
 
     private EventMetadata createUpdatedFlagsMetadata() {
         List<String> updatedSplitNames = mSplitsSyncHelper.getLastUpdatedFlagNames();
-        return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
+        return EventMetadataHelpers.createFlagUpdateMetadata(updatedSplitNames, null);
     }
 
     private boolean splitsFilterHasChanged(String storedSplitsFilterQueryString) {

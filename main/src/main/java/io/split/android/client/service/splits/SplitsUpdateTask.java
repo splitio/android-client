@@ -84,7 +84,7 @@ public class SplitsUpdateTask implements SplitTask {
             }
 
             // Fire sync complete AFTER update events
-            EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+            EventMetadata syncMetadata = EventMetadataHelpers.createFreshInstallMetadata();
             mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
         }
         return result;
@@ -92,7 +92,7 @@ public class SplitsUpdateTask implements SplitTask {
 
     private EventMetadata createUpdatedFlagsMetadata() {
         List<String> updatedSplitNames = mSplitsSyncHelper.getLastUpdatedFlagNames();
-        return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
+        return EventMetadataHelpers.createFlagUpdateMetadata(updatedSplitNames, null);
     }
 
     @VisibleForTesting

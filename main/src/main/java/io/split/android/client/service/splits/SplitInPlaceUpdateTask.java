@@ -68,6 +68,6 @@ public class SplitInPlaceUpdateTask implements SplitTask {
 
     private EventMetadata createUpdatedFlagsMetadata(ProcessedSplitChange processedSplitChange) {
         List<String> updatedSplitNames = extractFlagNames(processedSplitChange);
-        return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
+        return EventMetadataHelpers.createFlagUpdateMetadata(updatedSplitNames, null);
     }
 }

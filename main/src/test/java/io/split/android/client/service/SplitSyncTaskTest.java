@@ -28,7 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.split.android.client.api.SdkUpdateMetadataKeys;
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -258,7 +258,8 @@ public class SplitSyncTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            if (metadata.getType() != EventMetadata.Type.FLAG_UPDATE) return false;
+            List<String> flags = metadata.getValues();
             assertNotNull(flags);
             assertEquals(3, flags.size());
             assertTrue(flags.contains("split1"));
@@ -285,7 +286,8 @@ public class SplitSyncTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            if (metadata.getType() != EventMetadata.Type.FLAG_UPDATE) return false;
+            List<String> flags = metadata.getValues();
             assertNotNull(flags);
             assertTrue(flags.isEmpty());
             return true;

@@ -21,8 +21,7 @@ import org.mockito.Mockito;
 import java.util.Arrays;
 import java.util.List;
 
-import io.split.android.client.api.SdkReadyFromCacheMetadataKeys;
-import io.split.android.client.api.SdkUpdateMetadataKeys;
+import io.split.android.client.api.EventMetadata;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -104,12 +103,12 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        // Verify TARGETING_RULES_SYNC_COMPLETE is fired with sync metadata (freshInstall=true, lastUpdateTimestamp=null)
+        // Verify TARGETING_RULES_SYNC_COMPLETE is fired with FRESH_INSTALL metadata
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), argThat(metadata -> {
             if (metadata == null) return false;
-            assertEquals(Boolean.TRUE, metadata.get(SdkReadyFromCacheMetadataKeys.FRESH_INSTALL));
-            // lastUpdateTimestamp should not be present (or should be null)
-            return metadata.get(SdkReadyFromCacheMetadataKeys.LAST_UPDATE_TIMESTAMP) == null;
+            if (metadata.getType() != EventMetadata.Type.FRESH_INSTALL) return false;
+            // Value should be null for FRESH_INSTALL
+            return metadata.getValue() == null;
         }));
     }
 
@@ -176,7 +175,8 @@ public class SplitUpdateTaskTest {
 
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
-            List<String> flags = metadata.get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
+            if (metadata.getType() != EventMetadata.Type.FLAG_UPDATE) return false;
+            List<String> flags = metadata.getValues();
             assertNotNull(flags);
             assertEquals(2, flags.size());
             assertTrue(flags.contains("flag1"));

@@ -3,17 +3,16 @@ package io.split.android.client.events.metadata;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
 import io.split.android.client.api.EventMetadata;
-import io.split.android.client.api.SdkReadyFromCacheMetadataKeys;
-import io.split.android.client.api.SdkUpdateMetadataKeys;
 
 /**
  * Helper class for creating {@link EventMetadata} instances.
  * <p>
- * This keeps the metadata keys in a single place to avoid typos and inconsistencies.
+ * Use these factory methods to create metadata for different event types.
  */
 public class EventMetadataHelpers {
 
@@ -21,27 +20,77 @@ public class EventMetadataHelpers {
         // Utility class
     }
 
-    public static EventMetadata createUpdatedFlagsMetadata(List<String> updatedSplitNames) {
-        return new EventMetadataBuilder()
-                .put(SdkUpdateMetadataKeys.UPDATED_FLAGS.name(), new ArrayList<>(new HashSet<>(updatedSplitNames)))
-                .build();
+    /**
+     * Creates metadata for a FLAG_UPDATE event.
+     * <p>
+     * Flag names are deduplicated automatically.
+     *
+     * @param flagNames    the names of flags that were updated
+     * @param changeNumber the changeNumber associated with this update, or null if not available
+     * @return the event metadata
+     */
+    public static EventMetadata createFlagUpdateMetadata(
+            List<String> flagNames,
+            @Nullable Long changeNumber) {
+        // Deduplicate flag names
+        List<String> uniqueFlags = new ArrayList<>(new HashSet<>(flagNames));
+        return new EventMetadataImpl(
+                EventMetadata.Type.FLAG_UPDATE,
+                uniqueFlags,
+                changeNumber
+        );
     }
 
     /**
-     * Creates metadata for the SDK_READY_FROM_CACHE event.
+     * Creates metadata for a SEGMENT_UPDATE event.
+     * <p>
+     * Segment names are deduplicated automatically.
      *
-     * @param lastUpdateTimestamp the timestamp when the cache was last updated, or null if not available
-     * @param freshInstall        true if this is a fresh install (no prior cache), false if loaded from cache
+     * @param segmentNames the names of segments that were updated
+     * @param changeNumber the changeNumber associated with this update, or null if not available
      * @return the event metadata
      */
-    public static EventMetadata createCacheReadyMetadata(@Nullable Long lastUpdateTimestamp, boolean freshInstall) {
-        EventMetadataBuilder builder = new EventMetadataBuilder()
-                .put(SdkReadyFromCacheMetadataKeys.FRESH_INSTALL.name(), freshInstall);
+    public static EventMetadata createSegmentUpdateMetadata(
+            List<String> segmentNames,
+            @Nullable Long changeNumber) {
+        // Deduplicate segment names
+        List<String> uniqueSegments = new ArrayList<>(new HashSet<>(segmentNames));
+        return new EventMetadataImpl(
+                EventMetadata.Type.SEGMENT_UPDATE,
+                uniqueSegments,
+                changeNumber
+        );
+    }
 
-        if (lastUpdateTimestamp != null) {
-            builder.put(SdkReadyFromCacheMetadataKeys.LAST_UPDATE_TIMESTAMP.name(), lastUpdateTimestamp);
-        }
+    /**
+     * Creates metadata for a FRESH_INSTALL event.
+     * <p>
+     * This is used when SDK_READY_FROM_CACHE fires but there was no prior cache
+     * (fresh install scenario).
+     *
+     * @return the event metadata
+     */
+    public static EventMetadata createFreshInstallMetadata() {
+        return new EventMetadataImpl(
+                EventMetadata.Type.FRESH_INSTALL,
+                Collections.emptyList(),
+                null
+        );
+    }
 
-        return builder.build();
+    /**
+     * Creates metadata for a FROM_CACHE event.
+     * <p>
+     * This is used when SDK_READY_FROM_CACHE fires after loading from existing cache.
+     *
+     * @param lastUpdateTimestamp the timestamp when the cache was last updated
+     * @return the event metadata
+     */
+    public static EventMetadata createFromCacheMetadata(long lastUpdateTimestamp) {
+        return new EventMetadataImpl(
+                EventMetadata.Type.FROM_CACHE,
+                Collections.emptyList(),
+                lastUpdateTimestamp
+        );
     }
 }
