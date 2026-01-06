@@ -22,8 +22,9 @@ import io.split.android.client.api.EventMetadata;
  * <ul>
  *   <li>Metadata-enabled methods receive {@link EventMetadata} containing event-specific information</li>
  *   <li>Metadata may be {@code null} for some events</li>
- *   <li>If you only need metadata, implement the metadata version; if you need backward compatibility,
- *       implement both versions</li>
+ *   <li>Use {@link EventMetadata#getType()} to determine the type of update</li>
+ *   <li>Use {@link EventMetadata#getValues()} to get flag/segment names that changed</li>
+ *   <li>Use {@link EventMetadata#getValue()} to get changeNumber or timestamp</li>
  * </ul>
  * <p>
  * Example usage:
@@ -31,13 +32,23 @@ import io.split.android.client.api.EventMetadata;
  * client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
  *     @Override
  *     public void onPostExecution(SplitClient client, EventMetadata metadata) {
- *         List<String> updatedFlags = (List<String>) metadata.get("updatedFlags");
- *         // Handle update with metadata
+ *         if (metadata.getType() == EventMetadata.Type.FLAG_UPDATE) {
+ *             List<String> updatedFlags = metadata.getValues();
+ *             Long changeNumber = metadata.getValue();
+ *             // Handle flag update
+ *         }
  *     }
+ * });
  *
+ * client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
  *     @Override
- *     public void onPostExecution(SplitClient client) {
- *         // Legacy handling (also called if both are implemented)
+ *     public void onPostExecution(SplitClient client, EventMetadata metadata) {
+ *         if (metadata.getType() == EventMetadata.Type.FRESH_INSTALL) {
+ *             // Fresh install, no cache available
+ *         } else if (metadata.getType() == EventMetadata.Type.FROM_CACHE) {
+ *             Long timestamp = metadata.getValue();
+ *             // Loaded from cache with timestamp
+ *         }
  *     }
  * });
  * }</pre>

@@ -3,56 +3,92 @@ package io.split.android.client.api;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
+import java.util.List;
 
 /**
  * Represents metadata associated with SDK events.
  * <p>
- * Values are sanitized to only allow String, Number, Boolean, or List&lt;String&gt;.
+ * This interface provides a unified way to access event-specific information
+ * through a discriminated type system. The {@link Type} enum indicates what
+ * kind of metadata this represents, and the appropriate getters can be used
+ * to retrieve the relevant data.
+ * <p>
+ * <b>Usage patterns:</b>
+ * <ul>
+ *   <li>{@link Type#FLAG_UPDATE}: {@link #getValues()} returns flag names, {@link #getValue()} may return changeNumber</li>
+ *   <li>{@link Type#SEGMENT_UPDATE}: {@link #getValues()} returns segment names, {@link #getValue()} may return changeNumber</li>
+ *   <li>{@link Type#FRESH_INSTALL}: {@link #getValues()} returns empty list, {@link #getValue()} returns null</li>
+ *   <li>{@link Type#FROM_CACHE}: {@link #getValues()} returns empty list, {@link #getValue()} returns lastUpdateTimestamp</li>
+ * </ul>
  */
 public interface EventMetadata {
 
     /**
-     * Returns the set of keys in this metadata.
+     * Returns the type of metadata this represents.
      *
-     * @return set of keys
+     * @return the metadata type, never null
      */
     @NonNull
-    Set<String> keys();
+    Type getType();
 
     /**
-     * Returns the collection of values in this metadata.
+     * Returns the list of values associated with this metadata.
+     * <p>
+     * For {@link Type#FLAG_UPDATE}, this returns the names of flags that changed.
+     * For {@link Type#SEGMENT_UPDATE}, this returns the names of segments that changed.
+     * For other types, this returns an empty list.
      *
-     * @return collection of values
+     * @return the list of values, never null (may be empty)
      */
     @NonNull
-    Collection<Object> values();
+    List<String> getValues();
 
     /**
-     * Returns the value associated with the given key.
+     * Returns the numeric value associated with this metadata.
+     * <p>
+     * For {@link Type#FLAG_UPDATE} and {@link Type#SEGMENT_UPDATE}, this may return a changeNumber.
+     * For {@link Type#FROM_CACHE}, this returns the lastUpdateTimestamp.
+     * For {@link Type#FRESH_INSTALL}, this returns null.
      *
-     * @param key the key to look up
-     * @return the value associated with the key, or null if not found
+     * @return the numeric value, or null if not applicable
      */
     @Nullable
-    Object get(@NonNull String key);
+    Long getValue();
 
     /**
-     * Returns whether this metadata contains the given key.
-     *
-     * @param key the key to check
-     * @return true if the key exists, false otherwise
+     * The type of metadata this represents.
      */
-    boolean containsKey(@NonNull String key);
+    enum Type {
+        /**
+         * Flag definitions were updated.
+         * <p>
+         * {@link #getValues()} returns the names of flags that changed.
+         * {@link #getValue()} may return the changeNumber if available.
+         */
+        FLAG_UPDATE,
 
-    /**
-     * Returns a copy of the underlying data as a Map.
-     *
-     * @return a copy of the metadata map
-     */
-    @NonNull
-    Map<String, Object> toMap();
+        /**
+         * Segment/RBS memberships were updated.
+         * <p>
+         * {@link #getValues()} returns the names of segments that changed.
+         * {@link #getValue()} may return the changeNumber in future versions.
+         */
+        SEGMENT_UPDATE,
+
+        /**
+         * SDK_READY_FROM_CACHE with no prior cache (fresh install).
+         * <p>
+         * {@link #getValues()} returns an empty list.
+         * {@link #getValue()} returns null.
+         */
+        FRESH_INSTALL,
+
+        /**
+         * SDK_READY_FROM_CACHE loaded from existing cache.
+         * <p>
+         * {@link #getValues()} returns an empty list.
+         * {@link #getValue()} returns the lastUpdateTimestamp.
+         */
+        FROM_CACHE
+    }
 }
-

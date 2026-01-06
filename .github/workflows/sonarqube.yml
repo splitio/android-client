@@ -1,6 +1,11 @@
 name: SonarCloud Analysis
 
 on:
+  push:
+    branches:
+      - master
+      - development
+      - '*_baseline'
   pull_request:
     branches:
       - '*'
@@ -127,7 +132,7 @@ jobs:
           echo "=== Verification Complete ==="
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarqube-scan-action@v7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}
