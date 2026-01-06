@@ -1,85 +1,160 @@
 package io.split.android.client.events.metadata;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import io.split.android.client.api.EventMetadata;
 
+/**
+ * Tests for the {@link EventMetadataHelpers} factory methods.
+ */
 public class EventMetadataHelpersTest {
 
-    // Tests for createUpdatedFlagsMetadata (existing)
+    // Tests for createFlagUpdateMetadata
     @Test
-    public void createUpdatedFlagsMetadataContainsFlags() {
-        List<String> flags = Arrays.asList("flag1", "flag2", "flag3");
-        EventMetadata metadata = EventMetadataHelpers.createUpdatedFlagsMetadata(flags);
+    public void createFlagUpdateMetadataReturnsCorrectType() {
+        EventMetadata metadata = EventMetadataHelpers.createFlagUpdateMetadata(
+                Arrays.asList("flag1", "flag2"),
+                null
+        );
 
-        assertTrue(metadata.containsKey("updatedFlags"));
-        @SuppressWarnings("unchecked")
-        List<String> result = (List<String>) metadata.get("updatedFlags");
-        assertEquals(3, result.size());
-        assertTrue(result.contains("flag1"));
-        assertTrue(result.contains("flag2"));
-        assertTrue(result.contains("flag3"));
-    }
-
-    // Tests for createCacheReadyMetadata
-    @Test
-    public void createCacheReadyMetadataWithTimestampAndFreshInstallFalse() {
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(1234567890L, false);
-
-        assertEquals(1234567890L, metadata.get("lastUpdateTimestamp"));
-        assertEquals(false, metadata.get("freshInstall"));
+        assertEquals(EventMetadata.Type.FLAG_UPDATE, metadata.getType());
     }
 
     @Test
-    public void createCacheReadyMetadataWithNullTimestampAndFreshInstallTrue() {
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+    public void createFlagUpdateMetadataReturnsCorrectFlagNames() {
+        List<String> flagNames = Arrays.asList("flag1", "flag2", "flag3");
+        EventMetadata metadata = EventMetadataHelpers.createFlagUpdateMetadata(flagNames, null);
 
-        assertNull(metadata.get("lastUpdateTimestamp"));
-        assertEquals(true, metadata.get("freshInstall"));
+        List<String> values = metadata.getValues();
+        assertEquals(3, values.size());
+        assertTrue(values.contains("flag1"));
+        assertTrue(values.contains("flag2"));
+        assertTrue(values.contains("flag3"));
     }
 
     @Test
-    public void createCacheReadyMetadataKeysAreCorrect() {
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(123L, false);
+    public void createFlagUpdateMetadataReturnsChangeNumber() {
+        Long changeNumber = 12345L;
+        EventMetadata metadata = EventMetadataHelpers.createFlagUpdateMetadata(
+                Arrays.asList("flag1"),
+                changeNumber
+        );
 
-        assertTrue(metadata.containsKey("lastUpdateTimestamp"));
-        assertTrue(metadata.containsKey("freshInstall"));
-        assertEquals(2, metadata.keys().size());
+        assertEquals(changeNumber, metadata.getValue());
     }
 
     @Test
-    public void createCacheReadyMetadataWithZeroTimestamp() {
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(0L, false);
+    public void createFlagUpdateMetadataWithNullChangeNumber() {
+        EventMetadata metadata = EventMetadataHelpers.createFlagUpdateMetadata(
+                Arrays.asList("flag1"),
+                null
+        );
 
-        assertEquals(0L, metadata.get("lastUpdateTimestamp"));
-        assertEquals(false, metadata.get("freshInstall"));
+        assertNull(metadata.getValue());
     }
 
     @Test
-    public void createCacheReadyMetadataForCachePath() {
-        // Cache path: freshInstall=false, timestamp from storage
-        long storedTimestamp = 1700000000000L;
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(storedTimestamp, false);
+    public void createFlagUpdateMetadataDeduplicatesFlagNames() {
+        List<String> flagNames = Arrays.asList("flag1", "flag2", "flag1", "flag3", "flag2");
+        EventMetadata metadata = EventMetadataHelpers.createFlagUpdateMetadata(flagNames, null);
 
-        assertFalse((Boolean) metadata.get("freshInstall"));
-        assertEquals(storedTimestamp, metadata.get("lastUpdateTimestamp"));
+        List<String> values = metadata.getValues();
+        // Should have deduplicated - only 3 unique flags
+        assertEquals(3, values.size());
+    }
+
+    // Tests for createSegmentUpdateMetadata
+    @Test
+    public void createSegmentUpdateMetadataReturnsCorrectType() {
+        EventMetadata metadata = EventMetadataHelpers.createSegmentUpdateMetadata(
+                Arrays.asList("segment1", "segment2"),
+                null
+        );
+
+        assertEquals(EventMetadata.Type.SEGMENT_UPDATE, metadata.getType());
     }
 
     @Test
-    public void createCacheReadyMetadataForSyncPath() {
-        // Sync path: freshInstall=true, timestamp=null
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+    public void createSegmentUpdateMetadataReturnsCorrectSegmentNames() {
+        List<String> segmentNames = Arrays.asList("segment1", "segment2");
+        EventMetadata metadata = EventMetadataHelpers.createSegmentUpdateMetadata(segmentNames, null);
 
-        assertTrue((Boolean) metadata.get("freshInstall"));
-        assertNull(metadata.get("lastUpdateTimestamp"));
+        List<String> values = metadata.getValues();
+        assertEquals(2, values.size());
+        assertTrue(values.contains("segment1"));
+        assertTrue(values.contains("segment2"));
+    }
+
+    @Test
+    public void createSegmentUpdateMetadataReturnsChangeNumber() {
+        Long changeNumber = 67890L;
+        EventMetadata metadata = EventMetadataHelpers.createSegmentUpdateMetadata(
+                Arrays.asList("segment1"),
+                changeNumber
+        );
+
+        assertEquals(changeNumber, metadata.getValue());
+    }
+
+    // Tests for createFreshInstallMetadata
+    @Test
+    public void createFreshInstallMetadataReturnsCorrectType() {
+        EventMetadata metadata = EventMetadataHelpers.createFreshInstallMetadata();
+
+        assertEquals(EventMetadata.Type.FRESH_INSTALL, metadata.getType());
+    }
+
+    @Test
+    public void createFreshInstallMetadataReturnsEmptyValues() {
+        EventMetadata metadata = EventMetadataHelpers.createFreshInstallMetadata();
+
+        assertTrue(metadata.getValues().isEmpty());
+    }
+
+    @Test
+    public void createFreshInstallMetadataReturnsNullValue() {
+        EventMetadata metadata = EventMetadataHelpers.createFreshInstallMetadata();
+
+        assertNull(metadata.getValue());
+    }
+
+    // Tests for createFromCacheMetadata
+    @Test
+    public void createFromCacheMetadataReturnsCorrectType() {
+        EventMetadata metadata = EventMetadataHelpers.createFromCacheMetadata(1700000000000L);
+
+        assertEquals(EventMetadata.Type.FROM_CACHE, metadata.getType());
+    }
+
+    @Test
+    public void createFromCacheMetadataReturnsEmptyValues() {
+        EventMetadata metadata = EventMetadataHelpers.createFromCacheMetadata(1700000000000L);
+
+        assertTrue(metadata.getValues().isEmpty());
+    }
+
+    @Test
+    public void createFromCacheMetadataReturnsLastUpdateTimestamp() {
+        long timestamp = 1700000000000L;
+        EventMetadata metadata = EventMetadataHelpers.createFromCacheMetadata(timestamp);
+
+        assertEquals(Long.valueOf(timestamp), metadata.getValue());
+    }
+
+    @Test
+    public void createFromCacheMetadataWithZeroTimestamp() {
+        EventMetadata metadata = EventMetadataHelpers.createFromCacheMetadata(0L);
+
+        assertEquals(Long.valueOf(0L), metadata.getValue());
     }
 }
 
