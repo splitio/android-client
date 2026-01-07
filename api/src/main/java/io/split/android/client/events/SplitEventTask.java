@@ -13,8 +13,8 @@ import io.split.android.client.SplitClient;
  *   <li>{@code onPostExecutionView} methods are called on the main/UI thread (queued on main looper)</li>
  * </ul>
  * <p>
- * For events with metadata (like SDK_UPDATE or SDK_READY_FROM_CACHE), use the typed event task classes
- * {@link SdkUpdateEventTask} or {@link SdkReadyFromCacheEventTask} for type-safe metadata access.
+ * For events with metadata (like SDK_UPDATE or SDK_READY_FROM_CACHE), use
+ * {@link SdkEventListener} instead for type-safe metadata access.
  * <p>
  * Example usage:
  * <pre>{@code

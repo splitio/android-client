@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.attributes.AttributesManager;
-import io.split.android.client.events.SdkEvent;
+import io.split.android.client.events.SdkEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 
@@ -181,26 +181,31 @@ public interface SplitClient extends AttributesManager {
     void on(SplitEvent event, SplitEventTask task);
 
     /**
-     * Registers a type-safe event listener for SDK events.
+     * Registers an event listener for SDK events that provide typed metadata.
      * <p>
-     * This method provides compile-time type safety for event task registration.
-     * The event type parameter enforces the correct task type for each event.
+     * This method provides type-safe callbacks for SDK_UPDATE and SDK_READY_FROM_CACHE events.
+     * Override the methods you need in the listener.
      * <p>
      * Example usage:
      * <pre>{@code
-     * client.on(SdkEvent.SDK_UPDATE, new SdkUpdateEventTask() {
+     * client.addEventListener(new SdkEventListener() {
      *     @Override
-     *     public void onPostExecution(SplitClient client, SdkUpdateMetadata metadata) {
+     *     public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
      *         List<String> flags = metadata.getUpdatedFlags();
+     *         // Handle on background thread
+     *     }
+     *
+     *     @Override
+     *     public void onReadyFromCacheView(SplitClient client, SdkReadyFromCacheMetadata metadata) {
+     *         // Handle on main/UI thread
+     *         Boolean freshInstall = metadata.isFreshInstall();
      *     }
      * });
      * }</pre>
      *
-     * @param event the type-safe event to listen for
-     * @param task  the task to execute when the event occurs
-     * @param <T>   the type of event task
+     * @param listener the event listener to register
      */
-    <T extends SplitEventTask> void on(SdkEvent<T> event, T task);
+    void addEventListener(SdkEventListener listener);
 
     /**
      * Enqueue a new event to be sent to Split data collection services.
