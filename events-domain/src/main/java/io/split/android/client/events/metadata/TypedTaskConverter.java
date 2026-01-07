@@ -10,9 +10,7 @@ import io.split.android.client.events.SdkUpdateMetadata;
 
 /**
  * Converts {@link EventMetadata} to typed metadata objects for typed event tasks.
- * <p>
- * This class handles the conversion logic that was previously in the typed tasks.
- */
+*/
 public class TypedTaskConverter {
 
     private TypedTaskConverter() {

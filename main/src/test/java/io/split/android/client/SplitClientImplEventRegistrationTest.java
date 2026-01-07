@@ -14,6 +14,7 @@ import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
+import io.split.android.client.events.SdkEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -125,5 +126,21 @@ public class SplitClientImplEventRegistrationTest {
         splitClient.on(SplitEvent.SDK_UPDATE, task);
 
         verify(eventsManager).register(eq(SplitEvent.SDK_UPDATE), eq(task));
+    }
+
+    @Test
+    public void addEventListenerWithNullListenerDoesNotRegister() {
+        splitClient.addEventListener(null);
+
+        verify(eventsManager, never()).registerEventListener(any(SdkEventListener.class));
+    }
+
+    @Test
+    public void addEventListenerWithValidListenerRegistersListener() {
+        SdkEventListener listener = mock(SdkEventListener.class);
+
+        splitClient.addEventListener(listener);
+
+        verify(eventsManager).registerEventListener(eq(listener));
     }
 }

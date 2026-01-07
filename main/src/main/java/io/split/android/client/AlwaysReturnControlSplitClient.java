@@ -174,6 +174,7 @@ public class AlwaysReturnControlSplitClient implements SplitClient {
 
     @Override
     public void addEventListener(SdkEventListener listener) {
+        // no-op
     }
 
     @Override
