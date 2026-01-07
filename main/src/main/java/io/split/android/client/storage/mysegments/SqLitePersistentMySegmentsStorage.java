@@ -57,6 +57,11 @@ public class SqLitePersistentMySegmentsStorage<T extends SegmentEntity> implemen
     public void close() {
     }
 
+    @Override
+    public void clear() {
+        mDao.deleteAll();
+    }
+
     private SegmentsChange getMySegmentsFromEntity(SegmentEntity entity) {
         if (entity == null || Utils.isNullOrEmpty(entity.getSegmentList())) {
             return createEmpty();

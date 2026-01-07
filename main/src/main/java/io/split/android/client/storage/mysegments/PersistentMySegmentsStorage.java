@@ -9,4 +9,6 @@ public interface PersistentMySegmentsStorage {
     SegmentsChange getSnapshot(String userKey);
 
     void close();
+
+    void clear();
 }

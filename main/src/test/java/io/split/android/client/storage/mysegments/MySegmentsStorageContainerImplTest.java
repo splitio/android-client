@@ -3,6 +3,8 @@ package io.split.android.client.storage.mysegments;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.verify;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -64,5 +66,34 @@ public class MySegmentsStorageContainerImplTest {
         long distinctAmount = mContainer.getUniqueAmount();
 
         assertEquals(4, distinctAmount);
+    }
+
+    @Test
+    public void clearCallsPersistentStorageClear() {
+        mContainer.clear();
+
+        verify(mPersistentMySegmentsStorage).clear();
+    }
+
+    @Test
+    public void clearClearsInMemoryStorageForExistingKeys() {
+        String userKey = "user_key";
+        MySegmentsStorage storageForKey = mContainer.getStorageForKey(userKey);
+        storageForKey.set(SegmentsChange.create(new HashSet<>(Arrays.asList("s1", "s2")), -1L));
+
+        mContainer.clear();
+
+        assertTrue(storageForKey.getAll().isEmpty());
+    }
+
+    @Test
+    public void clearCallsPersistentStorageClearBeforeSettingEmptySegments() {
+        String userKey = "user_key";
+        mContainer.getStorageForKey(userKey);
+
+        mContainer.clear();
+
+        // Verify persistent storage clear was called
+        verify(mPersistentMySegmentsStorage).clear();
     }
 }

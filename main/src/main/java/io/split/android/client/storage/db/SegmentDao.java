@@ -11,4 +11,6 @@ public interface SegmentDao<T> {
     T getByUserKey(String userKey);
 
     List<T> getAll();
+
+    void deleteAll();
 }
