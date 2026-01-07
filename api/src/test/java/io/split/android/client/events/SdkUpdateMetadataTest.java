@@ -12,10 +12,10 @@ import java.util.List;
 public class SdkUpdateMetadataTest {
 
     @Test
-    public void getNamesReturnsNullWhenConstructedWithNull() {
+    public void getNamesReturnsEmptyListWhenConstructedWithNull() {
         SdkUpdateMetadata metadata = new SdkUpdateMetadata(null, null);
 
-        assertNull(metadata.getNames());
+        assertEquals(Collections.emptyList(), metadata.getNames());
     }
 
     @Test

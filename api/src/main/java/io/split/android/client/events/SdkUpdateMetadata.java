@@ -1,7 +1,9 @@
 package io.split.android.client.events;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -23,9 +25,6 @@ public final class SdkUpdateMetadata {
         /**
          * Rule-based segments were updated.
          * <p>
-         * Note: This is for rule-based segments (RBS) ONLY, not for memberships
-         * (my segments / large segments). Memberships have their own internal event
-         * flow and don't emit SDK_UPDATE events with this metadata type.
          */
         SEGMENTS_UPDATE
     }
@@ -33,18 +32,18 @@ public final class SdkUpdateMetadata {
     @Nullable
     private final Type mType;
 
-    @Nullable
+    @NonNull
     private final List<String> mNames;
 
     /**
      * Creates a new SdkUpdateMetadata instance.
      *
      * @param type  the type of update, or null if not available
-     * @param names the list of entity names that were updated, or null if not available
+     * @param names the list of entity names that were updated, or null to use an empty list
      */
     public SdkUpdateMetadata(@Nullable Type type, @Nullable List<String> names) {
         mType = type;
-        mNames = names;
+        mNames = names != null ? names : Collections.emptyList();
     }
 
     /**
@@ -63,9 +62,9 @@ public final class SdkUpdateMetadata {
      * For {@link Type#FLAGS_UPDATE}, this contains flag names.
      * For {@link Type#SEGMENTS_UPDATE}, this contains rule-based segment names.
      *
-     * @return the list of updated entity names, or null if not available
+     * @return the list of updated entity names, never null (empty list if none)
      */
-    @Nullable
+    @NonNull
     public List<String> getNames() {
         return mNames;
     }

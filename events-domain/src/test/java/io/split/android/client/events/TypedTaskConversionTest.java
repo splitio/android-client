@@ -69,7 +69,7 @@ public class TypedTaskConversionTest {
 
         assertNotNull(converted);
         assertNull(converted.getType());
-        assertNull(converted.getNames());
+        assertTrue(converted.getNames().isEmpty());
     }
 
     @Test
