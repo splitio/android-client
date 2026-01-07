@@ -3,6 +3,7 @@ package io.split.android.client;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import io.split.android.client.events.SdkEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.grammar.Treatments;
@@ -172,7 +173,7 @@ public class AlwaysReturnControlSplitClient implements SplitClient {
     }
 
     @Override
-    public <T extends SplitEventTask> void on(io.split.android.client.events.SdkEvent<T> event, T task) {
+    public void addEventListener(SdkEventListener listener) {
     }
 
     @Override

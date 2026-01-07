@@ -282,9 +282,9 @@ public class EventsManagerTest {
 
         waitForSdkReady(eventManager, readyLatch);
 
-        eventManager.register(SplitEvent.SDK_UPDATE, new SdkUpdateEventTask() {
+        eventManager.registerEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, SdkUpdateMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 receivedMetadata.set(metadata);
                 updateLatch.countDown();
             }
@@ -309,9 +309,9 @@ public class EventsManagerTest {
 
         waitForSdkReady(eventManager, readyLatch);
 
-        eventManager.register(SplitEvent.SDK_UPDATE, new SdkUpdateEventTask() {
+        eventManager.registerEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecutionView(SplitClient client, SdkUpdateMetadata metadata) {
+            public void onUpdateView(SplitClient client, SdkUpdateMetadata metadata) {
                 receivedMetadata.set(metadata);
                 updateLatch.countDown();
             }
@@ -352,27 +352,27 @@ public class EventsManagerTest {
     }
 
     @Test
-    public void sdkUpdateTypedTaskCallsBothMethods() throws InterruptedException {
+    public void sdkEventListenerCallsBothBackgroundAndMainThreadMethods() throws InterruptedException {
         SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorStub(), 0);
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch bothCalledLatch = new CountDownLatch(2);
-        final boolean[] typedMethodCalled = {false};
-        final boolean[] legacyMethodCalled = {false};
+        final boolean[] backgroundMethodCalled = {false};
+        final boolean[] mainThreadMethodCalled = {false};
         AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
 
         waitForSdkReady(eventManager, readyLatch);
 
-        eventManager.register(SplitEvent.SDK_UPDATE, new SdkUpdateEventTask() {
+        eventManager.registerEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, SdkUpdateMetadata metadata) {
-                typedMethodCalled[0] = true;
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
+                backgroundMethodCalled[0] = true;
                 receivedMetadata.set(metadata);
                 bothCalledLatch.countDown();
             }
 
             @Override
-            public void onPostExecution(SplitClient client) {
-                legacyMethodCalled[0] = true;
+            public void onUpdateView(SplitClient client, SdkUpdateMetadata metadata) {
+                mainThreadMethodCalled[0] = true;
                 bothCalledLatch.countDown();
             }
         });
@@ -382,9 +382,9 @@ public class EventsManagerTest {
 
         boolean bothCalled = bothCalledLatch.await(3, TimeUnit.SECONDS);
         assertTrue("Both callbacks should be called", bothCalled);
-        assertTrue("Typed method should be called", typedMethodCalled[0]);
-        assertTrue("Legacy method should also be called", legacyMethodCalled[0]);
-        assertNotNull("Metadata should be passed to typed method", receivedMetadata.get());
+        assertTrue("Background method should be called", backgroundMethodCalled[0]);
+        assertTrue("Main thread method should also be called", mainThreadMethodCalled[0]);
+        assertNotNull("Metadata should be passed to methods", receivedMetadata.get());
         assertNotNull("Metadata should contain updatedFlags", receivedMetadata.get().getUpdatedFlags());
     }
 
@@ -395,10 +395,10 @@ public class EventsManagerTest {
         CountDownLatch latch = new CountDownLatch(1);
         AtomicReference<SdkReadyFromCacheMetadata> receivedMetadata = new AtomicReference<>();
 
-        // Register a typed task
-        eventManager.register(SplitEvent.SDK_READY_FROM_CACHE, new SdkReadyFromCacheEventTask() {
+        // Register an event listener
+        eventManager.registerEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, SdkReadyFromCacheMetadata metadata) {
+            public void onReadyFromCache(SplitClient client, SdkReadyFromCacheMetadata metadata) {
                 receivedMetadata.set(metadata);
                 latch.countDown();
             }

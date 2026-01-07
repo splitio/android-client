@@ -113,6 +113,27 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     }
 
     @Override
+    public void registerEventListener(SdkEventListener listener) {
+        requireNonNull(listener);
+
+        // Register SDK_UPDATE handlers (bg + main)
+        mDualExecutorRegistration.register(
+                mEventsManager,
+                SplitEvent.SDK_UPDATE,
+                createUpdateBackgroundHandler(listener),
+                createUpdateMainThreadHandler(listener)
+        );
+
+        // Register SDK_READY_FROM_CACHE handlers (bg + main)
+        mDualExecutorRegistration.register(
+                mEventsManager,
+                SplitEvent.SDK_READY_FROM_CACHE,
+                createReadyFromCacheBackgroundHandler(listener),
+                createReadyFromCacheMainThreadHandler(listener)
+        );
+    }
+
+    @Override
     public boolean eventAlreadyTriggered(SplitEvent event) {
         return mEventsManager.eventAlreadyTriggered(event);
     }
@@ -160,31 +181,45 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
         };
     }
 
-    private void executeBackgroundTask(SplitEventTask task, SplitClient client, EventMetadata metadata) {
-        // Try typed methods first for typed tasks
-        if (task instanceof SdkUpdateEventTask) {
+    // SdkEventListener handlers for SDK_UPDATE
+    private EventHandler<SplitEvent, EventMetadata> createUpdateBackgroundHandler(final SdkEventListener listener) {
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
             SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
-            executeMethod(() -> ((SdkUpdateEventTask) task).onPostExecution(client, typedMetadata));
-        } else if (task instanceof SdkReadyFromCacheEventTask) {
-            SdkReadyFromCacheMetadata typedMetadata = TypedTaskConverter.convertForSdkReadyFromCache(metadata);
-            executeMethod(() -> ((SdkReadyFromCacheEventTask) task).onPostExecution(client, typedMetadata));
-        }
+            executeMethod(() -> listener.onUpdate(client, typedMetadata));
+        };
+    }
 
-        // Always try the base method
+    private EventHandler<SplitEvent, EventMetadata> createUpdateMainThreadHandler(final SdkEventListener listener) {
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
+            SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
+            executeMethod(() -> listener.onUpdateView(client, typedMetadata));
+        };
+    }
+
+    // SdkEventListener handlers for SDK_READY_FROM_CACHE
+    private EventHandler<SplitEvent, EventMetadata> createReadyFromCacheBackgroundHandler(final SdkEventListener listener) {
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
+            SdkReadyFromCacheMetadata typedMetadata = TypedTaskConverter.convertForSdkReadyFromCache(metadata);
+            executeMethod(() -> listener.onReadyFromCache(client, typedMetadata));
+        };
+    }
+
+    private EventHandler<SplitEvent, EventMetadata> createReadyFromCacheMainThreadHandler(final SdkEventListener listener) {
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
+            SdkReadyFromCacheMetadata typedMetadata = TypedTaskConverter.convertForSdkReadyFromCache(metadata);
+            executeMethod(() -> listener.onReadyFromCacheView(client, typedMetadata));
+        };
+    }
+
+    private void executeBackgroundTask(SplitEventTask task, SplitClient client, EventMetadata metadata) {
         executeMethod(() -> task.onPostExecution(client));
     }
 
     private void executeMainThreadTask(SplitEventTask task, SplitClient client, EventMetadata metadata) {
-        // Try typed methods first for typed tasks
-        if (task instanceof SdkUpdateEventTask) {
-            SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
-            executeMethod(() -> ((SdkUpdateEventTask) task).onPostExecutionView(client, typedMetadata));
-        } else if (task instanceof SdkReadyFromCacheEventTask) {
-            SdkReadyFromCacheMetadata typedMetadata = TypedTaskConverter.convertForSdkReadyFromCache(metadata);
-            executeMethod(() -> ((SdkReadyFromCacheEventTask) task).onPostExecutionView(client, typedMetadata));
-        }
-
-        // Always try the base method
         executeMethod(() -> task.onPostExecutionView(client));
     }
 

@@ -25,6 +25,7 @@ import io.split.android.client.TreatmentLabels;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
+import io.split.android.client.events.SdkEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -271,8 +272,9 @@ public final class LocalhostSplitClient implements SplitClient {
     }
 
     @Override
-    public <T extends SplitEventTask> void on(io.split.android.client.events.SdkEvent<T> event, T task) {
-        on(event.toSplitEvent(), task);
+    public void addEventListener(SdkEventListener listener) {
+        checkNotNull(listener);
+        mEventsManager.registerEventListener(listener);
     }
 
     @Override

@@ -35,9 +35,10 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
-import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.api.Key;
-import io.split.android.client.api.SdkReadyFromCacheMetadataKeys;
+import io.split.android.client.events.SdkEventListener;
+import io.split.android.client.events.SdkReadyFromCacheMetadata;
+import io.split.android.client.events.SdkUpdateMetadata;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.network.HttpMethod;
@@ -145,7 +146,7 @@ public class SdkEventsIntegrationTest {
 
         // And: a handler H is registered for sdkReadyFromCache
         AtomicInteger handlerInvocationCount = new AtomicInteger(0);
-        AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
+        AtomicReference<SdkReadyFromCacheMetadata> receivedMetadata = new AtomicReference<>();
         CountDownLatch cacheReadyLatch = new CountDownLatch(1);
 
         SplitClient client = factory.client(new Key("key_1"));
@@ -159,12 +160,12 @@ public class SdkEventsIntegrationTest {
 
         // And: the metadata contains "freshInstall" with value false
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        Boolean freshInstall = receivedMetadata.get().get(SdkReadyFromCacheMetadataKeys.FRESH_INSTALL);
+        Boolean freshInstall = receivedMetadata.get().isFreshInstall();
         assertNotNull("freshInstall should not be null", freshInstall);
         assertFalse("freshInstall should be false for cache path", freshInstall);
 
         // And: the metadata contains "lastUpdateTimestamp" with a valid timestamp
-        Long lastUpdateTimestamp = receivedMetadata.get().get(SdkReadyFromCacheMetadataKeys.LAST_UPDATE_TIMESTAMP);
+        Long lastUpdateTimestamp = receivedMetadata.get().getLastUpdateTimestamp();
         assertNotNull("lastUpdateTimestamp should not be null", lastUpdateTimestamp);
         assertTrue("lastUpdateTimestamp should be valid", lastUpdateTimestamp > 0);
 
@@ -191,7 +192,7 @@ public class SdkEventsIntegrationTest {
 
         // And: a handler H is registered for sdkReadyFromCache
         AtomicInteger handlerInvocationCount = new AtomicInteger(0);
-        AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
+        AtomicReference<SdkReadyFromCacheMetadata> receivedMetadata = new AtomicReference<>();
         CountDownLatch cacheReadyLatch = new CountDownLatch(1);
 
         SplitClient client = factory.client(new Key("key_1"));
@@ -206,7 +207,7 @@ public class SdkEventsIntegrationTest {
 
         // And: the metadata contains "freshInstall" with value true
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        Boolean freshInstall = receivedMetadata.get().get(SdkReadyFromCacheMetadataKeys.FRESH_INSTALL);
+        Boolean freshInstall = receivedMetadata.get().isFreshInstall();
         assertNotNull("freshInstall should not be null", freshInstall);
         assertTrue("freshInstall should be true for sync path (fresh install)", freshInstall);
 
@@ -336,14 +337,14 @@ public class SdkEventsIntegrationTest {
         TestClientFixture fixture = createStreamingClient(new Key("key_1"));
 
         AtomicInteger updateHandlerCount = new AtomicInteger(0);
-        AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
+        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch updateLatch = new CountDownLatch(1);
 
         // Register handlers BEFORE SDK_READY fires
-        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 updateHandlerCount.incrementAndGet();
                 receivedMetadata.set(metadata);
                 updateLatch.countDown();
@@ -352,7 +353,7 @@ public class SdkEventsIntegrationTest {
 
         fixture.client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onPostExecution(SplitClient client) {
                 readyLatch.countDown();
             }
         });
@@ -396,12 +397,12 @@ public class SdkEventsIntegrationTest {
         TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
         AtomicInteger updateHandlerCount = new AtomicInteger(0);
-        AtomicReference<EventMetadata> lastMetadata = new AtomicReference<>();
+        AtomicReference<SdkUpdateMetadata> lastMetadata = new AtomicReference<>();
         CountDownLatch updateLatch = new CountDownLatch(1);
 
-        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 updateHandlerCount.incrementAndGet();
                 lastMetadata.set(metadata);
                 updateLatch.countDown();
@@ -444,9 +445,9 @@ public class SdkEventsIntegrationTest {
         AtomicReference<CountDownLatch> secondUpdateLatchRef = new AtomicReference<>(null);
 
         // And: a handler H1 is registered for sdkUpdate
-        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handler1Count.incrementAndGet();
                 firstUpdateLatch.countDown();
                 // Count down second latch if it exists (second update)
@@ -473,9 +474,9 @@ public class SdkEventsIntegrationTest {
         CountDownLatch secondUpdateLatch = new CountDownLatch(2);
         secondUpdateLatchRef.set(secondUpdateLatch);
         
-        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handler2Count.incrementAndGet();
                 secondUpdateLatch.countDown();
             }
@@ -725,18 +726,18 @@ public class SdkEventsIntegrationTest {
 
         // Given: three handlers H1, H2 and H3 are registered for sdkUpdate in that order
         // And: H2 throws an exception when invoked
-        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handler1Count.incrementAndGet();
                 handler1Order.set(orderCounter.incrementAndGet());
                 updateLatch.countDown();
             }
         });
 
-        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handler2Count.incrementAndGet();
                 handler2Order.set(orderCounter.incrementAndGet());
                 updateLatch.countDown();
@@ -744,9 +745,9 @@ public class SdkEventsIntegrationTest {
             }
         });
 
-        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handler3Count.incrementAndGet();
                 handler3Order.set(orderCounter.incrementAndGet());
                 updateLatch.countDown();
@@ -797,13 +798,13 @@ public class SdkEventsIntegrationTest {
         TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
         AtomicInteger updateHandlerCount = new AtomicInteger(0);
-        AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
+        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
         CountDownLatch updateLatch = new CountDownLatch(1);
 
         // Given: a handler H is registered for sdkUpdate which inspects the received metadata
-        fixture.client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.client.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 updateHandlerCount.incrementAndGet();
                 receivedMetadata.set(metadata);
                 updateLatch.countDown();
@@ -885,17 +886,17 @@ public class SdkEventsIntegrationTest {
         CountDownLatch updateLatchB = new CountDownLatch(1);
 
         // And: handlers HA and HB are registered for sdkUpdate
-        fixture.clientA.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.clientA.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handlerACount.incrementAndGet();
                 updateLatchA.countDown();
             }
         });
 
-        fixture.clientB.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.clientB.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handlerBCount.incrementAndGet();
                 updateLatchB.countDown();
             }
@@ -939,17 +940,17 @@ public class SdkEventsIntegrationTest {
         CountDownLatch updateLatchB = new CountDownLatch(1);
 
         // And: handlers HA and HB are registered for sdkUpdate
-        fixture.clientA.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.clientA.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handlerACount.incrementAndGet();
                 updateLatchA.countDown();
             }
         });
 
-        fixture.clientB.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        fixture.clientB.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handlerBCount.incrementAndGet();
                 updateLatchB.countDown();
             }
@@ -1124,11 +1125,11 @@ public class SdkEventsIntegrationTest {
      * Registers a handler for SDK_READY_FROM_CACHE that captures metadata and counts invocations.
      */
     private void registerCacheReadyHandler(SplitClient client, AtomicInteger count,
-                                           AtomicReference<EventMetadata> metadata,
+                                           AtomicReference<SdkReadyFromCacheMetadata> metadata,
                                            CountDownLatch latch) {
-        client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
+        client.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata eventMetadata) {
+            public void onReadyFromCache(SplitClient client, SdkReadyFromCacheMetadata eventMetadata) {
                 count.incrementAndGet();
                 if (metadata != null) metadata.set(eventMetadata);
                 if (latch != null) latch.countDown();
@@ -1140,10 +1141,10 @@ public class SdkEventsIntegrationTest {
      * Registers a handler for SDK_UPDATE that counts invocations and optionally captures metadata.
      */
     private void registerUpdateHandler(SplitClient client, AtomicInteger count,
-                                       AtomicReference<EventMetadata> metadata) {
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+                                       AtomicReference<SdkUpdateMetadata> metadata) {
+        client.addEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata eventMetadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata eventMetadata) {
                 count.incrementAndGet();
                 if (metadata != null) metadata.set(eventMetadata);
             }
