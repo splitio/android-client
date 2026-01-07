@@ -1,31 +1,35 @@
-package io.split.android.client.api;
+package io.split.android.client.events.metadata;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.Collection;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Represents metadata associated with SDK events.
+ * <p>
+ * This is an internal API for SDK infrastructure use.
+ * Consumers should use the typed metadata classes instead:
+ * {@code SdkUpdateMetadata} and {@code SdkReadyFromCacheMetadata}.
  * <p>
  * Values are sanitized to only allow String, Number, Boolean, or List&lt;String&gt;.
  */
 public interface EventMetadata {
 
     /**
-     * Returns the set of keys in this metadata.
-     *
-     * @return set of keys
+     * Returns the number of entries in this metadata.
      */
-    @NonNull
-    Set<String> keys();
+    int size();
+
+    /**
+     * Returns whether this metadata has no entries.
+     */
+    default boolean isEmpty() {
+        return size() == 0;
+    }
 
     /**
      * Returns the collection of values in this metadata.
-     *
-     * @return collection of values
      */
     @NonNull
     Collection<Object> values();
@@ -46,13 +50,4 @@ public interface EventMetadata {
      * @return true if the key exists, false otherwise
      */
     boolean containsKey(@NonNull String key);
-
-    /**
-     * Returns a copy of the underlying data as a Map.
-     *
-     * @return a copy of the metadata map
-     */
-    @NonNull
-    Map<String, Object> toMap();
 }
-

@@ -2,7 +2,7 @@ package io.split.android.client.events;
 
 import androidx.annotation.Nullable;
 
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
 
 public interface ISplitEventsManager {
 

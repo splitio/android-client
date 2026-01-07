@@ -34,6 +34,7 @@ import io.split.android.client.TreatmentLabels;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
+import io.split.android.client.events.SdkEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -438,6 +439,22 @@ public class LocalhostSplitClientTest {
         client.on(event, task);
 
         verify(mockEventsManager, never()).register(any(), any());
+    }
+
+    @Test
+    public void addEventListenerWithNullListenerDoesNotRegister() {
+        client.addEventListener(null);
+
+        verify(mockEventsManager, never()).registerEventListener(any(SdkEventListener.class));
+    }
+
+    @Test
+    public void addEventListenerWithValidListenerRegistersListener() {
+        SdkEventListener listener = mock(SdkEventListener.class);
+
+        client.addEventListener(listener);
+
+        verify(mockEventsManager).registerEventListener(eq(listener));
     }
 
     @Test

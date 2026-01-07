@@ -15,8 +15,6 @@ import org.mockito.MockitoAnnotations;
 import java.util.Arrays;
 import java.util.List;
 
-import io.split.android.client.api.EventMetadata;
-
 public class EventMetadataBuilderTest {
 
     @Mock
@@ -94,7 +92,7 @@ public class EventMetadataBuilderTest {
     public void buildCreatesEmptyMetadataWhenNothingAdded() {
         EventMetadata metadata = new EventMetadataBuilder().build();
 
-        assertTrue(metadata.keys().isEmpty());
+        assertTrue(metadata.isEmpty());
     }
 
     @Test
@@ -112,7 +110,7 @@ public class EventMetadataBuilderTest {
                 .put("count", 42)
                 .build();
 
-        assertEquals(42, metadata.get("count"));
+        assertEquals(Integer.valueOf(42), metadata.get("count"));
     }
 
     @Test
@@ -121,7 +119,7 @@ public class EventMetadataBuilderTest {
                 .put("timestamp", 1234567890L)
                 .build();
 
-        assertEquals(1234567890L, metadata.get("timestamp"));
+        assertEquals(Long.valueOf(1234567890L), metadata.get("timestamp"));
     }
 
     @Test
@@ -130,7 +128,7 @@ public class EventMetadataBuilderTest {
                 .put("rate", 3.14)
                 .build();
 
-        assertEquals(3.14, metadata.get("rate"));
+        assertEquals(Double.valueOf(3.14), metadata.get("rate"));
     }
 
     @Test
@@ -139,7 +137,7 @@ public class EventMetadataBuilderTest {
                 .put("enabled", true)
                 .build();
 
-        assertEquals(true, metadata.get("enabled"));
+        assertEquals(Boolean.TRUE, metadata.get("enabled"));
     }
 
     @Test
@@ -148,7 +146,7 @@ public class EventMetadataBuilderTest {
                 .put("disabled", false)
                 .build();
 
-        assertEquals(false, metadata.get("disabled"));
+        assertEquals(Boolean.FALSE, metadata.get("disabled"));
     }
 
     @Test
@@ -159,7 +157,7 @@ public class EventMetadataBuilderTest {
                 .put("updatedFlags", flags)
                 .build();
 
-        assertEquals(flags, metadata.get("updatedFlags"));
+        assertEquals(flags, metadata.get(MetadataKeys.UPDATED_FLAGS));
     }
 
     @Test
@@ -171,10 +169,10 @@ public class EventMetadataBuilderTest {
                 .put("list", Arrays.asList("a", "b"))
                 .build();
 
-        assertEquals(4, metadata.keys().size());
+        assertEquals(4, metadata.size());
         assertEquals("text", metadata.get("string"));
-        assertEquals(100, metadata.get("number"));
-        assertEquals(true, metadata.get("flag"));
+        assertEquals(Integer.valueOf(100), metadata.get("number"));
+        assertEquals(Boolean.TRUE, metadata.get("flag"));
         assertEquals(Arrays.asList("a", "b"), metadata.get("list"));
     }
 

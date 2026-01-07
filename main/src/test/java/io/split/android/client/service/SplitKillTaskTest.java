@@ -5,12 +5,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
 import java.util.List;
 
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.events.SdkUpdateMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
+import io.split.android.client.events.metadata.TypedTaskConverter;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -20,7 +21,6 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.helpers.FileHelper;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -79,8 +79,8 @@ public class SplitKillTaskTest {
                 eq(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION), metadataCaptor.capture());
         EventMetadata metadata = metadataCaptor.getValue();
         Assert.assertNotNull(metadata);
-        @SuppressWarnings("unchecked")
-        List<String> updatedFlags = (List<String>) metadata.get("updatedFlags");
+        SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
+        List<String> updatedFlags = typedMetadata.getUpdatedFlags();
         Assert.assertNotNull(updatedFlags);
         Assert.assertEquals(1, updatedFlags.size());
         Assert.assertTrue(updatedFlags.contains("split1"));

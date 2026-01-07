@@ -13,31 +13,30 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
+
 
 public class EventMetadataImplTest {
 
     @Test
-    public void keysReturnsAllKeys() {
+    public void sizeAndContainsKeyReflectStoredEntries() {
         Map<String, Object> data = new HashMap<>();
         data.put("key1", "value1");
         data.put("key2", 42);
         data.put("key3", true);
 
         EventMetadataImpl metadata = new EventMetadataImpl(data);
-        Set<String> keys = metadata.keys();
 
-        assertEquals(3, keys.size());
-        assertTrue(keys.contains("key1"));
-        assertTrue(keys.contains("key2"));
-        assertTrue(keys.contains("key3"));
+        assertEquals(3, metadata.size());
+        assertTrue(metadata.containsKey("key1"));
+        assertTrue(metadata.containsKey("key2"));
+        assertTrue(metadata.containsKey("key3"));
     }
 
     @Test
-    public void keysReturnsEmptySetForEmptyMetadata() {
+    public void isEmptyReturnsTrueForEmptyMetadata() {
         EventMetadataImpl metadata = new EventMetadataImpl(new HashMap<>());
 
-        assertTrue(metadata.keys().isEmpty());
+        assertTrue(metadata.isEmpty());
     }
 
     @Test
@@ -102,71 +101,6 @@ public class EventMetadataImplTest {
     }
 
     @Test
-    public void toMapReturnsACopyOfTheData() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("key", "value");
-
-        EventMetadataImpl metadata = new EventMetadataImpl(data);
-        Map<String, Object> copy = metadata.toMap();
-
-        assertEquals(1, copy.size());
-        assertEquals("value", copy.get("key"));
-
-        // Verify it's a copy by modifying it
-        copy.put("newKey", "newValue");
-        assertFalse(metadata.containsKey("newKey"));
-    }
-
-    @Test
-    public void toMapReturnsEmptyMapForEmptyMetadata() {
-        EventMetadataImpl metadata = new EventMetadataImpl(new HashMap<>());
-
-        assertTrue(metadata.toMap().isEmpty());
-    }
-
-    @Test
-    public void toMapReturnsModifiableCopyOfLists() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("flags", Arrays.asList("flag_1", "flag_2"));
-
-        EventMetadataImpl metadata = new EventMetadataImpl(data);
-        Map<String, Object> copy = metadata.toMap();
-
-        // Should be able to modify the list in the copy
-        @SuppressWarnings("unchecked")
-        List<String> listInCopy = (List<String>) copy.get("flags");
-        listInCopy.add("flag_3");
-
-        // Original metadata should not be affected
-        @SuppressWarnings("unchecked")
-        List<String> originalList = (List<String>) metadata.get("flags");
-        assertEquals(2, originalList.size());
-        assertEquals(Arrays.asList("flag_1", "flag_2"), originalList);
-    }
-
-    @Test
-    public void toMapListsAreIndependentAcrossCalls() {
-        Map<String, Object> data = new HashMap<>();
-        data.put("flags", Arrays.asList("flag_1", "flag_2"));
-
-        EventMetadataImpl metadata = new EventMetadataImpl(data);
-
-        Map<String, Object> copy1 = metadata.toMap();
-        Map<String, Object> copy2 = metadata.toMap();
-
-        // Modify copy1's list
-        @SuppressWarnings("unchecked")
-        List<String> list1 = (List<String>) copy1.get("flags");
-        list1.add("flag_3");
-
-        // copy2's list should not be affected
-        @SuppressWarnings("unchecked")
-        List<String> list2 = (List<String>) copy2.get("flags");
-        assertEquals(2, list2.size());
-        assertEquals(Arrays.asList("flag_1", "flag_2"), list2);
-    }
-
-    @Test
     public void metadataIsImmutableAfterConstruction() {
         Map<String, Object> data = new HashMap<>();
         data.put("key", "value");
@@ -178,10 +112,11 @@ public class EventMetadataImplTest {
 
         // Metadata should not be affected
         assertFalse(metadata.containsKey("newKey"));
-        assertEquals(1, metadata.keys().size());
+        assertEquals(1, metadata.size());
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void listIsDefensivelyCopiedDuringConstruction() {
         List<String> originalList = new ArrayList<>(Arrays.asList("flag_1", "flag_2"));
         Map<String, Object> data = new HashMap<>();
@@ -193,20 +128,19 @@ public class EventMetadataImplTest {
         originalList.add("flag_3");
 
         // Metadata should not be affected
-        @SuppressWarnings("unchecked")
         List<String> storedList = (List<String>) metadata.get("flags");
         assertEquals(2, storedList.size());
         assertEquals(Arrays.asList("flag_1", "flag_2"), storedList);
     }
 
     @Test(expected = UnsupportedOperationException.class)
+    @SuppressWarnings("unchecked")
     public void listReturnedByGetIsUnmodifiable() {
         Map<String, Object> data = new HashMap<>();
         data.put("flags", Arrays.asList("flag_1", "flag_2"));
 
         EventMetadataImpl metadata = new EventMetadataImpl(data);
 
-        @SuppressWarnings("unchecked")
         List<String> list = (List<String>) metadata.get("flags");
 
         // This should throw UnsupportedOperationException

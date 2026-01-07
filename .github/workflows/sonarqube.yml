@@ -1,6 +1,11 @@
 name: SonarCloud Analysis
 
 on:
+  push:
+    branches:
+      - master
+      - development
+      - '*_baseline'
   pull_request:
     branches:
       - '*'
@@ -59,8 +64,13 @@ jobs:
           echo "=== Verifying Build Artifacts for SonarQube ==="
           echo ""
           
+          # Dynamically get modules from settings.gradle (extract module names from "include ':modulename'" lines)
+          MODULES=$(grep "^include" settings.gradle | cut -d"'" -f2 | cut -d":" -f2 | tr '\n' ' ')
+          echo "Detected modules: $MODULES"
+          echo ""
+          
           echo "Checking compiled class files for each module:"
-          for module in main events logger; do
+          for module in $MODULES; do
             MODULE_CLASSES_DIR="${module}/build/intermediates/javac/debug/compileDebugJavaWithJavac/classes"
             if [ -d "$MODULE_CLASSES_DIR" ]; then
               CLASS_COUNT=$(find "$MODULE_CLASSES_DIR" -name "*.class" | wc -l)
@@ -98,7 +108,7 @@ jobs:
           
           echo ""
           echo "Checking JaCoCo execution data for each module:"
-          for module in main events logger; do
+          for module in $MODULES; do
             EXEC_FILE="${module}/build/jacoco/testDebugUnitTest.exec"
             if [ -f "$EXEC_FILE" ]; then
               EXEC_SIZE=$(wc -c < "$EXEC_FILE")
@@ -127,7 +137,7 @@ jobs:
           echo "=== Verification Complete ==="
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v6
+        uses: SonarSource/sonarqube-scan-action@v7
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information
           SONAR_TOKEN: ${{ secrets.SONARQUBE_TOKEN }}

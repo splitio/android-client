@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.api.Key;
 
 /**
@@ -104,13 +104,19 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
 
     /**
      * Unregisters the events manager for a client key.
+     * <p>
+     * If the removed manager is a {@link SplitEventsManager}, its {@code destroy()} method
+     * will be called to clean up resources.
      *
      * @param key the client key to unregister
      */
     @Override
     public void unregisterEventsManager(Key key) {
         if (key != null) {
-            mManagers.remove(key);
+            ISplitEventsManager removed = mManagers.remove(key);
+            if (removed instanceof SplitEventsManager) {
+                ((SplitEventsManager) removed).destroy();
+            }
         }
     }
 

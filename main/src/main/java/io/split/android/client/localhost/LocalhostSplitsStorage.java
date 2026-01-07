@@ -20,7 +20,7 @@ import java.util.concurrent.ExecutorService;
 
 import java.util.ArrayList;
 
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.events.SplitInternalEvent;

@@ -1,7 +1,6 @@
 package io.split.android.client.events.metadata;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -10,19 +9,17 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import io.split.android.client.api.EventMetadata;
-
 public class EventMetadataHelpersTest {
 
     // Tests for createUpdatedFlagsMetadata (existing)
     @Test
+    @SuppressWarnings("unchecked")
     public void createUpdatedFlagsMetadataContainsFlags() {
         List<String> flags = Arrays.asList("flag1", "flag2", "flag3");
         EventMetadata metadata = EventMetadataHelpers.createUpdatedFlagsMetadata(flags);
 
-        assertTrue(metadata.containsKey("updatedFlags"));
-        @SuppressWarnings("unchecked")
-        List<String> result = (List<String>) metadata.get("updatedFlags");
+        assertTrue(metadata.containsKey(MetadataKeys.UPDATED_FLAGS));
+        List<String> result = (List<String>) metadata.get(MetadataKeys.UPDATED_FLAGS);
         assertEquals(3, result.size());
         assertTrue(result.contains("flag1"));
         assertTrue(result.contains("flag2"));
@@ -34,33 +31,33 @@ public class EventMetadataHelpersTest {
     public void createCacheReadyMetadataWithTimestampAndFreshInstallFalse() {
         EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(1234567890L, false);
 
-        assertEquals(1234567890L, metadata.get("lastUpdateTimestamp"));
-        assertEquals(false, metadata.get("freshInstall"));
+        assertEquals(Long.valueOf(1234567890L), metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
+        assertEquals(Boolean.FALSE, metadata.get(MetadataKeys.FRESH_INSTALL));
     }
 
     @Test
     public void createCacheReadyMetadataWithNullTimestampAndFreshInstallTrue() {
         EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
 
-        assertNull(metadata.get("lastUpdateTimestamp"));
-        assertEquals(true, metadata.get("freshInstall"));
+        assertNull(metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
+        assertEquals(Boolean.TRUE, metadata.get(MetadataKeys.FRESH_INSTALL));
     }
 
     @Test
     public void createCacheReadyMetadataKeysAreCorrect() {
         EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(123L, false);
 
-        assertTrue(metadata.containsKey("lastUpdateTimestamp"));
-        assertTrue(metadata.containsKey("freshInstall"));
-        assertEquals(2, metadata.keys().size());
+        assertTrue(metadata.containsKey(MetadataKeys.LAST_UPDATE_TIMESTAMP));
+        assertTrue(metadata.containsKey(MetadataKeys.FRESH_INSTALL));
+        assertEquals(2, metadata.size());
     }
 
     @Test
     public void createCacheReadyMetadataWithZeroTimestamp() {
         EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(0L, false);
 
-        assertEquals(0L, metadata.get("lastUpdateTimestamp"));
-        assertEquals(false, metadata.get("freshInstall"));
+        assertEquals(Long.valueOf(0L), metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
+        assertEquals(Boolean.FALSE, metadata.get(MetadataKeys.FRESH_INSTALL));
     }
 
     @Test
@@ -69,8 +66,8 @@ public class EventMetadataHelpersTest {
         long storedTimestamp = 1700000000000L;
         EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(storedTimestamp, false);
 
-        assertFalse((Boolean) metadata.get("freshInstall"));
-        assertEquals(storedTimestamp, metadata.get("lastUpdateTimestamp"));
+        assertEquals(Boolean.FALSE, metadata.get(MetadataKeys.FRESH_INSTALL));
+        assertEquals(Long.valueOf(storedTimestamp), metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
     }
 
     @Test
@@ -78,8 +75,7 @@ public class EventMetadataHelpersTest {
         // Sync path: freshInstall=true, timestamp=null
         EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
 
-        assertTrue((Boolean) metadata.get("freshInstall"));
-        assertNull(metadata.get("lastUpdateTimestamp"));
+        assertEquals(Boolean.TRUE, metadata.get(MetadataKeys.FRESH_INSTALL));
+        assertNull(metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
     }
 }
-

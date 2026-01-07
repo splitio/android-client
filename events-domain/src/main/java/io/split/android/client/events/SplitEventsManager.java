@@ -10,7 +10,9 @@ import io.harness.events.EventHandler;
 import io.harness.events.EventsManager;
 import io.harness.events.EventsManagers;
 
-import io.split.android.client.api.EventMetadata;
+import io.split.android.client.SplitClient;
+import io.split.android.client.events.metadata.EventMetadata;
+import io.split.android.client.events.metadata.TypedTaskConverter;
 import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.events.executors.SplitEventExecutorResourcesImpl;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -111,6 +113,27 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     }
 
     @Override
+    public void registerEventListener(SdkEventListener listener) {
+        requireNonNull(listener);
+
+        // Register SDK_UPDATE handlers (bg + main)
+        mDualExecutorRegistration.register(
+                mEventsManager,
+                SplitEvent.SDK_UPDATE,
+                createUpdateBackgroundHandler(listener),
+                createUpdateMainThreadHandler(listener)
+        );
+
+        // Register SDK_READY_FROM_CACHE handlers (bg + main)
+        mDualExecutorRegistration.register(
+                mEventsManager,
+                SplitEvent.SDK_READY_FROM_CACHE,
+                createReadyFromCacheBackgroundHandler(listener),
+                createReadyFromCacheMainThreadHandler(listener)
+        );
+    }
+
+    @Override
     public boolean eventAlreadyTriggered(SplitEvent event) {
         return mEventsManager.eventAlreadyTriggered(event);
     }
@@ -145,69 +168,69 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     }
 
     private EventHandler<SplitEvent, EventMetadata> createBackgroundHandler(final SplitEventTask task) {
-        return createEventHandler(task, "background", new TaskMethodCaller() {
-            @Override
-            public void callWithMetadata(EventMetadata metadata) {
-                task.onPostExecution(mResources.getSplitClient(), metadata);
-            }
-
-            @Override
-            public void callWithoutMetadata() {
-                task.onPostExecution(mResources.getSplitClient());
-            }
-        });
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
+            executeBackgroundTask(task, client, metadata);
+        };
     }
 
     private EventHandler<SplitEvent, EventMetadata> createMainThreadHandler(final SplitEventTask task) {
-        return createEventHandler(task, "main thread", new TaskMethodCaller() {
-            @Override
-            public void callWithMetadata(EventMetadata metadata) {
-                task.onPostExecutionView(mResources.getSplitClient(), metadata);
-            }
-
-            @Override
-            public void callWithoutMetadata() {
-                task.onPostExecutionView(mResources.getSplitClient());
-            }
-        });
-    }
-
-    /**
-     * Helper interface for calling task methods.
-     */
-    private interface TaskMethodCaller {
-        void callWithMetadata(EventMetadata metadata) throws Exception;
-        void callWithoutMetadata() throws Exception;
-    }
-
-    private EventHandler<SplitEvent, EventMetadata> createEventHandler(
-            final SplitEventTask task,
-            final String threadType,
-            final TaskMethodCaller caller) {
-        return new EventHandler<SplitEvent, EventMetadata>() {
-            @Override
-            public void handle(SplitEvent event, EventMetadata metadata) {
-                executeTaskMethod(metadata, true, threadType, caller);
-                executeTaskMethod(metadata, false, threadType, caller);
-            }
-
-            private void executeTaskMethod(EventMetadata metadata, boolean withMetadata, String threadType, TaskMethodCaller caller) {
-                try {
-                    if (withMetadata) {
-                        caller.callWithMetadata(metadata);
-                    } else {
-                        caller.callWithoutMetadata();
-                    }
-                } catch (SplitEventTaskMethodNotImplementedException e) {
-                    // Method not implemented by client, ignore
-                } catch (Exception e) {
-                    String errorPrefix = withMetadata
-                            ? "Error executing " + threadType + " event task (with metadata): "
-                            : "Error executing " + threadType + " event task: ";
-                    Logger.e(errorPrefix + e.getMessage());
-                }
-            }
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
+            executeMainThreadTask(task, client, metadata);
         };
+    }
+
+    // SdkEventListener handlers for SDK_UPDATE
+    private EventHandler<SplitEvent, EventMetadata> createUpdateBackgroundHandler(final SdkEventListener listener) {
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
+            SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
+            executeMethod(() -> listener.onUpdate(client, typedMetadata));
+        };
+    }
+
+    private EventHandler<SplitEvent, EventMetadata> createUpdateMainThreadHandler(final SdkEventListener listener) {
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
+            SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
+            executeMethod(() -> listener.onUpdateView(client, typedMetadata));
+        };
+    }
+
+    // SdkEventListener handlers for SDK_READY_FROM_CACHE
+    private EventHandler<SplitEvent, EventMetadata> createReadyFromCacheBackgroundHandler(final SdkEventListener listener) {
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
+            SdkReadyFromCacheMetadata typedMetadata = TypedTaskConverter.convertForSdkReadyFromCache(metadata);
+            executeMethod(() -> listener.onReadyFromCache(client, typedMetadata));
+        };
+    }
+
+    private EventHandler<SplitEvent, EventMetadata> createReadyFromCacheMainThreadHandler(final SdkEventListener listener) {
+        return (event, metadata) -> {
+            SplitClient client = mResources.getSplitClient();
+            SdkReadyFromCacheMetadata typedMetadata = TypedTaskConverter.convertForSdkReadyFromCache(metadata);
+            executeMethod(() -> listener.onReadyFromCacheView(client, typedMetadata));
+        };
+    }
+
+    private void executeBackgroundTask(SplitEventTask task, SplitClient client, EventMetadata metadata) {
+        executeMethod(() -> task.onPostExecution(client));
+    }
+
+    private void executeMainThreadTask(SplitEventTask task, SplitClient client, EventMetadata metadata) {
+        executeMethod(() -> task.onPostExecutionView(client));
+    }
+
+    private void executeMethod(Runnable method) {
+        try {
+            method.run();
+        } catch (SplitEventTaskMethodNotImplementedException e) {
+            // Method not implemented by client, ignore
+        } catch (Exception e) {
+            Logger.e("Error executing event task: " + e.getMessage());
+        }
     }
 
     private Executor createBackgroundExecutor(final SplitTaskExecutor taskExecutor) {

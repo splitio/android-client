@@ -9,9 +9,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-
-import io.split.android.client.api.EventMetadata;
 
 /**
  * Implementation of {@link EventMetadata}.
@@ -34,10 +31,9 @@ class EventMetadataImpl implements EventMetadata {
         mData = Collections.unmodifiableMap(copy);
     }
 
-    @NonNull
     @Override
-    public Set<String> keys() {
-        return mData.keySet();
+    public int size() {
+        return mData.size();
     }
 
     @NonNull
@@ -55,20 +51,5 @@ class EventMetadataImpl implements EventMetadata {
     @Override
     public boolean containsKey(@NonNull String key) {
         return mData.containsKey(key);
-    }
-
-    @NonNull
-    @Override
-    public Map<String, Object> toMap() {
-        Map<String, Object> copy = new HashMap<>();
-        for (Map.Entry<String, Object> entry : mData.entrySet()) {
-            Object value = entry.getValue();
-            if (value instanceof List) {
-                copy.put(entry.getKey(), new ArrayList<>((List<?>) value));
-            } else {
-                copy.put(entry.getKey(), value);
-            }
-        }
-        return copy;
     }
 }

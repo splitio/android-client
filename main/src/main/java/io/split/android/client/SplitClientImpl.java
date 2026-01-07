@@ -12,6 +12,7 @@ import java.util.Map;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
+import io.split.android.client.events.SdkEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -200,6 +201,15 @@ public final class SplitClientImpl implements SplitClient {
         }
 
         mEventsManager.register(event, task);
+    }
+
+    @Override
+    public void addEventListener(SdkEventListener listener) {
+        if (listener == null) {
+            Logger.w("Listener cannot be null");
+            return;
+        }
+        mEventsManager.registerEventListener(listener);
     }
 
     @Override

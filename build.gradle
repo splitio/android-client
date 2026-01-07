@@ -8,8 +8,8 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:9.0.0-beta02'
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
+        classpath 'com.android.tools.build:gradle:9.0.0-rc02'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.10'
         classpath "com.vanniktech:gradle-maven-publish-plugin:0.34.0"
     }
 }
@@ -19,7 +19,7 @@ apply plugin: 'com.vanniktech.maven.publish'
 apply from: "$rootDir/gradle/jacoco-root.gradle"
 
 ext {
-    splitVersion = '5.5.0-rc1'
+    splitVersion = '5.5.0-rc5'
     jacocoVersion = '0.8.8'
 }
 
