@@ -206,7 +206,7 @@ public final class SplitClientImpl implements SplitClient {
     @Override
     public void addEventListener(SdkEventListener listener) {
         if (listener == null) {
-            Logger.w("Listener cannot be null");
+            Logger.w("SDK Event Listener cannot be null");
             return;
         }
         mEventsManager.registerEventListener(listener);

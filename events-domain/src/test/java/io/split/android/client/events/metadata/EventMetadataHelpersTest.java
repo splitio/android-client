@@ -9,21 +9,47 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
+import io.split.android.client.events.SdkUpdateMetadata;
+
 public class EventMetadataHelpersTest {
 
-    // Tests for createUpdatedFlagsMetadata (existing)
+    // Tests for createUpdatedFlagsMetadata
     @Test
     @SuppressWarnings("unchecked")
-    public void createUpdatedFlagsMetadataContainsFlags() {
+    public void createUpdatedFlagsMetadataContainsTypeAndNames() {
         List<String> flags = Arrays.asList("flag1", "flag2", "flag3");
         EventMetadata metadata = EventMetadataHelpers.createUpdatedFlagsMetadata(flags);
 
-        assertTrue(metadata.containsKey(MetadataKeys.UPDATED_FLAGS));
-        List<String> result = (List<String>) metadata.get(MetadataKeys.UPDATED_FLAGS);
+        // Check type
+        assertTrue(metadata.containsKey(MetadataKeys.TYPE));
+        assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE.name(), metadata.get(MetadataKeys.TYPE));
+
+        // Check names
+        assertTrue(metadata.containsKey(MetadataKeys.NAMES));
+        List<String> result = (List<String>) metadata.get(MetadataKeys.NAMES);
         assertEquals(3, result.size());
         assertTrue(result.contains("flag1"));
         assertTrue(result.contains("flag2"));
         assertTrue(result.contains("flag3"));
+    }
+
+    // Tests for createUpdatedSegmentsMetadata
+    @Test
+    @SuppressWarnings("unchecked")
+    public void createUpdatedSegmentsMetadataContainsTypeAndNames() {
+        List<String> segments = Arrays.asList("segment1", "segment2");
+        EventMetadata metadata = EventMetadataHelpers.createUpdatedSegmentsMetadata(segments);
+
+        // Check type
+        assertTrue(metadata.containsKey(MetadataKeys.TYPE));
+        assertEquals(SdkUpdateMetadata.Type.SEGMENTS_UPDATE.name(), metadata.get(MetadataKeys.TYPE));
+
+        // Check names
+        assertTrue(metadata.containsKey(MetadataKeys.NAMES));
+        List<String> result = (List<String>) metadata.get(MetadataKeys.NAMES);
+        assertEquals(2, result.size());
+        assertTrue(result.contains("segment1"));
+        assertTrue(result.contains("segment2"));
     }
 
     // Tests for createCacheReadyMetadata

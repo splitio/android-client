@@ -154,10 +154,10 @@ public class EventMetadataBuilderTest {
         List<String> flags = Arrays.asList("flag_1", "flag_2", "flag_3");
 
         EventMetadata metadata = new EventMetadataBuilder()
-                .put("updatedFlags", flags)
+                .put("names", flags)
                 .build();
 
-        assertEquals(flags, metadata.get(MetadataKeys.UPDATED_FLAGS));
+        assertEquals(flags, metadata.get(MetadataKeys.NAMES));
     }
 
     @Test

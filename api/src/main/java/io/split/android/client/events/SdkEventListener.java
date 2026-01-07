@@ -17,8 +17,9 @@ import io.split.android.client.SplitClient;
  * client.addEventListener(new SdkEventListener() {
  *     @Override
  *     public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
- *         List<String> flags = metadata.getUpdatedFlags();
- *         // Handle updated flags on background thread
+ *         SdkUpdateMetadata.Type type = metadata.getType(); // FLAGS_UPDATE or SEGMENTS_UPDATE
+ *         List<String> names = metadata.getNames(); // updated flag/segment names
+ *         // Handle updates on background thread
  *     }
  *
  *     @Override

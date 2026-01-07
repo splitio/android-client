@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
+import io.split.android.client.events.SdkUpdateMetadata;
+
 /**
  * Helper class for creating {@link EventMetadata} instances.
  * <p>
@@ -17,9 +19,33 @@ public class EventMetadataHelpers {
         // Utility class
     }
 
-    public static EventMetadata createUpdatedFlagsMetadata(List<String> updatedSplitNames) {
+    /**
+     * Creates metadata for SDK_UPDATE events when flags are updated.
+     *
+     * @param updatedFlagNames the list of flag names that were updated
+     * @return the event metadata with TYPE=FLAGS_UPDATE and NAMES containing the flag names
+     */
+    public static EventMetadata createUpdatedFlagsMetadata(List<String> updatedFlagNames) {
         return new EventMetadataBuilder()
-                .put(MetadataKeys.UPDATED_FLAGS, new ArrayList<>(new HashSet<>(updatedSplitNames)))
+                .put(MetadataKeys.TYPE, SdkUpdateMetadata.Type.FLAGS_UPDATE.name())
+                .put(MetadataKeys.NAMES, new ArrayList<>(new HashSet<>(updatedFlagNames)))
+                .build();
+    }
+
+    /**
+     * Creates metadata for SDK_UPDATE events when rule-based segments are updated.
+     * <p>
+     * Note: This is for rule-based segments (RBS) ONLY, not for memberships
+     * (my segments / large segments). Memberships have their own internal event
+     * flow and don't emit SDK_UPDATE events with segment metadata.
+     *
+     * @param updatedSegmentNames the list of rule-based segment names that were updated
+     * @return the event metadata with TYPE=SEGMENTS_UPDATE and NAMES containing the segment names
+     */
+    public static EventMetadata createUpdatedSegmentsMetadata(List<String> updatedSegmentNames) {
+        return new EventMetadataBuilder()
+                .put(MetadataKeys.TYPE, SdkUpdateMetadata.Type.SEGMENTS_UPDATE.name())
+                .put(MetadataKeys.NAMES, new ArrayList<>(new HashSet<>(updatedSegmentNames)))
                 .build();
     }
 

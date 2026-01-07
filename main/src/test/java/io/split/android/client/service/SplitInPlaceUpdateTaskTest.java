@@ -154,11 +154,12 @@ public class SplitInPlaceUpdateTaskTest {
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
             SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
-            List<String> flags = typedMeta.getUpdatedFlags();
-            assertNotNull(flags);
-            assertEquals(2, flags.size());
-            assertTrue(flags.contains("test_split_1"));
-            assertTrue(flags.contains("test_split_2"));
+            List<String> names = typedMeta.getNames();
+            assertNotNull(names);
+            assertEquals(2, names.size());
+            assertTrue(names.contains("test_split_1"));
+            assertTrue(names.contains("test_split_2"));
+            assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, typedMeta.getType());
             return true;
         }));
     }
@@ -178,10 +179,11 @@ public class SplitInPlaceUpdateTaskTest {
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
             SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
-            List<String> flags = typedMeta.getUpdatedFlags();
-            assertNotNull(flags);
-            assertEquals(1, flags.size());
-            assertTrue(flags.contains("archived_split"));
+            List<String> names = typedMeta.getNames();
+            assertNotNull(names);
+            assertEquals(1, names.size());
+            assertTrue(names.contains("archived_split"));
+            assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, typedMeta.getType());
             return true;
         }));
     }

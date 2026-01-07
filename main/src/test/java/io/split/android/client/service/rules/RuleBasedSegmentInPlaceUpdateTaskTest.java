@@ -1,5 +1,7 @@
 package io.split.android.client.service.rules;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -45,7 +47,7 @@ public class RuleBasedSegmentInPlaceUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED), any());
     }
 
     @Test
@@ -60,7 +62,7 @@ public class RuleBasedSegmentInPlaceUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager, times(0)).notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+        verify(mEventsManager, times(0)).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED), any());
     }
 
     @Test

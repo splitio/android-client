@@ -1217,6 +1217,18 @@ public class SdkEventsIntegrationTest {
             }
         }
 
+        void pushRbsUpdate() {
+            pushRbsUpdate("2000", "1000");
+        }
+
+        void pushRbsUpdate(String changeNumber, String previousChangeNumber) {
+            if (streamingData != null) {
+                // RBS payload: {"name":"rbs_test","status":"ACTIVE","trafficTypeName":"user","excluded":{"keys":[],"segments":[]},"conditions":[{"matcherGroup":{"combiner":"AND","matchers":[{"keySelector":{"trafficType":"user"},"matcherType":"ALL_KEYS","negate":false}]}}]}
+                String RBS_UPDATE_PAYLOAD = "eyJuYW1lIjoicmJzX3Rlc3QiLCJzdGF0dXMiOiJBQ1RJVkUiLCJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiZXhjbHVkZWQiOnsia2V5cyI6W10sInNlZ21lbnRzIjpbXX0sImNvbmRpdGlvbnMiOlt7Im1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX19XX0=";
+                pushMessage(streamingData, IntegrationHelper.rbsChange(changeNumber, previousChangeNumber, RBS_UPDATE_PAYLOAD));
+            }
+        }
+
         void destroy() {
             factory.destroy();
         }
@@ -1294,5 +1306,139 @@ public class SdkEventsIntegrationTest {
         segmentEntity2.setSegmentList("{\"k\":[{\"n\":\"segment1\"}],\"cn\":null}");
         segmentEntity2.setUpdatedAt(System.currentTimeMillis() / 1000);
         mDatabase.mySegmentDao().update(segmentEntity2);
+    }
+
+    // ========================================================================
+    // Phase 1 TDD: Tests for SdkUpdateMetadata.Type enum
+    // ========================================================================
+
+    /**
+     * Scenario: sdkUpdateMetadata contains Type.FLAGS_UPDATE for flags update
+     * <p>
+     * Given sdkReady has already been emitted
+     * And a handler H is registered for sdkUpdate
+     * When a split update notification arrives via SSE
+     * Then sdkUpdate is emitted
+     * And handler H receives metadata with getType() returning Type.FLAGS_UPDATE
+     * And handler H receives metadata with getNames() containing the updated flag names
+     */
+    @Test
+    public void sdkUpdateMetadataContainsTypeForFlagsUpdate() throws Exception {
+        // Given: sdkReady has already been emitted (with streaming support)
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
+
+        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        fixture.client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+
+        // When: a split update notification arrives via SSE
+        fixture.pushSplitUpdate();
+
+        // Then: sdkUpdate is emitted
+        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire", updateFired);
+
+        // And: metadata has getType() returning Type.FLAGS_UPDATE
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        assertEquals("Type should be FLAGS_UPDATE",
+                SdkUpdateMetadata.Type.FLAGS_UPDATE, receivedMetadata.get().getType());
+
+        // And: metadata has getNames() containing the updated flag names
+        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
+        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
+
+        fixture.destroy();
+    }
+
+    /**
+     * Scenario: sdkUpdateMetadata contains Type.SEGMENTS_UPDATE for rule-based segments update
+     * <p>
+     * Given sdkReady has already been emitted
+     * And a handler H is registered for sdkUpdate
+     * When a rule-based segment update notification arrives via SSE
+     * Then sdkUpdate is emitted
+     * And handler H receives metadata with getType() returning Type.SEGMENTS_UPDATE
+     * And handler H receives metadata with getNames() containing the updated RBS names
+     * <p>
+     * Note: SEGMENTS_UPDATE is for rule-based segments (RBS) ONLY, not for memberships.
+     */
+    @Test
+    public void sdkUpdateMetadataContainsTypeForSegmentsUpdate() throws Exception {
+        // Given: sdkReady has already been emitted (with streaming support and RBS in storage)
+        TestClientFixture fixture = createStreamingClientWithRbsAndWaitForReady(new Key("key_1"));
+
+        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        fixture.client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+
+        // When: a rule-based segment update notification arrives via SSE
+        fixture.pushRbsUpdate();
+
+        // Then: sdkUpdate is emitted
+        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire for RBS update", updateFired);
+
+        // And: metadata has getType() returning Type.SEGMENTS_UPDATE
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        assertEquals("Type should be SEGMENTS_UPDATE",
+                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, receivedMetadata.get().getType());
+
+        // And: metadata has getNames() containing the updated RBS names
+        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
+        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
+        assertTrue("Names should contain rbs_test",
+                receivedMetadata.get().getNames().contains("rbs_test"));
+
+        fixture.destroy();
+    }
+
+    /**
+     * Creates a streaming client with RBS data pre-populated and waits for SDK_READY.
+     * Required for testing RBS in-place updates (RBS must exist in storage for instant update).
+     */
+    private TestClientFixture createStreamingClientWithRbsAndWaitForReady(Key key) throws InterruptedException, IOException {
+        // Pre-populate RBS in storage so in-place update can work
+        populateDatabaseWithRbsData();
+
+        TestClientFixture fixture = createStreamingClient(key);
+
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        fixture.client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient client) {
+                readyLatch.countDown();
+            }
+        });
+
+        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_READY should fire", readyFired);
+
+        // Wait for SSE connection and send keep-alive
+        fixture.waitForSseConnection();
+
+        return new TestClientFixture(fixture.factory, fixture.client, readyLatch, fixture.streamingData, fixture.sseLatch);
+    }
+
+    /**
+     * Populates the database with RBS data for instant update testing.
+     */
+    private void populateDatabaseWithRbsData() {
+        // Need to populate the RBS storage with the segment that will be updated
+        // so that in-place update can work (referenced RBS must exist)
+        mDatabase.generalInfoDao().update(new GeneralInfoEntity("rbsChangeNumber", 1000L));
     }
 }

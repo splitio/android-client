@@ -216,9 +216,10 @@ public class EventsManagerTest {
 
         Assert.assertTrue("SDK_UPDATE should fire", updateLatch.await(5, TimeUnit.SECONDS));
         Assert.assertNotNull("Metadata should not be null", receivedMetadata.get());
-        List<String> updatedFlags = receivedMetadata.get().getUpdatedFlags();
-        Assert.assertNotNull("Updated flags should not be null", updatedFlags);
-        Assert.assertTrue("Metadata should contain only killed_flag", updatedFlags.size() == 1 && updatedFlags.contains("killed_flag"));
+        List<String> names = receivedMetadata.get().getNames();
+        Assert.assertNotNull("Names should not be null", names);
+        Assert.assertTrue("Metadata should contain only killed_flag", names.size() == 1 && names.contains("killed_flag"));
+        Assert.assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, receivedMetadata.get().getType());
     }
 
     @Test
@@ -350,13 +351,15 @@ public class EventsManagerTest {
         Assert.assertTrue("Main thread method SHOULD run on main thread", mainThreadOnMainThread.get());
 
         Assert.assertNotNull("Background metadata should not be null", backgroundMetadata.get());
-        List<String> bgFlags = backgroundMetadata.get().getUpdatedFlags();
-        Assert.assertNotNull("Background updatedFlags should not be null", bgFlags);
-        Assert.assertTrue("Background metadata should contain flag1", bgFlags.contains("flag1"));
+        List<String> bgNames = backgroundMetadata.get().getNames();
+        Assert.assertNotNull("Background names should not be null", bgNames);
+        Assert.assertTrue("Background metadata should contain flag1", bgNames.contains("flag1"));
+        Assert.assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, backgroundMetadata.get().getType());
         
         Assert.assertNotNull("Main thread metadata should not be null", mainThreadMetadata.get());
-        List<String> mtFlags = mainThreadMetadata.get().getUpdatedFlags();
-        Assert.assertNotNull("Main thread updatedFlags should not be null", mtFlags);
-        Assert.assertTrue("Main thread metadata should contain flag1", mtFlags.contains("flag1"));
+        List<String> mtNames = mainThreadMetadata.get().getNames();
+        Assert.assertNotNull("Main thread names should not be null", mtNames);
+        Assert.assertTrue("Main thread metadata should contain flag1", mtNames.contains("flag1"));
+        Assert.assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, mainThreadMetadata.get().getType());
     }
 }

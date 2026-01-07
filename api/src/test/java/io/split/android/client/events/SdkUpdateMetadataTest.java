@@ -12,35 +12,73 @@ import java.util.List;
 public class SdkUpdateMetadataTest {
 
     @Test
-    public void getUpdatedFlagsReturnsNullWhenConstructedWithNull() {
-        SdkUpdateMetadata metadata = new SdkUpdateMetadata(null);
+    public void getNamesReturnsNullWhenConstructedWithNull() {
+        SdkUpdateMetadata metadata = new SdkUpdateMetadata(null, null);
 
-        assertNull(metadata.getUpdatedFlags());
+        assertNull(metadata.getNames());
     }
 
     @Test
-    public void getUpdatedFlagsReturnsEmptyListWhenConstructedWithEmptyList() {
-        SdkUpdateMetadata metadata = new SdkUpdateMetadata(Collections.emptyList());
+    public void getNamesReturnsEmptyListWhenConstructedWithEmptyList() {
+        SdkUpdateMetadata metadata = new SdkUpdateMetadata(null, Collections.emptyList());
 
-        assertEquals(Collections.emptyList(), metadata.getUpdatedFlags());
+        assertEquals(Collections.emptyList(), metadata.getNames());
     }
 
     @Test
-    public void getUpdatedFlagsReturnsListWhenConstructedWithList() {
-        List<String> flags = Arrays.asList("flag1", "flag2", "flag3");
-        SdkUpdateMetadata metadata = new SdkUpdateMetadata(flags);
+    public void getNamesReturnsListWhenConstructedWithList() {
+        List<String> names = Arrays.asList("flag1", "flag2", "flag3");
+        SdkUpdateMetadata metadata = new SdkUpdateMetadata(SdkUpdateMetadata.Type.FLAGS_UPDATE, names);
 
-        assertEquals(flags, metadata.getUpdatedFlags());
+        assertEquals(names, metadata.getNames());
     }
 
     @Test
-    public void getUpdatedFlagsReturnsSingleItemList() {
-        List<String> flags = Collections.singletonList("singleFlag");
-        SdkUpdateMetadata metadata = new SdkUpdateMetadata(flags);
+    public void getNamesReturnsSingleItemList() {
+        List<String> names = Collections.singletonList("singleFlag");
+        SdkUpdateMetadata metadata = new SdkUpdateMetadata(SdkUpdateMetadata.Type.FLAGS_UPDATE, names);
 
-        assertEquals(flags, metadata.getUpdatedFlags());
-        assertEquals(1, metadata.getUpdatedFlags().size());
-        assertEquals("singleFlag", metadata.getUpdatedFlags().get(0));
+        assertEquals(names, metadata.getNames());
+        assertEquals(1, metadata.getNames().size());
+        assertEquals("singleFlag", metadata.getNames().get(0));
+    }
+
+    @Test
+    public void getTypeReturnsNullWhenConstructedWithNull() {
+        SdkUpdateMetadata metadata = new SdkUpdateMetadata(null, null);
+
+        assertNull(metadata.getType());
+    }
+
+    @Test
+    public void getTypeReturnsFlagsUpdateWhenConstructedWithFlagsUpdate() {
+        SdkUpdateMetadata metadata = new SdkUpdateMetadata(SdkUpdateMetadata.Type.FLAGS_UPDATE, null);
+
+        assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, metadata.getType());
+    }
+
+    @Test
+    public void getTypeReturnsSegmentsUpdateWhenConstructedWithSegmentsUpdate() {
+        SdkUpdateMetadata metadata = new SdkUpdateMetadata(SdkUpdateMetadata.Type.SEGMENTS_UPDATE, null);
+
+        assertEquals(SdkUpdateMetadata.Type.SEGMENTS_UPDATE, metadata.getType());
+    }
+
+    @Test
+    public void flagsUpdateMetadataContainsBothTypeAndNames() {
+        List<String> flags = Arrays.asList("flag1", "flag2");
+        SdkUpdateMetadata metadata = new SdkUpdateMetadata(SdkUpdateMetadata.Type.FLAGS_UPDATE, flags);
+
+        assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, metadata.getType());
+        assertEquals(flags, metadata.getNames());
+    }
+
+    @Test
+    public void segmentsUpdateMetadataContainsBothTypeAndNames() {
+        List<String> segments = Arrays.asList("segment1", "segment2");
+        SdkUpdateMetadata metadata = new SdkUpdateMetadata(SdkUpdateMetadata.Type.SEGMENTS_UPDATE, segments);
+
+        assertEquals(SdkUpdateMetadata.Type.SEGMENTS_UPDATE, metadata.getType());
+        assertEquals(segments, metadata.getNames());
     }
 }
-

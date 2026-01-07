@@ -17,6 +17,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
+import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.RuleBasedSegmentChange;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
@@ -59,6 +60,7 @@ public class SplitsSyncHelper {
     private final ExecutorService mExecutor;
     private final TargetingRulesCache mTargetingRulesCache;
     private final AtomicReference<ProcessedSplitChange> mLastProcessedSplitChange = new AtomicReference<>();
+    private final AtomicReference<ProcessedRuleBasedSegmentChange> mLastProcessedRbsChange = new AtomicReference<>();
     private boolean mSplitsHaveChanged;
     private boolean mRuleBasedSegmentsHaveChanged;
 
@@ -376,8 +378,55 @@ public class SplitsSyncHelper {
         return updatedNames;
     }
 
+    /**
+     * Gets the list of updated rule-based segment names from the last sync operation.
+     * This includes both active (added/modified) and archived (removed) segments.
+     *
+     * @return list of updated RBS names, or empty list if no updates occurred
+     */
+    @NonNull
+    public List<String> getLastUpdatedRbsNames() {
+        ProcessedRuleBasedSegmentChange lastChange = mLastProcessedRbsChange.get();
+        if (lastChange == null) {
+            return Collections.emptyList();
+        }
+        return extractRbsNames(lastChange);
+    }
+
+    /**
+     * Extracts rule-based segment names from a ProcessedRuleBasedSegmentChange.
+     * This includes both active (added/modified) and archived (removed) segments.
+     *
+     * @param processedChange the processed RBS change
+     * @return list of RBS names, or empty list if change is null
+     */
+    @NonNull
+    public static List<String> extractRbsNames(@Nullable ProcessedRuleBasedSegmentChange processedChange) {
+        if (processedChange == null) {
+            return Collections.emptyList();
+        }
+
+        List<String> updatedNames = new ArrayList<>();
+        if (processedChange.getActive() != null) {
+            for (RuleBasedSegment segment : processedChange.getActive()) {
+                if (segment != null && segment.getName() != null) {
+                    updatedNames.add(segment.getName());
+                }
+            }
+        }
+        if (processedChange.getArchived() != null) {
+            for (RuleBasedSegment segment : processedChange.getArchived()) {
+                if (segment != null && segment.getName() != null) {
+                    updatedNames.add(segment.getName());
+                }
+            }
+        }
+        return updatedNames;
+    }
+
     private void updateRbsStorage(RuleBasedSegmentChange ruleBasedSegmentChange) {
         ProcessedRuleBasedSegmentChange change = mRuleBasedSegmentChangeProcessor.process(ruleBasedSegmentChange.getSegments(), ruleBasedSegmentChange.getTill());
+        mLastProcessedRbsChange.set(change);
         mRuleBasedSegmentStorage.update(change.getActive(), change.getArchived(), change.getChangeNumber(), mExecutor);
     }
 

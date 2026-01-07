@@ -20,7 +20,7 @@ import io.split.android.client.events.metadata.TypedTaskConverter;
 public class TypedTaskConversionTest {
 
     @Test
-    public void convertForSdkUpdateConvertsMetadataCorrectly() {
+    public void convertForSdkUpdateConvertsFlagsMetadataCorrectly() {
         List<String> expectedFlags = Arrays.asList("flag1", "flag2");
 
         EventMetadata eventMetadata = EventMetadataHelpers.createUpdatedFlagsMetadata(expectedFlags);
@@ -29,8 +29,24 @@ public class TypedTaskConversionTest {
         SdkUpdateMetadata converted = TypedTaskConverter.convertForSdkUpdate(eventMetadata);
 
         assertNotNull(converted);
-        assertEquals(expectedFlags.size(), converted.getUpdatedFlags().size());
-        assertTrue(converted.getUpdatedFlags().containsAll(expectedFlags));
+        assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, converted.getType());
+        assertEquals(expectedFlags.size(), converted.getNames().size());
+        assertTrue(converted.getNames().containsAll(expectedFlags));
+    }
+
+    @Test
+    public void convertForSdkUpdateConvertsSegmentsMetadataCorrectly() {
+        List<String> expectedSegments = Arrays.asList("segment1", "segment2");
+
+        EventMetadata eventMetadata = EventMetadataHelpers.createUpdatedSegmentsMetadata(expectedSegments);
+
+        // Call conversion method
+        SdkUpdateMetadata converted = TypedTaskConverter.convertForSdkUpdate(eventMetadata);
+
+        assertNotNull(converted);
+        assertEquals(SdkUpdateMetadata.Type.SEGMENTS_UPDATE, converted.getType());
+        assertEquals(expectedSegments.size(), converted.getNames().size());
+        assertTrue(converted.getNames().containsAll(expectedSegments));
     }
 
     @Test
@@ -52,7 +68,8 @@ public class TypedTaskConversionTest {
         SdkUpdateMetadata converted = TypedTaskConverter.convertForSdkUpdate(null);
 
         assertNotNull(converted);
-        assertNull(converted.getUpdatedFlags());
+        assertNull(converted.getType());
+        assertNull(converted.getNames());
     }
 
     @Test
@@ -64,4 +81,3 @@ public class TypedTaskConversionTest {
         assertNull(converted.getLastUpdateTimestamp());
     }
 }
-
