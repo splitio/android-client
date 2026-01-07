@@ -110,4 +110,11 @@ public class SqLitePersistentMyLargeSegmentsStorageTest {
 
         assertTrue(result.getNames().containsAll(Arrays.asList("segment1", "segment2", "segment3")));
     }
+
+    @Test
+    public void clearCallsDeleteAllOnDao() {
+        mStorage.clear();
+
+        verify(mDao).deleteAll();
+    }
 }

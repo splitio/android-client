@@ -27,4 +27,8 @@ public interface MyLargeSegmentDao extends SegmentDao<MyLargeSegmentEntity> {
     @Override
     @Query("SELECT user_key, segment_list, updated_at FROM " + TABLE_NAME)
     List<MyLargeSegmentEntity> getAll();
+
+    @Override
+    @Query("DELETE FROM " + TABLE_NAME)
+    void deleteAll();
 }
