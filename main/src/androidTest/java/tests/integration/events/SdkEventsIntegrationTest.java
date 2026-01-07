@@ -250,7 +250,7 @@ public class SdkEventsIntegrationTest {
         // Register handlers immediately
         client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onPostExecution(SplitClient client) {
                 cacheHandlerCount.incrementAndGet();
                 cacheReadyLatch.countDown();
             }
@@ -258,7 +258,7 @@ public class SdkEventsIntegrationTest {
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onPostExecution(SplitClient client) {
                 readyHandlerCount.incrementAndGet();
                 readyLatch.countDown();
             }
@@ -575,7 +575,7 @@ public class SdkEventsIntegrationTest {
         SplitClient client = factory.client(new Key("key_1"));
         client.on(SplitEvent.SDK_READY_TIMED_OUT, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onPostExecution(SplitClient client) {
                 timeoutHandlerCount.incrementAndGet();
                 timeoutLatch.countDown();
             }
@@ -583,7 +583,7 @@ public class SdkEventsIntegrationTest {
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onPostExecution(SplitClient client) {
                 readyHandlerCount.incrementAndGet();
                 readyLatch.countDown();
             }
@@ -639,7 +639,7 @@ public class SdkEventsIntegrationTest {
         SplitClient client = factory.client(new Key("key_1"));
         client.on(SplitEvent.SDK_READY_TIMED_OUT, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onPostExecution(SplitClient client) {
                 timeoutHandlerCount.incrementAndGet();
             }
         });
@@ -982,7 +982,7 @@ public class SdkEventsIntegrationTest {
 
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onPostExecution(SplitClient client) {
                 readyLatch.countDown();
             }
         });
@@ -1036,7 +1036,7 @@ public class SdkEventsIntegrationTest {
         CountDownLatch readyLatch = new CountDownLatch(1);
         fixture.client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onPostExecution(SplitClient client) {
                 readyLatch.countDown();
             }
         });
@@ -1157,7 +1157,7 @@ public class SdkEventsIntegrationTest {
     private void registerReadyHandler(SplitClient client, AtomicInteger count, CountDownLatch latch) {
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onPostExecution(SplitClient client) {
                 if (count != null) count.incrementAndGet();
                 if (latch != null) latch.countDown();
             }

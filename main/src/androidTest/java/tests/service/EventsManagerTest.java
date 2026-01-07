@@ -17,8 +17,8 @@ import fake.SplitEventExecutorResourcesMock;
 import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.events.metadata.EventMetadata;
-import io.split.android.client.api.SdkUpdateMetadataKeys;
+import io.split.android.client.events.SdkEventListener;
+import io.split.android.client.events.SdkUpdateMetadata;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -187,7 +187,7 @@ public class EventsManagerTest {
 
         CountDownLatch readyLatch = new CountDownLatch(1);
         CountDownLatch updateLatch = new CountDownLatch(1);
-        AtomicReference<EventMetadata> receivedMetadata = new AtomicReference<>();
+        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
 
         // Wait for SDK_READY first
         eventManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
@@ -197,10 +197,10 @@ public class EventsManagerTest {
             }
         });
 
-        // Register for SDK_UPDATE with metadata callback
-        eventManager.register(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        // Register for SDK_UPDATE with metadata callback using SdkEventListener
+        eventManager.registerEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 receivedMetadata.set(metadata);
                 updateLatch.countDown();
             }
@@ -211,15 +211,14 @@ public class EventsManagerTest {
         eventManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
         Assert.assertTrue("SDK_READY should fire", readyLatch.await(5, TimeUnit.SECONDS));
 
-        EventMetadata metadata = EventMetadataHelpers.createUpdatedFlagsMetadata(
-                Collections.singletonList("killed_flag"));
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION, metadata);
+        eventManager.notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION, 
+                EventMetadataHelpers.createUpdatedFlagsMetadata(Collections.singletonList("killed_flag")));
 
         Assert.assertTrue("SDK_UPDATE should fire", updateLatch.await(5, TimeUnit.SECONDS));
         Assert.assertNotNull("Metadata should not be null", receivedMetadata.get());
-        Assert.assertTrue("Metadata should contain updatedFlags", receivedMetadata.get().containsKey(SdkUpdateMetadataKeys.UPDATED_FLAGS));
-        List<String> metadataList = receivedMetadata.get().get(SdkUpdateMetadataKeys.UPDATED_FLAGS);
-        Assert.assertTrue("Metadata should contain only killed_flag", metadataList.size() == 1 && metadataList.contains("killed_flag"));
+        List<String> updatedFlags = receivedMetadata.get().getUpdatedFlags();
+        Assert.assertNotNull("Updated flags should not be null", updatedFlags);
+        Assert.assertTrue("Metadata should contain only killed_flag", updatedFlags.size() == 1 && updatedFlags.contains("killed_flag"));
     }
 
     @Test
@@ -289,26 +288,22 @@ public class EventsManagerTest {
     }
 
     @Test
-    public void testAllFourCallbackMethodsAreCalledWithCorrectThreadContext() throws InterruptedException {
+    public void testSdkEventListenerReceivesMetadataOnCorrectThreads() throws InterruptedException {
         SplitClientConfig cfg = SplitClientConfig.builder().build();
         SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorImpl(), cfg.blockUntilReady());
         eventManager.setExecutionResources(new SplitEventExecutorResourcesMock());
 
         CountDownLatch readyLatch = new CountDownLatch(1);
-        CountDownLatch allCalledLatch = new CountDownLatch(4); // Expect 4 calls
+        CountDownLatch allCalledLatch = new CountDownLatch(2); // Expect 2 calls (background and main thread)
 
-        AtomicBoolean backgroundMetadataCalled = new AtomicBoolean(false);
-        AtomicBoolean backgroundLegacyCalled = new AtomicBoolean(false);
-        AtomicBoolean mainThreadMetadataCalled = new AtomicBoolean(false);
-        AtomicBoolean mainThreadLegacyCalled = new AtomicBoolean(false);
+        AtomicBoolean backgroundCalled = new AtomicBoolean(false);
+        AtomicBoolean mainThreadCalled = new AtomicBoolean(false);
 
-        AtomicBoolean backgroundMetadataOnMainThread = new AtomicBoolean(true); // Should be false
-        AtomicBoolean backgroundLegacyOnMainThread = new AtomicBoolean(true);   // Should be false
-        AtomicBoolean mainThreadMetadataOnMainThread = new AtomicBoolean(false); // Should be true
-        AtomicBoolean mainThreadLegacyOnMainThread = new AtomicBoolean(false);   // Should be true
+        AtomicBoolean backgroundOnMainThread = new AtomicBoolean(true); // Should be false
+        AtomicBoolean mainThreadOnMainThread = new AtomicBoolean(false); // Should be true
 
-        AtomicReference<EventMetadata> backgroundMetadata = new AtomicReference<>();
-        AtomicReference<EventMetadata> mainThreadMetadata = new AtomicReference<>();
+        AtomicReference<SdkUpdateMetadata> backgroundMetadata = new AtomicReference<>();
+        AtomicReference<SdkUpdateMetadata> mainThreadMetadata = new AtomicReference<>();
 
         // Wait for SDK_READY first
         eventManager.register(SplitEvent.SDK_READY, new SplitEventTask() {
@@ -318,35 +313,21 @@ public class EventsManagerTest {
             }
         });
 
-        // Register a task that implements ALL FOUR methods
-        eventManager.register(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+        // Register SdkEventListener to receive typed metadata
+        eventManager.registerEventListener(new SdkEventListener() {
             @Override
-            public void onPostExecution(SplitClient client, EventMetadata metadata) {
-                backgroundMetadataCalled.set(true);
-                backgroundMetadataOnMainThread.set(Looper.myLooper() == Looper.getMainLooper());
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
+                backgroundCalled.set(true);
+                backgroundOnMainThread.set(Looper.myLooper() == Looper.getMainLooper());
                 backgroundMetadata.set(metadata);
                 allCalledLatch.countDown();
             }
 
             @Override
-            public void onPostExecution(SplitClient client) {
-                backgroundLegacyCalled.set(true);
-                backgroundLegacyOnMainThread.set(Looper.myLooper() == Looper.getMainLooper());
-                allCalledLatch.countDown();
-            }
-
-            @Override
-            public void onPostExecutionView(SplitClient client, EventMetadata metadata) {
-                mainThreadMetadataCalled.set(true);
-                mainThreadMetadataOnMainThread.set(Looper.myLooper() == Looper.getMainLooper());
+            public void onUpdateView(SplitClient client, SdkUpdateMetadata metadata) {
+                mainThreadCalled.set(true);
+                mainThreadOnMainThread.set(Looper.myLooper() == Looper.getMainLooper());
                 mainThreadMetadata.set(metadata);
-                allCalledLatch.countDown();
-            }
-
-            @Override
-            public void onPostExecutionView(SplitClient client) {
-                mainThreadLegacyCalled.set(true);
-                mainThreadLegacyOnMainThread.set(Looper.myLooper() == Looper.getMainLooper());
                 allCalledLatch.countDown();
             }
         });
@@ -357,25 +338,25 @@ public class EventsManagerTest {
         Assert.assertTrue("SDK_READY should fire", readyLatch.await(5, TimeUnit.SECONDS));
 
         // Trigger SDK_UPDATE with metadata
-        EventMetadata metadata = EventMetadataHelpers.createUpdatedFlagsMetadata(
-                Arrays.asList("flag1", "flag2"));
-        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
+        eventManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, 
+                EventMetadataHelpers.createUpdatedFlagsMetadata(Arrays.asList("flag1", "flag2")));
 
-        Assert.assertTrue("All four callbacks should be called", allCalledLatch.await(5, TimeUnit.SECONDS));
+        Assert.assertTrue("Both callbacks should be called", allCalledLatch.await(5, TimeUnit.SECONDS));
 
-        Assert.assertTrue("Background metadata method should be called", backgroundMetadataCalled.get());
-        Assert.assertTrue("Background legacy method should be called", backgroundLegacyCalled.get());
-        Assert.assertTrue("Main thread metadata method should be called", mainThreadMetadataCalled.get());
-        Assert.assertTrue("Main thread legacy method should be called", mainThreadLegacyCalled.get());
+        Assert.assertTrue("Background method should be called", backgroundCalled.get());
+        Assert.assertTrue("Main thread method should be called", mainThreadCalled.get());
 
-        Assert.assertFalse("Background metadata method should NOT run on main thread", backgroundMetadataOnMainThread.get());
-        Assert.assertFalse("Background legacy method should NOT run on main thread", backgroundLegacyOnMainThread.get());
-        Assert.assertTrue("Main thread metadata method SHOULD run on main thread", mainThreadMetadataOnMainThread.get());
-        Assert.assertTrue("Main thread legacy method SHOULD run on main thread", mainThreadLegacyOnMainThread.get());
+        Assert.assertFalse("Background method should NOT run on main thread", backgroundOnMainThread.get());
+        Assert.assertTrue("Main thread method SHOULD run on main thread", mainThreadOnMainThread.get());
 
         Assert.assertNotNull("Background metadata should not be null", backgroundMetadata.get());
-        Assert.assertTrue("Background metadata should contain updatedFlags", backgroundMetadata.get().containsKey(SdkUpdateMetadataKeys.UPDATED_FLAGS));
+        List<String> bgFlags = backgroundMetadata.get().getUpdatedFlags();
+        Assert.assertNotNull("Background updatedFlags should not be null", bgFlags);
+        Assert.assertTrue("Background metadata should contain flag1", bgFlags.contains("flag1"));
+        
         Assert.assertNotNull("Main thread metadata should not be null", mainThreadMetadata.get());
-        Assert.assertTrue("Main thread metadata should contain updatedFlags", mainThreadMetadata.get().containsKey(SdkUpdateMetadataKeys.UPDATED_FLAGS));
+        List<String> mtFlags = mainThreadMetadata.get().getUpdatedFlags();
+        Assert.assertNotNull("Main thread updatedFlags should not be null", mtFlags);
+        Assert.assertTrue("Main thread metadata should contain flag1", mtFlags.contains("flag1"));
     }
 }

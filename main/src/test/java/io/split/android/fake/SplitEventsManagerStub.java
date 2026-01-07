@@ -5,6 +5,7 @@ import androidx.annotation.Nullable;
 import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.ListenableEventsManager;
+import io.split.android.client.events.SdkEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitInternalEvent;
@@ -40,5 +41,10 @@ public class SplitEventsManagerStub implements ISplitEventsManager, ListenableEv
             return isSdkReadyTriggered;
         }
         return false;
+    }
+
+    @Override
+    public void registerEventListener(SdkEventListener listener) {
+        // Stub implementation - does nothing
     }
 }
