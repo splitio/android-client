@@ -971,6 +971,92 @@ public class SdkEventsIntegrationTest {
         fixture.destroy();
     }
 
+
+
+    /**
+     * Scenario: sdkUpdateMetadata contains Type.FLAGS_UPDATE for flags update
+     * <p>
+     * Given sdkReady has already been emitted
+     * And a handler H is registered for sdkUpdate
+     * When a split update notification arrives via SSE
+     * Then sdkUpdate is emitted
+     * And handler H receives metadata with getType() returning Type.FLAGS_UPDATE
+     * And handler H receives metadata with getNames() containing the updated flag names
+     */
+    @Test
+    public void sdkUpdateMetadataContainsTypeForFlagsUpdate() throws Exception {
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
+
+        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        fixture.client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+
+        fixture.pushSplitUpdate();
+
+        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire", updateFired);
+
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        assertEquals("Type should be FLAGS_UPDATE",
+                SdkUpdateMetadata.Type.FLAGS_UPDATE, receivedMetadata.get().getType());
+
+        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
+        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
+
+        fixture.destroy();
+    }
+
+    /**
+     * Scenario: sdkUpdateMetadata contains Type.SEGMENTS_UPDATE for rule-based segments update
+     * <p>
+     * Given sdkReady has already been emitted
+     * And a handler H is registered for sdkUpdate
+     * When a rule-based segment update notification arrives via SSE
+     * Then sdkUpdate is emitted
+     * And handler H receives metadata with getType() returning Type.SEGMENTS_UPDATE
+     * And handler H receives metadata with getNames() containing the updated RBS names
+     * <p>
+     * Note: SEGMENTS_UPDATE is for rule-based segments (RBS) ONLY, not for memberships.
+     */
+    @Test
+    public void sdkUpdateMetadataContainsTypeForSegmentsUpdate() throws Exception {
+        TestClientFixture fixture = createStreamingClientWithRbsAndWaitForReady(new Key("key_1"));
+
+        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        fixture.client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+
+        fixture.pushRbsUpdate();
+
+        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire for RBS update", updateFired);
+
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        assertEquals("Type should be SEGMENTS_UPDATE",
+                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, receivedMetadata.get().getType());
+
+        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
+        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
+        assertTrue("Names should contain rbs_test",
+                receivedMetadata.get().getNames().contains("rbs_test"));
+
+        fixture.destroy();
+    }
+
     /**
      * Creates a client and waits for SDK_READY to fire.
      * Returns a TestClientFixture containing the factory, client, and ready latch.
@@ -1306,104 +1392,6 @@ public class SdkEventsIntegrationTest {
         segmentEntity2.setSegmentList("{\"k\":[{\"n\":\"segment1\"}],\"cn\":null}");
         segmentEntity2.setUpdatedAt(System.currentTimeMillis() / 1000);
         mDatabase.mySegmentDao().update(segmentEntity2);
-    }
-
-    // ========================================================================
-    // Phase 1 TDD: Tests for SdkUpdateMetadata.Type enum
-    // ========================================================================
-
-    /**
-     * Scenario: sdkUpdateMetadata contains Type.FLAGS_UPDATE for flags update
-     * <p>
-     * Given sdkReady has already been emitted
-     * And a handler H is registered for sdkUpdate
-     * When a split update notification arrives via SSE
-     * Then sdkUpdate is emitted
-     * And handler H receives metadata with getType() returning Type.FLAGS_UPDATE
-     * And handler H receives metadata with getNames() containing the updated flag names
-     */
-    @Test
-    public void sdkUpdateMetadataContainsTypeForFlagsUpdate() throws Exception {
-        // Given: sdkReady has already been emitted (with streaming support)
-        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
-
-        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch updateLatch = new CountDownLatch(1);
-
-        fixture.client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                receivedMetadata.set(metadata);
-                updateLatch.countDown();
-            }
-        });
-
-        // When: a split update notification arrives via SSE
-        fixture.pushSplitUpdate();
-
-        // Then: sdkUpdate is emitted
-        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire", updateFired);
-
-        // And: metadata has getType() returning Type.FLAGS_UPDATE
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertEquals("Type should be FLAGS_UPDATE",
-                SdkUpdateMetadata.Type.FLAGS_UPDATE, receivedMetadata.get().getType());
-
-        // And: metadata has getNames() containing the updated flag names
-        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
-        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
-
-        fixture.destroy();
-    }
-
-    /**
-     * Scenario: sdkUpdateMetadata contains Type.SEGMENTS_UPDATE for rule-based segments update
-     * <p>
-     * Given sdkReady has already been emitted
-     * And a handler H is registered for sdkUpdate
-     * When a rule-based segment update notification arrives via SSE
-     * Then sdkUpdate is emitted
-     * And handler H receives metadata with getType() returning Type.SEGMENTS_UPDATE
-     * And handler H receives metadata with getNames() containing the updated RBS names
-     * <p>
-     * Note: SEGMENTS_UPDATE is for rule-based segments (RBS) ONLY, not for memberships.
-     */
-    @Test
-    public void sdkUpdateMetadataContainsTypeForSegmentsUpdate() throws Exception {
-        // Given: sdkReady has already been emitted (with streaming support and RBS in storage)
-        TestClientFixture fixture = createStreamingClientWithRbsAndWaitForReady(new Key("key_1"));
-
-        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch updateLatch = new CountDownLatch(1);
-
-        fixture.client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                receivedMetadata.set(metadata);
-                updateLatch.countDown();
-            }
-        });
-
-        // When: a rule-based segment update notification arrives via SSE
-        fixture.pushRbsUpdate();
-
-        // Then: sdkUpdate is emitted
-        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire for RBS update", updateFired);
-
-        // And: metadata has getType() returning Type.SEGMENTS_UPDATE
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertEquals("Type should be SEGMENTS_UPDATE",
-                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, receivedMetadata.get().getType());
-
-        // And: metadata has getNames() containing the updated RBS names
-        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
-        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
-        assertTrue("Names should contain rbs_test",
-                receivedMetadata.get().getNames().contains("rbs_test"));
-
-        fixture.destroy();
     }
 
     /**
