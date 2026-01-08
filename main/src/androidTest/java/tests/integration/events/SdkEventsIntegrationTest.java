@@ -971,8 +971,6 @@ public class SdkEventsIntegrationTest {
         fixture.destroy();
     }
 
-
-
     /**
      * Scenario: sdkUpdateMetadata contains Type.FLAGS_UPDATE for flags update
      * <p>

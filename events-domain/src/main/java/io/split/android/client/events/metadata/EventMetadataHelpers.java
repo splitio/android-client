@@ -32,10 +32,6 @@ public class EventMetadataHelpers {
 
     /**
      * Creates metadata for SDK_UPDATE events when rule-based segments are updated.
-     * <p>
-     * Note: This is for rule-based segments (RBS) ONLY, not for memberships
-     * (my segments / large segments). Memberships have their own internal event
-     * flow and don't emit SDK_UPDATE events with segment metadata.
      *
      * @param updatedSegmentNames the list of rule-based segment names that were updated
      * @return the event metadata with TYPE=SEGMENTS_UPDATE and NAMES containing the segment names
