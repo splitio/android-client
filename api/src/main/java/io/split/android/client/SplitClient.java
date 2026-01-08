@@ -191,7 +191,8 @@ public interface SplitClient extends AttributesManager {
      * client.addEventListener(new SdkEventListener() {
      *     @Override
      *     public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-     *         List<String> flags = metadata.getUpdatedFlags();
+     *         SdkUpdateMetadata.Type type = metadata.getType(); // FLAGS_UPDATE or SEGMENTS_UPDATE
+     *         List<String> names = metadata.getNames(); // updated flag/segment names
      *         // Handle on background thread
      *     }
      *

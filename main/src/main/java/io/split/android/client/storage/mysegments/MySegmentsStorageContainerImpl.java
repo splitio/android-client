@@ -51,7 +51,7 @@ public class MySegmentsStorageContainerImpl implements MySegmentsStorageContaine
     public void clear() {
         synchronized (lock) {
             mPersistentMySegmentsStorage.clear();
-            // Set empty segments for keys in mStorageMap
+            // Clear in-memory segments for keys in mStorageMap
             for (MySegmentsStorage mySegmentsStorage : mStorageMap.values()) {
                 mySegmentsStorage.clear();
             }

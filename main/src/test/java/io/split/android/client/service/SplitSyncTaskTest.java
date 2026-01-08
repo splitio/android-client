@@ -260,12 +260,13 @@ public class SplitSyncTaskTest {
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
             SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
-            List<String> flags = typedMeta.getUpdatedFlags();
-            assertNotNull(flags);
-            assertEquals(3, flags.size());
-            assertTrue(flags.contains("split1"));
-            assertTrue(flags.contains("split2"));
-            assertTrue(flags.contains("split3"));
+            List<String> names = typedMeta.getNames();
+            assertNotNull(names);
+            assertEquals(3, names.size());
+            assertTrue(names.contains("split1"));
+            assertTrue(names.contains("split2"));
+            assertTrue(names.contains("split3"));
+            assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, typedMeta.getType());
             return true;
         }));
     }
@@ -288,9 +289,10 @@ public class SplitSyncTaskTest {
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
             SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
-            List<String> flags = typedMeta.getUpdatedFlags();
-            assertNotNull(flags);
-            assertTrue(flags.isEmpty());
+            List<String> names = typedMeta.getNames();
+            assertNotNull(names);
+            assertTrue(names.isEmpty());
+            assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, typedMeta.getType());
             return true;
         }));
     }
@@ -306,7 +308,7 @@ public class SplitSyncTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED), any());
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
     }
 

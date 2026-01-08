@@ -142,7 +142,7 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED), any());
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
     }
 
@@ -179,11 +179,12 @@ public class SplitUpdateTaskTest {
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
             SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
-            List<String> flags = typedMeta.getUpdatedFlags();
-            assertNotNull(flags);
-            assertEquals(2, flags.size());
-            assertTrue(flags.contains("flag1"));
-            assertTrue(flags.contains("flag2"));
+            List<String> names = typedMeta.getNames();
+            assertNotNull(names);
+            assertEquals(2, names.size());
+            assertTrue(names.contains("flag1"));
+            assertTrue(names.contains("flag2"));
+            assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, typedMeta.getType());
             return true;
         }));
     }

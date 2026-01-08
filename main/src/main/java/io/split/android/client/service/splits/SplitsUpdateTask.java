@@ -80,7 +80,8 @@ public class SplitsUpdateTask implements SplitTask {
             }
 
             if (mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+                EventMetadata rbsMetadata = createUpdatedRbsMetadata();
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED, rbsMetadata);
             }
 
             // Fire sync complete AFTER update events
@@ -93,6 +94,11 @@ public class SplitsUpdateTask implements SplitTask {
     private EventMetadata createUpdatedFlagsMetadata() {
         List<String> updatedSplitNames = mSplitsSyncHelper.getLastUpdatedFlagNames();
         return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
+    }
+
+    private EventMetadata createUpdatedRbsMetadata() {
+        List<String> updatedRbsNames = mSplitsSyncHelper.getLastUpdatedRbsNames();
+        return EventMetadataHelpers.createUpdatedSegmentsMetadata(updatedRbsNames);
     }
 
     @VisibleForTesting

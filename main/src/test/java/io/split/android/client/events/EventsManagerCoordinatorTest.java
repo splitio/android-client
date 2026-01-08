@@ -121,9 +121,9 @@ public class EventsManagerCoordinatorTest {
         verify(mMockChildEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(meta -> {
             if (meta == null) return false;
             SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(meta);
-            List<String> flags = typedMeta.getUpdatedFlags();
-            assertNotNull(flags);
-            return flags.size() == 2 && flags.contains("flag1") && flags.contains("flag2");
+            List<String> names = typedMeta.getNames();
+            assertNotNull(names);
+            return names.size() == 2 && names.contains("flag1") && names.contains("flag2");
         }));
     }
 

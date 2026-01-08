@@ -1,5 +1,6 @@
 package io.split.android.client.localhost;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -103,9 +104,10 @@ public class LocalhostSplitsStorageTest {
         EventMetadata metadata = metadataCaptor.getValue();
         assertNotNull("Metadata should not be null", metadata);
         SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
-        List<String> flags = typedMetadata.getUpdatedFlags();
-        assertNotNull("updatedFlags value should not be null", flags);
-        assertTrue("Metadata should contain 'split1' flag", flags.contains("split1"));
+        List<String> names = typedMetadata.getNames();
+        assertNotNull("names value should not be null", names);
+        assertTrue("Metadata should contain 'split1' flag", names.contains("split1"));
+        assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, typedMetadata.getType());
     }
 }
 

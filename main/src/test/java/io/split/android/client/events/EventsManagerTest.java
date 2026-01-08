@@ -296,8 +296,8 @@ public class EventsManagerTest {
         boolean updateAwait = updateLatch.await(3, TimeUnit.SECONDS);
         assertTrue("SDK_UPDATE callback should be called", updateAwait);
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertNotNull("Metadata should contain updatedFlags", receivedMetadata.get().getUpdatedFlags());
-        assertEquals(2, receivedMetadata.get().getUpdatedFlags().size());
+        assertNotNull("Metadata should contain names", receivedMetadata.get().getNames());
+        assertEquals(2, receivedMetadata.get().getNames().size());
     }
 
     @Test
@@ -323,7 +323,7 @@ public class EventsManagerTest {
         boolean updateAwait = updateLatch.await(3, TimeUnit.SECONDS);
         assertTrue("SDK_UPDATE callback should be called on main thread", updateAwait);
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertNotNull("Metadata should contain updatedFlags", receivedMetadata.get().getUpdatedFlags());
+        assertNotNull("Metadata should contain names", receivedMetadata.get().getNames());
     }
 
     @Test
@@ -385,7 +385,7 @@ public class EventsManagerTest {
         assertTrue("Background method should be called", backgroundMethodCalled[0]);
         assertTrue("Main thread method should also be called", mainThreadMethodCalled[0]);
         assertNotNull("Metadata should be passed to methods", receivedMetadata.get());
-        assertNotNull("Metadata should contain updatedFlags", receivedMetadata.get().getUpdatedFlags());
+        assertNotNull("Metadata should contain names", receivedMetadata.get().getNames());
     }
 
     @Test

@@ -26,11 +26,25 @@ public class TypedTaskConverter {
     @NonNull
     @SuppressWarnings("unchecked")
     public static SdkUpdateMetadata convertForSdkUpdate(@Nullable EventMetadata metadata) {
-        List<String> updatedFlags = null;
+        SdkUpdateMetadata.Type type = null;
+        List<String> names = null;
+
         if (metadata != null) {
-            updatedFlags = (List<String>) metadata.get(MetadataKeys.UPDATED_FLAGS);
+            // Extract type
+            String typeString = (String) metadata.get(MetadataKeys.TYPE);
+            if (typeString != null) {
+                try {
+                    type = SdkUpdateMetadata.Type.valueOf(typeString);
+                } catch (IllegalArgumentException ignored) {
+                    // Unknown type, leave as null
+                }
+            }
+
+            // Extract names
+            names = (List<String>) metadata.get(MetadataKeys.NAMES);
         }
-        return new SdkUpdateMetadata(updatedFlags);
+
+        return new SdkUpdateMetadata(type, names);
     }
 
     /**

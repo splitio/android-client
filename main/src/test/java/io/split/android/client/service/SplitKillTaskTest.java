@@ -80,10 +80,11 @@ public class SplitKillTaskTest {
         EventMetadata metadata = metadataCaptor.getValue();
         Assert.assertNotNull(metadata);
         SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
-        List<String> updatedFlags = typedMetadata.getUpdatedFlags();
-        Assert.assertNotNull(updatedFlags);
-        Assert.assertEquals(1, updatedFlags.size());
-        Assert.assertTrue(updatedFlags.contains("split1"));
+        List<String> names = typedMetadata.getNames();
+        Assert.assertNotNull(names);
+        Assert.assertEquals(1, names.size());
+        Assert.assertTrue(names.contains("split1"));
+        Assert.assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, typedMetadata.getType());
     }
 
     @Test

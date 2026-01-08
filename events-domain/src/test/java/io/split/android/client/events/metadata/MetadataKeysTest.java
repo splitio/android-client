@@ -11,8 +11,13 @@ import org.junit.Test;
 public class MetadataKeysTest {
 
     @Test
-    public void updatedFlagsKeyHasCorrectValue() {
-        assertEquals("updatedFlags", MetadataKeys.UPDATED_FLAGS);
+    public void typeKeyHasCorrectValue() {
+        assertEquals("type", MetadataKeys.TYPE);
+    }
+
+    @Test
+    public void namesKeyHasCorrectValue() {
+        assertEquals("names", MetadataKeys.NAMES);
     }
 
     @Test

@@ -14,9 +14,20 @@ final class MetadataKeys {
     // SDK_UPDATE event keys
 
     /**
-     * Names of flags that changed in this update.
+     * The type of update (FLAGS_UPDATE or SEGMENTS_UPDATE).
      */
-    static final String UPDATED_FLAGS = "updatedFlags";
+    static final String TYPE = "type";
+
+    static final String TYPE_FLAGS_UPDATE = "FLAGS_UPDATE";
+    static final String TYPE_SEGMENTS_UPDATE = "SEGMENTS_UPDATE";
+
+    /**
+     * Names of entities that changed in this update.
+     * <p>
+     * For FLAGS_UPDATE, these are flag names.
+     * For SEGMENTS_UPDATE, these are rule-based segment names.
+     */
+    static final String NAMES = "names";
 
     // SDK_READY_FROM_CACHE event keys
 

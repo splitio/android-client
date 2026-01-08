@@ -10,6 +10,7 @@ import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -33,6 +34,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.Split;
@@ -46,6 +48,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpStatus;
+import io.split.android.client.service.rules.ProcessedRuleBasedSegmentChange;
 import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
@@ -776,5 +779,67 @@ public class SplitsSyncHelperTest {
         List<String> result = mSplitsSyncHelper.getLastUpdatedFlagNames();
         assertEquals(1, result.size());
         assertTrue(result.contains("archived_split"));
+    }
+
+    @Test
+    public void getLastUpdatedRbsNamesReturnsSegmentNamesAfterSync() throws HttpFetcherException {
+        RuleBasedSegment activeSegment = RuleBasedSegmentStorageImplTest.createRuleBasedSegment("active_segment");
+        RuleBasedSegment archivedSegment = RuleBasedSegmentStorageImplTest.createRuleBasedSegment("archived_segment");
+        SplitChange splitChange = SplitChange.create(-1, 100L, Collections.emptyList());
+        RuleBasedSegmentChange rbsChange = RuleBasedSegmentChange.create(-1, 100L, Collections.singletonList(activeSegment));
+        // Create ProcessedRuleBasedSegmentChange with both active and archived segments
+        ProcessedRuleBasedSegmentChange processedChange = new ProcessedRuleBasedSegmentChange(
+                Set.of(activeSegment), Set.of(archivedSegment), 100L, System.currentTimeMillis());
+
+        doReturn(processedChange).when(mRuleBasedSegmentChangeProcessor).process(any(List.class), anyLong());
+
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenReturn(TargetingRulesChange.create(splitChange, rbsChange))
+                .thenReturn(TargetingRulesChange.create(SplitChange.create(100L, 100L, Collections.emptyList()), RuleBasedSegmentChange.create(100L, 100L, Collections.emptyList())));
+        when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
+        when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(100L);
+
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+
+        List<String> result = mSplitsSyncHelper.getLastUpdatedRbsNames();
+        assertEquals(2, result.size());
+        assertTrue(result.contains("active_segment"));
+        assertTrue(result.contains("archived_segment"));
+    }
+
+    @Test
+    public void getLastUpdatedRbsNamesReturnsEmptyListWhenNoSyncPerformed() {
+        List<String> result = mSplitsSyncHelper.getLastUpdatedRbsNames();
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void extractRbsNamesReturnsActiveAndArchivedSegmentNames() {
+        RuleBasedSegment activeSegment = RuleBasedSegmentStorageImplTest.createRuleBasedSegment("active_segment");
+        RuleBasedSegment archivedSegment = RuleBasedSegmentStorageImplTest.createRuleBasedSegment("archived_segment");
+        ProcessedRuleBasedSegmentChange processedChange = new ProcessedRuleBasedSegmentChange(
+                Set.of(activeSegment), Set.of(archivedSegment), 100L, System.currentTimeMillis());
+
+        List<String> result = SplitsSyncHelper.extractRbsNames(processedChange);
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains("active_segment"));
+        assertTrue(result.contains("archived_segment"));
+    }
+
+    @Test
+    public void extractRbsNamesReturnsEmptyListForNullChange() {
+        List<String> result = SplitsSyncHelper.extractRbsNames(null);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void extractRbsNamesHandlesNullActiveAndArchivedSets() {
+        ProcessedRuleBasedSegmentChange processedChange = new ProcessedRuleBasedSegmentChange(
+                null, null, 100L, System.currentTimeMillis());
+
+        List<String> result = SplitsSyncHelper.extractRbsNames(processedChange);
+
+        assertTrue(result.isEmpty());
     }
 }
