@@ -126,11 +126,9 @@ public class RolloutCacheManagerIntegrationTest {
         assertEquals(8000L, initialChangeNumber);
 
         // values after clear
-        assertEquals(1, intermediateSegments.size());
-        assertTrue(Json.fromJson(intermediateSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
-        assertEquals(1, intermediateLargeSegments.size());
+        assertEquals(0, intermediateSegments.size());
+        assertEquals(0, intermediateLargeSegments.size());
         assertEquals(0, intermediateFlags.size());
-        assertTrue(Json.fromJson(intermediateLargeSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
         assertEquals(-1, intermediateChangeNumber);
 
         // values after second init (values were reinserted into DB); no clear
@@ -203,11 +201,9 @@ public class RolloutCacheManagerIntegrationTest {
         assertFalse(Json.fromJson(initialSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
         assertFalse(Json.fromJson(initialLargeSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
         assertEquals(8000L, initialChangeNumber);
-        assertEquals(1, finalSegments.size());
-        assertTrue(Json.fromJson(finalSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
+        assertEquals(0, finalSegments.size());
         assertEquals(0, finalFlags.size());
-        assertEquals(1, finalLargeSegments.size());
-        assertTrue(Json.fromJson(finalLargeSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
+        assertEquals(0, finalLargeSegments.size());
         assertEquals(-1, finalChangeNumber);
         assertTrue(0L < mRoomDb.generalInfoDao()
                 .getByName("rolloutCacheLastClearTimestamp").getLongValue());
