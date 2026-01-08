@@ -1394,7 +1394,7 @@ public class SdkEventsIntegrationTest {
 
     /**
      * Creates a streaming client with RBS data pre-populated and waits for SDK_READY.
-     * Required for testing RBS in-place updates (RBS must exist in storage for instant update).
+     * Pre-populates RBS change number so the test can verify in-place update behavior.
      */
     private TestClientFixture createStreamingClientWithRbsAndWaitForReady(Key key) throws InterruptedException, IOException {
         // Pre-populate RBS in storage so in-place update can work
@@ -1420,11 +1420,10 @@ public class SdkEventsIntegrationTest {
     }
 
     /**
-     * Populates the database with RBS data for instant update testing.
+     * Populates the database with RBS change number for instant update testing.
      */
     private void populateDatabaseWithRbsData() {
-        // Need to populate the RBS storage with the segment that will be updated
-        // so that in-place update can work (referenced RBS must exist)
+        // Set RBS change number so streaming notifications trigger in-place updates
         mDatabase.generalInfoDao().update(new GeneralInfoEntity("rbsChangeNumber", 1000L));
     }
 }
