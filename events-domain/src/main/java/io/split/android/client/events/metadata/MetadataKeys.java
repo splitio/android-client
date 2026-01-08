@@ -18,6 +18,9 @@ final class MetadataKeys {
      */
     static final String TYPE = "type";
 
+    static final String TYPE_FLAGS_UPDATE = "FLAGS_UPDATE";
+    static final String TYPE_SEGMENTS_UPDATE = "SEGMENTS_UPDATE";
+
     /**
      * Names of entities that changed in this update.
      * <p>

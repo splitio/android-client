@@ -6,8 +6,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import io.split.android.client.events.SdkUpdateMetadata;
-
 /**
  * Helper class for creating {@link EventMetadata} instances.
  * <p>
@@ -27,7 +25,7 @@ public class EventMetadataHelpers {
      */
     public static EventMetadata createUpdatedFlagsMetadata(List<String> updatedFlagNames) {
         return new EventMetadataBuilder()
-                .put(MetadataKeys.TYPE, SdkUpdateMetadata.Type.FLAGS_UPDATE.name())
+                .put(MetadataKeys.TYPE, MetadataKeys.TYPE_FLAGS_UPDATE)
                 .put(MetadataKeys.NAMES, new ArrayList<>(new HashSet<>(updatedFlagNames)))
                 .build();
     }
@@ -44,7 +42,7 @@ public class EventMetadataHelpers {
      */
     public static EventMetadata createUpdatedSegmentsMetadata(List<String> updatedSegmentNames) {
         return new EventMetadataBuilder()
-                .put(MetadataKeys.TYPE, SdkUpdateMetadata.Type.SEGMENTS_UPDATE.name())
+                .put(MetadataKeys.TYPE, MetadataKeys.TYPE_SEGMENTS_UPDATE)
                 .put(MetadataKeys.NAMES, new ArrayList<>(new HashSet<>(updatedSegmentNames)))
                 .build();
     }

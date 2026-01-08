@@ -9,8 +9,6 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.List;
 
-import io.split.android.client.events.SdkUpdateMetadata;
-
 public class EventMetadataHelpersTest {
 
     // Tests for createUpdatedFlagsMetadata
@@ -20,9 +18,8 @@ public class EventMetadataHelpersTest {
         List<String> flags = Arrays.asList("flag1", "flag2", "flag3");
         EventMetadata metadata = EventMetadataHelpers.createUpdatedFlagsMetadata(flags);
 
-        // Check type
         assertTrue(metadata.containsKey(MetadataKeys.TYPE));
-        assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE.name(), metadata.get(MetadataKeys.TYPE));
+        assertEquals(MetadataKeys.TYPE_FLAGS_UPDATE, metadata.get(MetadataKeys.TYPE));
 
         // Check names
         assertTrue(metadata.containsKey(MetadataKeys.NAMES));
@@ -40,9 +37,8 @@ public class EventMetadataHelpersTest {
         List<String> segments = Arrays.asList("segment1", "segment2");
         EventMetadata metadata = EventMetadataHelpers.createUpdatedSegmentsMetadata(segments);
 
-        // Check type
         assertTrue(metadata.containsKey(MetadataKeys.TYPE));
-        assertEquals(SdkUpdateMetadata.Type.SEGMENTS_UPDATE.name(), metadata.get(MetadataKeys.TYPE));
+        assertEquals(MetadataKeys.TYPE_SEGMENTS_UPDATE, metadata.get(MetadataKeys.TYPE));
 
         // Check names
         assertTrue(metadata.containsKey(MetadataKeys.NAMES));
