@@ -10,15 +10,18 @@ import androidx.annotation.VisibleForTesting;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.SegmentsChange;
-import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
@@ -273,18 +276,44 @@ public class MySegmentsSyncTask implements SplitTask {
 
         if (segmentsHaveChanged) {
             Logger.v("New segments: " + segmentsResult.newSegments);
-            mEventsManager.notifyInternalEvent(mUpdateEvent);
+            List<String> changedSegmentNames = computeChangedSegmentNames(segmentsResult);
+            EventMetadata metadata = EventMetadataHelpers.createUpdatedSegmentsMetadata(changedSegmentNames);
+            mEventsManager.notifyInternalEvent(mUpdateEvent, metadata);
         }
 
         if (largeSegmentsHaveChanged) {
             Logger.v("New large segments: " + largeSegmentsResult.newSegments);
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
+            List<String> changedLargeSegmentNames = computeChangedSegmentNames(largeSegmentsResult);
+            EventMetadata metadata = EventMetadataHelpers.createUpdatedSegmentsMetadata(changedLargeSegmentNames);
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, metadata);
         }
 
         // Fire sync complete AFTER update events. This ensures SDK_READY triggers after
         // all *_UPDATED events have been processed (which won't trigger SDK_UPDATE because
         // SDK_READY's prerequisite for SDK_UPDATE isn't met yet).
         mEventsManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+    }
+
+    /**
+     * Computes the set of changed segment names (added + removed) between old and new segments.
+     */
+    private List<String> computeChangedSegmentNames(UpdateSegmentsResult result) {
+        Set<String> oldSet = new HashSet<>(result.oldSegments);
+        Set<String> newSet = new HashSet<>(result.newSegments);
+
+        // Added segments: in new but not in old
+        Set<String> added = new HashSet<>(newSet);
+        added.removeAll(oldSet);
+
+        // Removed segments: in old but not in new
+        Set<String> removed = new HashSet<>(oldSet);
+        removed.removeAll(newSet);
+
+        // Combined changed segments
+        Set<String> changed = new HashSet<>(added);
+        changed.addAll(removed);
+
+        return new ArrayList<>(changed);
     }
 
     private static class UpdateSegmentsResult {

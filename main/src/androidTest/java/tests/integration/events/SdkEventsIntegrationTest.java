@@ -1056,6 +1056,100 @@ public class SdkEventsIntegrationTest {
     }
 
     /**
+     * Scenario: sdkUpdateMetadata contains Type.SEGMENTS_UPDATE for membership segments update
+     * <p>
+     * Given sdkReady has already been emitted
+     * And the client has segments in storage
+     * And a handler H is registered for sdkUpdate
+     * When a membership segments update notification arrives via SSE
+     * Then sdkUpdate is emitted
+     * And handler H receives metadata with getType() returning Type.SEGMENTS_UPDATE
+     * And handler H receives metadata with getNames() containing the updated segment names
+     */
+    @Test
+    public void sdkUpdateMetadataContainsTypeForMembershipSegmentsUpdate() throws Exception {
+        // Pre-populate with segments so removal will trigger an update
+        populateDatabaseWithMembershipData();
+
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
+
+        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        fixture.client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+
+        // Push membership segments update (removal of segment1)
+        fixture.pushMembershipSegmentsUpdate(new String[]{"segment1"}, 2000L);
+
+        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire for membership segments update", updateFired);
+
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        assertEquals("Type should be SEGMENTS_UPDATE",
+                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, receivedMetadata.get().getType());
+
+        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
+        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
+        assertTrue("Names should contain segment1",
+                receivedMetadata.get().getNames().contains("segment1"));
+
+        fixture.destroy();
+    }
+
+    /**
+     * Scenario: sdkUpdateMetadata contains Type.SEGMENTS_UPDATE for large segments update
+     * <p>
+     * Given sdkReady has already been emitted
+     * And the client has large segments in storage
+     * And a handler H is registered for sdkUpdate
+     * When a large segments update notification arrives via SSE
+     * Then sdkUpdate is emitted
+     * And handler H receives metadata with getType() returning Type.SEGMENTS_UPDATE
+     * And handler H receives metadata with getNames() containing the updated large segment names
+     */
+    @Test
+    public void sdkUpdateMetadataContainsTypeForLargeSegmentsUpdate() throws Exception {
+        // Pre-populate with large segments so removal will trigger an update
+        populateDatabaseWithLargeSegmentData();
+
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
+
+        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        fixture.client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+
+        // Push large segments update (removal of large_segment1)
+        fixture.pushMembershipLargeSegmentsUpdate(new String[]{"large_segment1"}, 2000L);
+
+        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire for large segments update", updateFired);
+
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        assertEquals("Type should be SEGMENTS_UPDATE",
+                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, receivedMetadata.get().getType());
+
+        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
+        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
+        assertTrue("Names should contain large_segment1",
+                receivedMetadata.get().getNames().contains("large_segment1"));
+
+        fixture.destroy();
+    }
+
+    /**
      * Creates a client and waits for SDK_READY to fire.
      * Returns a TestClientFixture containing the factory, client, and ready latch.
      */
@@ -1313,6 +1407,18 @@ public class SdkEventsIntegrationTest {
             }
         }
 
+        void pushMembershipSegmentsUpdate(String[] segmentNames, long changeNumber) {
+            if (streamingData != null) {
+                pushMessage(streamingData, IntegrationHelper.membershipSegmentsUpdate(segmentNames, changeNumber));
+            }
+        }
+
+        void pushMembershipLargeSegmentsUpdate(String[] segmentNames, long changeNumber) {
+            if (streamingData != null) {
+                pushMessage(streamingData, IntegrationHelper.membershipLargeSegmentsUpdate(segmentNames, changeNumber));
+            }
+        }
+
         void destroy() {
             factory.destroy();
         }
@@ -1425,5 +1531,29 @@ public class SdkEventsIntegrationTest {
     private void populateDatabaseWithRbsData() {
         // Set RBS change number so streaming notifications trigger in-place updates
         mDatabase.generalInfoDao().update(new GeneralInfoEntity("rbsChangeNumber", 1000L));
+    }
+
+    /**
+     * Populates the database with membership segments for testing segment removal updates.
+     */
+    private void populateDatabaseWithMembershipData() {
+        // Populate segments for key_1 with segment1 so removal triggers update
+        MySegmentEntity segmentEntity = new MySegmentEntity();
+        segmentEntity.setUserKey("key_1");
+        segmentEntity.setSegmentList("{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":1000}");
+        segmentEntity.setUpdatedAt(System.currentTimeMillis() / 1000);
+        mDatabase.mySegmentDao().update(segmentEntity);
+    }
+
+    /**
+     * Populates the database with large segments for testing large segment removal updates.
+     */
+    private void populateDatabaseWithLargeSegmentData() {
+        // Populate large segments for key_1 with large_segment1 so removal triggers update
+        MySegmentEntity largeSegmentEntity = new MySegmentEntity();
+        largeSegmentEntity.setUserKey("key_1_large");
+        largeSegmentEntity.setSegmentList("{\"k\":[{\"n\":\"large_segment1\"},{\"n\":\"large_segment2\"}],\"cn\":1000}");
+        largeSegmentEntity.setUpdatedAt(System.currentTimeMillis() / 1000);
+        mDatabase.myLargeSegmentDao().update(largeSegmentEntity);
     }
 }

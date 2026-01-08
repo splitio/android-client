@@ -343,6 +343,48 @@ public class IntegrationHelper {
                 "data: {\"id\":\"1111\",\"clientId\":\"pri:ODc1NjQyNzY1\",\"timestamp\":" + System.currentTimeMillis() + ",\"encoding\":\"json\",\"channel\":\"xxxx_xxxx_flags\",\"data\":\"{\\\"type\\\":\\\"RB_SEGMENT_UPDATE\\\",\\\"changeNumber\\\":" + changeNumber + ",\\\"pcn\\\":" + previousChangeNumber + ",\\\"c\\\":" + compressionType + ",\\\"d\\\":\\\"" + compressedPayload + "\\\"}\"}\n\n";
     }
 
+    /**
+     * Creates a membership (my segments) update SSE notification.
+     * Uses KEY_LIST strategy (u=2) with SEGMENT_REMOVAL strategy (u=3) for testing.
+     *
+     * @param segmentNames the segment names to include in the notification
+     * @param changeNumber the change number for this update
+     * @return SSE formatted message
+     */
+    public static String membershipSegmentsUpdate(String[] segmentNames, long changeNumber) {
+        StringBuilder names = new StringBuilder();
+        for (int i = 0; i < segmentNames.length; i++) {
+            if (i > 0) names.append(",");
+            names.append("\\\\\\\"").append(segmentNames[i]).append("\\\\\\\"");
+        }
+        // u=3 is SEGMENT_REMOVAL strategy which triggers in-place update
+        String data = "{\\\"type\\\":\\\"MEMBERSHIPS_MS_UPDATE\\\",\\\"u\\\":3,\\\"c\\\":0,\\\"d\\\":\\\"\\\",\\\"n\\\":[" + names + "],\\\"cn\\\":" + changeNumber + "}";
+        return "id: membership123\n" +
+                "event: message\n" +
+                "data: {\"id\":\"mem1\",\"clientId\":\"pri:ODc1NjQyNzY1\",\"timestamp\":" + System.currentTimeMillis() + ",\"encoding\":\"json\",\"channel\":\"xxxx_xxxx_mySegments\",\"data\":\"" + data + "\"}\n\n";
+    }
+
+    /**
+     * Creates a large segments update SSE notification.
+     * Uses SEGMENT_REMOVAL strategy (u=3) for testing.
+     *
+     * @param segmentNames the large segment names to include in the notification
+     * @param changeNumber the change number for this update
+     * @return SSE formatted message
+     */
+    public static String membershipLargeSegmentsUpdate(String[] segmentNames, long changeNumber) {
+        StringBuilder names = new StringBuilder();
+        for (int i = 0; i < segmentNames.length; i++) {
+            if (i > 0) names.append(",");
+            names.append("\\\\\\\"").append(segmentNames[i]).append("\\\\\\\"");
+        }
+        // u=3 is SEGMENT_REMOVAL strategy which triggers in-place update
+        String data = "{\\\"type\\\":\\\"MEMBERSHIPS_LS_UPDATE\\\",\\\"u\\\":3,\\\"c\\\":0,\\\"d\\\":\\\"\\\",\\\"n\\\":[" + names + "],\\\"cn\\\":" + changeNumber + "}";
+        return "id: largeseg123\n" +
+                "event: message\n" +
+                "data: {\"id\":\"ls1\",\"clientId\":\"pri:ODc1NjQyNzY1\",\"timestamp\":" + System.currentTimeMillis() + ",\"encoding\":\"json\",\"channel\":\"xxxx_xxxx_mySegments\",\"data\":\"" + data + "\"}\n\n";
+    }
+
     public static String loadSplitChanges(Context context, String fileName) {
         String change = getFileContentsAsString(context, fileName);
         TargetingRulesChange targetingRulesChange = Json.fromJson(change, TargetingRulesChange.class);
