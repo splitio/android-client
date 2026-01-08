@@ -362,34 +362,6 @@ afterEvaluate {
 }
 
 afterEvaluate {
-    def emptySourcesJarTask = tasks.findByName("emptySourcesJar")
-    if (emptySourcesJarTask != null) {
-        // Ensure only one sources artifact is published
-        publishing.publications.withType(MavenPublication) { publication ->
-            if (publication.name == "maven") {
-                // Keep only the sources from fusedLibraryComponent
-                publication.artifacts.removeAll { artifact ->
-                    // Remove artifacts that match the emptySourcesJar task output
-                    try {
-                        def artifactFile = artifact.file
-                        if (artifactFile != null && artifactFile.exists()) {
-                            def emptySourcesFile = emptySourcesJarTask.archiveFile.get().asFile
-                            artifactFile == emptySourcesFile
-                        } else {
-                            artifact.classifier == "sources" && artifact.extension == "jar" &&
-                            !publication.artifacts.any { 
-                                it != artifact && it.classifier == "sources" && 
-                                it.buildDependencies != null
-                            }
-                        }
-                    } catch (Exception e) {
-                        false
-                    }
-                }
-            }
-        }
-    }
-
     // Disable Gradle Module Metadata (.module file) to avoid variant ambiguity
     tasks.configureEach { task ->
         // Match tasks related to module metadata generation
@@ -407,6 +379,31 @@ afterEvaluate {
         if (publication.name == "maven") {
             publication.artifacts.removeAll { artifact ->
                 artifact.file?.name?.endsWith('lint.jar') ?: false
+            }
+        }
+    }
+}
+
+// Remove duplicate sources JAR artifact before publishing
+// The vanniktech plugin adds emptySourcesJar while AGP 9.0 also provides one from fusedLibraryComponent
+// We want to keep the AGP one (merged_sources_jar) which has actual sources
+// This must be done at task execution time because artifacts are resolved lazily
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.findAll { it.name.startsWith('publishMavenPublication') }.each { publishTask ->
+        publishTask.doFirst {
+            def pub = publication
+            if (pub.name == "maven") {
+                def sourcesArtifacts = pub.artifacts.findAll { it.classifier == "sources" && it.extension == "jar" }
+                if (sourcesArtifacts.size() > 1) {
+                    // Keep the AGP one (merged_sources_jar), remove the vanniktech empty one (build/libs)
+                    def toRemove = sourcesArtifacts.find { 
+                        it.file?.absolutePath?.contains("build/libs") || it.file?.name?.contains("android-client-sources")
+                    }
+                    if (toRemove) {
+                        pub.artifacts.remove(toRemove)
+                        println "Removed duplicate empty sources artifact: ${toRemove.file?.absolutePath}"
+                    }
+                }
             }
         }
     }
