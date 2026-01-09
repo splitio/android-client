@@ -100,4 +100,29 @@ public class EventMetadataHelpersTest {
         assertEquals(Boolean.TRUE, metadata.get(MetadataKeys.INITIAL_CACHE_LOAD));
         assertNull(metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
     }
+
+    @Test
+    public void createSyncCompleteMetadataWhenCacheAlreadyLoaded() {
+        long updateTimestamp = 1234567890L;
+        EventMetadata metadata = EventMetadataHelpers.createSyncCompleteMetadata(true, updateTimestamp);
+
+        assertEquals(Boolean.FALSE, metadata.get(MetadataKeys.INITIAL_CACHE_LOAD));
+        assertEquals(updateTimestamp, metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
+    }
+
+    @Test
+    public void createSyncCompleteMetadataWhenCacheNotLoaded() {
+        EventMetadata metadata = EventMetadataHelpers.createSyncCompleteMetadata(false, 1234567890L);
+
+        assertEquals(Boolean.TRUE, metadata.get(MetadataKeys.INITIAL_CACHE_LOAD));
+        assertNull(metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
+    }
+
+    @Test
+    public void createSyncCompleteMetadataIgnoresTimestampWhenCacheNotLoaded() {
+        // Even if a timestamp is provided, it should be ignored when cache is not loaded
+        EventMetadata metadata = EventMetadataHelpers.createSyncCompleteMetadata(false, 9999999999L);
+
+        assertNull(metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
+    }
 }

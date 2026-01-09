@@ -60,4 +60,19 @@ public class EventMetadataHelpers {
 
         return builder.build();
     }
+
+    /**
+     * Creates metadata for TARGETING_RULES_SYNC_COMPLETE based on whether cache was already loaded.
+     * <p>
+     * If cache was already loaded (SDK_READY_FROM_CACHE fired), uses initialCacheLoad=false
+     * and includes the update timestamp. Otherwise, uses initialCacheLoad=true with no timestamp.
+     *
+     * @param cacheAlreadyLoaded true if SDK_READY_FROM_CACHE has already fired
+     * @param updateTimestamp    the timestamp from storage, used only if cacheAlreadyLoaded is true
+     * @return the event metadata for sync complete
+     */
+    public static EventMetadata createSyncCompleteMetadata(boolean cacheAlreadyLoaded, @Nullable Long updateTimestamp) {
+        Long timestamp = cacheAlreadyLoaded ? updateTimestamp : null;
+        return createReadyMetadata(timestamp, !cacheAlreadyLoaded);
+    }
 }
