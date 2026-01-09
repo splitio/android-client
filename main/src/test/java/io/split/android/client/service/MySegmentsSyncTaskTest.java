@@ -29,6 +29,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.dtos.AllSegmentsChange;
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -230,7 +231,7 @@ public class MySegmentsSyncTaskTest {
         mTask.execute();
 
         verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
-        verify(mEventsManager, never()).notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+        verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.MY_SEGMENTS_UPDATED), any(EventMetadata.class));
     }
 
     @Test
@@ -243,7 +244,7 @@ public class MySegmentsSyncTaskTest {
 
         // Verify MEMBERSHIPS_SYNC_COMPLETE is always fired on successful sync, even when segments changed
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE));
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MY_SEGMENTS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MY_SEGMENTS_UPDATED), any(EventMetadata.class));
     }
 
     @Test
@@ -254,7 +255,7 @@ public class MySegmentsSyncTaskTest {
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MY_SEGMENTS_UPDATED));
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MY_SEGMENTS_UPDATED), any(EventMetadata.class));
     }
 
     @Test
@@ -265,7 +266,7 @@ public class MySegmentsSyncTaskTest {
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MY_SEGMENTS_UPDATED), any(EventMetadata.class));
     }
 
     @Test
@@ -277,7 +278,7 @@ public class MySegmentsSyncTaskTest {
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
         mTask.execute();
 
-        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED), any(EventMetadata.class));
     }
 
     @Test

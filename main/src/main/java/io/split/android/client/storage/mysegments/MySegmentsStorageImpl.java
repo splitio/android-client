@@ -63,6 +63,7 @@ class MySegmentsStorageImpl implements MySegmentsStorage {
     public void clear() {
         mInMemoryMySegments.clear();
         mTill.set(DEFAULT_CHANGE_NUMBER);
+        mPersistentStorage.set(mMatchingKey, SegmentsChange.createEmpty());
     }
 
     @NonNull
