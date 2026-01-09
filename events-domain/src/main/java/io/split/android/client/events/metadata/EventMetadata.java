@@ -10,7 +10,7 @@ import java.util.Collection;
  * <p>
  * This is an internal API for SDK infrastructure use.
  * Consumers should use the typed metadata classes instead:
- * {@code SdkUpdateMetadata} and {@code SdkReadyFromCacheMetadata}.
+ * {@code SdkUpdateMetadata} and {@code SdkReadyMetadata}.
  * <p>
  * Values are sanitized to only allow String, Number, Boolean, or List&lt;String&gt;.
  */

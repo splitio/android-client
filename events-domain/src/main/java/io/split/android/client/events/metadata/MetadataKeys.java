@@ -29,12 +29,12 @@ final class MetadataKeys {
      */
     static final String NAMES = "names";
 
-    // SDK_READY_FROM_CACHE event keys
+    // SDK_READY and SDK_READY_FROM_CACHE event keys
 
     /**
-     * True if this is a fresh install with no usable cache.
+     * True if this is an initial cache load with no usable cache.
      */
-    static final String FRESH_INSTALL = "freshInstall";
+    static final String INITIAL_CACHE_LOAD = "initialCacheLoad";
 
     /**
      * Last successful cache timestamp in milliseconds since epoch.

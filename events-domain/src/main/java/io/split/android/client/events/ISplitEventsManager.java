@@ -15,4 +15,12 @@ public interface ISplitEventsManager {
      * @param metadata      the event metadata, can be null
      */
     void notifyInternalEvent(SplitInternalEvent internalEvent, @Nullable EventMetadata metadata);
+
+    /**
+     * Checks if an external event has already been triggered.
+     *
+     * @param event the event to check
+     * @return true if the event has already been triggered (reached its max executions), false otherwise
+     */
+    boolean eventAlreadyTriggered(SplitEvent event);
 }

@@ -119,7 +119,13 @@ public class SplitsSyncTask implements SplitTask {
         // Fire sync complete AFTER update events. This ensures SDK_READY triggers after
         // all *_UPDATED events have been processed (which won't trigger SDK_UPDATE because
         // SDK_READY's prerequisite for SDK_UPDATE isn't met yet).
-        EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+        // 
+        // If SDK_READY_FROM_CACHE already fired (cache path completed first), use initialCacheLoad=false
+        // and include the update timestamp from storage.
+        // Otherwise (sync completing first), use initialCacheLoad=true.
+        boolean cacheAlreadyLoaded = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE);
+        Long timestamp = cacheAlreadyLoaded ? mSplitsStorage.getUpdateTimestamp() : null;
+        EventMetadata syncMetadata = EventMetadataHelpers.createReadyMetadata(timestamp, !cacheAlreadyLoaded);
         mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
     }
 

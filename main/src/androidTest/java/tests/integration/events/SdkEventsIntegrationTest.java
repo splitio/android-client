@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -37,7 +38,7 @@ import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SdkEventListener;
-import io.split.android.client.events.SdkReadyFromCacheMetadata;
+import io.split.android.client.events.SdkReadyMetadata;
 import io.split.android.client.events.SdkUpdateMetadata;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
@@ -47,6 +48,7 @@ import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -71,6 +73,7 @@ public class SdkEventsIntegrationTest {
     private SplitClientConfig buildConfig() {
         return SplitClientConfig.builder()
                 .serviceEndpoints(endpoints())
+                .logLevel(SplitLogLevel.VERBOSE)
                 .ready(30000)
                 .featuresRefreshRate(999999) // High refresh rate to avoid periodic sync interfering
                 .segmentsRefreshRate(999999)
@@ -88,7 +91,7 @@ public class SdkEventsIntegrationTest {
     @Before
     public void setup() {
         mWebServer = new MockWebServer();
-        mCurSplitReqId = 1;
+        mCurSplitReqId = 1003;
         final Dispatcher dispatcher = new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
@@ -132,7 +135,7 @@ public class SdkEventsIntegrationTest {
      * "attributesLoadedFromStorage" and "encryptionMigrationDone" are notified
      * Then sdkReadyFromCache is emitted exactly once
      * And handler H is invoked once
-     * And the metadata contains "freshInstall" with value false
+     * And the metadata contains "initialCacheLoad" with value false
      * And the metadata contains "lastUpdateTimestamp" with a valid timestamp
      */
     @Test
@@ -146,7 +149,7 @@ public class SdkEventsIntegrationTest {
 
         // And: a handler H is registered for sdkReadyFromCache
         AtomicInteger handlerInvocationCount = new AtomicInteger(0);
-        AtomicReference<SdkReadyFromCacheMetadata> receivedMetadata = new AtomicReference<>();
+        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
         CountDownLatch cacheReadyLatch = new CountDownLatch(1);
 
         SplitClient client = factory.client(new Key("key_1"));
@@ -158,11 +161,11 @@ public class SdkEventsIntegrationTest {
         assertTrue("SDK_READY_FROM_CACHE should fire", fired);
         assertEquals("Handler should be invoked exactly once", 1, handlerInvocationCount.get());
 
-        // And: the metadata contains "freshInstall" with value false
+        // And: the metadata contains "initialCacheLoad" with value false
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        Boolean freshInstall = receivedMetadata.get().isFreshInstall();
-        assertNotNull("freshInstall should not be null", freshInstall);
-        assertFalse("freshInstall should be false for cache path", freshInstall);
+        Boolean initialCacheLoad = receivedMetadata.get().isInitialCacheLoad();
+        assertNotNull("initialCacheLoad should not be null", initialCacheLoad);
+        assertFalse("initialCacheLoad should be false for cache path", initialCacheLoad);
 
         // And: the metadata contains "lastUpdateTimestamp" with a valid timestamp
         Long lastUpdateTimestamp = receivedMetadata.get().getLastUpdateTimestamp();
@@ -180,7 +183,7 @@ public class SdkEventsIntegrationTest {
      * When internal events "targetingRulesSyncComplete" and "membershipsSyncComplete" are notified
      * Then sdkReadyFromCache is emitted exactly once
      * And handler H is invoked once
-     * And the metadata contains "freshInstall" with value true
+     * And the metadata contains "initialCacheLoad" with value true
      */
     @Test
     public void sdkReadyFromCacheFiresWhenSyncCompletesFreshInstallPath() throws Exception {
@@ -192,7 +195,7 @@ public class SdkEventsIntegrationTest {
 
         // And: a handler H is registered for sdkReadyFromCache
         AtomicInteger handlerInvocationCount = new AtomicInteger(0);
-        AtomicReference<SdkReadyFromCacheMetadata> receivedMetadata = new AtomicReference<>();
+        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
         CountDownLatch cacheReadyLatch = new CountDownLatch(1);
 
         SplitClient client = factory.client(new Key("key_1"));
@@ -205,11 +208,153 @@ public class SdkEventsIntegrationTest {
         assertTrue("SDK_READY_FROM_CACHE should fire", fired);
         assertEquals("Handler should be invoked exactly once", 1, handlerInvocationCount.get());
 
-        // And: the metadata contains "freshInstall" with value true
+        // And: the metadata contains "initialCacheLoad" with value true
         assertNotNull("Metadata should not be null", receivedMetadata.get());
-        Boolean freshInstall = receivedMetadata.get().isFreshInstall();
-        assertNotNull("freshInstall should not be null", freshInstall);
-        assertTrue("freshInstall should be true for sync path (fresh install)", freshInstall);
+        Boolean initialCacheLoad = receivedMetadata.get().isInitialCacheLoad();
+        assertNotNull("initialCacheLoad should not be null", initialCacheLoad);
+        assertTrue("initialCacheLoad should be true for sync path (fresh install)", initialCacheLoad);
+
+        factory.destroy();
+    }
+
+    /**
+     * Scenario: onReady listener fires when SDK_READY event occurs
+     * <p>
+     * Given the SDK is starting with populated persistent storage
+     * And a handler H is registered using addEventListener with onReady
+     * When SDK_READY fires
+     * Then onReady is invoked exactly once
+     * And the handler receives the SplitClient and SdkReadyMetadata
+     * And the metadata contains "initialCacheLoad" with value false
+     * And the metadata contains "lastUpdateTimestamp" with a valid timestamp
+     */
+    @Test
+    public void sdkReadyListenerFiresWithMetadata() throws Exception {
+        // Given: SDK is starting with populated persistent storage
+        long testTimestamp = System.currentTimeMillis();
+        populateDatabaseWithCacheData(testTimestamp);
+
+        SplitClientConfig config = buildConfig();
+        SplitFactory factory = buildFactory(config);
+
+        AtomicInteger onReadyCount = new AtomicInteger(0);
+        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
+        AtomicReference<SplitClient> receivedClient = new AtomicReference<>();
+        CountDownLatch readyLatch = new CountDownLatch(1);
+
+        SplitClient client = factory.client(new Key("key_1"));
+
+        // And: a handler H is registered using addEventListener with onReady
+        client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onReady(SplitClient client, SdkReadyMetadata metadata) {
+                onReadyCount.incrementAndGet();
+                receivedMetadata.set(metadata);
+                receivedClient.set(client);
+                readyLatch.countDown();
+            }
+        });
+
+        // When: SDK_READY fires
+        boolean fired = readyLatch.await(10, TimeUnit.SECONDS);
+
+        // Then: onReady is invoked exactly once
+        assertTrue("onReady should fire", fired);
+        assertEquals("onReady should be invoked exactly once", 1, onReadyCount.get());
+
+        // And: the handler receives the SplitClient and SdkReadyMetadata
+        assertNotNull("Received client should not be null", receivedClient.get());
+        assertNotNull("Received metadata should not be null", receivedMetadata.get());
+
+        // And: the metadata contains "initialCacheLoad" with value false
+        Boolean initialCacheLoad = receivedMetadata.get().isInitialCacheLoad();
+        assertNotNull("initialCacheLoad should not be null", initialCacheLoad);
+        assertFalse("initialCacheLoad should be false for cache path", initialCacheLoad);
+
+        // And: the metadata contains "lastUpdateTimestamp" with a valid timestamp
+        Long lastUpdateTimestamp = receivedMetadata.get().getLastUpdateTimestamp();
+        assertNotNull("lastUpdateTimestamp should not be null", lastUpdateTimestamp);
+        assertTrue("lastUpdateTimestamp should be valid", lastUpdateTimestamp > 0);
+
+        factory.destroy();
+    }
+
+    /**
+     * Scenario: onReady listener replays to late subscribers
+     * <p>
+     * Given sdkReady has already been emitted
+     * When a new handler H is registered using addEventListener with onReady
+     * Then onReady handler H is invoked exactly once immediately (replay)
+     */
+    @Test
+    public void sdkReadyListenerReplaysToLateSubscribers() throws Exception {
+        // Given: sdkReady has already been emitted
+        TestClientFixture fixture = createClientAndWaitForReady(new Key("key_1"));
+
+        // When: a new handler H is registered for onReady after SDK_READY has fired
+        AtomicInteger onReadyCount = new AtomicInteger(0);
+        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
+        CountDownLatch lateReadyLatch = new CountDownLatch(1);
+
+        fixture.client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onReady(SplitClient client, SdkReadyMetadata metadata) {
+                onReadyCount.incrementAndGet();
+                receivedMetadata.set(metadata);
+                lateReadyLatch.countDown();
+            }
+        });
+
+        // Then: onReady handler H is invoked exactly once immediately (replay)
+        boolean replayFired = lateReadyLatch.await(5, TimeUnit.SECONDS);
+        assertTrue("Late onReady handler should receive replay", replayFired);
+        assertEquals("Late onReady handler should be invoked exactly once", 1, onReadyCount.get());
+        assertNotNull("Metadata should not be null on replay", receivedMetadata.get());
+
+        // And: onReady is not emitted again (verify no additional invocations)
+        Thread.sleep(500);
+        assertEquals("Late handler should not be invoked again", 1, onReadyCount.get());
+
+        fixture.destroy();
+    }
+
+    /**
+     * Scenario: onReadyView is invoked on main thread when SDK_READY fires
+     * <p>
+     * Given the SDK is starting
+     * And a handler H is registered using addEventListener with onReadyView
+     * When SDK_READY fires
+     * Then onReadyView is invoked on the main/UI thread
+     */
+    @Test
+    public void sdkReadyViewListenerFiresOnMainThread() throws Exception {
+        // Given: SDK is starting with populated persistent storage
+        long testTimestamp = System.currentTimeMillis();
+        populateDatabaseWithCacheData(testTimestamp);
+
+        SplitClientConfig config = buildConfig();
+        SplitFactory factory = buildFactory(config);
+
+        AtomicInteger onReadyViewCount = new AtomicInteger(0);
+        CountDownLatch readyViewLatch = new CountDownLatch(1);
+
+        SplitClient client = factory.client(new Key("key_1"));
+
+        // And: a handler H is registered using addEventListener with onReadyView
+        client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onReadyView(SplitClient client, SdkReadyMetadata metadata) {
+                onReadyViewCount.incrementAndGet();
+                readyViewLatch.countDown();
+            }
+        });
+
+        // When: SDK_READY fires
+        boolean fired = readyViewLatch.await(10, TimeUnit.SECONDS);
+
+        // Then: onReadyView is invoked
+        assertTrue("onReadyView should fire", fired);
+        assertEquals("onReadyView should be invoked exactly once", 1, onReadyViewCount.get());
 
         factory.destroy();
     }
@@ -1209,11 +1354,11 @@ public class SdkEventsIntegrationTest {
      * Registers a handler for SDK_READY_FROM_CACHE that captures metadata and counts invocations.
      */
     private void registerCacheReadyHandler(SplitClient client, AtomicInteger count,
-                                           AtomicReference<SdkReadyFromCacheMetadata> metadata,
+                                           AtomicReference<SdkReadyMetadata> metadata,
                                            CountDownLatch latch) {
         client.addEventListener(new SdkEventListener() {
             @Override
-            public void onReadyFromCache(SplitClient client, SdkReadyFromCacheMetadata eventMetadata) {
+            public void onReadyFromCache(SplitClient client, SdkReadyMetadata eventMetadata) {
                 count.incrementAndGet();
                 if (metadata != null) metadata.set(eventMetadata);
                 if (latch != null) latch.countDown();

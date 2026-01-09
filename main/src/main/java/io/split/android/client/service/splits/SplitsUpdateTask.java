@@ -10,6 +10,7 @@ import java.util.List;
 
 import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.ServiceConstants;
@@ -84,8 +85,13 @@ public class SplitsUpdateTask implements SplitTask {
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED, rbsMetadata);
             }
 
-            // Fire sync complete AFTER update events
-            EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+            // Fire sync complete AFTER update events.
+            // If SDK_READY_FROM_CACHE already fired (cache path completed first), use initialCacheLoad=false
+            // and include the update timestamp from storage.
+            // Otherwise (sync completing first), use initialCacheLoad=true.
+            boolean cacheAlreadyLoaded = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE);
+            Long timestamp = cacheAlreadyLoaded ? mSplitsStorage.getUpdateTimestamp() : null;
+            EventMetadata syncMetadata = EventMetadataHelpers.createReadyMetadata(timestamp, !cacheAlreadyLoaded);
             mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
         }
         return result;

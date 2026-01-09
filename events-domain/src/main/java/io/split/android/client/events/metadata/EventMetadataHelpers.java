@@ -44,15 +44,15 @@ public class EventMetadataHelpers {
     }
 
     /**
-     * Creates metadata for the SDK_READY_FROM_CACHE event.
+     * Creates metadata for the SDK_READY and SDK_READY_FROM_CACHE events.
      *
      * @param lastUpdateTimestamp the timestamp when the cache was last updated, or null if not available
-     * @param freshInstall        true if this is a fresh install (no prior cache), false if loaded from cache
+     * @param initialCacheLoad    true if this is an initial cache load (no prior cache), false if loaded from cache
      * @return the event metadata
      */
-    public static EventMetadata createCacheReadyMetadata(@Nullable Long lastUpdateTimestamp, boolean freshInstall) {
+    public static EventMetadata createReadyMetadata(@Nullable Long lastUpdateTimestamp, boolean initialCacheLoad) {
         EventMetadataBuilder builder = new EventMetadataBuilder()
-                .put(MetadataKeys.FRESH_INSTALL, freshInstall);
+                .put(MetadataKeys.INITIAL_CACHE_LOAD, initialCacheLoad);
 
         if (lastUpdateTimestamp != null) {
             builder.put(MetadataKeys.LAST_UPDATE_TIMESTAMP, lastUpdateTimestamp);

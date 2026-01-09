@@ -16,6 +16,12 @@ import io.split.android.client.SplitClient;
  * <pre>{@code
  * client.addEventListener(new SdkEventListener() {
  *     @Override
+ *     public void onReady(SplitClient client, SdkReadyMetadata metadata) {
+ *         Boolean initialCacheLoad = metadata.isInitialCacheLoad();
+ *         // Handle ready on background thread
+ *     }
+ *
+ *     @Override
  *     public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
  *         SdkUpdateMetadata.Type type = metadata.getType(); // FLAGS_UPDATE or SEGMENTS_UPDATE
  *         List<String> names = metadata.getNames(); // updated flag/segment names
@@ -23,14 +29,39 @@ import io.split.android.client.SplitClient;
  *     }
  *
  *     @Override
- *     public void onReadyFromCacheView(SplitClient client, SdkReadyFromCacheMetadata metadata) {
+ *     public void onReadyFromCacheView(SplitClient client, SdkReadyMetadata metadata) {
  *         // Handle cache ready on main/UI thread
- *         Boolean freshInstall = metadata.isFreshInstall();
+ *         Boolean initialCacheLoad = metadata.isInitialCacheLoad();
  *     }
  * });
  * }</pre>
  */
 public abstract class SdkEventListener {
+
+    /**
+     * Called when SDK_READY event occurs, executed on a background thread.
+     * <p>
+     * Override this method to handle SDK_READY events with typed metadata.
+     *
+     * @param client   the Split client instance
+     * @param metadata the typed metadata containing ready state information
+     */
+    public void onReady(SplitClient client, SdkReadyMetadata metadata) {
+        // Default empty implementation
+    }
+
+    /**
+     * Called when SDK_READY event occurs, executed on the main/UI thread.
+     * <p>
+     * Override this method to handle SDK_READY events with typed metadata on the main thread.
+     * Use this when you need to update UI components.
+     *
+     * @param client   the Split client instance
+     * @param metadata the typed metadata containing ready state information
+     */
+    public void onReadyView(SplitClient client, SdkReadyMetadata metadata) {
+        // Default empty implementation
+    }
 
     /**
      * Called when SDK_UPDATE event occurs, executed on a background thread.
@@ -52,7 +83,7 @@ public abstract class SdkEventListener {
      * @param client   the Split client instance
      * @param metadata the typed metadata containing cache information
      */
-    public void onReadyFromCache(SplitClient client, SdkReadyFromCacheMetadata metadata) {
+    public void onReadyFromCache(SplitClient client, SdkReadyMetadata metadata) {
         // Default empty implementation
     }
 
@@ -78,8 +109,7 @@ public abstract class SdkEventListener {
      * @param client   the Split client instance
      * @param metadata the typed metadata containing cache information
      */
-    public void onReadyFromCacheView(SplitClient client, SdkReadyFromCacheMetadata metadata) {
+    public void onReadyFromCacheView(SplitClient client, SdkReadyMetadata metadata) {
         // Default empty implementation
     }
 }
-

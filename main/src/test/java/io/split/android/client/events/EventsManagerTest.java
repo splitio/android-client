@@ -393,12 +393,12 @@ public class EventsManagerTest {
         SplitEventsManager eventManager = new SplitEventsManager(new SplitTaskExecutorStub(), 0);
 
         CountDownLatch latch = new CountDownLatch(1);
-        AtomicReference<SdkReadyFromCacheMetadata> receivedMetadata = new AtomicReference<>();
+        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
 
         // Register an event listener
         eventManager.registerEventListener(new SdkEventListener() {
             @Override
-            public void onReadyFromCache(SplitClient client, SdkReadyFromCacheMetadata metadata) {
+            public void onReadyFromCache(SplitClient client, SdkReadyMetadata metadata) {
                 receivedMetadata.set(metadata);
                 latch.countDown();
             }
