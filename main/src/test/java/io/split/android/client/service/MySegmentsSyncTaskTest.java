@@ -71,7 +71,7 @@ public class MySegmentsSyncTaskTest {
     @Before
     public void setup() {
         mAutoCloseable = MockitoAnnotations.openMocks(this);
-        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(true);
+        when(mMySegmentsChangeChecker.getChangedSegments(any(), any())).thenReturn(Collections.singletonList("changed_segment"));
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null);
         loadMySegments();
     }
@@ -224,7 +224,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void syncCompleteEventIsEmittedWhenNoChangesInSegments() throws HttpFetcherException {
-        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(false);
+        when(mMySegmentsChangeChecker.getChangedSegments(any(), any())).thenReturn(Collections.emptyList());
         when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
 
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
@@ -237,7 +237,7 @@ public class MySegmentsSyncTaskTest {
     @Test
     public void membershipsSyncCompleteIsAlwaysFiredOnSuccessfulSync() throws HttpFetcherException {
         when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
-        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(true);
+        when(mMySegmentsChangeChecker.getChangedSegments(any(), any())).thenReturn(Collections.singletonList("changed_segment"));
 
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
         mTask.execute();
@@ -250,7 +250,7 @@ public class MySegmentsSyncTaskTest {
     @Test
     public void updateEventIsFiredWhenSegmentsHaveChanged() throws HttpFetcherException {
         when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
-        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(true);
+        when(mMySegmentsChangeChecker.getChangedSegments(any(), any())).thenReturn(Collections.singletonList("changed_segment"));
 
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
         mTask.execute();
@@ -260,7 +260,7 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void updatedEventIsEmittedWhenChangesInSegments() throws HttpFetcherException {
-        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(true);
+        when(mMySegmentsChangeChecker.getChangedSegments(any(), any())).thenReturn(Collections.singletonList("changed_segment"));
         when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(mMySegments);
 
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
@@ -271,8 +271,8 @@ public class MySegmentsSyncTaskTest {
 
     @Test
     public void largeSegmentsUpdatedEventIsEmittedWhenChangesInLargeSegmentsAndNotInSegments() throws HttpFetcherException {
-        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(any(), any())).thenReturn(false);
-        when(mMySegmentsChangeChecker.mySegmentsHaveChanged(Collections.emptyList(), Collections.singletonList("largesegment0"))).thenReturn(true);
+        when(mMySegmentsChangeChecker.getChangedSegments(any(), any())).thenReturn(Collections.emptyList());
+        when(mMySegmentsChangeChecker.getChangedSegments(Collections.emptyList(), Collections.singletonList("largesegment0"))).thenReturn(Collections.singletonList("largesegment0"));
         when(mMySegmentsFetcher.execute(noParams, null)).thenReturn(createChange(1L));
 
         mTask = new MySegmentsSyncTask(mMySegmentsFetcher, mySegmentsStorage, myLargeSegmentsStorage, false, mEventsManager, mMySegmentsChangeChecker, mTelemetryRuntimeProducer, MySegmentsSyncTaskConfig.get(), null, null, mock(BackoffCounter.class), 1);
