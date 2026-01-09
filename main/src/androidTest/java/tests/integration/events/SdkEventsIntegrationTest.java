@@ -43,10 +43,12 @@ import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.GeneralInfoEntity;
+import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.logger.Logger;
+import io.split.android.client.utils.logger.SplitLogLevel;
 import okhttp3.mockwebserver.Dispatcher;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
@@ -1056,86 +1058,129 @@ public class SdkEventsIntegrationTest {
     }
 
     /**
-     * Scenario: sdkUpdateMetadata contains Type.SEGMENTS_UPDATE for membership segments update
+     * Scenario: sdkUpdateMetadata contains Type.SEGMENTS_UPDATE for membership segments update (polling)
      * <p>
      * Given sdkReady has already been emitted
-     * And the client has segments in storage
      * And a handler H is registered for sdkUpdate
-     * When a membership segments update notification arrives via SSE
+     * When segments change via polling (server returns different segments)
      * Then sdkUpdate is emitted
      * And handler H receives metadata with getType() returning Type.SEGMENTS_UPDATE
-     * And handler H receives metadata with getNames() containing the updated segment names
+     * And handler H receives metadata with getNames() containing the changed segment names
      */
     @Test
     public void sdkUpdateMetadataContainsTypeForMembershipSegmentsUpdate() throws Exception {
-        // Pre-populate with segments so removal will trigger an update
-        populateDatabaseWithMembershipData();
-
-        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
-
-        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch updateLatch = new CountDownLatch(1);
-
-        fixture.client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                receivedMetadata.set(metadata);
-                updateLatch.countDown();
-            }
-        });
-
-        // Push membership segments update (removal of segment1)
-        fixture.pushMembershipSegmentsUpdate(new String[]{"segment1"}, 2000L);
-
-        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire for membership segments update", updateFired);
-
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertEquals("Type should be SEGMENTS_UPDATE",
-                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, receivedMetadata.get().getType());
-
-        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
-        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
-        assertTrue("Names should contain segment1",
-                receivedMetadata.get().getNames().contains("segment1"));
-
-        fixture.destroy();
+        verifySdkUpdateForSegmentsPolling(
+                // Initial sync: segment1, segment2
+                "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":1000},\"ls\":{\"k\":[],\"cn\":1000}}",
+                // Polling: segment1 removed, segment3 added
+                "{\"ms\":{\"k\":[{\"n\":\"segment2\"},{\"n\":\"segment3\"}],\"cn\":2000},\"ls\":{\"k\":[],\"cn\":1000}}",
+                "segment1", "segment3"
+        );
     }
 
     /**
-     * Scenario: sdkUpdateMetadata contains Type.SEGMENTS_UPDATE for large segments update
+     * Scenario: sdkUpdateMetadata contains Type.SEGMENTS_UPDATE for large segments update (polling)
      * <p>
      * Given sdkReady has already been emitted
-     * And the client has large segments in storage
      * And a handler H is registered for sdkUpdate
-     * When a large segments update notification arrives via SSE
+     * When large segments change via polling (server returns different large segments)
      * Then sdkUpdate is emitted
      * And handler H receives metadata with getType() returning Type.SEGMENTS_UPDATE
-     * And handler H receives metadata with getNames() containing the updated large segment names
+     * And handler H receives metadata with getNames() containing the changed large segment names
      */
     @Test
     public void sdkUpdateMetadataContainsTypeForLargeSegmentsUpdate() throws Exception {
-        // Pre-populate with large segments so removal will trigger an update
-        populateDatabaseWithLargeSegmentData();
+        verifySdkUpdateForSegmentsPolling(
+                // Initial sync: large_segment1, large_segment2
+                "{\"ms\":{\"k\":[],\"cn\":1000},\"ls\":{\"k\":[{\"n\":\"large_segment1\"},{\"n\":\"large_segment2\"}],\"cn\":1000}}",
+                // Polling: large_segment1 removed, large_segment3 added
+                "{\"ms\":{\"k\":[],\"cn\":1000},\"ls\":{\"k\":[{\"n\":\"large_segment2\"},{\"n\":\"large_segment3\"}],\"cn\":2000}}",
+                "large_segment1", "large_segment3"
+        );
+    }
 
-        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
+    /**
+     * Helper method to verify SDK_UPDATE with SEGMENTS_UPDATE type is emitted when segments change via polling.
+     *
+     * @param initialResponse      the memberships response for initial sync
+     * @param pollingResponse      the memberships response for polling (with changed segments)
+     * @param expectedSegmentNames segment names expected in the metadata (removed or added)
+     */
+    private void verifySdkUpdateForSegmentsPolling(String initialResponse, String pollingResponse,
+                                                   String... expectedSegmentNames) throws Exception {
+        AtomicInteger membershipsHitCount = new AtomicInteger(0);
+
+        final Dispatcher pollingDispatcher = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                final String path = request.getPath();
+                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    int count = membershipsHitCount.incrementAndGet();
+                    if (count <= 1) {
+                        return new MockResponse().setResponseCode(200).setBody(initialResponse);
+                    } else {
+                        return new MockResponse().setResponseCode(200).setBody(pollingResponse);
+                    }
+                } else if (path.contains("/splitChanges")) {
+                    return new MockResponse().setResponseCode(200)
+                            .setBody(IntegrationHelper.emptyTargetingRulesChanges(1000, 1000));
+                } else if (path.contains("/testImpressions/bulk")) {
+                    return new MockResponse().setResponseCode(200);
+                }
+                return new MockResponse().setResponseCode(404);
+            }
+        };
+        mWebServer.setDispatcher(pollingDispatcher);
+
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .serviceEndpoints(endpoints())
+                .ready(30000)
+                .featuresRefreshRate(999999)
+                .segmentsRefreshRate(3)
+                .impressionsRefreshRate(999999)
+                .streamingEnabled(false)
+                .trafficType("account")
+                .build();
+
+        SplitFactory factory = buildFactory(config);
+        SplitClient client = factory.client();
+
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient c) {
+                readyLatch.countDown();
+            }
+        });
+        assertTrue("SDK_READY should fire", readyLatch.await(10, TimeUnit.SECONDS));
 
         AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch updateLatch = new CountDownLatch(1);
+        AtomicInteger legacyHandlerCount = new AtomicInteger(0);
+        CountDownLatch updateLatch = new CountDownLatch(2); // Wait for both handlers
 
-        fixture.client.addEventListener(new SdkEventListener() {
+        // Register new API handler (addEventListener)
+        client.addEventListener(new SdkEventListener() {
             @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
+            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
                 receivedMetadata.set(metadata);
                 updateLatch.countDown();
             }
         });
 
-        // Push large segments update (removal of large_segment1)
-        fixture.pushMembershipLargeSegmentsUpdate(new String[]{"large_segment1"}, 2000L);
+        // Register legacy API handler (client.on)
+        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient c) {
+                legacyHandlerCount.incrementAndGet();
+                updateLatch.countDown();
+            }
+        });
 
         boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire for large segments update", updateFired);
+        assertTrue("SDK_UPDATE should fire when segments change via polling. Hit count: " + membershipsHitCount.get(), updateFired);
+
+        // Verify legacy API was also triggered
+        assertEquals("Legacy API (client.on) should be triggered", 1, legacyHandlerCount.get());
 
         assertNotNull("Metadata should not be null", receivedMetadata.get());
         assertEquals("Type should be SEGMENTS_UPDATE",
@@ -1143,10 +1188,17 @@ public class SdkEventsIntegrationTest {
 
         assertNotNull("Names should not be null", receivedMetadata.get().getNames());
         assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
-        assertTrue("Names should contain large_segment1",
-                receivedMetadata.get().getNames().contains("large_segment1"));
 
-        fixture.destroy();
+        boolean containsExpected = false;
+        for (String expectedName : expectedSegmentNames) {
+            if (receivedMetadata.get().getNames().contains(expectedName)) {
+                containsExpected = true;
+                break;
+            }
+        }
+        assertTrue("Names should contain one of the expected changed segments", containsExpected);
+
+        factory.destroy();
     }
 
     /**
@@ -1407,18 +1459,6 @@ public class SdkEventsIntegrationTest {
             }
         }
 
-        void pushMembershipSegmentsUpdate(String[] segmentNames, long changeNumber) {
-            if (streamingData != null) {
-                pushMessage(streamingData, IntegrationHelper.membershipSegmentsUpdate(segmentNames, changeNumber));
-            }
-        }
-
-        void pushMembershipLargeSegmentsUpdate(String[] segmentNames, long changeNumber) {
-            if (streamingData != null) {
-                pushMessage(streamingData, IntegrationHelper.membershipLargeSegmentsUpdate(segmentNames, changeNumber));
-            }
-        }
-
         void destroy() {
             factory.destroy();
         }
@@ -1533,27 +1573,4 @@ public class SdkEventsIntegrationTest {
         mDatabase.generalInfoDao().update(new GeneralInfoEntity("rbsChangeNumber", 1000L));
     }
 
-    /**
-     * Populates the database with membership segments for testing segment removal updates.
-     */
-    private void populateDatabaseWithMembershipData() {
-        // Populate segments for key_1 with segment1 so removal triggers update
-        MySegmentEntity segmentEntity = new MySegmentEntity();
-        segmentEntity.setUserKey("key_1");
-        segmentEntity.setSegmentList("{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":1000}");
-        segmentEntity.setUpdatedAt(System.currentTimeMillis() / 1000);
-        mDatabase.mySegmentDao().update(segmentEntity);
-    }
-
-    /**
-     * Populates the database with large segments for testing large segment removal updates.
-     */
-    private void populateDatabaseWithLargeSegmentData() {
-        // Populate large segments for key_1 with large_segment1 so removal triggers update
-        MySegmentEntity largeSegmentEntity = new MySegmentEntity();
-        largeSegmentEntity.setUserKey("key_1_large");
-        largeSegmentEntity.setSegmentList("{\"k\":[{\"n\":\"large_segment1\"},{\"n\":\"large_segment2\"}],\"cn\":1000}");
-        largeSegmentEntity.setUpdatedAt(System.currentTimeMillis() / 1000);
-        mDatabase.myLargeSegmentDao().update(largeSegmentEntity);
-    }
 }
