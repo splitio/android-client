@@ -1111,95 +1111,18 @@ public class SdkEventsIntegrationTest {
      */
     @Test
     public void twoDistinctSdkUpdateEventsWhenBothSegmentsAndLargeSegmentsChange() throws Exception {
-        AtomicInteger membershipsHitCount = new AtomicInteger(0);
+        // Initial sync: segment1, segment2 in ms; large_segment1, large_segment2 in ls
+        String initialResponse = "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":1000},\"ls\":{\"k\":[{\"n\":\"large_segment1\"},{\"n\":\"large_segment2\"}],\"cn\":1000}}";
+        // Polling: both ms and ls change
+        String pollingResponse = "{\"ms\":{\"k\":[{\"n\":\"segment2\"},{\"n\":\"segment3\"}],\"cn\":2000},\"ls\":{\"k\":[{\"n\":\"large_segment2\"},{\"n\":\"large_segment3\"}],\"cn\":2000}}";
 
-        final Dispatcher pollingDispatcher = new Dispatcher() {
-            @Override
-            public MockResponse dispatch(RecordedRequest request) {
-                final String path = request.getPath();
-                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
-                    int count = membershipsHitCount.incrementAndGet();
-                    if (count <= 1) {
-                        // Initial sync: segment1, segment2 in ms; large_segment1, large_segment2 in ls
-                        return new MockResponse().setResponseCode(200)
-                                .setBody("{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":1000},\"ls\":{\"k\":[{\"n\":\"large_segment1\"},{\"n\":\"large_segment2\"}],\"cn\":1000}}");
-                    } else {
-                        // Polling: both ms and ls change
-                        // ms: segment1 removed, segment3 added
-                        // ls: large_segment1 removed, large_segment3 added
-                        return new MockResponse().setResponseCode(200)
-                                .setBody("{\"ms\":{\"k\":[{\"n\":\"segment2\"},{\"n\":\"segment3\"}],\"cn\":2000},\"ls\":{\"k\":[{\"n\":\"large_segment2\"},{\"n\":\"large_segment3\"}],\"cn\":2000}}");
-                    }
-                } else if (path.contains("/splitChanges")) {
-                    return new MockResponse().setResponseCode(200)
-                            .setBody(IntegrationHelper.emptyTargetingRulesChanges(1000, 1000));
-                } else if (path.contains("/testImpressions/bulk")) {
-                    return new MockResponse().setResponseCode(200);
-                }
-                return new MockResponse().setResponseCode(404);
-            }
-        };
-        mWebServer.setDispatcher(pollingDispatcher);
-
-        SplitClientConfig config = new TestableSplitConfigBuilder()
-                .serviceEndpoints(endpoints())
-                .ready(30000)
-                .featuresRefreshRate(999999)
-                .segmentsRefreshRate(3)
-                .impressionsRefreshRate(999999)
-                .streamingEnabled(false)
-                .trafficType("account")
-                .build();
-
-        SplitFactory factory = buildFactory(config);
-        SplitClient client = factory.client();
-
-        CountDownLatch readyLatch = new CountDownLatch(1);
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient c) {
-                readyLatch.countDown();
-            }
-        });
-        assertTrue("SDK_READY should fire", readyLatch.await(10, TimeUnit.SECONDS));
-
-        List<SdkUpdateMetadata> receivedMetadataList = new ArrayList<>();
-        AtomicInteger legacyHandlerCount = new AtomicInteger(0);
-        CountDownLatch updateLatch = new CountDownLatch(4); // 2 events x 2 handlers (new API + legacy)
-
-        // Register new API handler (addEventListener)
-        client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
-                synchronized (receivedMetadataList) {
-                    receivedMetadataList.add(metadata);
-                }
-                updateLatch.countDown();
-            }
-        });
-
-        // Register legacy API handler (client.on)
-        client.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient c) {
-                legacyHandlerCount.incrementAndGet();
-                updateLatch.countDown();
-            }
-        });
-
-        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire twice when both segments and large segments change. " +
-                "Hit count: " + membershipsHitCount.get() + ", metadata count: " + receivedMetadataList.size() +
-                ", legacy count: " + legacyHandlerCount.get(), updateFired);
-
-        // Verify legacy API was triggered twice (once per SDK_UPDATE event)
-        assertEquals("Legacy API (client.on) should be triggered twice", 2, legacyHandlerCount.get());
+        List<SdkUpdateMetadata> metadataList = waitForSegmentsPollingUpdates(initialResponse, pollingResponse, 2);
 
         // Verify we received 2 distinct SDK_UPDATE events
-        assertEquals("Should receive 2 SDK_UPDATE events", 2, receivedMetadataList.size());
+        assertEquals("Should receive 2 SDK_UPDATE events", 2, metadataList.size());
 
         // Both events should be SEGMENTS_UPDATE type
-        for (SdkUpdateMetadata metadata : receivedMetadataList) {
+        for (SdkUpdateMetadata metadata : metadataList) {
             assertNotNull("Metadata should not be null", metadata);
             assertEquals("Type should be SEGMENTS_UPDATE",
                     SdkUpdateMetadata.Type.SEGMENTS_UPDATE, metadata.getType());
@@ -1209,7 +1132,7 @@ public class SdkEventsIntegrationTest {
 
         // Collect all segment names from both events
         List<String> allSegmentNames = new ArrayList<>();
-        for (SdkUpdateMetadata metadata : receivedMetadataList) {
+        for (SdkUpdateMetadata metadata : metadataList) {
             allSegmentNames.addAll(metadata.getNames());
         }
 
@@ -1219,8 +1142,6 @@ public class SdkEventsIntegrationTest {
 
         assertTrue("Should have regular segment changes", hasRegularSegmentChange);
         assertTrue("Should have large segment changes", hasLargeSegmentChange);
-
-        factory.destroy();
     }
 
     /**
@@ -1232,6 +1153,38 @@ public class SdkEventsIntegrationTest {
      */
     private void verifySdkUpdateForSegmentsPolling(String initialResponse, String pollingResponse,
                                                    String... expectedSegmentNames) throws Exception {
+        List<SdkUpdateMetadata> metadataList = waitForSegmentsPollingUpdates(initialResponse, pollingResponse, 1);
+
+        assertEquals("Should receive 1 SDK_UPDATE event", 1, metadataList.size());
+
+        SdkUpdateMetadata metadata = metadataList.get(0);
+        assertNotNull("Metadata should not be null", metadata);
+        assertEquals("Type should be SEGMENTS_UPDATE",
+                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, metadata.getType());
+
+        assertNotNull("Names should not be null", metadata.getNames());
+        assertFalse("Names should not be empty", metadata.getNames().isEmpty());
+
+        boolean containsExpected = false;
+        for (String expectedName : expectedSegmentNames) {
+            if (metadata.getNames().contains(expectedName)) {
+                containsExpected = true;
+                break;
+            }
+        }
+        assertTrue("Names should contain one of the expected changed segments", containsExpected);
+    }
+
+    /**
+     * Helper method that sets up polling for segments and waits for the expected number of SDK_UPDATE events.
+     *
+     * @param initialResponse    the memberships response for initial sync
+     * @param pollingResponse    the memberships response for polling (with changed segments)
+     * @param expectedEventCount the number of SDK_UPDATE events to wait for
+     * @return list of received SdkUpdateMetadata from the events
+     */
+    private List<SdkUpdateMetadata> waitForSegmentsPollingUpdates(String initialResponse, String pollingResponse,
+                                                                   int expectedEventCount) throws Exception {
         AtomicInteger membershipsHitCount = new AtomicInteger(0);
 
         final Dispatcher pollingDispatcher = new Dispatcher() {
@@ -1278,15 +1231,18 @@ public class SdkEventsIntegrationTest {
         });
         assertTrue("SDK_READY should fire", readyLatch.await(10, TimeUnit.SECONDS));
 
-        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
+        List<SdkUpdateMetadata> receivedMetadataList = new ArrayList<>();
         AtomicInteger legacyHandlerCount = new AtomicInteger(0);
-        CountDownLatch updateLatch = new CountDownLatch(2); // Wait for both handlers
+        // Wait for expectedEventCount events x 2 handlers (new API + legacy)
+        CountDownLatch updateLatch = new CountDownLatch(expectedEventCount * 2);
 
         // Register new API handler (addEventListener)
         client.addEventListener(new SdkEventListener() {
             @Override
             public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
-                receivedMetadata.set(metadata);
+                synchronized (receivedMetadataList) {
+                    receivedMetadataList.add(metadata);
+                }
                 updateLatch.countDown();
             }
         });
@@ -1301,28 +1257,17 @@ public class SdkEventsIntegrationTest {
         });
 
         boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire when segments change via polling. Hit count: " + membershipsHitCount.get(), updateFired);
+        assertTrue("SDK_UPDATE should fire " + expectedEventCount + " time(s). " +
+                "Hit count: " + membershipsHitCount.get() + ", metadata count: " + receivedMetadataList.size() +
+                ", legacy count: " + legacyHandlerCount.get(), updateFired);
 
-        // Verify legacy API was also triggered
-        assertEquals("Legacy API (client.on) should be triggered", 1, legacyHandlerCount.get());
-
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertEquals("Type should be SEGMENTS_UPDATE",
-                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, receivedMetadata.get().getType());
-
-        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
-        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
-
-        boolean containsExpected = false;
-        for (String expectedName : expectedSegmentNames) {
-            if (receivedMetadata.get().getNames().contains(expectedName)) {
-                containsExpected = true;
-                break;
-            }
-        }
-        assertTrue("Names should contain one of the expected changed segments", containsExpected);
+        // Verify legacy API was triggered the expected number of times
+        assertEquals("Legacy API (client.on) should be triggered " + expectedEventCount + " time(s)",
+                expectedEventCount, legacyHandlerCount.get());
 
         factory.destroy();
+
+        return receivedMetadataList;
     }
 
     /**
