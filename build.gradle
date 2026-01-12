@@ -19,7 +19,7 @@ apply plugin: 'com.vanniktech.maven.publish'
 apply from: "$rootDir/gradle/jacoco-root.gradle"
 
 ext {
-    splitVersion = '5.5.0-rc5'
+    splitVersion = '5.5.0-rc6'
     jacocoVersion = '0.8.8'
 }
 
