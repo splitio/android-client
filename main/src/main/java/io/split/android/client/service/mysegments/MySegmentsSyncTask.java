@@ -274,14 +274,13 @@ public class MySegmentsSyncTask implements SplitTask {
 
         if (!changedSegments.isEmpty()) {
             Logger.v("New segments: " + segmentsResult.newSegments);
-            EventMetadata metadata = EventMetadataHelpers.createUpdatedSegmentsMetadata(changedSegments);
-            mEventsManager.notifyInternalEvent(mUpdateEvent, metadata);
+            mEventsManager.notifyInternalEvent(mUpdateEvent, EventMetadataHelpers.createUpdatedSegmentsMetadata());
         }
 
         if (!changedLargeSegments.isEmpty()) {
             Logger.v("New large segments: " + largeSegmentsResult.newSegments);
-            EventMetadata metadata = EventMetadataHelpers.createUpdatedSegmentsMetadata(changedLargeSegments);
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED, metadata);
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED,
+                    EventMetadataHelpers.createUpdatedSegmentsMetadata());
         }
 
         // Fire sync complete AFTER update events. This ensures SDK_READY triggers after

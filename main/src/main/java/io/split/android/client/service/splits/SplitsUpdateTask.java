@@ -74,14 +74,15 @@ public class SplitsUpdateTask implements SplitTask {
             // Fire *_UPDATED events BEFORE sync complete. This order is important:
             // if we fire TARGETING_RULES_SYNC_COMPLETE first, it may trigger SDK_READY,
             // and then the *_UPDATED events would immediately trigger SDK_UPDATE during initial sync.
+            //
+            // Use If splits changed, only fire SPLITS_UPDATED (FLAGS_UPDATE).
+            // RBS changes are only relevant when flags DIDN'T change.
             if (mSplitsSyncHelper.splitsHaveChanged()) {
                 EventMetadata metadata = createUpdatedFlagsMetadata();
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
-            }
-
-            if (mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()) {
-                EventMetadata rbsMetadata = createUpdatedRbsMetadata();
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED, rbsMetadata);
+            } else if (mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()) {
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED,
+                        EventMetadataHelpers.createUpdatedSegmentsMetadata());
             }
 
             // Fire sync complete AFTER update events
@@ -94,11 +95,6 @@ public class SplitsUpdateTask implements SplitTask {
     private EventMetadata createUpdatedFlagsMetadata() {
         List<String> updatedSplitNames = mSplitsSyncHelper.getLastUpdatedFlagNames();
         return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
-    }
-
-    private EventMetadata createUpdatedRbsMetadata() {
-        List<String> updatedRbsNames = mSplitsSyncHelper.getLastUpdatedRbsNames();
-        return EventMetadataHelpers.createUpdatedSegmentsMetadata(updatedRbsNames);
     }
 
     @VisibleForTesting

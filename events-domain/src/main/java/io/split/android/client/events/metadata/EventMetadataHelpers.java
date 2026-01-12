@@ -3,6 +3,7 @@ package io.split.android.client.events.metadata;
 import androidx.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
@@ -31,15 +32,16 @@ public class EventMetadataHelpers {
     }
 
     /**
-     * Creates metadata for SDK_UPDATE events when rule-based segments are updated.
+     * Creates metadata for SDK_UPDATE events when segments are updated.
+     * <p>
+     * SEGMENTS_UPDATE always has empty names - segment names are not included in the metadata.
      *
-     * @param updatedSegmentNames the list of rule-based segment names that were updated
-     * @return the event metadata with TYPE=SEGMENTS_UPDATE and NAMES containing the segment names
+     * @return the event metadata with TYPE=SEGMENTS_UPDATE and empty NAMES list
      */
-    public static EventMetadata createUpdatedSegmentsMetadata(List<String> updatedSegmentNames) {
+    public static EventMetadata createUpdatedSegmentsMetadata() {
         return new EventMetadataBuilder()
                 .put(MetadataKeys.TYPE, MetadataKeys.TYPE_SEGMENTS_UPDATE)
-                .put(MetadataKeys.NAMES, new ArrayList<>(new HashSet<>(updatedSegmentNames)))
+                .put(MetadataKeys.NAMES, Collections.emptyList())
                 .build();
     }
 

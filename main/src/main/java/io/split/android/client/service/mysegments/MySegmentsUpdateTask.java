@@ -4,14 +4,11 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Set;
 
 import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
-import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -100,9 +97,7 @@ public class MySegmentsUpdateTask implements SplitTask {
 
     private void updateAndNotify(Set<String> segments) {
         mMySegmentsStorage.set(SegmentsChange.create(segments, mChangeNumber));
-        List<String> changedSegmentNames = new ArrayList<>(mSegmentNames);
-        EventMetadata metadata = EventMetadataHelpers.createUpdatedSegmentsMetadata(changedSegmentNames);
-        mEventsManager.notifyInternalEvent(mUpdateEvent, metadata);
+        mEventsManager.notifyInternalEvent(mUpdateEvent, EventMetadataHelpers.createUpdatedSegmentsMetadata());
     }
 
     private void logError(String message) {

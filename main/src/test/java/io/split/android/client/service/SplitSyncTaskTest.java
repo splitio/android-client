@@ -327,6 +327,28 @@ public class SplitSyncTaskTest {
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
     }
 
+    @Test
+    public void ruleBasedSegmentsUpdatedIsNotFiredWhenBothSplitsAndRbsChanged() {
+        // When both splits and RBS change, only SPLITS_UPDATED should fire (else-if logic)
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+        when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(0L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES))).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mSplitsSyncHelper.splitsHaveChanged()).thenReturn(true);
+        when(mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()).thenReturn(true);
+        when(mSplitsSyncHelper.getLastUpdatedFlagNames()).thenReturn(Arrays.asList("flag1"));
+
+        mTask.execute();
+
+        // SPLITS_UPDATED should fire
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
+        // RULE_BASED_SEGMENTS_UPDATED should NOT fire (else-if logic)
+        verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED), any());
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
+    }
+
     @After
     public void tearDown() {
         reset(mSplitsStorage);

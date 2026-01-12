@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
 
 import org.junit.After;
@@ -248,7 +249,7 @@ public class SdkEventsIntegrationTest {
         CountDownLatch readyLatch = new CountDownLatch(1);
 
         SplitClient client = factory.client(new Key("key_1"));
-        
+
         // Register handlers immediately
         client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
             @Override
@@ -279,10 +280,10 @@ public class SdkEventsIntegrationTest {
 
         // Then: sdkReady is emitted exactly once
         assertTrue("SDK_READY should fire after SDK_READY_FROM_CACHE and sync completion. " +
-                "Cache fired: " + cacheHandlerCount.get() + ", Ready fired: " + readyHandlerCount.get(), 
+                "Cache fired: " + cacheHandlerCount.get() + ", Ready fired: " + readyHandlerCount.get(),
                 readyFired);
         assertEquals("Ready handler should be invoked exactly once", 1, readyHandlerCount.get());
-        
+
         // Verify both events fired
         assertEquals("SDK_READY_FROM_CACHE should fire", 1, cacheHandlerCount.get());
         assertEquals("SDK_READY should fire after SDK_READY_FROM_CACHE", 1, readyHandlerCount.get());
@@ -475,7 +476,7 @@ public class SdkEventsIntegrationTest {
         // When: a second handler H2 is registered for sdkUpdate after one sdkUpdate has already fired
         CountDownLatch secondUpdateLatch = new CountDownLatch(2);
         secondUpdateLatchRef.set(secondUpdateLatch);
-        
+
         fixture.client.addEventListener(new SdkEventListener() {
             @Override
             public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
@@ -490,7 +491,7 @@ public class SdkEventsIntegrationTest {
 
         // Ensure handlers are registered and first update is fully processed before pushing second update
         Thread.sleep(500);
-        
+
         // Send keep-alive to ensure SSE connection is still active
         if (fixture.streamingData != null) {
             TestingHelper.pushKeepAlive(fixture.streamingData);
@@ -502,8 +503,8 @@ public class SdkEventsIntegrationTest {
 
         // Then: both H1 and H2 are invoked for that second sdkUpdate
         boolean secondUpdateFired = secondUpdateLatch.await(15, TimeUnit.SECONDS);
-        assertTrue("Second SDK_UPDATE should fire. H1 count: " + handler1Count.get() + 
-                ", H2 count: " + handler2Count.get() + 
+        assertTrue("Second SDK_UPDATE should fire. H1 count: " + handler1Count.get() +
+                ", H2 count: " + handler2Count.get() +
                 ", secondUpdateLatch count: " + secondUpdateLatch.getCount(), secondUpdateFired);
 
         // H1 should now have 2 total invocations (1 from first + 1 from second)
@@ -773,10 +774,10 @@ public class SdkEventsIntegrationTest {
         // are stored in a HashSet which doesn't guarantee iteration order.
         // The important thing is that all handlers were invoked and H3 was invoked
         // even though H2 threw an exception (error isolation).
-        assertTrue("All handlers should have been assigned order numbers", 
+        assertTrue("All handlers should have been assigned order numbers",
                 handler1Order.get() > 0 && handler2Order.get() > 0 && handler3Order.get() > 0);
         assertEquals("Order counter should be 3 (one for each handler)", 3, orderCounter.get());
-        
+
         // Verify error isolation: H3 was invoked even though H2 threw an exception
         // This is the key assertion - that errors don't prevent subsequent handlers from executing
         assertTrue("H3 should be invoked even if H2 throws (error isolation)", handler3Count.get() == 1);
@@ -927,7 +928,7 @@ public class SdkEventsIntegrationTest {
      * This test verifies that when a split update notification arrives via SSE,
      * the SDK_UPDATE event is emitted to all clients in the factory.
      * <p>
-     * Note: True client-scoped events like mySegmentsUpdated require specific streaming 
+     * Note: True client-scoped events like mySegmentsUpdated require specific streaming
      * notifications targeted at individual user keys. This test demonstrates the difference
      * by showing that SDK-scoped split updates affect all clients equally.
      */
@@ -1021,9 +1022,9 @@ public class SdkEventsIntegrationTest {
      * When a rule-based segment update notification arrives via SSE
      * Then sdkUpdate is emitted
      * And handler H receives metadata with getType() returning Type.SEGMENTS_UPDATE
-     * And handler H receives metadata with getNames() containing the updated RBS names
+     * And handler H receives metadata with getNames() returning an empty list
      * <p>
-     * Note: SEGMENTS_UPDATE is for rule-based segments (RBS) ONLY, not for memberships.
+     * Note: SEGMENTS_UPDATE always has empty names (segment names are not included).
      */
     @Test
     public void sdkUpdateMetadataContainsTypeForSegmentsUpdate() throws Exception {
@@ -1050,11 +1051,120 @@ public class SdkEventsIntegrationTest {
                 SdkUpdateMetadata.Type.SEGMENTS_UPDATE, receivedMetadata.get().getType());
 
         assertNotNull("Names should not be null", receivedMetadata.get().getNames());
-        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
-        assertTrue("Names should contain rbs_test",
-                receivedMetadata.get().getNames().contains("rbs_test"));
+        assertTrue("Names should be empty for SEGMENTS_UPDATE", receivedMetadata.get().getNames().isEmpty());
 
         fixture.destroy();
+    }
+
+    /**
+     * Scenario: Only FLAGS_UPDATE fires when both flags and RBS change together
+     * <p>
+     * Given sdkReady has already been emitted
+     * And a handler H is registered for sdkUpdate
+     * When a polling sync returns changes to both flags AND rule-based segments
+     * Then only ONE sdkUpdate is emitted
+     * And handler H receives metadata with getType() returning Type.FLAGS_UPDATE
+     * And SEGMENTS_UPDATE is NOT fired (RBS changes are subsumed by FLAGS_UPDATE)
+     */
+    @Test
+    public void sdkUpdateFiresOnlyOnceWhenBothFlagsAndRbsChange() throws Exception {
+        // Track number of /splitChanges calls
+        AtomicInteger splitChangesHitCount = new AtomicInteger(0);
+
+        final Dispatcher pollingDispatcher = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                final String path = request.getPath();
+                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
+                } else if (path.contains("/splitChanges")) {
+                    int count = splitChangesHitCount.incrementAndGet();
+                    if (count <= 1) {
+                        // Initial sync: empty
+                        return new MockResponse().setResponseCode(200)
+                                .setBody(IntegrationHelper.emptyTargetingRulesChanges(1000, 1000));
+                    } else {
+                        // Polling sync: return BOTH flag and RBS changes
+                        // s and t must be equal to signal end of sync loop
+                        String responseWithBothChanges = "{\"ff\":{\"s\":2000,\"t\":2000,\"d\":[" +
+                                "{\"trafficTypeName\":\"user\",\"name\":\"test_split\",\"status\":\"ACTIVE\"," +
+                                "\"killed\":false,\"defaultTreatment\":\"off\",\"changeNumber\":2000," +
+                                "\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\"," +
+                                "\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"ALL_KEYS\",\"negate\":false}]}," +
+                                "\"partitions\":[{\"treatment\":\"on\",\"size\":100}]}]}" +
+                                "]},\"rbs\":{\"s\":2000,\"t\":2000,\"d\":[" +
+                                "{\"name\":\"test_rbs\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\"," +
+                                "\"excluded\":{\"keys\":[],\"segments\":[]}," +
+                                "\"conditions\":[{\"matcherGroup\":{\"combiner\":\"AND\"," +
+                                "\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"ALL_KEYS\",\"negate\":false}]}}]}" +
+                                "]}}";
+                        return new MockResponse().setResponseCode(200).setBody(responseWithBothChanges);
+                    }
+                } else if (path.contains("/testImpressions/bulk")) {
+                    return new MockResponse().setResponseCode(200);
+                }
+                return new MockResponse().setResponseCode(404);
+            }
+        };
+        mWebServer.setDispatcher(pollingDispatcher);
+
+        // Use polling mode with short refresh rate to trigger sync quickly
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .serviceEndpoints(endpoints())
+                .ready(30000)
+                .featuresRefreshRate(3) // Poll every 3 seconds
+                .segmentsRefreshRate(999999)
+                .impressionsRefreshRate(999999)
+                .streamingEnabled(false)
+                .trafficType("account")
+                .build();
+
+        SplitFactory factory = buildFactory(config);
+        SplitClient client = factory.client();
+
+        // Wait for SDK_READY
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient c) {
+                readyLatch.countDown();
+            }
+        });
+        assertTrue("SDK_READY should fire", readyLatch.await(10, TimeUnit.SECONDS));
+
+        // Register handler to count SDK_UPDATE events and capture metadata
+        List<SdkUpdateMetadata> receivedMetadataList = new ArrayList<>();
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
+                synchronized (receivedMetadataList) {
+                    receivedMetadataList.add(metadata);
+                }
+                updateLatch.countDown();
+            }
+        });
+
+        // Wait for SDK_UPDATE (triggered by polling that returns both flag and RBS changes)
+        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
+        assertTrue("SDK_UPDATE should fire", updateFired);
+
+        // Wait a bit to ensure no additional events fire
+        Thread.sleep(1000);
+
+        // Verify only ONE SDK_UPDATE was fired
+        synchronized (receivedMetadataList) {
+            assertEquals("Should receive exactly 1 SDK_UPDATE event (not 2)", 1, receivedMetadataList.size());
+
+            // Verify it's FLAGS_UPDATE (not SEGMENTS_UPDATE)
+            SdkUpdateMetadata metadata = receivedMetadataList.get(0);
+            assertNotNull("Metadata should not be null", metadata);
+            assertEquals("Type should be FLAGS_UPDATE (not SEGMENTS_UPDATE)",
+                    SdkUpdateMetadata.Type.FLAGS_UPDATE, metadata.getType());
+        }
+
+        factory.destroy();
     }
 
     /**
@@ -1065,16 +1175,15 @@ public class SdkEventsIntegrationTest {
      * When segments change via polling (server returns different segments)
      * Then sdkUpdate is emitted
      * And handler H receives metadata with getType() returning Type.SEGMENTS_UPDATE
-     * And handler H receives metadata with getNames() containing the changed segment names
+     * And handler H receives metadata with getNames() returning an empty list
      */
     @Test
     public void sdkUpdateMetadataContainsTypeForMembershipSegmentsUpdate() throws Exception {
-        verifySdkUpdateForSegmentsPolling(
+        verifySdkUpdateForSegmentsPollingWithEmptyNames(
                 // Initial sync: segment1, segment2
                 "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":1000},\"ls\":{\"k\":[],\"cn\":1000}}",
                 // Polling: segment1 removed, segment3 added
-                "{\"ms\":{\"k\":[{\"n\":\"segment2\"},{\"n\":\"segment3\"}],\"cn\":2000},\"ls\":{\"k\":[],\"cn\":1000}}",
-                "segment1", "segment3"
+                "{\"ms\":{\"k\":[{\"n\":\"segment2\"},{\"n\":\"segment3\"}],\"cn\":2000},\"ls\":{\"k\":[],\"cn\":1000}}"
         );
     }
 
@@ -1086,16 +1195,15 @@ public class SdkEventsIntegrationTest {
      * When large segments change via polling (server returns different large segments)
      * Then sdkUpdate is emitted
      * And handler H receives metadata with getType() returning Type.SEGMENTS_UPDATE
-     * And handler H receives metadata with getNames() containing the changed large segment names
+     * And handler H receives metadata with getNames() returning an empty list
      */
     @Test
     public void sdkUpdateMetadataContainsTypeForLargeSegmentsUpdate() throws Exception {
-        verifySdkUpdateForSegmentsPolling(
+        verifySdkUpdateForSegmentsPollingWithEmptyNames(
                 // Initial sync: large_segment1, large_segment2
                 "{\"ms\":{\"k\":[],\"cn\":1000},\"ls\":{\"k\":[{\"n\":\"large_segment1\"},{\"n\":\"large_segment2\"}],\"cn\":1000}}",
                 // Polling: large_segment1 removed, large_segment3 added
-                "{\"ms\":{\"k\":[],\"cn\":1000},\"ls\":{\"k\":[{\"n\":\"large_segment2\"},{\"n\":\"large_segment3\"}],\"cn\":2000}}",
-                "large_segment1", "large_segment3"
+                "{\"ms\":{\"k\":[],\"cn\":1000},\"ls\":{\"k\":[{\"n\":\"large_segment2\"},{\"n\":\"large_segment3\"}],\"cn\":2000}}"
         );
     }
 
@@ -1106,8 +1214,7 @@ public class SdkEventsIntegrationTest {
      * And a handler H is registered for sdkUpdate
      * When a single memberships response contains changes to both segments and large segments
      * Then two SDK_UPDATE events are emitted
-     * And one event has metadata with getType() returning Type.SEGMENTS_UPDATE and names containing segment changes
-     * And another event has metadata with getType() returning Type.SEGMENTS_UPDATE and names containing large segment changes
+     * And both events have metadata with getType() returning Type.SEGMENTS_UPDATE and empty names
      */
     @Test
     public void twoDistinctSdkUpdateEventsWhenBothSegmentsAndLargeSegmentsChange() throws Exception {
@@ -1121,38 +1228,24 @@ public class SdkEventsIntegrationTest {
         // Verify we received 2 distinct SDK_UPDATE events
         assertEquals("Should receive 2 SDK_UPDATE events", 2, metadataList.size());
 
-        // Both events should be SEGMENTS_UPDATE type
+        // Both events should be SEGMENTS_UPDATE type with empty names
         for (SdkUpdateMetadata metadata : metadataList) {
             assertNotNull("Metadata should not be null", metadata);
             assertEquals("Type should be SEGMENTS_UPDATE",
                     SdkUpdateMetadata.Type.SEGMENTS_UPDATE, metadata.getType());
             assertNotNull("Names should not be null", metadata.getNames());
-            assertFalse("Names should not be empty", metadata.getNames().isEmpty());
+            assertTrue("Names should be empty for SEGMENTS_UPDATE", metadata.getNames().isEmpty());
         }
-
-        // Collect all segment names from both events
-        List<String> allSegmentNames = new ArrayList<>();
-        for (SdkUpdateMetadata metadata : metadataList) {
-            allSegmentNames.addAll(metadata.getNames());
-        }
-
-        // Verify we have changes from both regular segments and large segments
-        boolean hasRegularSegmentChange = allSegmentNames.contains("segment1") || allSegmentNames.contains("segment3");
-        boolean hasLargeSegmentChange = allSegmentNames.contains("large_segment1") || allSegmentNames.contains("large_segment3");
-
-        assertTrue("Should have regular segment changes", hasRegularSegmentChange);
-        assertTrue("Should have large segment changes", hasLargeSegmentChange);
     }
 
     /**
      * Helper method to verify SDK_UPDATE with SEGMENTS_UPDATE type is emitted when segments change via polling.
+     * Verifies that names are always empty for SEGMENTS_UPDATE.
      *
-     * @param initialResponse      the memberships response for initial sync
-     * @param pollingResponse      the memberships response for polling (with changed segments)
-     * @param expectedSegmentNames segment names expected in the metadata (removed or added)
+     * @param initialResponse the memberships response for initial sync
+     * @param pollingResponse the memberships response for polling (with changed segments)
      */
-    private void verifySdkUpdateForSegmentsPolling(String initialResponse, String pollingResponse,
-                                                   String... expectedSegmentNames) throws Exception {
+    private void verifySdkUpdateForSegmentsPollingWithEmptyNames(String initialResponse, String pollingResponse) throws Exception {
         List<SdkUpdateMetadata> metadataList = waitForSegmentsPollingUpdates(initialResponse, pollingResponse, 1);
 
         assertEquals("Should receive 1 SDK_UPDATE event", 1, metadataList.size());
@@ -1163,16 +1256,7 @@ public class SdkEventsIntegrationTest {
                 SdkUpdateMetadata.Type.SEGMENTS_UPDATE, metadata.getType());
 
         assertNotNull("Names should not be null", metadata.getNames());
-        assertFalse("Names should not be empty", metadata.getNames().isEmpty());
-
-        boolean containsExpected = false;
-        for (String expectedName : expectedSegmentNames) {
-            if (metadata.getNames().contains(expectedName)) {
-                containsExpected = true;
-                break;
-            }
-        }
-        assertTrue("Names should contain one of the expected changed segments", containsExpected);
+        assertTrue("Names should be empty for SEGMENTS_UPDATE", metadata.getNames().isEmpty());
     }
 
     /**

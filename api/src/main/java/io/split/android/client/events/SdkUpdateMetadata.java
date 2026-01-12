@@ -19,12 +19,16 @@ public final class SdkUpdateMetadata {
     public enum Type {
         /**
          * Feature flags were updated.
+         * <p>
+         * {@link #getNames()} returns the list of flag names that changed.
          */
         FLAGS_UPDATE,
 
         /**
-         * Rule-based segments were updated.
+         * Segments were updated (rule-based segments, memberships, or large segments).
          * <p>
+         * Note: {@link #getNames()} always returns an empty list for this type.
+         * Segment names are not included in the metadata.
          */
         SEGMENTS_UPDATE
     }
@@ -59,10 +63,10 @@ public final class SdkUpdateMetadata {
     /**
      * Returns the list of entity names that changed in this update.
      * <p>
-     * For {@link Type#FLAGS_UPDATE}, this contains flag names.
-     * For {@link Type#SEGMENTS_UPDATE}, this contains rule-based segment names.
+     * For {@link Type#FLAGS_UPDATE}, this contains flag names that were updated.
+     * For {@link Type#SEGMENTS_UPDATE}, this is always an empty list (segment names are not included).
      *
-     * @return the list of updated entity names, never null (empty list if none)
+     * @return the list of updated entity names, never null (empty list for SEGMENTS_UPDATE or if none)
      */
     @NonNull
     public List<String> getNames() {
