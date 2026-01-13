@@ -99,7 +99,7 @@ public class RuleBasedSegmentInPlaceUpdateTaskTest {
     }
 
     @Test
-    public void segmentsUpdatedIncludesMetadataWithActiveAndArchivedSegmentNames() {
+    public void segmentsUpdatedIncludesMetadataWithEmptyNames() {
         RuleBasedSegment activeSegment = createRuleBasedSegment("active_segment");
         RuleBasedSegment archivedSegment = createRuleBasedSegment("archived_segment");
         long changeNumber = 123L;
@@ -111,14 +111,13 @@ public class RuleBasedSegmentInPlaceUpdateTaskTest {
         mTask = getTask(activeSegment, changeNumber);
         mTask.execute();
 
+        // SEGMENTS_UPDATE always has empty names
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED), argThat(metadata -> {
             if (metadata == null) return false;
             SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
             List<String> names = typedMeta.getNames();
             assertNotNull(names);
-            assertEquals(2, names.size());
-            assertTrue(names.contains("active_segment"));
-            assertTrue(names.contains("archived_segment"));
+            assertTrue("Names should be empty for SEGMENTS_UPDATE", names.isEmpty());
             assertEquals(SdkUpdateMetadata.Type.SEGMENTS_UPDATE, typedMeta.getType());
             return true;
         }));
