@@ -28,7 +28,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import io.split.android.client.events.SdkReadyMetadata;
 import io.split.android.client.events.SdkUpdateMetadata;
+import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.metadata.TypedTaskConverter;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.events.SplitEventsManager;
@@ -325,6 +327,51 @@ public class SplitSyncTaskTest {
 
         verify(mEventsManager, never()).notifyInternalEvent(eq(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED));
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), any());
+    }
+
+    @Test
+    public void syncCompleteMetadataHasInitialCacheLoadFalseWhenCacheAlreadyLoaded() {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES)))
+                .thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+
+        long expectedTimestamp = 1234567890L;
+        when(mSplitsStorage.getUpdateTimestamp()).thenReturn(expectedTimestamp);
+        when(mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)).thenReturn(true);
+
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), argThat(metadata -> {
+            if (metadata == null) return false;
+            SdkReadyMetadata typedMeta = TypedTaskConverter.convertForSdkReady(metadata);
+            assertEquals(false, typedMeta.isInitialCacheLoad());
+            assertEquals(Long.valueOf(expectedTimestamp), typedMeta.getLastUpdateTimestamp());
+            return true;
+        }));
+    }
+
+    @Test
+    public void syncCompleteMetadataHasInitialCacheLoadTrueWhenCacheNotLoaded() {
+        mTask = SplitsSyncTask.build(mSplitsSyncHelper, mSplitsStorage, mRuleBasedSegmentStorage,
+                mQueryString, mEventsManager, mTelemetryRuntimeProducer);
+        when(mSplitsStorage.getTill()).thenReturn(100L);
+        when(mSplitsStorage.getSplitsFilterQueryString()).thenReturn(mQueryString);
+        when(mSplitsSyncHelper.sync(any(), anyBoolean(), anyBoolean(), eq(ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES)))
+                .thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE)).thenReturn(false);
+
+        mTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), argThat(metadata -> {
+            if (metadata == null) return false;
+            SdkReadyMetadata typedMeta = TypedTaskConverter.convertForSdkReady(metadata);
+            assertEquals(true, typedMeta.isInitialCacheLoad());
+            assertEquals(null, typedMeta.getLastUpdateTimestamp());
+            return true;
+        }));
     }
 
     @After

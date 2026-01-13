@@ -242,7 +242,7 @@ public class MySegmentsSyncTaskTest {
         mTask.execute();
 
         // Verify MEMBERSHIPS_SYNC_COMPLETE is always fired on successful sync, even when segments changed
-        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE));
+        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MY_SEGMENTS_UPDATED));
     }
 

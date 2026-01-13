@@ -26,6 +26,8 @@ import java.util.concurrent.TimeUnit;
 import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -40,6 +42,7 @@ import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
+import io.split.android.client.storage.splits.SplitsStorage;
 
 public class FeatureFlagsSynchronizerImplTest {
 
@@ -256,5 +259,55 @@ public class FeatureFlagsSynchronizerImplTest {
 
         verify(mSingleThreadTaskExecutor).stopTask("12");
         verify(mSingleThreadTaskExecutor, times(1)).schedule(eq(mockTask), anyLong(), anyLong(), any());
+    }
+
+    @Test
+    public void loadAndSynchronizeNotifiesEventsManagerWithCorrectMetadataWhenSplitsLoadedFromStorage() {
+        long expectedTimestamp = 1234567890L;
+        SplitsStorage splitsStorage = mock(SplitsStorage.class);
+        when(splitsStorage.getUpdateTimestamp()).thenReturn(expectedTimestamp);
+
+        // Set up mock tasks
+        LoadSplitsTask mockLoadTask = mock(LoadSplitsTask.class);
+        when(mockLoadTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
+        when(mTaskFactory.createLoadSplitsTask()).thenReturn(mockLoadTask);
+
+        LoadRuleBasedSegmentsTask mockLoadRuleBasedSegmentsTask = mock(LoadRuleBasedSegmentsTask.class);
+        when(mockLoadRuleBasedSegmentsTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_RULE_BASED_SEGMENTS));
+        when(mTaskFactory.createLoadRuleBasedSegmentsTask()).thenReturn(mockLoadRuleBasedSegmentsTask);
+
+        FilterSplitsInCacheTask mockFilterTask = mock(FilterSplitsInCacheTask.class);
+        when(mockFilterTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.FILTER_SPLITS_CACHE));
+        when(mTaskFactory.createFilterSplitsInCacheTask()).thenReturn(mockFilterTask);
+
+        SplitsSyncTask mockSplitSyncTask = mock(SplitsSyncTask.class);
+        when(mockSplitSyncTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.SPLITS_SYNC));
+        when(mTaskFactory.createSplitsSyncTask(true)).thenReturn(mockSplitSyncTask);
+
+        FeatureFlagsSynchronizerImpl synchronizer = new FeatureFlagsSynchronizerImpl(
+                mConfig, mTaskExecutor, mSingleThreadTaskExecutor, mTaskFactory,
+                mEventsManager, mRetryBackoffCounterFactory, mPushManagerEventBroadcaster, splitsStorage);
+
+        ArgumentCaptor<List<SplitTaskBatchItem>> batchCaptor = ArgumentCaptor.forClass(List.class);
+
+        synchronizer.loadAndSynchronize();
+
+        verify(mTaskExecutor).executeSerially(batchCaptor.capture());
+        List<SplitTaskBatchItem> batch = batchCaptor.getValue();
+
+        SplitTaskBatchItem loadSplitsItem = batch.get(2);
+        SplitTaskExecutionListener listener = loadSplitsItem.getListener();
+
+        listener.taskExecuted(SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS));
+
+        ArgumentCaptor<EventMetadata> metadataCaptor = ArgumentCaptor.forClass(EventMetadata.class);
+        verify(mEventsManager).notifyInternalEvent(
+                eq(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE),
+                metadataCaptor.capture());
+
+        EventMetadata capturedMetadata = metadataCaptor.getValue();
+
+        assertEquals(false, capturedMetadata.get("initialCacheLoad"));
+        assertEquals(expectedTimestamp, capturedMetadata.get("lastUpdateTimestamp"));
     }
 }

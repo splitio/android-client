@@ -21,8 +21,8 @@ public class MetadataKeysTest {
     }
 
     @Test
-    public void freshInstallKeyHasCorrectValue() {
-        assertEquals("freshInstall", MetadataKeys.FRESH_INSTALL);
+    public void initialCacheLoadKeyHasCorrectValue() {
+        assertEquals("initialCacheLoad", MetadataKeys.INITIAL_CACHE_LOAD);
     }
 
     @Test

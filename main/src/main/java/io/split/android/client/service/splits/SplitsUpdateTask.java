@@ -10,6 +10,7 @@ import java.util.List;
 
 import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.ServiceConstants;
@@ -84,8 +85,10 @@ public class SplitsUpdateTask implements SplitTask {
                 mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED, rbsMetadata);
             }
 
-            // Fire sync complete AFTER update events
-            EventMetadata syncMetadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+            // Fire sync complete AFTER update events.
+            boolean cacheAlreadyLoaded = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE);
+            EventMetadata syncMetadata = EventMetadataHelpers.createSyncCompleteMetadata(
+                    cacheAlreadyLoaded, mSplitsStorage.getUpdateTimestamp());
             mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
         }
         return result;
