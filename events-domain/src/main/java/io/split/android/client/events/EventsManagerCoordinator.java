@@ -127,4 +127,20 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
             }
         }
     }
+
+    /**
+     * Checks if an external event has already been triggered in any registered manager.
+     *
+     * @param event the event to check
+     * @return true if the event has already been triggered in any manager, false otherwise
+     */
+    @Override
+    public boolean eventAlreadyTriggered(SplitEvent event) {
+        for (ISplitEventsManager manager : mManagers.values()) {
+            if (manager.eventAlreadyTriggered(event)) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

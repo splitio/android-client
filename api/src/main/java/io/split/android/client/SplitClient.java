@@ -183,12 +183,18 @@ public interface SplitClient extends AttributesManager {
     /**
      * Registers an event listener for SDK events that provide typed metadata.
      * <p>
-     * This method provides type-safe callbacks for SDK_UPDATE and SDK_READY_FROM_CACHE events.
+     * This method provides type-safe callbacks for SDK_READY, SDK_UPDATE, and SDK_READY_FROM_CACHE events.
      * Override the methods you need in the listener.
      * <p>
      * Example usage:
      * <pre>{@code
      * client.addEventListener(new SdkEventListener() {
+     *     @Override
+     *     public void onReady(SplitClient client, SdkReadyMetadata metadata) {
+     *         Boolean initialCacheLoad = metadata.isInitialCacheLoad();
+     *         // Handle SDK ready on background thread
+     *     }
+     *
      *     @Override
      *     public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
      *         SdkUpdateMetadata.Type type = metadata.getType(); // FLAGS_UPDATE or SEGMENTS_UPDATE
@@ -197,9 +203,9 @@ public interface SplitClient extends AttributesManager {
      *     }
      *
      *     @Override
-     *     public void onReadyFromCacheView(SplitClient client, SdkReadyFromCacheMetadata metadata) {
+     *     public void onReadyFromCacheView(SplitClient client, SdkReadyMetadata metadata) {
      *         // Handle on main/UI thread
-     *         Boolean freshInstall = metadata.isFreshInstall();
+     *         Boolean initialCacheLoad = metadata.isInitialCacheLoad();
      *     }
      * });
      * }</pre>

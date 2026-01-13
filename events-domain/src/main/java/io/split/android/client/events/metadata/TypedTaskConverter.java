@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 
 import java.util.List;
 
-import io.split.android.client.events.SdkReadyFromCacheMetadata;
+import io.split.android.client.events.SdkReadyMetadata;
 import io.split.android.client.events.SdkUpdateMetadata;
 
 /**
@@ -48,19 +48,19 @@ public class TypedTaskConverter {
     }
 
     /**
-     * Converts EventMetadata to SdkReadyFromCacheMetadata.
+     * Converts EventMetadata to SdkReadyMetadata.
      *
      * @param metadata the event metadata, may be null
-     * @return the typed metadata for SDK_READY_FROM_CACHE events
+     * @return the typed metadata for SDK_READY and SDK_READY_FROM_CACHE events
      */
     @NonNull
-    public static SdkReadyFromCacheMetadata convertForSdkReadyFromCache(@Nullable EventMetadata metadata) {
-        Boolean freshInstall = null;
+    public static SdkReadyMetadata convertForSdkReady(@Nullable EventMetadata metadata) {
+        Boolean initialCacheLoad = null;
         Long lastUpdateTimestamp = null;
         if (metadata != null) {
-            freshInstall = (Boolean) metadata.get(MetadataKeys.FRESH_INSTALL);
+            initialCacheLoad = (Boolean) metadata.get(MetadataKeys.INITIAL_CACHE_LOAD);
             lastUpdateTimestamp = (Long) metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP);
         }
-        return new SdkReadyFromCacheMetadata(freshInstall, lastUpdateTimestamp);
+        return new SdkReadyMetadata(initialCacheLoad, lastUpdateTimestamp);
     }
 }

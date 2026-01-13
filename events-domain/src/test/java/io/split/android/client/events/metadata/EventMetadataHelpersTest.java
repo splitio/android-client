@@ -45,56 +45,81 @@ public class EventMetadataHelpersTest {
         assertTrue("Names should be empty for SEGMENTS_UPDATE", result.isEmpty());
     }
 
-    // Tests for createCacheReadyMetadata
+    // Tests for createReadyMetadata
     @Test
-    public void createCacheReadyMetadataWithTimestampAndFreshInstallFalse() {
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(1234567890L, false);
+    public void createReadyMetadataWithTimestampAndInitialCacheLoadFalse() {
+        EventMetadata metadata = EventMetadataHelpers.createReadyMetadata(1234567890L, false);
 
         assertEquals(Long.valueOf(1234567890L), metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
-        assertEquals(Boolean.FALSE, metadata.get(MetadataKeys.FRESH_INSTALL));
+        assertEquals(Boolean.FALSE, metadata.get(MetadataKeys.INITIAL_CACHE_LOAD));
     }
 
     @Test
-    public void createCacheReadyMetadataWithNullTimestampAndFreshInstallTrue() {
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+    public void createReadyMetadataWithNullTimestampAndInitialCacheLoadTrue() {
+        EventMetadata metadata = EventMetadataHelpers.createReadyMetadata(null, true);
 
         assertNull(metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
-        assertEquals(Boolean.TRUE, metadata.get(MetadataKeys.FRESH_INSTALL));
+        assertEquals(Boolean.TRUE, metadata.get(MetadataKeys.INITIAL_CACHE_LOAD));
     }
 
     @Test
-    public void createCacheReadyMetadataKeysAreCorrect() {
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(123L, false);
+    public void createReadyMetadataKeysAreCorrect() {
+        EventMetadata metadata = EventMetadataHelpers.createReadyMetadata(123L, false);
 
         assertTrue(metadata.containsKey(MetadataKeys.LAST_UPDATE_TIMESTAMP));
-        assertTrue(metadata.containsKey(MetadataKeys.FRESH_INSTALL));
+        assertTrue(metadata.containsKey(MetadataKeys.INITIAL_CACHE_LOAD));
         assertEquals(2, metadata.size());
     }
 
     @Test
-    public void createCacheReadyMetadataWithZeroTimestamp() {
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(0L, false);
+    public void createReadyMetadataWithZeroTimestamp() {
+        EventMetadata metadata = EventMetadataHelpers.createReadyMetadata(0L, false);
 
         assertEquals(Long.valueOf(0L), metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
-        assertEquals(Boolean.FALSE, metadata.get(MetadataKeys.FRESH_INSTALL));
+        assertEquals(Boolean.FALSE, metadata.get(MetadataKeys.INITIAL_CACHE_LOAD));
     }
 
     @Test
-    public void createCacheReadyMetadataForCachePath() {
-        // Cache path: freshInstall=false, timestamp from storage
+    public void createReadyMetadataForCachePath() {
+        // Cache path: initialCacheLoad=false, timestamp from storage
         long storedTimestamp = 1700000000000L;
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(storedTimestamp, false);
+        EventMetadata metadata = EventMetadataHelpers.createReadyMetadata(storedTimestamp, false);
 
-        assertEquals(Boolean.FALSE, metadata.get(MetadataKeys.FRESH_INSTALL));
+        assertEquals(Boolean.FALSE, metadata.get(MetadataKeys.INITIAL_CACHE_LOAD));
         assertEquals(Long.valueOf(storedTimestamp), metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
     }
 
     @Test
-    public void createCacheReadyMetadataForSyncPath() {
-        // Sync path: freshInstall=true, timestamp=null
-        EventMetadata metadata = EventMetadataHelpers.createCacheReadyMetadata(null, true);
+    public void createReadyMetadataForSyncPath() {
+        // Sync path: initialCacheLoad=true, timestamp=null
+        EventMetadata metadata = EventMetadataHelpers.createReadyMetadata(null, true);
 
-        assertEquals(Boolean.TRUE, metadata.get(MetadataKeys.FRESH_INSTALL));
+        assertEquals(Boolean.TRUE, metadata.get(MetadataKeys.INITIAL_CACHE_LOAD));
+        assertNull(metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
+    }
+
+    @Test
+    public void createSyncCompleteMetadataWhenCacheAlreadyLoaded() {
+        long updateTimestamp = 1234567890L;
+        EventMetadata metadata = EventMetadataHelpers.createSyncCompleteMetadata(true, updateTimestamp);
+
+        assertEquals(Boolean.FALSE, metadata.get(MetadataKeys.INITIAL_CACHE_LOAD));
+        assertEquals(updateTimestamp, metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
+    }
+
+    @Test
+    public void createSyncCompleteMetadataWhenCacheNotLoaded() {
+        EventMetadata metadata = EventMetadataHelpers.createSyncCompleteMetadata(false, 1234567890L);
+
+        assertEquals(Boolean.TRUE, metadata.get(MetadataKeys.INITIAL_CACHE_LOAD));
+        assertNull(metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
+    }
+
+    @Test
+    public void createSyncCompleteMetadataIgnoresTimestampWhenCacheNotLoaded() {
+        // Even if a timestamp is provided, it should be ignored when cache is not loaded
+        EventMetadata metadata = EventMetadataHelpers.createSyncCompleteMetadata(false, 9999999999L);
+
         assertNull(metadata.get(MetadataKeys.LAST_UPDATE_TIMESTAMP));
     }
 }

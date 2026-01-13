@@ -21,7 +21,7 @@ import org.mockito.Mockito;
 import java.util.Arrays;
 import java.util.List;
 
-import io.split.android.client.events.SdkReadyFromCacheMetadata;
+import io.split.android.client.events.SdkReadyMetadata;
 import io.split.android.client.events.SdkUpdateMetadata;
 import io.split.android.client.events.metadata.TypedTaskConverter;
 import io.split.android.client.dtos.SplitChange;
@@ -105,11 +105,11 @@ public class SplitUpdateTaskTest {
 
         mTask.execute();
 
-        // Verify TARGETING_RULES_SYNC_COMPLETE is fired with sync metadata (freshInstall=true, lastUpdateTimestamp=null)
+        // Verify TARGETING_RULES_SYNC_COMPLETE is fired with sync metadata (initialCacheLoad=true, lastUpdateTimestamp=null)
         verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE), argThat(metadata -> {
             if (metadata == null) return false;
-            SdkReadyFromCacheMetadata typedMeta = TypedTaskConverter.convertForSdkReadyFromCache(metadata);
-            assertEquals(Boolean.TRUE, typedMeta.isFreshInstall());
+            SdkReadyMetadata typedMeta = TypedTaskConverter.convertForSdkReady(metadata);
+            assertEquals(Boolean.TRUE, typedMeta.isInitialCacheLoad());
             // lastUpdateTimestamp should not be present (or should be null)
             return typedMeta.getLastUpdateTimestamp() == null;
         }));

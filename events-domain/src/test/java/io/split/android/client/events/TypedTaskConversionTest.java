@@ -48,16 +48,16 @@ public class TypedTaskConversionTest {
     }
 
     @Test
-    public void convertForSdkReadyFromCacheConvertsMetadataCorrectly() {
+    public void convertForSdkReadyConvertsMetadataCorrectly() {
         long expectedTimestamp = 1704067200000L;
 
-        EventMetadata eventMetadata = EventMetadataHelpers.createCacheReadyMetadata(expectedTimestamp, true);
+        EventMetadata eventMetadata = EventMetadataHelpers.createReadyMetadata(expectedTimestamp, true);
 
         // Call conversion method
-        SdkReadyFromCacheMetadata converted = TypedTaskConverter.convertForSdkReadyFromCache(eventMetadata);
+        SdkReadyMetadata converted = TypedTaskConverter.convertForSdkReady(eventMetadata);
 
         assertNotNull(converted);
-        assertTrue(converted.isFreshInstall());
+        assertTrue(converted.isInitialCacheLoad());
         assertEquals(Long.valueOf(expectedTimestamp), converted.getLastUpdateTimestamp());
     }
 
@@ -71,11 +71,11 @@ public class TypedTaskConversionTest {
     }
 
     @Test
-    public void convertForSdkReadyFromCacheHandlesNullMetadata() {
-        SdkReadyFromCacheMetadata converted = TypedTaskConverter.convertForSdkReadyFromCache(null);
+    public void convertForSdkReadyHandlesNullMetadata() {
+        SdkReadyMetadata converted = TypedTaskConverter.convertForSdkReady(null);
 
         assertNotNull(converted);
-        assertNull(converted.isFreshInstall());
+        assertNull(converted.isInitialCacheLoad());
         assertNull(converted.getLastUpdateTimestamp());
     }
 }
