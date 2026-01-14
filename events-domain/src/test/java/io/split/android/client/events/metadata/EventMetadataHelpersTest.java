@@ -33,19 +33,16 @@ public class EventMetadataHelpersTest {
     // Tests for createUpdatedSegmentsMetadata
     @Test
     @SuppressWarnings("unchecked")
-    public void createUpdatedSegmentsMetadataContainsTypeAndNames() {
-        List<String> segments = Arrays.asList("segment1", "segment2");
-        EventMetadata metadata = EventMetadataHelpers.createUpdatedSegmentsMetadata(segments);
+    public void createUpdatedSegmentsMetadataContainsTypeAndEmptyNames() {
+        EventMetadata metadata = EventMetadataHelpers.createUpdatedSegmentsMetadata();
 
         assertTrue(metadata.containsKey(MetadataKeys.TYPE));
         assertEquals(MetadataKeys.TYPE_SEGMENTS_UPDATE, metadata.get(MetadataKeys.TYPE));
 
-        // Check names
+        // Check names - should always be empty
         assertTrue(metadata.containsKey(MetadataKeys.NAMES));
         List<String> result = (List<String>) metadata.get(MetadataKeys.NAMES);
-        assertEquals(2, result.size());
-        assertTrue(result.contains("segment1"));
-        assertTrue(result.contains("segment2"));
+        assertTrue("Names should be empty for SEGMENTS_UPDATE", result.isEmpty());
     }
 
     // Tests for createReadyMetadata

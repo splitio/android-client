@@ -1,6 +1,7 @@
 package io.split.android.client.service;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -179,7 +180,7 @@ public class MySegmentsUpdateTaskTest {
         Assert.assertTrue(captorValue.getNames().contains(mCustomerSegment));
         Assert.assertEquals(1, captorValue.getNames().size());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
-        verify(mEventsManager).notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.MY_SEGMENTS_UPDATED), any());
     }
 
     @Test

@@ -14,6 +14,7 @@ public final class EvaluationResult {
         this(treatment, label, null, null, false);
     }
 
+    @VisibleForTesting
     public EvaluationResult(String treatment, String label, boolean impressionsDisabled) {
         this(treatment, label, null, null, impressionsDisabled);
     }

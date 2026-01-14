@@ -36,17 +36,15 @@ public class TypedTaskConversionTest {
 
     @Test
     public void convertForSdkUpdateConvertsSegmentsMetadataCorrectly() {
-        List<String> expectedSegments = Arrays.asList("segment1", "segment2");
-
-        EventMetadata eventMetadata = EventMetadataHelpers.createUpdatedSegmentsMetadata(expectedSegments);
+        // SEGMENTS_UPDATE always has empty names
+        EventMetadata eventMetadata = EventMetadataHelpers.createUpdatedSegmentsMetadata();
 
         // Call conversion method
         SdkUpdateMetadata converted = TypedTaskConverter.convertForSdkUpdate(eventMetadata);
 
         assertNotNull(converted);
         assertEquals(SdkUpdateMetadata.Type.SEGMENTS_UPDATE, converted.getType());
-        assertEquals(expectedSegments.size(), converted.getNames().size());
-        assertTrue(converted.getNames().containsAll(expectedSegments));
+        assertTrue("Names should be empty for SEGMENTS_UPDATE", converted.getNames().isEmpty());
     }
 
     @Test
