@@ -19,7 +19,7 @@ apply plugin: 'com.vanniktech.maven.publish'
 apply from: "$rootDir/gradle/jacoco-root.gradle"
 
 ext {
-    splitVersion = '5.5.0-rc5'
+    splitVersion = '5.5.0-rc7'
     jacocoVersion = '0.8.8'
 }
 
@@ -143,6 +143,55 @@ dependencies {
     include project(':events')
     include project(':events-domain')
     include project(':api')
+}
+
+def javadocSourceProjects = [
+    project(':main'),
+    project(':logger'),
+    project(':events'),
+    project(':events-domain'),
+    project(':api')
+]
+
+def javadocSourceDirsProvider = providers.provider {
+    files(javadocSourceProjects.collect { sourceProject ->
+        def androidExtension = sourceProject.extensions.findByName("android")
+        def sourceDirs = androidExtension?.sourceSets?.main?.java?.srcDirs ?: []
+        return sourceDirs.findAll { it.exists() }
+    })
+}
+
+def sourcesJarTask = tasks.register('sourcesJar', Jar) {
+    archiveBaseName = 'android-client'
+    archiveVersion = splitVersion
+    archiveClassifier = 'sources'
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    from(javadocSourceDirsProvider)
+}
+
+tasks.register('javadocJar', Jar) {
+    archiveBaseName = 'android-client'
+    archiveVersion = splitVersion
+    archiveClassifier = 'javadoc'
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    def javadocDir = layout.buildDirectory.dir('intermediates/java_doc_dir/release')
+    from(javadocDir)
+    doFirst {
+        if (!javadocDir.get().asFile.exists()) {
+            throw new GradleException("Javadoc directory not found: ${javadocDir.get().asFile}")
+        }
+    }
+}
+
+afterEvaluate {
+    def agpJavadocTask = tasks.findByName('javaDocRelease') ?:
+        tasks.findByName('javaDocJar') ?:
+        tasks.findByName('javaDoc')
+    if (agpJavadocTask != null) {
+        tasks.named('javadocJar').configure {
+            dependsOn agpJavadocTask
+        }
+    }
 }
 
 def splitPOM = {
@@ -377,6 +426,8 @@ afterEvaluate {
     // This causes lint to crash when consumers use checkDependencies: true
     publishing.publications.withType(MavenPublication) { publication ->
         if (publication.name == "maven") {
+            publication.artifact(tasks.named('javadocJar'))
+            publication.artifact(tasks.named('sourcesJar'))
             publication.artifacts.removeAll { artifact ->
                 artifact.file?.name?.endsWith('lint.jar') ?: false
             }
@@ -393,16 +444,18 @@ gradle.taskGraph.whenReady { graph ->
         publishTask.doFirst {
             def pub = publication
             if (pub.name == "maven") {
+                def sourcesJarFile = tasks.named('sourcesJar').get().archiveFile.get().asFile
                 def sourcesArtifacts = pub.artifacts.findAll { it.classifier == "sources" && it.extension == "jar" }
-                if (sourcesArtifacts.size() > 1) {
-                    // Keep the AGP one (merged_sources_jar), remove the vanniktech empty one (build/libs)
-                    def toRemove = sourcesArtifacts.find { 
-                        it.file?.absolutePath?.contains("build/libs") || it.file?.name?.contains("android-client-sources")
-                    }
-                    if (toRemove) {
-                        pub.artifacts.remove(toRemove)
-                        println "Removed duplicate empty sources artifact: ${toRemove.file?.absolutePath}"
-                    }
+                sourcesArtifacts.findAll { it.file != null && it.file != sourcesJarFile }.each { artifact ->
+                    pub.artifacts.remove(artifact)
+                    println "Removed duplicate sources artifact: ${artifact.file?.absolutePath}"
+                }
+
+                def javadocJarFile = tasks.named('javadocJar').get().archiveFile.get().asFile
+                def javadocArtifacts = pub.artifacts.findAll { it.classifier == "javadoc" && it.extension == "jar" }
+                javadocArtifacts.findAll { it.file != null && it.file != javadocJarFile }.each { artifact ->
+                    pub.artifacts.remove(artifact)
+                    println "Removed duplicate javadoc artifact: ${artifact.file?.absolutePath}"
                 }
             }
         }
