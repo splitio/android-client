@@ -16,9 +16,10 @@ import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.SegmentsChange;
-import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
@@ -268,17 +269,18 @@ public class MySegmentsSyncTask implements SplitTask {
         // This order is important: if we fire MEMBERSHIPS_SYNC_COMPLETE first, it may trigger SDK_READY,
         // and then the *_UPDATED events would immediately trigger SDK_UPDATE during initial sync.
         // By firing *_UPDATED first (while SDK_READY hasn't triggered yet), they won't trigger SDK_UPDATE.
-        boolean segmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(segmentsResult.oldSegments, segmentsResult.newSegments);
-        boolean largeSegmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(largeSegmentsResult.oldSegments, largeSegmentsResult.newSegments);
+        List<String> changedSegments = mMySegmentsChangeChecker.getChangedSegments(segmentsResult.oldSegments, segmentsResult.newSegments);
+        List<String> changedLargeSegments = mMySegmentsChangeChecker.getChangedSegments(largeSegmentsResult.oldSegments, largeSegmentsResult.newSegments);
 
-        if (segmentsHaveChanged) {
+        if (!changedSegments.isEmpty()) {
             Logger.v("New segments: " + segmentsResult.newSegments);
-            mEventsManager.notifyInternalEvent(mUpdateEvent);
+            mEventsManager.notifyInternalEvent(mUpdateEvent, EventMetadataHelpers.createUpdatedSegmentsMetadata());
         }
 
-        if (largeSegmentsHaveChanged) {
+        if (!changedLargeSegments.isEmpty()) {
             Logger.v("New large segments: " + largeSegmentsResult.newSegments);
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED,
+                    EventMetadataHelpers.createUpdatedSegmentsMetadata());
         }
 
         // Fire sync complete AFTER update events. This ensures SDK_READY triggers after
