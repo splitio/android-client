@@ -145,16 +145,29 @@ dependencies {
     include project(':api')
 }
 
-def javadocSourceProjects = [
-    project(':main'),
-    project(':logger'),
-    project(':events'),
-    project(':events-domain'),
-    project(':api')
-]
+def javadocSourceProjects = providers.provider {
+    def includeConfig = configurations.findByName("include")
+    if (includeConfig == null) {
+        return []
+    }
+    includeConfig.allDependencies
+        .withType(org.gradle.api.artifacts.ProjectDependency)
+        .collect { dep ->
+            def projectPath = null
+            if (dep.metaClass.hasProperty(dep, 'dependencyProject')) {
+                projectPath = dep.dependencyProject?.path
+            } else if (dep.metaClass.hasProperty(dep, 'dependencyProjectPath')) {
+                projectPath = dep.dependencyProjectPath
+            } else if (dep.metaClass.hasProperty(dep, 'path')) {
+                projectPath = dep.path
+            }
+            return projectPath ? project(projectPath) : null
+        }
+        .findAll { it != null }
+}
 
 def javadocSourceDirsProvider = providers.provider {
-    files(javadocSourceProjects.collect { sourceProject ->
+    files(javadocSourceProjects.get().collect { sourceProject ->
         def androidExtension = sourceProject.extensions.findByName("android")
         def sourceDirs = androidExtension?.sourceSets?.main?.java?.srcDirs ?: []
         return sourceDirs.findAll { it.exists() }
