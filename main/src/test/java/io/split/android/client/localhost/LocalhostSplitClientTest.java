@@ -10,9 +10,12 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import org.mockito.MockedStatic;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -43,6 +46,7 @@ import io.split.android.client.fallback.FallbackTreatmentsCalculator;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.engine.experiments.SplitParser;
 
@@ -443,9 +447,25 @@ public class LocalhostSplitClientTest {
 
     @Test
     public void addEventListenerWithNullListenerDoesNotRegister() {
-        client.addEventListener(null);
+        try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
+            client.addEventListener(null);
 
-        verify(mockEventsManager, never()).registerEventListener(any(SdkEventListener.class));
+            verify(mockEventsManager, never()).registerEventListener(any(SdkEventListener.class));
+            logger.verify(() -> Logger.w("SDK Event Listener cannot be null"));
+        }
+    }
+
+    @Test
+    public void addEventListenerDoesNotRegisterWhenClientIsDestroyed() {
+        try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
+            client.destroy();
+            SdkEventListener listener = mock(SdkEventListener.class);
+
+            client.addEventListener(listener);
+
+            verify(mockEventsManager, never()).registerEventListener(any(SdkEventListener.class));
+            logger.verify(() -> Logger.w("Client has already been destroyed. Cannot add event listener"));
+        }
     }
 
     @Test
