@@ -186,6 +186,8 @@ public interface SplitClient extends AttributesManager {
      * This method provides type-safe callbacks for SDK_READY, SDK_UPDATE, and SDK_READY_FROM_CACHE events.
      * Override the methods you need in the listener.
      * <p>
+     * Multiple listeners can be registered. Each listener will be invoked once per event.
+     * <p>
      * Example usage:
      * <pre>{@code
      * client.addEventListener(new SdkEventListener() {
@@ -210,9 +212,9 @@ public interface SplitClient extends AttributesManager {
      * });
      * }</pre>
      *
-     * @param listener the event listener to register
+     * @param listener the event listener to register. Must not be null.
      */
-    void addEventListener(SdkEventListener listener);
+    void addEventListener(@NonNull SdkEventListener listener);
 
     /**
      * Enqueue a new event to be sent to Split data collection services.
