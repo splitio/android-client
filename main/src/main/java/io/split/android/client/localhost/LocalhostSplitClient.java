@@ -273,6 +273,10 @@ public final class LocalhostSplitClient implements SplitClient {
 
     @Override
     public void addEventListener(@NonNull SdkEventListener listener) {
+        if (mIsClientDestroyed) {
+            Logger.w("Client has already been destroyed. Cannot add event listener");
+            return;
+        }
         if (listener == null) {
             Logger.w("SDK Event Listener cannot be null");
             return;

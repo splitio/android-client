@@ -3,6 +3,7 @@ package io.split.android.client;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 
 import io.split.android.client.api.Key;
@@ -20,6 +22,7 @@ import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.shared.SplitClientContainer;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.engine.experiments.SplitParser;
@@ -129,10 +132,13 @@ public class SplitClientImplEventRegistrationTest {
     }
 
     @Test
-    public void addEventListenerWithNullListenerDoesNotRegister() {
-        splitClient.addEventListener(null);
+    public void addEventListenerWithNullListenerDoesNotRegisterAndLogsWarning() {
+        try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
+            splitClient.addEventListener(null);
 
-        verify(eventsManager, never()).registerEventListener(any(SdkEventListener.class));
+            verify(eventsManager, never()).registerEventListener(any(SdkEventListener.class));
+            logger.verify(() -> Logger.w("SDK Event Listener cannot be null"));
+        }
     }
 
     @Test
@@ -142,5 +148,18 @@ public class SplitClientImplEventRegistrationTest {
         splitClient.addEventListener(listener);
 
         verify(eventsManager).registerEventListener(eq(listener));
+    }
+
+    @Test
+    public void addEventListenerDoesNotRegisterWhenClientIsDestroyedAndLogsWarning() {
+        try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
+            splitClient.destroy();
+
+            SdkEventListener listener = mock(SdkEventListener.class);
+            splitClient.addEventListener(listener);
+
+            verify(eventsManager, never()).registerEventListener(any(SdkEventListener.class));
+            logger.verify(() -> Logger.w("Client has already been destroyed. Cannot add event listener"));
+        }
     }
 }

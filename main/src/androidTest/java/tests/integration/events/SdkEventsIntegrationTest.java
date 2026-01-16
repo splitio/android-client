@@ -977,33 +977,39 @@ public class SdkEventsIntegrationTest {
      * Given a SplitClient with an EventsManager and a handler H registered for sdkUpdate
      * And sdkReady has already been emitted
      * When the client is destroyed
-     * And an internal "splitsUpdated" event is notified for that client
-     * Then no external events are emitted
-     * And handler H is never invoked
+     * And an internal "splitsUpdated" event is notified via SSE
+     * Then handler H is never invoked (handlers were cleared on destroy)
      * When registering a new handler H2 for sdkUpdate after destroy
      * Then the registration is a no-op
-     * And H2 is never invoked
+     * And H2 is never invoked even when another update is pushed
      */
     @Test
     public void destroyingClientStopsEventsAndClearsHandlers() throws Exception {
-        // Given: sdkReady has already been emitted
-        TestClientFixture fixture = createClientAndWaitForReady(new Key("key_1"));
+        // Given: sdkReady has already been emitted (with streaming support)
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
         AtomicInteger handler1Count = new AtomicInteger(0);
         AtomicInteger handler2Count = new AtomicInteger(0);
 
-        // Given: a handler H registered for sdkUpdate
-        registerUpdateHandler(fixture.client, handler1Count, null);
+        // Given: a handler H registered for sdkUpdate before destroy
+        fixture.client.addEventListener(createOnUpdateListener(handler1Count, null, null));
 
         // When: the client is destroyed
         fixture.client.destroy();
 
-        // When: registering a new handler H2 for sdkUpdate after destroy
-        registerUpdateHandler(fixture.client, handler2Count, null);
+        fixture.pushSplitUpdate("3000", "2000");
 
-        // Then: handlers are not invoked (client is destroyed)
+        // Handler H is never invoked (handlers were cleared on destroy)
         Thread.sleep(1000);
         assertEquals("Handler H1 should not be invoked after destroy", 0, handler1Count.get());
+
+        // When: registering a new handler H2 for sdkUpdate after destroy
+        fixture.client.addEventListener(createOnUpdateListener(handler2Count, null, null));
+
+        fixture.pushSplitUpdate("4000", "3000");
+
+        Thread.sleep(1000);
+        assertEquals("Handler H1 should still be 0", 0, handler1Count.get());
         assertEquals("Handler H2 should not be invoked after destroy", 0, handler2Count.get());
 
         fixture.destroy();
