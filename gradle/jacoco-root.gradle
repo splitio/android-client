@@ -1,0 +1,98 @@
+import org.gradle.testing.jacoco.tasks.JacocoReport
+import org.gradle.api.tasks.testing.Test
+
+// Apply Jacoco at the root to support aggregate reporting
+apply plugin: 'jacoco'
+
+// Define exclusions for JaCoCo coverage
+def coverageExclusions = [
+        '**/R.class',
+        '**/R$*.class',
+        '**/BuildConfig.*',
+        '**/Manifest*.*',
+        '**/*Test*.*',
+        'android/**/*.*'
+]
+
+// Aggregate Jacoco coverage report for all Android library modules
+tasks.register('jacocoRootReport', JacocoReport) {
+    group = 'verification'
+    description = 'Generates an aggregate JaCoCo coverage report for all modules'
+
+    def fileFilter = coverageExclusions
+
+    // Collect class directories from all subprojects
+    def classDirs = subprojects.collectMany { proj ->
+        def b = proj.buildDir
+
+        // Try multiple possible class directory locations for different AGP versions
+        // NOTE: If new modules use different compilation output directories, add them here
+        def possibleClassDirs = [
+                new File(b, "intermediates/javac/debug/compileDebugJavaWithJavac/classes"),  // AGP 9.0+ location (primary)
+                new File(b, "classes/java/main")                                             // Standard fallback location
+        ]
+
+        possibleClassDirs.findAll { it.exists() && it.isDirectory() }.collect { dir ->
+            proj.fileTree(dir: dir, excludes: fileFilter)
+        }
+    }
+    classDirectories.from = files(classDirs)
+
+    // Collect source directories from all subprojects
+    def srcDirs = subprojects.collectMany { proj ->
+        [proj.file("src/main/java"), proj.file("src/main/kotlin")]
+    }.findAll { it.exists() }
+    sourceDirectories.from = files(srcDirs)
+
+    // Collect execution data from all subprojects
+    def execFiles = subprojects.collectMany { proj ->
+        def b = proj.buildDir
+        [
+                new File(b, "jacoco/testDebugUnitTest.exec"),
+                new File(b, "outputs/unit_test_code_coverage/debugUnitTest/testDebugUnitTest.exec")
+        ].findAll { it.exists() }
+    }
+    executionData.from = files(execFiles)
+
+    doFirst {
+        logger.lifecycle("=== JaCoCo Root Report Generation ===")
+        logger.lifecycle("Execution data files:")
+        def execDataFiles = executionData.files
+        if (execDataFiles.isEmpty() || !execDataFiles.any { it.exists() }) {
+            logger.warn("  - No execution data files found - coverage report will be empty")
+        } else {
+            execDataFiles.each { file ->
+                if (file.exists()) {
+                    logger.lifecycle("  - Found: $file (${file.length()} bytes)")
+                } else {
+                    logger.lifecycle("  - Missing: $file")
+                }
+            }
+        }
+        logger.lifecycle("=======================================")
+    }
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+
+        xml.outputLocation = file("$buildDir/reports/jacoco/jacocoRootReport/jacocoRootReport.xml")
+        html.outputLocation = file("$buildDir/reports/jacoco/jacocoRootReport/html")
+    }
+
+    // Always regenerate the report
+    outputs.upToDateWhen { false }
+}
+
+// Wire all module unit tests into the aggregate Jacoco report
+subprojects { proj ->
+    // Only consider projects that apply the Jacoco plugin
+    plugins.withId('jacoco') {
+        tasks.withType(Test).matching { it.name == 'testDebugUnitTest' }.configureEach { testTask ->
+            rootProject.tasks.named('jacocoRootReport') {
+                dependsOn(testTask)
+            }
+        }
+    }
+}

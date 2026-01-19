@@ -93,12 +93,6 @@ tasks.register('jacocoTestReport', JacocoReport) {
             }
         }
         
-        // Log class directories
-        logger.lifecycle("Class directories:")
-        classDirectories.files.each { dir ->
-            logger.lifecycle("  - $dir (${dir.exists() ? 'exists' : 'missing'})")
-        }
-        
         // Log execution data files
         def execDataFiles = executionData.files
         logger.lifecycle("Execution data files:")

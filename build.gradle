@@ -8,17 +8,18 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:9.0.0-alpha13'
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
+        classpath 'com.android.tools.build:gradle:9.0.0-rc02'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.10'
         classpath "com.vanniktech:gradle-maven-publish-plugin:0.34.0"
     }
 }
 
 apply plugin: 'com.android.fused-library'
 apply plugin: 'com.vanniktech.maven.publish'
+apply from: "$rootDir/gradle/jacoco-root.gradle"
 
 ext {
-    splitVersion = '5.4.3-rc4'
+    splitVersion = '5.4.3-rc5'
     jacocoVersion = '0.8.8'
 }
 
@@ -33,16 +34,49 @@ allprojects {
     }
 }
 
+// The SonarQube Gradle plugin is NOT yet compatible with AGP 9.0
+// Using CLI scanner wrapper as workaround until plugin is updated
 
-// Define exclusions for JaCoCo coverage
-def coverageExclusions = [
-        '**/R.class',
-        '**/R$*.class',
-        '**/BuildConfig.*',
-        '**/Manifest*.*',
-        '**/*Test*.*',
-        'android/**/*.*'
-]
+// Sonar task that wraps the CLI scanner (uses sonar-project.properties)
+tasks.register('sonar') {
+    group = 'verification'
+    description = 'Run SonarQube analysis (uses sonar-scanner CLI for AGP 9.0 compatibility)'
+
+    dependsOn 'jacocoRootReport'
+
+    doLast {
+        def sonarToken = System.getProperty('sonar.token') ?: project.findProperty('sonar.token')
+        def sonarHost = System.getProperty('sonar.host.url') ?: project.findProperty('sonar.host.url') ?: 'https://sonarcloud.io'
+        def sonarOrg = System.getProperty('sonar.organization') ?: project.findProperty('sonar.organization')
+
+        if (!sonarToken) {
+            throw new GradleException('SonarQube token required')
+        }
+
+        // Find sonar-scanner
+        def scannerPath = ['sonar-scanner', '/opt/homebrew/bin/sonar-scanner', '/usr/local/bin/sonar-scanner']
+                .find { path ->
+                    try {
+                        def proc = new ProcessBuilder(path, '--version').redirectErrorStream(true).start()
+                        return proc.waitFor() == 0
+                    } catch (Exception e) { return false }
+                }
+
+        if (!scannerPath) {
+            throw new GradleException('sonar-scanner not found. Install with: brew install sonar-scanner')
+        }
+
+        println "Running sonar-scanner..."
+        def cmd = [scannerPath, "-Dsonar.token=${sonarToken}", "-Dsonar.host.url=${sonarHost}"]
+        if (sonarOrg) cmd.add("-Dsonar.organization=${sonarOrg}")
+        cmd.add("-Dsonar.projectVersion=${splitVersion}")
+
+        def proc = new ProcessBuilder(cmd).directory(rootDir).inheritIO().start()
+        if (proc.waitFor() != 0) {
+            throw new GradleException("sonar-scanner failed")
+        }
+    }
+}
 
 androidFusedLibrary {
     namespace = 'io.split.android.android_client'
@@ -50,9 +84,9 @@ androidFusedLibrary {
 }
 
 tasks.configureEach { task ->
-    if (task.name == 'packageLintJar' || 
-        task.name.contains('LintJar') ||
-        task.name.contains('LintModel')) {
+    if (task.name == 'packageLintJar' ||
+            task.name.contains('LintJar') ||
+            task.name.contains('LintModel')) {
         task.enabled = false
     }
 }
@@ -63,35 +97,35 @@ afterEvaluate {
         doLast {
             def aarFile = file("${buildDir}/outputs/aar/android-client.aar")
             def proguardFile = file("${buildDir}/intermediates/merged_consumer_proguard_file/release/mergeReleaseConsumerProguardFiles/proguard.txt")
-            
+
             if (aarFile.exists() && proguardFile.exists()) {
                 // Create temp directory to extract AAR
                 def tempDir = file("${buildDir}/tmp/aar-repack")
                 tempDir.deleteDir()
                 tempDir.mkdirs()
-                
+
                 // Extract AAR
                 copy {
                     from zipTree(aarFile)
                     into tempDir
                 }
-                
+
                 // Copy proguard.txt
                 copy {
                     from proguardFile
                     into tempDir
                 }
-                
+
                 // Remove lint.jar if it exists (we don't have custom lint rules)
                 def lintJar = new File(tempDir, 'lint.jar')
                 if (lintJar.exists()) {
                     lintJar.delete()
                     println "Removed empty lint.jar from AAR"
                 }
-                
+
                 // Repack AAR
                 ant.zip(destfile: aarFile, basedir: tempDir)
-                
+
                 println "Added consumer ProGuard rules to ${aarFile.name}"
             }
         }
@@ -106,6 +140,68 @@ repositories {
 dependencies {
     include project(':main')
     include project(':logger')
+}
+
+def javadocSourceProjects = providers.provider {
+    def includeConfig = configurations.findByName("include")
+    if (includeConfig == null) {
+        return []
+    }
+    includeConfig.allDependencies
+            .withType(org.gradle.api.artifacts.ProjectDependency)
+            .collect { dep ->
+                def projectPath = null
+                if (dep.metaClass.hasProperty(dep, 'dependencyProject')) {
+                    projectPath = dep.dependencyProject?.path
+                } else if (dep.metaClass.hasProperty(dep, 'dependencyProjectPath')) {
+                    projectPath = dep.dependencyProjectPath
+                } else if (dep.metaClass.hasProperty(dep, 'path')) {
+                    projectPath = dep.path
+                }
+                return projectPath ? project(projectPath) : null
+            }
+            .findAll { it != null }
+}
+
+def javadocSourceDirsProvider = providers.provider {
+    files(javadocSourceProjects.get().collect { sourceProject ->
+        def androidExtension = sourceProject.extensions.findByName("android")
+        def sourceDirs = androidExtension?.sourceSets?.main?.java?.srcDirs ?: []
+        return sourceDirs.findAll { it.exists() }
+    })
+}
+
+def sourcesJarTask = tasks.register('sourcesJar', Jar) {
+    archiveBaseName = 'android-client'
+    archiveVersion = splitVersion
+    archiveClassifier = 'sources'
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    from(javadocSourceDirsProvider)
+}
+
+tasks.register('javadocJar', Jar) {
+    archiveBaseName = 'android-client'
+    archiveVersion = splitVersion
+    archiveClassifier = 'javadoc'
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    def javadocDir = layout.buildDirectory.dir('intermediates/java_doc_dir/release')
+    from(javadocDir)
+    doFirst {
+        if (!javadocDir.get().asFile.exists()) {
+            throw new GradleException("Javadoc directory not found: ${javadocDir.get().asFile}")
+        }
+    }
+}
+
+afterEvaluate {
+    def agpJavadocTask = tasks.findByName('javaDocRelease') ?:
+            tasks.findByName('javaDocJar') ?:
+                    tasks.findByName('javaDoc')
+    if (agpJavadocTask != null) {
+        tasks.named('javadocJar').configure {
+            dependsOn agpJavadocTask
+        }
+    }
 }
 
 def splitPOM = {
@@ -144,34 +240,34 @@ mavenPublishing {
 tasks.register('signArtifacts') {
     description = 'Signs all Maven artifacts with GPG'
     group = 'publishing'
-    
+
     doLast {
         def groupPath = project.group.toString().replace('.', '/')
         def artifactId = 'android-client'
         def versionStr = project.version.toString()
         def artifactDir = file("${buildDir}/publishing/mavenCentral/${groupPath}/${artifactId}/${versionStr}")
-        
+
         println "Signing artifacts in: ${artifactDir}"
-        
+
         if (!artifactDir.exists()) {
             println "WARNING: Artifact directory does not exist: ${artifactDir}"
             println "Skipping signing. Run publishAllPublicationsToMavenCentralRepository first."
             return
         }
-        
+
         def keyId = project.findProperty('signing.keyId')
         def password = project.findProperty('signing.password')
-        
+
         if (!keyId) {
             throw new GradleException("signing.keyId property is not set in gradle.properties")
         }
         if (!password) {
             throw new GradleException("signing.password property is not set in gradle.properties")
         }
-        
+
         println "Using GPG key ID: ${keyId}"
         println "Using default GPG keyring"
-        
+
         def artifactsToSign = []
         artifactDir.eachFile { file ->
             def name = file.name
@@ -180,15 +276,15 @@ tasks.register('signArtifacts') {
                 artifactsToSign << file
             }
         }
-        
+
         if (artifactsToSign.isEmpty()) {
             println "WARNING: No artifacts found to sign in ${artifactDir}"
             return
         }
-        
+
         println "Found ${artifactsToSign.size()} artifact(s) to sign:"
         artifactsToSign.each { println "  - ${it.name}" }
-        
+
         def gpgCommand = null
         def gpgPaths = [
             '/opt/homebrew/bin/gpg',  // macOS Homebrew on Apple Silicon - try first
@@ -196,7 +292,7 @@ tasks.register('signArtifacts') {
             '/usr/bin/gpg',
             '/opt/local/bin/gpg'  // MacPorts
         ]
-        
+
         for (path in gpgPaths) {
             def gpgFile = new File(path)
             if (gpgFile.exists() && gpgFile.canExecute()) {
@@ -205,7 +301,7 @@ tasks.register('signArtifacts') {
                 break
             }
         }
-        
+
         if (gpgCommand == null) {
             try {
                 def process = new ProcessBuilder(['gpg', '--version'])
@@ -220,7 +316,7 @@ tasks.register('signArtifacts') {
                 // GPG not in PATH
             }
         }
-        
+
         if (gpgCommand == null) {
             throw new GradleException("GPG is not installed or not found in common locations.\n" +
                 "Please install GPG:\n" +
@@ -229,20 +325,20 @@ tasks.register('signArtifacts') {
                 "Searched in: ${gpgPaths.join(', ')}\n" +
                 "If GPG is installed elsewhere, you can configure the path in the task.")
         }
-        
+
         println "Using GPG: ${gpgCommand}"
-        
+
         artifactsToSign.each { artifact ->
             def ascFile = new File(artifact.parentFile, "${artifact.name}.asc")
-            
+
             // Skip if already signed
             if (ascFile.exists()) {
                 println "Signature already exists for ${artifact.name}, skipping"
                 return
             }
-            
+
             println "Signing: ${artifact.name}"
-            
+
             try {
                 def cmd = [
                     gpgCommand,
@@ -256,29 +352,29 @@ tasks.register('signArtifacts') {
                     '--armor',
                     artifact.absolutePath
                 ]
-                
+
                 // Set GPG_TTY to avoid agent issues
                 def processEnv = new ProcessBuilder().environment()
                 processEnv.put('GPG_TTY', '')
-                
+
                 def process = new ProcessBuilder(cmd)
                     .redirectErrorStream(true)
                     .start()
-                
+
                 def exitCode = process.waitFor()
-                
+
                 if (exitCode != 0) {
                     def output = process.inputStream.text
                     throw new GradleException("Failed to sign ${artifact.name}. Exit code: ${exitCode}\nOutput: ${output}")
                 }
-                
+
                 // Verify the signature was created
                 if (!ascFile.exists()) {
                     throw new GradleException("Signature file was not created for ${artifact.name}")
                 }
-                
+
                 println "  ✓ Created signature: ${ascFile.name}"
-                
+
                 // Verify the signature
                 def verifyCmd = [
                     gpgCommand,
@@ -286,24 +382,24 @@ tasks.register('signArtifacts') {
                     ascFile.absolutePath,
                     artifact.absolutePath
                 ]
-                
+
                 def verifyProcess = new ProcessBuilder(verifyCmd)
                     .redirectErrorStream(true)
                     .start()
-                
+
                 def verifyExitCode = verifyProcess.waitFor()
-                
+
                 if (verifyExitCode == 0) {
                     println "  ✓ Signature verified successfully"
                 } else {
                     println "  ⚠ Warning: Could not verify signature"
                 }
-                
+
             } catch (Exception e) {
                 throw new GradleException("Failed to sign artifact ${artifact.name}: ${e.message}", e)
             }
         }
-        
+
         println "Successfully signed ${artifactsToSign.size()} artifact(s)"
     }
 }
@@ -312,64 +408,63 @@ tasks.register('signArtifacts') {
 afterEvaluate {
     def signTask = tasks.findByName('signArtifacts')
     def publishTask = tasks.findByName('publishAllPublicationsToMavenCentralRepository')
-    
+
     if (signTask && publishTask) {
         // signArtifacts depends on publishing (so artifacts exist)
         signTask.dependsOn(publishTask)
-        
+
         // Make publish task finalize with signing
         publishTask.finalizedBy(signTask)
-        
+
         println "Configured signArtifacts task to run after publishAllPublicationsToMavenCentralRepository"
     }
 }
 
 afterEvaluate {
-    def emptySourcesJarTask = tasks.findByName("emptySourcesJar")
-    if (emptySourcesJarTask != null) {
-        // Ensure only one sources artifact is published
-        publishing.publications.withType(MavenPublication) { publication ->
-            if (publication.name == "maven") {
-                // Keep only the sources from fusedLibraryComponent
-                publication.artifacts.removeAll { artifact ->
-                    // Remove artifacts that match the emptySourcesJar task output
-                    try {
-                        def artifactFile = artifact.file
-                        if (artifactFile != null && artifactFile.exists()) {
-                            def emptySourcesFile = emptySourcesJarTask.archiveFile.get().asFile
-                            artifactFile == emptySourcesFile
-                        } else {
-                            artifact.classifier == "sources" && artifact.extension == "jar" &&
-                            !publication.artifacts.any { 
-                                it != artifact && it.classifier == "sources" && 
-                                it.buildDependencies != null
-                            }
-                        }
-                    } catch (Exception e) {
-                        false
-                    }
-                }
-            }
-        }
-    }
-
     // Disable Gradle Module Metadata (.module file) to avoid variant ambiguity
     tasks.configureEach { task ->
         // Match tasks related to module metadata generation
-        if (task.name.startsWith('generateMetadataFileFor') || 
+        if (task.name.startsWith('generateMetadataFileFor') ||
             task.name == 'generateModuleMetadata' ||
             task.class.name.endsWith('GenerateModuleMetadata')) {
             task.enabled = false
         }
     }
-    
+
     // Remove empty lint.jar from publication to prevent consumer lint crashes
     // The fused library plugin generates an empty lint.jar without proper Lint-Registry-v2 manifest
     // This causes lint to crash when consumers use checkDependencies: true
     publishing.publications.withType(MavenPublication) { publication ->
         if (publication.name == "maven") {
+            publication.artifact(tasks.named('javadocJar'))
+            publication.artifact(tasks.named('sourcesJar'))
             publication.artifacts.removeAll { artifact ->
                 artifact.file?.name?.endsWith('lint.jar') ?: false
+            }
+        }
+    }
+}
+
+// The vanniktech plugin adds emptySourcesJar while AGP 9.0 also provides one from fusedLibraryComponent
+// We want to keep the AGP one (merged_sources_jar) which has actual sources
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.findAll { it.name.startsWith('publishMavenPublication') }.each { publishTask ->
+        publishTask.doFirst {
+            def pub = publication
+            if (pub.name == "maven") {
+                def sourcesJarFile = tasks.named('sourcesJar').get().archiveFile.get().asFile
+                def sourcesArtifacts = pub.artifacts.findAll { it.classifier == "sources" && it.extension == "jar" }
+                sourcesArtifacts.findAll { it.file != null && it.file != sourcesJarFile }.each { artifact ->
+                    pub.artifacts.remove(artifact)
+                    println "Removed duplicate sources artifact: ${artifact.file?.absolutePath}"
+                }
+
+                def javadocJarFile = tasks.named('javadocJar').get().archiveFile.get().asFile
+                def javadocArtifacts = pub.artifacts.findAll { it.classifier == "javadoc" && it.extension == "jar" }
+                javadocArtifacts.findAll { it.file != null && it.file != javadocJarFile }.each { artifact ->
+                    pub.artifacts.remove(artifact)
+                    println "Removed duplicate javadoc artifact: ${artifact.file?.absolutePath}"
+                }
             }
         }
     }

@@ -102,3 +102,7 @@ configurations.matching { it.name.toLowerCase().contains("test") }.all {
         force "org.jetbrains.kotlin:kotlin-stdlib-jdk8:1.8.0"
     }
 }
+
+tasks.withType(Test).configureEach {
+    maxParallelForks = Runtime.getRuntime().availableProcessors().intdiv(2) ?: 1
+}
