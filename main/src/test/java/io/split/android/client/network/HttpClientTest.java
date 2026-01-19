@@ -20,6 +20,8 @@ import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
@@ -401,6 +403,40 @@ public class HttpClientTest {
         assertTrue(authAwait);
         assertTrue(successAwait);
         mProxyServer.shutdown();
+    }
+
+    @Test
+    public void buildUsesTls12FactoryWhenLegacyAndNoProxy() throws Exception {
+        Context context = mock(Context.class);
+
+        try (MockedStatic<LegacyTlsUpdater> legacyMock = Mockito.mockStatic(LegacyTlsUpdater.class)) {
+            legacyMock.when(LegacyTlsUpdater::couldBeOld).thenReturn(true);
+
+            HttpClient legacyClient = new HttpClientImpl.Builder()
+                    .setContext(context)
+                    .setUrlSanitizer(mUrlSanitizerMock)
+                    .build();
+
+            legacyMock.verify(() -> LegacyTlsUpdater.update(context));
+            assertTrue(((HttpClientImpl) legacyClient).getSslSocketFactory() instanceof Tls12OnlySocketFactory);
+        }
+    }
+
+    @Test
+    public void buildUsesDefaultSslWhenNotLegacyAndNoProxy() throws Exception {
+        Context context = mock(Context.class);
+
+        try (MockedStatic<LegacyTlsUpdater> legacyMock = Mockito.mockStatic(LegacyTlsUpdater.class)) {
+            legacyMock.when(LegacyTlsUpdater::couldBeOld).thenReturn(false);
+
+            HttpClient modernClient = new HttpClientImpl.Builder()
+                    .setContext(context)
+                    .setUrlSanitizer(mUrlSanitizerMock)
+                    .build();
+
+            legacyMock.verify(() -> LegacyTlsUpdater.update(context), Mockito.never());
+            assertNull(((HttpClientImpl) modernClient).getSslSocketFactory());
+        }
     }
 
 
