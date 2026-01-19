@@ -977,33 +977,39 @@ public class SdkEventsIntegrationTest {
      * Given a SplitClient with an EventsManager and a handler H registered for sdkUpdate
      * And sdkReady has already been emitted
      * When the client is destroyed
-     * And an internal "splitsUpdated" event is notified for that client
-     * Then no external events are emitted
-     * And handler H is never invoked
+     * And an internal "splitsUpdated" event is notified via SSE
+     * Then handler H is never invoked (handlers were cleared on destroy)
      * When registering a new handler H2 for sdkUpdate after destroy
      * Then the registration is a no-op
-     * And H2 is never invoked
+     * And H2 is never invoked even when another update is pushed
      */
     @Test
     public void destroyingClientStopsEventsAndClearsHandlers() throws Exception {
-        // Given: sdkReady has already been emitted
-        TestClientFixture fixture = createClientAndWaitForReady(new Key("key_1"));
+        // Given: sdkReady has already been emitted (with streaming support)
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
         AtomicInteger handler1Count = new AtomicInteger(0);
         AtomicInteger handler2Count = new AtomicInteger(0);
 
-        // Given: a handler H registered for sdkUpdate
-        registerUpdateHandler(fixture.client, handler1Count, null);
+        // Given: a handler H registered for sdkUpdate before destroy
+        fixture.client.addEventListener(createOnUpdateListener(handler1Count, null, null));
 
         // When: the client is destroyed
         fixture.client.destroy();
 
-        // When: registering a new handler H2 for sdkUpdate after destroy
-        registerUpdateHandler(fixture.client, handler2Count, null);
+        fixture.pushSplitUpdate("3000", "2000");
 
-        // Then: handlers are not invoked (client is destroyed)
+        // Handler H is never invoked (handlers were cleared on destroy)
         Thread.sleep(1000);
         assertEquals("Handler H1 should not be invoked after destroy", 0, handler1Count.get());
+
+        // When: registering a new handler H2 for sdkUpdate after destroy
+        fixture.client.addEventListener(createOnUpdateListener(handler2Count, null, null));
+
+        fixture.pushSplitUpdate("4000", "3000");
+
+        Thread.sleep(1000);
+        assertEquals("Handler H1 should still be 0", 0, handler1Count.get());
         assertEquals("Handler H2 should not be invoked after destroy", 0, handler2Count.get());
 
         fixture.destroy();
@@ -1497,6 +1503,188 @@ public class SdkEventsIntegrationTest {
         return receivedMetadataList;
     }
 
+
+
+    /**
+     * Scenario: Multiple listeners with onUpdate are both invoked
+     * <p>
+     * Given sdkReady has already been emitted
+     * And two different SdkEventListener instances (L1 and L2) with onUpdate handlers are registered
+     * When a split update notification arrives via SSE
+     * Then SDK_UPDATE is emitted once
+     * And both L1.onUpdate and L2.onUpdate are invoked exactly once each
+     */
+    @Test
+    public void multipleListenersWithOnUpdateBothInvoked() throws Exception {
+        TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
+
+        AtomicInteger listener1Count = new AtomicInteger(0);
+        AtomicInteger listener2Count = new AtomicInteger(0);
+        AtomicReference<SdkUpdateMetadata> listener1Metadata = new AtomicReference<>();
+        AtomicReference<SdkUpdateMetadata> listener2Metadata = new AtomicReference<>();
+        CountDownLatch updateLatch = new CountDownLatch(2);
+
+        fixture.client.addEventListener(createOnUpdateListener(listener1Count, listener1Metadata, updateLatch));
+        fixture.client.addEventListener(createOnUpdateListener(listener2Count, listener2Metadata, updateLatch));
+
+        fixture.pushSplitUpdate();
+
+        assertTrue("Both listeners should be invoked", updateLatch.await(10, TimeUnit.SECONDS));
+        assertEquals("Listener 1 should be invoked exactly once", 1, listener1Count.get());
+        assertEquals("Listener 2 should be invoked exactly once", 1, listener2Count.get());
+        assertNotNull("Listener 1 should receive metadata", listener1Metadata.get());
+        assertNotNull("Listener 2 should receive metadata", listener2Metadata.get());
+
+        fixture.destroy();
+    }
+
+    /**
+     * Scenario: Multiple listeners with onReady are both invoked
+     * <p>
+     * Given the SDK is starting
+     * And two different SdkEventListener instances (L1 and L2) with onReady handlers are registered
+     * When SDK_READY fires
+     * Then both L1.onReady and L2.onReady are invoked exactly once each
+     * And both receive SdkReadyMetadata
+     */
+    @Test
+    public void multipleListenersWithOnReadyBothInvoked() throws Exception {
+        populateDatabaseWithCacheData(System.currentTimeMillis());
+        SplitFactory factory = buildFactory(buildConfig());
+        SplitClient client = factory.client(new Key("key_1"));
+
+        AtomicInteger listener1Count = new AtomicInteger(0);
+        AtomicInteger listener2Count = new AtomicInteger(0);
+        AtomicReference<SdkReadyMetadata> listener1Metadata = new AtomicReference<>();
+        AtomicReference<SdkReadyMetadata> listener2Metadata = new AtomicReference<>();
+        CountDownLatch readyLatch = new CountDownLatch(2);
+
+        client.addEventListener(createOnReadyListener(listener1Count, listener1Metadata, readyLatch));
+        client.addEventListener(createOnReadyListener(listener2Count, listener2Metadata, readyLatch));
+
+        assertTrue("Both listeners should be invoked", readyLatch.await(10, TimeUnit.SECONDS));
+        assertEquals("Listener 1 should be invoked exactly once", 1, listener1Count.get());
+        assertEquals("Listener 2 should be invoked exactly once", 1, listener2Count.get());
+        assertNotNull("Listener 1 should receive metadata", listener1Metadata.get());
+        assertNotNull("Listener 2 should receive metadata", listener2Metadata.get());
+
+        factory.destroy();
+    }
+
+    /**
+     * Scenario: Listeners with different callbacks (onReady and onUpdate) each invoked on correct event
+     * <p>
+     * Given the SDK is starting
+     * And a SdkEventListener L1 with onReady handler is registered
+     * And a SdkEventListener L2 with onUpdate handler is registered
+     * When SDK_READY fires
+     * Then L1.onReady is invoked
+     * And L2.onUpdate is NOT invoked (wrong event type)
+     * When an SDK_UPDATE notification arrives via SSE
+     * Then L2.onUpdate is invoked
+     * And L1.onReady is NOT invoked again (already fired once for SDK_READY)
+     */
+    @Test
+    public void listenersWithDifferentCallbacksInvokedOnCorrectEventType() throws Exception {
+        TestClientFixture fixture = createStreamingClient(new Key("key_1"));
+
+        AtomicInteger onReadyCount = new AtomicInteger(0);
+        AtomicInteger onUpdateCount = new AtomicInteger(0);
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        fixture.client.addEventListener(createOnReadyListener(onReadyCount, null, readyLatch));
+        fixture.client.addEventListener(createOnUpdateListener(onUpdateCount, null, updateLatch));
+
+        assertTrue("SDK_READY should fire", readyLatch.await(10, TimeUnit.SECONDS));
+        assertEquals("onReady should be invoked exactly once", 1, onReadyCount.get());
+        assertEquals("onUpdate should NOT be invoked on SDK_READY", 0, onUpdateCount.get());
+
+        fixture.waitForSseConnection();
+        fixture.pushSplitUpdate();
+
+        assertTrue("SDK_UPDATE should fire", updateLatch.await(10, TimeUnit.SECONDS));
+        assertEquals("onUpdate should be invoked exactly once", 1, onUpdateCount.get());
+        assertEquals("onReady should still be 1 (not invoked again)", 1, onReadyCount.get());
+
+        fixture.destroy();
+    }
+
+    /**
+     * Scenario: Multiple listeners with both onReady and onUpdate in same listener
+     * <p>
+     * Given the SDK is starting
+     * And two SdkEventListener instances (L1 and L2) each with both onReady and onUpdate handlers
+     * When SDK_READY fires
+     * Then both L1.onReady and L2.onReady are invoked exactly once each
+     * And neither L1.onUpdate nor L2.onUpdate are invoked
+     * When an SDK_UPDATE notification arrives via SSE
+     * Then both L1.onUpdate and L2.onUpdate are invoked exactly once each
+     */
+    @Test
+    public void multipleListenersWithBothReadyAndUpdateHandlers() throws Exception {
+        TestClientFixture fixture = createStreamingClient(new Key("key_1"));
+
+        AtomicInteger listener1ReadyCount = new AtomicInteger(0);
+        AtomicInteger listener1UpdateCount = new AtomicInteger(0);
+        AtomicInteger listener2ReadyCount = new AtomicInteger(0);
+        AtomicInteger listener2UpdateCount = new AtomicInteger(0);
+        CountDownLatch readyLatch = new CountDownLatch(2);
+        CountDownLatch updateLatch = new CountDownLatch(2);
+
+        fixture.client.addEventListener(createDualListener(listener1ReadyCount, readyLatch, listener1UpdateCount, updateLatch));
+        fixture.client.addEventListener(createDualListener(listener2ReadyCount, readyLatch, listener2UpdateCount, updateLatch));
+
+        assertTrue("Both onReady handlers should be invoked", readyLatch.await(10, TimeUnit.SECONDS));
+        assertEquals("Listener 1 onReady should be invoked once", 1, listener1ReadyCount.get());
+        assertEquals("Listener 2 onReady should be invoked once", 1, listener2ReadyCount.get());
+        assertEquals("Listener 1 onUpdate should NOT be invoked on SDK_READY", 0, listener1UpdateCount.get());
+        assertEquals("Listener 2 onUpdate should NOT be invoked on SDK_READY", 0, listener2UpdateCount.get());
+
+        fixture.waitForSseConnection();
+        fixture.pushSplitUpdate();
+
+        assertTrue("Both onUpdate handlers should be invoked", updateLatch.await(10, TimeUnit.SECONDS));
+        assertEquals("Listener 1 onUpdate should be invoked once", 1, listener1UpdateCount.get());
+        assertEquals("Listener 2 onUpdate should be invoked once", 1, listener2UpdateCount.get());
+        assertEquals("Listener 1 onReady should still be 1", 1, listener1ReadyCount.get());
+        assertEquals("Listener 2 onReady should still be 1", 1, listener2ReadyCount.get());
+
+        fixture.destroy();
+    }
+
+    /**
+     * Scenario: Multiple listeners with onReady replay to late subscribers
+     * <p>
+     * Given SDK_READY has already been emitted
+     * And a SdkEventListener L1 with onReady was registered before SDK_READY and was invoked
+     * When a new SdkEventListener L2 with onReady is registered after SDK_READY has fired
+     * Then L2.onReady is invoked (replay)
+     * And L1.onReady is NOT invoked again
+     */
+    @Test
+    public void multipleListenersWithOnReadyReplayToLateSubscribers() throws Exception {
+        TestClientFixture fixture = createClientAndWaitForReady(new Key("key_1"));
+
+        AtomicInteger listener1Count = new AtomicInteger(0);
+        AtomicInteger listener2Count = new AtomicInteger(0);
+        CountDownLatch listener1Latch = new CountDownLatch(1);
+        CountDownLatch listener2Latch = new CountDownLatch(1);
+
+        fixture.client.addEventListener(createOnReadyListener(listener1Count, null, listener1Latch));
+        assertTrue("Listener 1 should receive replay", listener1Latch.await(5, TimeUnit.SECONDS));
+        assertEquals("Listener 1 should be invoked once (replay)", 1, listener1Count.get());
+
+        fixture.client.addEventListener(createOnReadyListener(listener2Count, null, listener2Latch));
+        assertTrue("Listener 2 should receive replay", listener2Latch.await(5, TimeUnit.SECONDS));
+        assertEquals("Listener 2 should be invoked once (replay)", 1, listener2Count.get());
+
+        Thread.sleep(500);
+        assertEquals("Listener 1 should still be 1 (not invoked again)", 1, listener1Count.get());
+
+        fixture.destroy();
+    }
+
     /**
      * Creates a client and waits for SDK_READY to fire.
      * Returns a TestClientFixture containing the factory, client, and ready latch.
@@ -1690,6 +1878,58 @@ public class SdkEventsIntegrationTest {
         });
     }
 
+    /**
+     * Creates a SdkEventListener that counts onReady invocations and captures metadata.
+     */
+    private SdkEventListener createOnReadyListener(AtomicInteger count,
+                                                   AtomicReference<SdkReadyMetadata> metadata,
+                                                   CountDownLatch latch) {
+        return new SdkEventListener() {
+            @Override
+            public void onReady(SplitClient client, SdkReadyMetadata eventMetadata) {
+                if (count != null) count.incrementAndGet();
+                if (metadata != null) metadata.set(eventMetadata);
+                if (latch != null) latch.countDown();
+            }
+        };
+    }
+
+    /**
+     * Creates a SdkEventListener that counts onUpdate invocations and captures metadata.
+     */
+    private SdkEventListener createOnUpdateListener(AtomicInteger count,
+                                                    AtomicReference<SdkUpdateMetadata> metadata,
+                                                    CountDownLatch latch) {
+        return new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient client, SdkUpdateMetadata eventMetadata) {
+                if (count != null) count.incrementAndGet();
+                if (metadata != null) metadata.set(eventMetadata);
+                if (latch != null) latch.countDown();
+            }
+        };
+    }
+
+    /**
+     * Creates a SdkEventListener with both onReady and onUpdate handlers.
+     */
+    private SdkEventListener createDualListener(AtomicInteger readyCount, CountDownLatch readyLatch,
+                                                AtomicInteger updateCount, CountDownLatch updateLatch) {
+        return new SdkEventListener() {
+            @Override
+            public void onReady(SplitClient client, SdkReadyMetadata metadata) {
+                if (readyCount != null) readyCount.incrementAndGet();
+                if (readyLatch != null) readyLatch.countDown();
+            }
+
+            @Override
+            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
+                if (updateCount != null) updateCount.incrementAndGet();
+                if (updateLatch != null) updateLatch.countDown();
+            }
+        };
+    }
+
     private static final String SPLIT_UPDATE_PAYLOAD = "eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiJkNDMxY2RkMC1iMGJlLTExZWEtOGE4MC0xNjYwYWRhOWNlMzkiLCJuYW1lIjoibWF1cm9famF2YSIsInRyYWZmaWNBbGxvY2F0aW9uIjoxMDAsInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6LTkyMzkxNDkxLCJzZWVkIjotMTc2OTM3NzYwNCwic3RhdHVzIjoiQUNUSVZFIiwia2lsbGVkIjpmYWxzZSwiZGVmYXVsdFRyZWF0bWVudCI6Im9mZiIsImNoYW5nZU51bWJlciI6MTY4NDMyOTg1NDM4NSwiYWxnbyI6MiwiY29uZmlndXJhdGlvbnMiOnt9LCJjb25kaXRpb25zIjpbeyJjb25kaXRpb25UeXBlIjoiV0hJVEVMSVNUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7Im1hdGNoZXJUeXBlIjoiV0hJVEVMSVNUIiwibmVnYXRlIjpmYWxzZSwid2hpdGVsaXN0TWF0Y2hlckRhdGEiOnsid2hpdGVsaXN0IjpbImFkbWluIiwibWF1cm8iLCJuaWNvIl19fV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9XSwibGFiZWwiOiJ3aGl0ZWxpc3RlZCJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiSU5fU0VHTUVOVCIsIm5lZ2F0ZSI6ZmFsc2UsInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjp7InNlZ21lbnROYW1lIjoibWF1ci0yIn19XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImluIHNlZ21lbnQgbWF1ci0yIn0seyJjb25kaXRpb25UeXBlIjoiUk9MTE9VVCIsIm1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImRlZmF1bHQgcnVsZSJ9XX0=";
 
     /**
@@ -1868,5 +2108,4 @@ public class SdkEventsIntegrationTest {
         // Set RBS change number so streaming notifications trigger in-place updates
         mDatabase.generalInfoDao().update(new GeneralInfoEntity("rbsChangeNumber", 1000L));
     }
-
 }
