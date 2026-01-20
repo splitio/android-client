@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.util.Base64;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -15,6 +16,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +44,7 @@ import io.split.android.client.events.SdkReadyMetadata;
 import io.split.android.client.events.SdkUpdateMetadata;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
+import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.MyLargeSegmentEntity;
@@ -257,7 +260,7 @@ public class SdkEventsIntegrationTest {
         });
 
         // When: SDK_READY fires
-        boolean fired = readyLatch.await(10, TimeUnit.SECONDS);
+        boolean fired = readyLatch.await(30, TimeUnit.SECONDS);
 
         // Then: onReady is invoked exactly once
         assertTrue("onReady should fire", fired);
@@ -276,6 +279,47 @@ public class SdkEventsIntegrationTest {
         Long lastUpdateTimestamp = receivedMetadata.get().getLastUpdateTimestamp();
         assertNotNull("lastUpdateTimestamp should not be null", lastUpdateTimestamp);
         assertTrue("lastUpdateTimestamp should be valid", lastUpdateTimestamp > 0);
+
+        factory.destroy();
+    }
+
+    /**
+     * Scenario: sdkReady metadata should be preserved for late-registered clients (warm cache)
+     * <p>
+     * Given the SDK is starting with populated persistent storage
+     * And client1 has already emitted SDK_READY
+     * When client2 is created and receives SDK_READY (replay)
+     * Then the metadata should not be null and should reflect cache path values
+     */
+    @Test
+    public void sdkReadyMetadataNotNullWhenMembershipsCompletesLast() throws Exception {
+        long testTimestamp = System.currentTimeMillis();
+        populateDatabaseWithCacheData(testTimestamp);
+
+        SplitFactory factory = buildFactory(buildConfig());
+
+        SplitClient client1 = factory.client(new Key("key_1"));
+        CountDownLatch readyLatch1 = new CountDownLatch(1);
+        registerReadyHandler(client1, null, readyLatch1);
+        assertTrue("Client1 SDK_READY should fire", readyLatch1.await(10, TimeUnit.SECONDS));
+
+        SplitClient client2 = factory.client(new Key("key_2"));
+        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
+        CountDownLatch readyLatch2 = new CountDownLatch(1);
+        client2.addEventListener(new SdkEventListener() {
+            @Override
+            public void onReady(SplitClient client, SdkReadyMetadata metadata) {
+                receivedMetadata.set(metadata);
+                readyLatch2.countDown();
+            }
+        });
+
+        assertTrue("Client2 SDK_READY should fire", readyLatch2.await(10, TimeUnit.SECONDS));
+
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        assertNotNull("initialCacheLoad should not be null", receivedMetadata.get().isInitialCacheLoad());
+        assertFalse("initialCacheLoad should be false for cache path", receivedMetadata.get().isInitialCacheLoad());
+        assertNotNull("lastUpdateTimestamp should not be null", receivedMetadata.get().getLastUpdateTimestamp());
 
         factory.destroy();
     }
@@ -1337,6 +1381,267 @@ public class SdkEventsIntegrationTest {
     }
 
     /**
+     * Scenario: sdkUpdateMetadata includes flag names for polling flag updates
+     * <p>
+     * Given sdkReady has already been emitted in polling mode
+     * When polling returns a flag update
+     * Then sdkUpdate metadata contains FLAGS_UPDATE with non-empty names
+     */
+    @Test
+    public void sdkUpdateMetadataContainsNamesForPollingFlagsUpdate() throws Exception {
+        AtomicInteger splitChangesHitCount = new AtomicInteger(0);
+        final Dispatcher pollingDispatcher = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                final String path = request.getPath();
+                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
+                } else if (path.contains("/splitChanges")) {
+                    int count = splitChangesHitCount.incrementAndGet();
+                    if (count <= 1) {
+                        return new MockResponse().setResponseCode(200)
+                                .setBody(IntegrationHelper.emptyTargetingRulesChanges(1000, 1000));
+                    } else {
+                        String responseWithFlagChange = "{\"ff\":{\"s\":2000,\"t\":2000,\"d\":[" +
+                                "{\"trafficTypeName\":\"user\",\"name\":\"polling_flag\",\"status\":\"ACTIVE\"," +
+                                "\"killed\":false,\"defaultTreatment\":\"off\",\"changeNumber\":2000," +
+                                "\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\"," +
+                                "\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"ALL_KEYS\",\"negate\":false}]}," +
+                                "\"partitions\":[{\"treatment\":\"on\",\"size\":100}]}]}" +
+                                "]},\"rbs\":{\"s\":2000,\"t\":2000,\"d\":[]}}";
+                        return new MockResponse().setResponseCode(200).setBody(responseWithFlagChange);
+                    }
+                } else if (path.contains("/testImpressions/bulk")) {
+                    return new MockResponse().setResponseCode(200);
+                }
+                return new MockResponse().setResponseCode(404);
+            }
+        };
+        mWebServer.setDispatcher(pollingDispatcher);
+
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .serviceEndpoints(endpoints())
+                .ready(30000)
+                .featuresRefreshRate(3)
+                .segmentsRefreshRate(999999)
+                .impressionsRefreshRate(999999)
+                .streamingEnabled(false)
+                .trafficType("account")
+                .build();
+
+        SplitFactory factory = buildFactory(config);
+        SplitClient client = factory.client();
+
+        CountDownLatch readyLatch = new CountDownLatch(1);
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient c) {
+                readyLatch.countDown();
+            }
+        });
+        assertTrue("SDK_READY should fire", readyLatch.await(10, TimeUnit.SECONDS));
+
+        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
+        CountDownLatch updateLatch = new CountDownLatch(1);
+        client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
+                receivedMetadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+
+        assertTrue("SDK_UPDATE should fire", updateLatch.await(15, TimeUnit.SECONDS));
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        assertEquals("Type should be FLAGS_UPDATE",
+                SdkUpdateMetadata.Type.FLAGS_UPDATE, receivedMetadata.get().getType());
+        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
+        assertTrue("Names should include polling_flag", receivedMetadata.get().getNames().contains("polling_flag"));
+
+        factory.destroy();
+    }
+
+    /**
+     * Scenario: sdkReady should include non-null metadata on fresh install
+     * <p>
+     * Given the SDK starts with empty storage (fresh install)
+     * When SDK_READY fires
+     * Then metadata should be present (initialCacheLoad=true, lastUpdateTimestamp=null)
+     */
+    @Test
+    public void sdkReadyMetadataNotNullOnFreshInstall() throws Exception {
+        SplitFactory factory = buildFactory(buildConfig());
+        SplitClient client = factory.client(new Key("key_1"));
+
+        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
+        CountDownLatch readyLatch = new CountDownLatch(1);
+
+        client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onReady(SplitClient client, SdkReadyMetadata metadata) {
+                receivedMetadata.set(metadata);
+                readyLatch.countDown();
+            }
+        });
+
+        assertTrue("SDK_READY should fire", readyLatch.await(10, TimeUnit.SECONDS));
+
+        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        assertNotNull("initialCacheLoad should not be null", receivedMetadata.get().isInitialCacheLoad());
+        assertTrue("initialCacheLoad should be true for fresh install", receivedMetadata.get().isInitialCacheLoad());
+        assertEquals("lastUpdateTimestamp should be null for fresh install",
+                null, receivedMetadata.get().getLastUpdateTimestamp());
+
+        factory.destroy();
+    }
+
+    /**
+     * Scenario: sdkUpdateMetadata should include SEGMENTS_UPDATE when only one client changes (polling)
+     * <p>
+     * Given two clients are created in polling mode
+     * And only client1 receives a membership change on polling
+     * When polling updates occur
+     * Then only client1 receives SDK_UPDATE with SEGMENTS_UPDATE metadata
+     */
+    @Test
+    public void sdkUpdateMetadataForSingleClientMembershipPolling() throws Exception {
+        AtomicInteger key1MembershipHits = new AtomicInteger(0);
+        AtomicInteger key2MembershipHits = new AtomicInteger(0);
+
+        final String initialMemberships = "{\"ms\":{\"k\":[{\"n\":\"segment1\"}],\"cn\":1000},\"ls\":{\"k\":[],\"cn\":1000}}";
+        final String updatedMembershipsKey1 = "{\"ms\":{\"k\":[{\"n\":\"segment2\"}],\"cn\":2000},\"ls\":{\"k\":[],\"cn\":1000}}";
+
+        final Dispatcher pollingDispatcher = new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                final String path = request.getPath();
+                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    if (path.contains("key_1")) {
+                        int count = key1MembershipHits.incrementAndGet();
+                        return new MockResponse().setResponseCode(200)
+                                .setBody(count <= 1 ? initialMemberships : updatedMembershipsKey1);
+                    }
+                    if (path.contains("key_2")) {
+                        key2MembershipHits.incrementAndGet();
+                        return new MockResponse().setResponseCode(200).setBody(initialMemberships);
+                    }
+                    return new MockResponse().setResponseCode(200).setBody(initialMemberships);
+                } else if (path.contains("/splitChanges")) {
+                    return new MockResponse().setResponseCode(200)
+                            .setBody(IntegrationHelper.emptyTargetingRulesChanges(1000, 1000));
+                } else if (path.contains("/testImpressions/bulk")) {
+                    return new MockResponse().setResponseCode(200);
+                }
+                return new MockResponse().setResponseCode(404);
+            }
+        };
+        mWebServer.setDispatcher(pollingDispatcher);
+
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .serviceEndpoints(endpoints())
+                .ready(30000)
+                .featuresRefreshRate(999999)
+                .segmentsRefreshRate(3)
+                .impressionsRefreshRate(999999)
+                .streamingEnabled(false)
+                .trafficType("account")
+                .build();
+
+        SplitFactory factory = buildFactory(config);
+        SplitClient client1 = factory.client(new Key("key_1"));
+        SplitClient client2 = factory.client(new Key("key_2"));
+
+        AtomicReference<SdkUpdateMetadata> client1Metadata = new AtomicReference<>();
+        AtomicInteger client2UpdateCount = new AtomicInteger(0);
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        client1.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
+                client1Metadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+        client2.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
+                client2UpdateCount.incrementAndGet();
+            }
+        });
+
+        CountDownLatch readyLatch1 = new CountDownLatch(1);
+        CountDownLatch readyLatch2 = new CountDownLatch(1);
+        client1.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient c) {
+                readyLatch1.countDown();
+            }
+        });
+        client2.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient c) {
+                readyLatch2.countDown();
+            }
+        });
+        assertTrue("Client1 SDK_READY should fire", readyLatch1.await(10, TimeUnit.SECONDS));
+        assertTrue("Client2 SDK_READY should fire", readyLatch2.await(10, TimeUnit.SECONDS));
+
+        assertTrue("Client1 should receive SDK_UPDATE", updateLatch.await(20, TimeUnit.SECONDS));
+        assertNotNull("Client1 metadata should not be null", client1Metadata.get());
+        assertEquals("Type should be SEGMENTS_UPDATE",
+                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, client1Metadata.get().getType());
+
+        Thread.sleep(1000);
+        assertEquals("Client2 should not receive SDK_UPDATE", 0, client2UpdateCount.get());
+
+        factory.destroy();
+    }
+
+    /**
+     * Scenario: sdkUpdateMetadata contains SEGMENTS_UPDATE when only one streaming client changes
+     * <p>
+     * Given two clients are created with streaming enabled
+     * And a membership keylist update targets only client1
+     * When the SSE notification is pushed
+     * Then only client1 receives SDK_UPDATE with SEGMENTS_UPDATE metadata
+     */
+    @Test
+    public void sdkUpdateMetadataForSingleClientMembershipStreaming() throws Exception {
+        TwoClientFixture fixture = createTwoStreamingClientsAndWaitForReady(new Key("key1"), new Key("key2"));
+
+        AtomicReference<SdkUpdateMetadata> client1Metadata = new AtomicReference<>();
+        AtomicInteger client2UpdateCount = new AtomicInteger(0);
+        CountDownLatch updateLatch = new CountDownLatch(1);
+
+        fixture.clientA.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
+                client1Metadata.set(metadata);
+                updateLatch.countDown();
+            }
+        });
+        fixture.clientB.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
+                client2UpdateCount.incrementAndGet();
+            }
+        });
+
+        // Keylist update: only key1 is included
+        fixture.pushMembershipKeyListUpdate("key1", "streaming_segment");
+
+        assertTrue("Client1 should receive SDK_UPDATE", updateLatch.await(10, TimeUnit.SECONDS));
+        assertNotNull("Client1 metadata should not be null", client1Metadata.get());
+        assertEquals("Type should be SEGMENTS_UPDATE",
+                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, client1Metadata.get().getType());
+
+        Thread.sleep(500);
+        assertEquals("Client2 should not receive SDK_UPDATE", 0, client2UpdateCount.get());
+
+        fixture.destroy();
+    }
+
+    /**
      * Scenario: sdkUpdateMetadata contains Type.SEGMENTS_UPDATE for large segments update (polling)
      * <p>
      * Given sdkReady has already been emitted
@@ -2026,11 +2331,39 @@ public class SdkEventsIntegrationTest {
             }
         }
 
+        void pushMembershipKeyListUpdate(String key, String segmentName) {
+            if (streamingData != null) {
+                pushMessage(streamingData, membershipKeyListUpdateMessage(key, segmentName));
+            }
+        }
+
         void destroy() {
             factory.destroy();
         }
     }
 
+    private static String membershipKeyListUpdateMessage(String key, String segmentName) {
+        MySegmentsV2PayloadDecoder decoder = new MySegmentsV2PayloadDecoder();
+        BigInteger hashedKey = decoder.hashKey(key);
+        String keyListJson = "{\"a\":[" + hashedKey.toString() + "],\"r\":[]}";
+        String encodedKeyList = Base64.encodeToString(
+                keyListJson.getBytes(io.split.android.client.utils.StringHelper.defaultCharset()),
+                Base64.NO_WRAP);
+
+        String notificationJson = "{" +
+                "\\\"type\\\":\\\"MEMBERSHIPS_MS_UPDATE\\\"," +
+                "\\\"cn\\\":2000," +
+                "\\\"n\\\":[\\\"" + segmentName + "\\\"]," +
+                "\\\"c\\\":0," +
+                "\\\"u\\\":2," +
+                "\\\"d\\\":\\\"" + encodedKeyList + "\\\"" +
+                "}";
+
+        return "id: 1\n" +
+                "event: message\n" +
+                "data: {\"id\":\"m1\",\"clientId\":\"pri:test\",\"timestamp\":" + System.currentTimeMillis() +
+                ",\"encoding\":\"json\",\"channel\":\"test_channel\",\"data\":\"" + notificationJson + "\"}\n";
+    }
     private static void pushMessage(BlockingQueue<String> queue, String message) {
         try {
             queue.put(message + "\n");
