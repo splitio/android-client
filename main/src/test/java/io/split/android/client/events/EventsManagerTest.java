@@ -282,7 +282,7 @@ public class EventsManagerTest {
 
         waitForSdkReady(eventManager, readyLatch);
 
-        eventManager.registerEventListener(new SdkEventListener() {
+        eventManager.registerEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 receivedMetadata.set(metadata);
@@ -309,7 +309,7 @@ public class EventsManagerTest {
 
         waitForSdkReady(eventManager, readyLatch);
 
-        eventManager.registerEventListener(new SdkEventListener() {
+        eventManager.registerEventListener(new SplitEventListener() {
             @Override
             public void onUpdateView(SplitClient client, SdkUpdateMetadata metadata) {
                 receivedMetadata.set(metadata);
@@ -362,7 +362,7 @@ public class EventsManagerTest {
 
         waitForSdkReady(eventManager, readyLatch);
 
-        eventManager.registerEventListener(new SdkEventListener() {
+        eventManager.registerEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 backgroundMethodCalled[0] = true;
@@ -396,7 +396,7 @@ public class EventsManagerTest {
         AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
 
         // Register an event listener
-        eventManager.registerEventListener(new SdkEventListener() {
+        eventManager.registerEventListener(new SplitEventListener() {
             @Override
             public void onReadyFromCache(SplitClient client, SdkReadyMetadata metadata) {
                 receivedMetadata.set(metadata);

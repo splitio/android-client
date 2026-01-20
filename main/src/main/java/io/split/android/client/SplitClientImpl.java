@@ -12,7 +12,7 @@ import java.util.Map;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
-import io.split.android.client.events.SdkEventListener;
+import io.split.android.client.events.SplitEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -204,7 +204,7 @@ public final class SplitClientImpl implements SplitClient {
     }
 
     @Override
-    public void addEventListener(@NonNull SdkEventListener listener) {
+    public void addEventListener(@NonNull SplitEventListener listener) {
         if (mIsClientDestroyed) {
             Logger.w("Client has already been destroyed. Cannot add event listener");
             return;

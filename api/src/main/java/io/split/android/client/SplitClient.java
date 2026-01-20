@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.attributes.AttributesManager;
-import io.split.android.client.events.SdkEventListener;
+import io.split.android.client.events.SplitEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 
@@ -214,7 +214,7 @@ public interface SplitClient extends AttributesManager {
      *
      * @param listener the event listener to register. Must not be null.
      */
-    void addEventListener(@NonNull SdkEventListener listener);
+    void addEventListener(@NonNull SplitEventListener listener);
 
     /**
      * Enqueue a new event to be sent to Split data collection services.

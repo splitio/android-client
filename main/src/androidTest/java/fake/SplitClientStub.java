@@ -11,7 +11,7 @@ import java.util.Map;
 import io.split.android.client.EvaluationOptions;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitResult;
-import io.split.android.client.events.SdkEventListener;
+import io.split.android.client.events.SplitEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 
@@ -122,7 +122,7 @@ public class SplitClientStub implements SplitClient {
     }
 
     @Override
-    public void addEventListener(SdkEventListener listener) {
+    public void addEventListener(SplitEventListener listener) {
         // Stub implementation - does nothing
     }
 
