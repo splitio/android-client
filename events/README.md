@@ -21,6 +21,8 @@ Events are configured using `EventsManagerConfig.Builder`:
 - **`prerequisite(external, prerequisiteExternal)`**: External event can only fire after the prerequisite external event has fired
 - **`suppressedBy(external, suppressorExternal)`**: External event is permanently suppressed if the suppressor external event has already fired
 - **`executionLimit(external, limit)`**: Max times the event can fire (-1 = unlimited, 1 = once only)
+- **`metadataSource(external, internal)`**: For `requireAll`, selects the internal event whose metadata will be delivered
+- **`metadataSource(external, Set<internal>, internal)`**: For `requireAny` groups, selects the metadata source per group
 
 ## Topological Sort for Evaluation Order
 
@@ -31,6 +33,9 @@ The events system uses **topological sorting** to determine the order in which e
 1. **Internal Event Arrives**: A single internal event can potentially satisfy conditions for multiple external events.
 2. **Single-Pass Evaluation**: The system iterates through a pre-computed list of external events (`mEvaluationOrder`).
 3. **Order Matters**: This list is topologically sorted so that events with dependencies (prerequisites/suppression) come *after* the events they depend on.
+4. **Metadata Selection**: When an external event fires, metadata is resolved from the configured source event:
+   - `requireAll`: use the configured source internal event
+   - `requireAny`: use the source configured for the specific group that completed
 
 ### Why It's Necessary
 
