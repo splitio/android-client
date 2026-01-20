@@ -145,36 +145,25 @@ public class SdkEventsIntegrationTest {
     @Test
     public void sdkReadyFromCacheFiresWhenCacheLoadingCompletes() throws Exception {
         // Given: SDK is starting with populated persistent storage
-        long testTimestamp = System.currentTimeMillis();
-        populateDatabaseWithCacheData(testTimestamp);
-
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
+        populateDatabaseWithCacheData(System.currentTimeMillis());
+        SplitFactory factory = buildFactory(buildConfig());
+        SplitClient client = factory.client(new Key("key_1"));
 
         // And: a handler H is registered for sdkReadyFromCache
-        AtomicInteger handlerInvocationCount = new AtomicInteger(0);
-        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch cacheReadyLatch = new CountDownLatch(1);
-
-        SplitClient client = factory.client(new Key("key_1"));
-        registerCacheReadyHandler(client, handlerInvocationCount, receivedMetadata, cacheReadyLatch);
-
-        boolean fired = cacheReadyLatch.await(10, TimeUnit.SECONDS);
+        EventCapture<SdkReadyMetadata> capture = captureCacheReadyEvent(client);
 
         // Then: sdkReadyFromCache is emitted exactly once
-        assertTrue("SDK_READY_FROM_CACHE should fire", fired);
-        assertEquals("Handler should be invoked exactly once", 1, handlerInvocationCount.get());
+        awaitEvent(capture.latch, "SDK_READY_FROM_CACHE");
+        assertFiredOnce(capture.count, "SDK_READY_FROM_CACHE handler");
 
         // And: the metadata contains "initialCacheLoad" with value false
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
-        Boolean initialCacheLoad = receivedMetadata.get().isInitialCacheLoad();
-        assertNotNull("initialCacheLoad should not be null", initialCacheLoad);
-        assertFalse("initialCacheLoad should be false for cache path", initialCacheLoad);
+        assertNotNull("Metadata should not be null", capture.metadata.get());
+        assertNotNull("initialCacheLoad should not be null", capture.metadata.get().isInitialCacheLoad());
+        assertFalse("initialCacheLoad should be false for cache path", capture.metadata.get().isInitialCacheLoad());
 
         // And: the metadata contains "lastUpdateTimestamp" with a valid timestamp
-        Long lastUpdateTimestamp = receivedMetadata.get().getLastUpdateTimestamp();
-        assertNotNull("lastUpdateTimestamp should not be null", lastUpdateTimestamp);
-        assertTrue("lastUpdateTimestamp should be valid", lastUpdateTimestamp > 0);
+        assertNotNull("lastUpdateTimestamp should not be null", capture.metadata.get().getLastUpdateTimestamp());
+        assertTrue("lastUpdateTimestamp should be valid", capture.metadata.get().getLastUpdateTimestamp() > 0);
 
         factory.destroy();
     }
@@ -192,31 +181,20 @@ public class SdkEventsIntegrationTest {
     @Test
     public void sdkReadyFromCacheFiresWhenSyncCompletesFreshInstallPath() throws Exception {
         // Given: SDK is starting without persistent storage (fresh install)
-        // Database is already empty from setup()
-
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
+        SplitFactory factory = buildFactory(buildConfig());
+        SplitClient client = factory.client(new Key("key_1"));
 
         // And: a handler H is registered for sdkReadyFromCache
-        AtomicInteger handlerInvocationCount = new AtomicInteger(0);
-        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch cacheReadyLatch = new CountDownLatch(1);
-
-        SplitClient client = factory.client(new Key("key_1"));
-        registerCacheReadyHandler(client, handlerInvocationCount, receivedMetadata, cacheReadyLatch);
-
-        // When: internal events "targetingRulesSyncComplete" and "membershipsSyncComplete" are notified
-        boolean fired = cacheReadyLatch.await(10, TimeUnit.SECONDS);
+        EventCapture<SdkReadyMetadata> capture = captureCacheReadyEvent(client);
 
         // Then: sdkReadyFromCache is emitted exactly once
-        assertTrue("SDK_READY_FROM_CACHE should fire", fired);
-        assertEquals("Handler should be invoked exactly once", 1, handlerInvocationCount.get());
+        awaitEvent(capture.latch, "SDK_READY_FROM_CACHE");
+        assertFiredOnce(capture.count, "SDK_READY_FROM_CACHE handler");
 
         // And: the metadata contains "initialCacheLoad" with value true
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
-        Boolean initialCacheLoad = receivedMetadata.get().isInitialCacheLoad();
-        assertNotNull("initialCacheLoad should not be null", initialCacheLoad);
-        assertTrue("initialCacheLoad should be true for sync path (fresh install)", initialCacheLoad);
+        assertNotNull("Metadata should not be null", capture.metadata.get());
+        assertNotNull("initialCacheLoad should not be null", capture.metadata.get().isInitialCacheLoad());
+        assertTrue("initialCacheLoad should be true for sync path (fresh install)", capture.metadata.get().isInitialCacheLoad());
 
         factory.destroy();
     }
@@ -235,50 +213,25 @@ public class SdkEventsIntegrationTest {
     @Test
     public void sdkReadyListenerFiresWithMetadata() throws Exception {
         // Given: SDK is starting with populated persistent storage
-        long testTimestamp = System.currentTimeMillis();
-        populateDatabaseWithCacheData(testTimestamp);
-
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
-
-        AtomicInteger onReadyCount = new AtomicInteger(0);
-        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
-        AtomicReference<SplitClient> receivedClient = new AtomicReference<>();
-        CountDownLatch readyLatch = new CountDownLatch(1);
-
+        populateDatabaseWithCacheData(System.currentTimeMillis());
+        SplitFactory factory = buildFactory(buildConfig());
         SplitClient client = factory.client(new Key("key_1"));
 
         // And: a handler H is registered using addEventListener with onReady
-        client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onReady(SplitClient client, SdkReadyMetadata metadata) {
-                onReadyCount.incrementAndGet();
-                receivedMetadata.set(metadata);
-                receivedClient.set(client);
-                readyLatch.countDown();
-            }
-        });
-
-        // When: SDK_READY fires
-        boolean fired = readyLatch.await(30, TimeUnit.SECONDS);
+        EventCapture<SdkReadyMetadata> capture = captureReadyEvent(client);
 
         // Then: onReady is invoked exactly once
-        assertTrue("onReady should fire", fired);
-        assertEquals("onReady should be invoked exactly once", 1, onReadyCount.get());
-
-        // And: the handler receives the SplitClient and SdkReadyMetadata
-        assertNotNull("Received client should not be null", receivedClient.get());
-        assertNotNull("Received metadata should not be null", receivedMetadata.get());
+        awaitEvent(capture.latch, "onReady", 30);
+        assertFiredOnce(capture.count, "onReady");
 
         // And: the metadata contains "initialCacheLoad" with value false
-        Boolean initialCacheLoad = receivedMetadata.get().isInitialCacheLoad();
-        assertNotNull("initialCacheLoad should not be null", initialCacheLoad);
-        assertFalse("initialCacheLoad should be false for cache path", initialCacheLoad);
+        assertNotNull("Received metadata should not be null", capture.metadata.get());
+        assertNotNull("initialCacheLoad should not be null", capture.metadata.get().isInitialCacheLoad());
+        assertFalse("initialCacheLoad should be false for cache path", capture.metadata.get().isInitialCacheLoad());
 
         // And: the metadata contains "lastUpdateTimestamp" with a valid timestamp
-        Long lastUpdateTimestamp = receivedMetadata.get().getLastUpdateTimestamp();
-        assertNotNull("lastUpdateTimestamp should not be null", lastUpdateTimestamp);
-        assertTrue("lastUpdateTimestamp should be valid", lastUpdateTimestamp > 0);
+        assertNotNull("lastUpdateTimestamp should not be null", capture.metadata.get().getLastUpdateTimestamp());
+        assertTrue("lastUpdateTimestamp should be valid", capture.metadata.get().getLastUpdateTimestamp() > 0);
 
         factory.destroy();
     }
@@ -293,33 +246,20 @@ public class SdkEventsIntegrationTest {
      */
     @Test
     public void sdkReadyMetadataNotNullWhenMembershipsCompletesLast() throws Exception {
-        long testTimestamp = System.currentTimeMillis();
-        populateDatabaseWithCacheData(testTimestamp);
-
+        populateDatabaseWithCacheData(System.currentTimeMillis());
         SplitFactory factory = buildFactory(buildConfig());
 
         SplitClient client1 = factory.client(new Key("key_1"));
-        CountDownLatch readyLatch1 = new CountDownLatch(1);
-        registerReadyHandler(client1, null, readyLatch1);
-        assertTrue("Client1 SDK_READY should fire", readyLatch1.await(10, TimeUnit.SECONDS));
+        waitForReady(client1);
 
         SplitClient client2 = factory.client(new Key("key_2"));
-        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch readyLatch2 = new CountDownLatch(1);
-        client2.addEventListener(new SdkEventListener() {
-            @Override
-            public void onReady(SplitClient client, SdkReadyMetadata metadata) {
-                receivedMetadata.set(metadata);
-                readyLatch2.countDown();
-            }
-        });
+        EventCapture<SdkReadyMetadata> capture = captureReadyEvent(client2);
+        awaitEvent(capture.latch, "Client2 SDK_READY");
 
-        assertTrue("Client2 SDK_READY should fire", readyLatch2.await(10, TimeUnit.SECONDS));
-
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertNotNull("initialCacheLoad should not be null", receivedMetadata.get().isInitialCacheLoad());
-        assertFalse("initialCacheLoad should be false for cache path", receivedMetadata.get().isInitialCacheLoad());
-        assertNotNull("lastUpdateTimestamp should not be null", receivedMetadata.get().getLastUpdateTimestamp());
+        assertNotNull("Metadata should not be null", capture.metadata.get());
+        assertNotNull("initialCacheLoad should not be null", capture.metadata.get().isInitialCacheLoad());
+        assertFalse("initialCacheLoad should be false for cache path", capture.metadata.get().isInitialCacheLoad());
+        assertNotNull("lastUpdateTimestamp should not be null", capture.metadata.get().getLastUpdateTimestamp());
 
         factory.destroy();
     }
@@ -337,28 +277,16 @@ public class SdkEventsIntegrationTest {
         TestClientFixture fixture = createClientAndWaitForReady(new Key("key_1"));
 
         // When: a new handler H is registered for onReady after SDK_READY has fired
-        AtomicInteger onReadyCount = new AtomicInteger(0);
-        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch lateReadyLatch = new CountDownLatch(1);
-
-        fixture.client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onReady(SplitClient client, SdkReadyMetadata metadata) {
-                onReadyCount.incrementAndGet();
-                receivedMetadata.set(metadata);
-                lateReadyLatch.countDown();
-            }
-        });
+        EventCapture<SdkReadyMetadata> capture = captureReadyEvent(fixture.client);
 
         // Then: onReady handler H is invoked exactly once immediately (replay)
-        boolean replayFired = lateReadyLatch.await(5, TimeUnit.SECONDS);
-        assertTrue("Late onReady handler should receive replay", replayFired);
-        assertEquals("Late onReady handler should be invoked exactly once", 1, onReadyCount.get());
-        assertNotNull("Metadata should not be null on replay", receivedMetadata.get());
+        awaitEvent(capture.latch, "Late onReady handler replay", 5);
+        assertFiredOnce(capture.count, "Late onReady handler");
+        assertNotNull("Metadata should not be null on replay", capture.metadata.get());
 
         // And: onReady is not emitted again (verify no additional invocations)
         Thread.sleep(500);
-        assertEquals("Late handler should not be invoked again", 1, onReadyCount.get());
+        assertFiredOnce(capture.count, "Late handler");
 
         fixture.destroy();
     }
@@ -374,32 +302,22 @@ public class SdkEventsIntegrationTest {
     @Test
     public void sdkReadyViewListenerFiresOnMainThread() throws Exception {
         // Given: SDK is starting with populated persistent storage
-        long testTimestamp = System.currentTimeMillis();
-        populateDatabaseWithCacheData(testTimestamp);
-
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
-
-        AtomicInteger onReadyViewCount = new AtomicInteger(0);
-        CountDownLatch readyViewLatch = new CountDownLatch(1);
-
+        populateDatabaseWithCacheData(System.currentTimeMillis());
+        SplitFactory factory = buildFactory(buildConfig());
         SplitClient client = factory.client(new Key("key_1"));
 
         // And: a handler H is registered using addEventListener with onReadyView
+        EventCapture<SdkReadyMetadata> capture = new EventCapture<>();
         client.addEventListener(new SdkEventListener() {
             @Override
-            public void onReadyView(SplitClient client, SdkReadyMetadata metadata) {
-                onReadyViewCount.incrementAndGet();
-                readyViewLatch.countDown();
+            public void onReadyView(SplitClient c, SdkReadyMetadata metadata) {
+                capture.capture(metadata);
             }
         });
 
-        // When: SDK_READY fires
-        boolean fired = readyViewLatch.await(10, TimeUnit.SECONDS);
-
         // Then: onReadyView is invoked
-        assertTrue("onReadyView should fire", fired);
-        assertEquals("onReadyView should be invoked exactly once", 1, onReadyViewCount.get());
+        awaitEvent(capture.latch, "onReadyView");
+        assertFiredOnce(capture.count, "onReadyView");
 
         factory.destroy();
     }
@@ -421,59 +339,20 @@ public class SdkEventsIntegrationTest {
      */
     @Test
     public void sdkReadyFiresAfterSdkReadyFromCacheAndRequiresSyncCompletion() throws Exception {
-        // Given: SDK has not yet emitted sdkReady
-        // Use fresh install (no cache) so SDK_READY_FROM_CACHE fires via sync path,
-        // then SDK_READY fires after sync completes
-        // Database is already empty from setup()
-
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
-
-        // And: handlers are registered BEFORE creating client to catch all events
-        AtomicInteger cacheHandlerCount = new AtomicInteger(0);
-        AtomicInteger readyHandlerCount = new AtomicInteger(0);
-        CountDownLatch cacheReadyLatch = new CountDownLatch(1);
-        CountDownLatch readyLatch = new CountDownLatch(1);
-
+        // Given: SDK has not yet emitted sdkReady (fresh install)
+        SplitFactory factory = buildFactory(buildConfig());
         SplitClient client = factory.client(new Key("key_1"));
 
-        // Register handlers immediately
-        client.on(SplitEvent.SDK_READY_FROM_CACHE, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
-                cacheHandlerCount.incrementAndGet();
-                cacheReadyLatch.countDown();
-            }
-        });
+        // And: handlers are registered to catch all events
+        EventCapture<SdkReadyMetadata> cacheCapture = captureCacheReadyEvent(client);
+        CountDownLatch readyLatch = captureLegacyReadyEvent(client);
 
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
-                readyHandlerCount.incrementAndGet();
-                readyLatch.countDown();
-            }
-        });
-
-        // When: sync completes (happens automatically during initialization)
-        // SDK_READY_FROM_CACHE fires via sync path when TARGETING_RULES_SYNC_COMPLETE and MEMBERSHIPS_SYNC_COMPLETE fire
         // Wait for SDK_READY_FROM_CACHE first
-        boolean cacheFired = cacheReadyLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_READY_FROM_CACHE should fire", cacheFired);
-        assertEquals("Cache handler should be invoked once", 1, cacheHandlerCount.get());
+        awaitEvent(cacheCapture.latch, "SDK_READY_FROM_CACHE");
+        assertFiredOnce(cacheCapture.count, "Cache handler");
 
-        // SDK_READY requires both SDK_READY_FROM_CACHE (prerequisite) and sync completion (requireAll)
         // Wait for SDK_READY to fire
-        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
-
-        // Then: sdkReady is emitted exactly once
-        assertTrue("SDK_READY should fire after SDK_READY_FROM_CACHE and sync completion. " +
-                "Cache fired: " + cacheHandlerCount.get() + ", Ready fired: " + readyHandlerCount.get(),
-                readyFired);
-        assertEquals("Ready handler should be invoked exactly once", 1, readyHandlerCount.get());
-
-        // Verify both events fired
-        assertEquals("SDK_READY_FROM_CACHE should fire", 1, cacheHandlerCount.get());
-        assertEquals("SDK_READY should fire after SDK_READY_FROM_CACHE", 1, readyHandlerCount.get());
+        awaitEvent(readyLatch, "SDK_READY");
 
         factory.destroy();
     }
@@ -492,19 +371,15 @@ public class SdkEventsIntegrationTest {
         TestClientFixture fixture = createClientAndWaitForReady(new Key("key_1"));
 
         // When: a new handler H is registered for sdkReady
-        AtomicInteger lateHandlerCount = new AtomicInteger(0);
-        CountDownLatch lateHandlerLatch = new CountDownLatch(1);
-
-        registerReadyHandler(fixture.client, lateHandlerCount, lateHandlerLatch);
+        EventCapture<SdkReadyMetadata> capture = captureReadyEvent(fixture.client);
 
         // Then: handler H is invoked exactly once immediately (replay)
-        boolean replayFired = lateHandlerLatch.await(5, TimeUnit.SECONDS);
-        assertTrue("Late handler should receive replay", replayFired);
-        assertEquals("Late handler should be invoked exactly once", 1, lateHandlerCount.get());
+        awaitEvent(capture.latch, "Late handler replay", 5);
+        assertFiredOnce(capture.count, "Late handler");
 
         // And: sdkReady is not emitted again (verify no additional invocations)
         Thread.sleep(500);
-        assertEquals("Late handler should not be invoked again", 1, lateHandlerCount.get());
+        assertFiredOnce(capture.count, "Late handler");
 
         fixture.destroy();
     }
@@ -526,49 +401,27 @@ public class SdkEventsIntegrationTest {
         // Given: Create streaming client but don't wait for SDK_READY
         TestClientFixture fixture = createStreamingClient(new Key("key_1"));
 
-        AtomicInteger updateHandlerCount = new AtomicInteger(0);
-        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch readyLatch = new CountDownLatch(1);
-        CountDownLatch updateLatch = new CountDownLatch(1);
-
         // Register handlers BEFORE SDK_READY fires
-        fixture.client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                updateHandlerCount.incrementAndGet();
-                receivedMetadata.set(metadata);
-                updateLatch.countDown();
-            }
-        });
-
-        fixture.client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
-                readyLatch.countDown();
-            }
-        });
+        EventCapture<SdkUpdateMetadata> updateCapture = captureUpdateEvent(fixture.client);
+        CountDownLatch readyLatch = captureLegacyReadyEvent(fixture.client);
 
         // Wait a bit to see if SDK_UPDATE fires prematurely (during initial sync)
         Thread.sleep(1000);
 
         // Then: sdkUpdate is not emitted because sdkReady has not fired yet
-        assertEquals("SDK_UPDATE should not fire before SDK_READY", 0, updateHandlerCount.get());
+        assertEquals("SDK_UPDATE should not fire before SDK_READY", 0, updateCapture.count.get());
 
         // When: SDK_READY fires
-        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_READY should fire", readyFired);
-
-        // Wait for SSE connection
+        awaitEvent(readyLatch, "SDK_READY");
         fixture.waitForSseConnection();
 
         // When: a new "splitsUpdated" event is notified via SSE (after SDK_READY has fired)
         fixture.pushSplitUpdate("2000", "1000");
 
         // Then: sdkUpdate is emitted and handler H is invoked once
-        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire after SDK_READY when splits update arrives", updateFired);
-        assertEquals("Handler should be invoked exactly once", 1, updateHandlerCount.get());
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        awaitEvent(updateCapture.latch, "SDK_UPDATE");
+        assertFiredOnce(updateCapture.count, "SDK_UPDATE handler");
+        assertNotNull("Metadata should not be null", updateCapture.metadata.get());
 
         fixture.destroy();
     }
@@ -586,27 +439,15 @@ public class SdkEventsIntegrationTest {
         // Given: sdkReady has already been emitted (with streaming support)
         TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
-        AtomicInteger updateHandlerCount = new AtomicInteger(0);
-        AtomicReference<SdkUpdateMetadata> lastMetadata = new AtomicReference<>();
-        CountDownLatch updateLatch = new CountDownLatch(1);
-
-        fixture.client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                updateHandlerCount.incrementAndGet();
-                lastMetadata.set(metadata);
-                updateLatch.countDown();
-            }
-        });
+        EventCapture<SdkUpdateMetadata> capture = captureUpdateEvent(fixture.client);
 
         // When: a split update notification arrives via SSE
         fixture.pushSplitUpdate();
 
         // Then: sdkUpdate is emitted and handler H is invoked
-        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire after split update notification", updateFired);
-        assertEquals("Handler should be invoked once", 1, updateHandlerCount.get());
-        assertNotNull("Metadata should not be null", lastMetadata.get());
+        awaitEvent(capture.latch, "SDK_UPDATE");
+        assertFiredOnce(capture.count, "SDK_UPDATE handler");
+        assertNotNull("Metadata should not be null", capture.metadata.get());
 
         fixture.destroy();
     }
@@ -630,7 +471,6 @@ public class SdkEventsIntegrationTest {
         TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
         AtomicInteger handler1Count = new AtomicInteger(0);
-        AtomicInteger handler2Count = new AtomicInteger(0);
         CountDownLatch firstUpdateLatch = new CountDownLatch(1);
         AtomicReference<CountDownLatch> secondUpdateLatchRef = new AtomicReference<>(null);
 
@@ -640,7 +480,6 @@ public class SdkEventsIntegrationTest {
             public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handler1Count.incrementAndGet();
                 firstUpdateLatch.countDown();
-                // Count down second latch if it exists (second update)
                 CountDownLatch secondLatch = secondUpdateLatchRef.get();
                 if (secondLatch != null) {
                     secondLatch.countDown();
@@ -649,55 +488,40 @@ public class SdkEventsIntegrationTest {
         });
 
         // When: an internal "splitsUpdated" event is notified via SSE
-        // Use large change numbers to avoid any edge cases with change number validation
         fixture.pushSplitUpdate("2000", "1000");
 
         // Then: sdkUpdate is emitted and handler H1 is invoked once
-        boolean firstUpdateFired = firstUpdateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire for H1", firstUpdateFired);
-        assertEquals("H1 should be invoked once", 1, handler1Count.get());
+        awaitEvent(firstUpdateLatch, "SDK_UPDATE for H1");
+        assertFiredOnce(handler1Count, "H1");
 
-        // Wait to ensure first update is fully processed and stored
+        // Wait to ensure first update is fully processed
         Thread.sleep(1000);
 
         // When: a second handler H2 is registered for sdkUpdate after one sdkUpdate has already fired
         CountDownLatch secondUpdateLatch = new CountDownLatch(2);
         secondUpdateLatchRef.set(secondUpdateLatch);
-
-        fixture.client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                handler2Count.incrementAndGet();
-                secondUpdateLatch.countDown();
-            }
-        });
+        EventCapture<SdkUpdateMetadata> handler2Capture = captureUpdateEvent(fixture.client);
 
         // Then: H2 does not receive a replay for past sdkUpdate events
         Thread.sleep(500);
-        assertEquals("H2 should not receive replay", 0, handler2Count.get());
+        assertEquals("H2 should not receive replay", 0, handler2Capture.count.get());
 
-        // Ensure handlers are registered and first update is fully processed before pushing second update
+        // Ensure handlers are registered before pushing second update
         Thread.sleep(500);
-
-        // Send keep-alive to ensure SSE connection is still active
         if (fixture.streamingData != null) {
             TestingHelper.pushKeepAlive(fixture.streamingData);
         }
 
-        // When: another internal "splitsUpdated" event is notified (with incrementing change number)
-        // Use a higher change number to ensure it's accepted after the first update
+        // When: another internal "splitsUpdated" event is notified
         fixture.pushSplitUpdate("2001", "2000");
 
         // Then: both H1 and H2 are invoked for that second sdkUpdate
-        boolean secondUpdateFired = secondUpdateLatch.await(15, TimeUnit.SECONDS);
-        assertTrue("Second SDK_UPDATE should fire. H1 count: " + handler1Count.get() +
-                ", H2 count: " + handler2Count.get() +
-                ", secondUpdateLatch count: " + secondUpdateLatch.getCount(), secondUpdateFired);
+        awaitEvent(secondUpdateLatch, "Second SDK_UPDATE", 15);
 
         // H1 should now have 2 total invocations (1 from first + 1 from second)
-        assertEquals("H1 should have 2 total invocations", 2, handler1Count.get());
+        assertFiredTimes(handler1Count, "H1", 2);
         // H2 should have 1 invocation (only from second update, no replay)
-        assertEquals("H2 should have 1 invocation (no replay)", 1, handler2Count.get());
+        assertFiredOnce(handler2Capture.count, "H2");
 
         fixture.destroy();
     }
@@ -716,81 +540,46 @@ public class SdkEventsIntegrationTest {
      */
     @Test
     public void sdkReadyTimedOutEmittedWhenReadinessTimeoutElapses() throws Exception {
-        // Given: handlers are registered
-        // And: the readiness timeout is configured to a short timeout (2 seconds)
-        // Use a mock server that delays responses to prevent sync from completing quickly
+        // Given: the readiness timeout is configured to a short timeout (2 seconds)
         SplitClientConfig config = SplitClientConfig.builder()
                 .serviceEndpoints(endpoints())
-                .ready(2000) // 2 second timeout
+                .ready(2000)
                 .featuresRefreshRate(999999)
                 .segmentsRefreshRate(999999)
                 .impressionsRefreshRate(999999)
-                .syncEnabled(true) // Keep sync enabled but delay responses
+                .syncEnabled(true)
                 .trafficType("account")
                 .build();
 
         // Set up mock server to delay responses so sync doesn't complete before timeout
-        final Dispatcher delayedDispatcher = new Dispatcher() {
-            @Override
-            public MockResponse dispatch(RecordedRequest request) {
-                final String path = request.getPath();
-                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
-                    // Delay response to prevent sync from completing
-                    return new MockResponse()
-                            .setResponseCode(200)
-                            .setBody(IntegrationHelper.dummyAllSegments())
-                            .setBodyDelay(5, TimeUnit.SECONDS); // 5 second delay
-                } else if (path.contains("/splitChanges")) {
-                    // Delay response to prevent sync from completing
-                    long id = mCurSplitReqId++;
-                    return new MockResponse()
-                            .setResponseCode(200)
-                            .setBody(IntegrationHelper.emptyTargetingRulesChanges(id, id))
-                            .setBodyDelay(5, TimeUnit.SECONDS); // 5 second delay
-                } else if (path.contains("/testImpressions/bulk")) {
-                    return new MockResponse().setResponseCode(200);
-                }
-                return new MockResponse().setResponseCode(404);
-            }
-        };
-        mWebServer.setDispatcher(delayedDispatcher);
+        mWebServer.setDispatcher(createDelayedDispatcher(5));
 
         SplitFactory factory = buildFactory(config);
-
-        AtomicInteger timeoutHandlerCount = new AtomicInteger(0);
-        AtomicInteger readyHandlerCount = new AtomicInteger(0);
-        CountDownLatch timeoutLatch = new CountDownLatch(1);
-        CountDownLatch readyLatch = new CountDownLatch(1);
-
         SplitClient client = factory.client(new Key("key_1"));
+
+        EventCapture<Void> timeoutCapture = new EventCapture<>();
+        AtomicInteger readyCount = new AtomicInteger(0);
+
         client.on(SplitEvent.SDK_READY_TIMED_OUT, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client) {
-                timeoutHandlerCount.incrementAndGet();
-                timeoutLatch.countDown();
+            public void onPostExecution(SplitClient c) {
+                timeoutCapture.increment();
             }
         });
-
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client) {
-                readyHandlerCount.incrementAndGet();
-                readyLatch.countDown();
+            public void onPostExecution(SplitClient c) {
+                readyCount.incrementAndGet();
             }
         });
 
-        // When: the timeout elapses without sdkReady firing (due to delayed responses)
-        boolean timeoutFired = timeoutLatch.await(5, TimeUnit.SECONDS);
-
         // Then: sdkReadyTimedOut is emitted exactly once
-        assertTrue("SDK_READY_TIMED_OUT should fire after timeout. " +
-                "Timeout count: " + timeoutHandlerCount.get() + ", Ready count: " + readyHandlerCount.get(),
-                timeoutFired);
-        assertEquals("Timeout handler should be invoked once", 1, timeoutHandlerCount.get());
+        awaitEvent(timeoutCapture.latch, "SDK_READY_TIMED_OUT", 5);
+        assertFiredOnce(timeoutCapture.count, "Timeout handler");
 
         // And: sdkReady is not emitted (sync didn't complete in time)
         Thread.sleep(500);
-        assertEquals("SDK_READY should not fire before timeout", 0, readyHandlerCount.get());
+        assertEquals("SDK_READY should not fire before timeout", 0, readyCount.get());
 
         factory.destroy();
     }
@@ -809,11 +598,10 @@ public class SdkEventsIntegrationTest {
      */
     @Test
     public void sdkReadyTimedOutSuppressedWhenSdkReadyFiresBeforeTimeout() throws Exception {
-        // Given: handlers are registered
-        // And: the readiness timeout is configured to a longer timeout (10 seconds)
+        // Given: the readiness timeout is configured to a longer timeout (10 seconds)
         SplitClientConfig config = SplitClientConfig.builder()
                 .serviceEndpoints(endpoints())
-                .ready(10000) // 10 second timeout
+                .ready(10000)
                 .featuresRefreshRate(999999)
                 .segmentsRefreshRate(999999)
                 .impressionsRefreshRate(999999)
@@ -822,29 +610,25 @@ public class SdkEventsIntegrationTest {
                 .build();
 
         SplitFactory factory = buildFactory(config);
-        AtomicInteger timeoutHandlerCount = new AtomicInteger(0);
-        AtomicInteger readyHandlerCount = new AtomicInteger(0);
-        CountDownLatch readyLatch = new CountDownLatch(1);
-
         SplitClient client = factory.client(new Key("key_1"));
+
+        AtomicInteger timeoutCount = new AtomicInteger(0);
         client.on(SplitEvent.SDK_READY_TIMED_OUT, new SplitEventTask() {
             @Override
-            public void onPostExecution(SplitClient client) {
-                timeoutHandlerCount.incrementAndGet();
+            public void onPostExecution(SplitClient c) {
+                timeoutCount.incrementAndGet();
             }
         });
-        registerReadyHandler(client, readyHandlerCount, readyLatch);
 
-        // When: internal events for sdkReadyFromCache and sdkReady complete before the timeout elapses
-        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
+        EventCapture<SdkReadyMetadata> readyCapture = captureReadyEvent(client);
 
         // Then: sdkReady is emitted
-        assertTrue("SDK_READY should fire", readyFired);
-        assertEquals("Ready handler should be invoked once", 1, readyHandlerCount.get());
+        awaitEvent(readyCapture.latch, "SDK_READY");
+        assertFiredOnce(readyCapture.count, "Ready handler");
 
         // And: sdkReadyTimedOut is not emitted
-        Thread.sleep(2000); // Wait a bit to ensure timeout doesn't fire
-        assertEquals("SDK_READY_TIMED_OUT should not fire (suppressed)", 0, timeoutHandlerCount.get());
+        Thread.sleep(2000);
+        assertEquals("SDK_READY_TIMED_OUT should not fire (suppressed)", 0, timeoutCount.get());
 
         factory.destroy();
     }
@@ -863,26 +647,18 @@ public class SdkEventsIntegrationTest {
      */
     @Test
     public void syncCompletionDoesNotTriggerSdkUpdateDuringInitialSync() throws Exception {
-        // Given: handlers are registered
-        SplitClientConfig config = buildConfig();
-        SplitFactory factory = buildFactory(config);
-
-        AtomicInteger updateHandlerCount = new AtomicInteger(0);
-        AtomicInteger readyHandlerCount = new AtomicInteger(0);
-        CountDownLatch readyLatch = new CountDownLatch(1);
-
+        SplitFactory factory = buildFactory(buildConfig());
         SplitClient client = factory.client(new Key("key_1"));
-        registerUpdateHandler(client, updateHandlerCount, null);
-        registerReadyHandler(client, readyHandlerCount, readyLatch);
+
+        EventCapture<SdkUpdateMetadata> updateCapture = captureUpdateEvent(client);
+        CountDownLatch readyLatch = captureLegacyReadyEvent(client);
 
         // When: sync completes (happens automatically during initialization)
-        // The *_UPDATED events fire before SDK_READY, so SDK_UPDATE shouldn't fire
-        boolean readyFired = readyLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_READY should fire", readyFired);
+        awaitEvent(readyLatch, "SDK_READY");
 
         // Then: sdkUpdate is NOT emitted because the *_UPDATED events were notified before sdkReady fired
         Thread.sleep(1000);
-        assertEquals("SDK_UPDATE should not fire during initial sync", 0, updateHandlerCount.get());
+        assertEquals("SDK_UPDATE should not fire during initial sync", 0, updateCapture.count.get());
 
         factory.destroy();
     }
@@ -987,30 +763,15 @@ public class SdkEventsIntegrationTest {
         // Given: sdkReady has already been emitted (with streaming support)
         TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
-        AtomicInteger updateHandlerCount = new AtomicInteger(0);
-        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch updateLatch = new CountDownLatch(1);
-
-        // Given: a handler H is registered for sdkUpdate which inspects the received metadata
-        fixture.client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                updateHandlerCount.incrementAndGet();
-                receivedMetadata.set(metadata);
-                updateLatch.countDown();
-            }
-        });
+        EventCapture<SdkUpdateMetadata> capture = captureUpdateEvent(fixture.client);
 
         // When: an internal "splitsUpdated" event is notified via SSE
         fixture.pushSplitUpdate();
 
         // Then: sdkUpdate is emitted and handler H is invoked once
-        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire", updateFired);
-        assertEquals("Handler should be invoked exactly once", 1, updateHandlerCount.get());
-
-        // And: handler H receives metadata
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        awaitEvent(capture.latch, "SDK_UPDATE");
+        assertFiredOnce(capture.count, "SDK_UPDATE handler");
+        assertNotNull("Metadata should not be null", capture.metadata.get());
 
         fixture.destroy();
     }
@@ -1032,29 +793,23 @@ public class SdkEventsIntegrationTest {
         // Given: sdkReady has already been emitted (with streaming support)
         TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
-        AtomicInteger handler1Count = new AtomicInteger(0);
-        AtomicInteger handler2Count = new AtomicInteger(0);
-
-        // Given: a handler H registered for sdkUpdate before destroy
-        fixture.client.addEventListener(createOnUpdateListener(handler1Count, null, null));
+        EventCapture<SdkUpdateMetadata> handler1 = captureUpdateEvent(fixture.client);
 
         // When: the client is destroyed
         fixture.client.destroy();
-
         fixture.pushSplitUpdate("3000", "2000");
 
         // Handler H is never invoked (handlers were cleared on destroy)
         Thread.sleep(1000);
-        assertEquals("Handler H1 should not be invoked after destroy", 0, handler1Count.get());
+        assertEquals("Handler H1 should not be invoked after destroy", 0, handler1.count.get());
 
         // When: registering a new handler H2 for sdkUpdate after destroy
-        fixture.client.addEventListener(createOnUpdateListener(handler2Count, null, null));
-
+        EventCapture<SdkUpdateMetadata> handler2 = captureUpdateEvent(fixture.client);
         fixture.pushSplitUpdate("4000", "3000");
 
         Thread.sleep(1000);
-        assertEquals("Handler H1 should still be 0", 0, handler1Count.get());
-        assertEquals("Handler H2 should not be invoked after destroy", 0, handler2Count.get());
+        assertEquals("Handler H1 should still be 0", 0, handler1.count.get());
+        assertEquals("Handler H2 should not be invoked after destroy", 0, handler2.count.get());
 
         fixture.destroy();
     }
@@ -1076,41 +831,17 @@ public class SdkEventsIntegrationTest {
         // Given: a factory with two clients (with streaming support)
         TwoClientFixture fixture = createTwoStreamingClientsAndWaitForReady(new Key("key_A"), new Key("key_B"));
 
-        AtomicInteger handlerACount = new AtomicInteger(0);
-        AtomicInteger handlerBCount = new AtomicInteger(0);
-        CountDownLatch updateLatchA = new CountDownLatch(1);
-        CountDownLatch updateLatchB = new CountDownLatch(1);
-
-        // And: handlers HA and HB are registered for sdkUpdate
-        fixture.clientA.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                handlerACount.incrementAndGet();
-                updateLatchA.countDown();
-            }
-        });
-
-        fixture.clientB.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                handlerBCount.incrementAndGet();
-                updateLatchB.countDown();
-            }
-        });
+        EventCapture<SdkUpdateMetadata> captureA = captureUpdateEvent(fixture.clientA);
+        EventCapture<SdkUpdateMetadata> captureB = captureUpdateEvent(fixture.clientB);
 
         // When: a SDK-scoped internal "splitsUpdated" event is notified via SSE
         fixture.pushSplitUpdate();
 
         // Then: sdkUpdate is emitted once per client
-        boolean updateAFired = updateLatchA.await(10, TimeUnit.SECONDS);
-        boolean updateBFired = updateLatchB.await(10, TimeUnit.SECONDS);
-
-        assertTrue("SDK_UPDATE should fire for ClientA", updateAFired);
-        assertTrue("SDK_UPDATE should fire for ClientB", updateBFired);
-
-        // And: handler HA is invoked once and handler HB is invoked once
-        assertEquals("Handler A should be invoked once", 1, handlerACount.get());
-        assertEquals("Handler B should be invoked once", 1, handlerBCount.get());
+        awaitEvent(captureA.latch, "SDK_UPDATE for ClientA");
+        awaitEvent(captureB.latch, "SDK_UPDATE for ClientB");
+        assertFiredOnce(captureA.count, "Handler A");
+        assertFiredOnce(captureB.count, "Handler B");
 
         fixture.destroy();
     }
@@ -1130,39 +861,17 @@ public class SdkEventsIntegrationTest {
         // Given: a factory with two clients (with streaming support)
         TwoClientFixture fixture = createTwoStreamingClientsAndWaitForReady(new Key("userA"), new Key("userB"));
 
-        AtomicInteger handlerACount = new AtomicInteger(0);
-        AtomicInteger handlerBCount = new AtomicInteger(0);
-        CountDownLatch updateLatchA = new CountDownLatch(1);
-        CountDownLatch updateLatchB = new CountDownLatch(1);
-
-        // And: handlers HA and HB are registered for sdkUpdate
-        fixture.clientA.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                handlerACount.incrementAndGet();
-                updateLatchA.countDown();
-            }
-        });
-
-        fixture.clientB.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                handlerBCount.incrementAndGet();
-                updateLatchB.countDown();
-            }
-        });
+        EventCapture<SdkUpdateMetadata> captureA = captureUpdateEvent(fixture.clientA);
+        EventCapture<SdkUpdateMetadata> captureB = captureUpdateEvent(fixture.clientB);
 
         // When: a SDK-scoped split update notification arrives (affects all clients)
         fixture.pushSplitUpdate();
 
         // Then: both clients receive SDK_UPDATE since splitsUpdated is SDK-scoped
-        boolean updateAFired = updateLatchA.await(10, TimeUnit.SECONDS);
-        boolean updateBFired = updateLatchB.await(10, TimeUnit.SECONDS);
-
-        assertTrue("SDK_UPDATE should fire for ClientA", updateAFired);
-        assertTrue("SDK_UPDATE should fire for ClientB", updateBFired);
-        assertEquals("Handler A should be invoked once", 1, handlerACount.get());
-        assertEquals("Handler B should be invoked once", 1, handlerBCount.get());
+        awaitEvent(captureA.latch, "SDK_UPDATE for ClientA");
+        awaitEvent(captureB.latch, "SDK_UPDATE for ClientB");
+        assertFiredOnce(captureA.count, "Handler A");
+        assertFiredOnce(captureB.count, "Handler B");
 
         fixture.destroy();
     }
@@ -1181,28 +890,15 @@ public class SdkEventsIntegrationTest {
     public void sdkUpdateMetadataContainsTypeForFlagsUpdate() throws Exception {
         TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
-        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch updateLatch = new CountDownLatch(1);
-
-        fixture.client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                receivedMetadata.set(metadata);
-                updateLatch.countDown();
-            }
-        });
-
+        EventCapture<SdkUpdateMetadata> capture = captureUpdateEvent(fixture.client);
         fixture.pushSplitUpdate();
 
-        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire", updateFired);
-
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        awaitEvent(capture.latch, "SDK_UPDATE");
+        assertNotNull("Metadata should not be null", capture.metadata.get());
         assertEquals("Type should be FLAGS_UPDATE",
-                SdkUpdateMetadata.Type.FLAGS_UPDATE, receivedMetadata.get().getType());
-
-        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
-        assertFalse("Names should not be empty", receivedMetadata.get().getNames().isEmpty());
+                SdkUpdateMetadata.Type.FLAGS_UPDATE, capture.metadata.get().getType());
+        assertNotNull("Names should not be null", capture.metadata.get().getNames());
+        assertFalse("Names should not be empty", capture.metadata.get().getNames().isEmpty());
 
         fixture.destroy();
     }
@@ -1223,28 +919,15 @@ public class SdkEventsIntegrationTest {
     public void sdkUpdateMetadataContainsTypeForSegmentsUpdate() throws Exception {
         TestClientFixture fixture = createStreamingClientWithRbsAndWaitForReady(new Key("key_1"));
 
-        AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch updateLatch = new CountDownLatch(1);
-
-        fixture.client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
-                receivedMetadata.set(metadata);
-                updateLatch.countDown();
-            }
-        });
-
+        EventCapture<SdkUpdateMetadata> capture = captureUpdateEvent(fixture.client);
         fixture.pushRbsUpdate();
 
-        boolean updateFired = updateLatch.await(10, TimeUnit.SECONDS);
-        assertTrue("SDK_UPDATE should fire for RBS update", updateFired);
-
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
+        awaitEvent(capture.latch, "SDK_UPDATE for RBS");
+        assertNotNull("Metadata should not be null", capture.metadata.get());
         assertEquals("Type should be SEGMENTS_UPDATE",
-                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, receivedMetadata.get().getType());
-
-        assertNotNull("Names should not be null", receivedMetadata.get().getNames());
-        assertTrue("Names should be empty for SEGMENTS_UPDATE", receivedMetadata.get().getNames().isEmpty());
+                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, capture.metadata.get().getType());
+        assertNotNull("Names should not be null", capture.metadata.get().getNames());
+        assertTrue("Names should be empty for SEGMENTS_UPDATE", capture.metadata.get().getNames().isEmpty());
 
         fixture.destroy();
     }
@@ -1473,24 +1156,14 @@ public class SdkEventsIntegrationTest {
         SplitFactory factory = buildFactory(buildConfig());
         SplitClient client = factory.client(new Key("key_1"));
 
-        AtomicReference<SdkReadyMetadata> receivedMetadata = new AtomicReference<>();
-        CountDownLatch readyLatch = new CountDownLatch(1);
+        EventCapture<SdkReadyMetadata> capture = captureReadyEvent(client);
 
-        client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onReady(SplitClient client, SdkReadyMetadata metadata) {
-                receivedMetadata.set(metadata);
-                readyLatch.countDown();
-            }
-        });
-
-        assertTrue("SDK_READY should fire", readyLatch.await(10, TimeUnit.SECONDS));
-
-        assertNotNull("Metadata should not be null", receivedMetadata.get());
-        assertNotNull("initialCacheLoad should not be null", receivedMetadata.get().isInitialCacheLoad());
-        assertTrue("initialCacheLoad should be true for fresh install", receivedMetadata.get().isInitialCacheLoad());
+        awaitEvent(capture.latch, "SDK_READY");
+        assertNotNull("Metadata should not be null", capture.metadata.get());
+        assertNotNull("initialCacheLoad should not be null", capture.metadata.get().isInitialCacheLoad());
+        assertTrue("initialCacheLoad should be true for fresh install", capture.metadata.get().isInitialCacheLoad());
         assertEquals("lastUpdateTimestamp should be null for fresh install",
-                null, receivedMetadata.get().getLastUpdateTimestamp());
+                null, capture.metadata.get().getLastUpdateTimestamp());
 
         factory.destroy();
     }
@@ -1506,12 +1179,10 @@ public class SdkEventsIntegrationTest {
     @Test
     public void sdkUpdateMetadataForSingleClientMembershipPolling() throws Exception {
         AtomicInteger key1MembershipHits = new AtomicInteger(0);
-        AtomicInteger key2MembershipHits = new AtomicInteger(0);
-
         final String initialMemberships = "{\"ms\":{\"k\":[{\"n\":\"segment1\"}],\"cn\":1000},\"ls\":{\"k\":[],\"cn\":1000}}";
         final String updatedMembershipsKey1 = "{\"ms\":{\"k\":[{\"n\":\"segment2\"}],\"cn\":2000},\"ls\":{\"k\":[],\"cn\":1000}}";
 
-        final Dispatcher pollingDispatcher = new Dispatcher() {
+        mWebServer.setDispatcher(new Dispatcher() {
             @Override
             public MockResponse dispatch(RecordedRequest request) {
                 final String path = request.getPath();
@@ -1520,10 +1191,6 @@ public class SdkEventsIntegrationTest {
                         int count = key1MembershipHits.incrementAndGet();
                         return new MockResponse().setResponseCode(200)
                                 .setBody(count <= 1 ? initialMemberships : updatedMembershipsKey1);
-                    }
-                    if (path.contains("key_2")) {
-                        key2MembershipHits.incrementAndGet();
-                        return new MockResponse().setResponseCode(200).setBody(initialMemberships);
                     }
                     return new MockResponse().setResponseCode(200).setBody(initialMemberships);
                 } else if (path.contains("/splitChanges")) {
@@ -1534,65 +1201,25 @@ public class SdkEventsIntegrationTest {
                 }
                 return new MockResponse().setResponseCode(404);
             }
-        };
-        mWebServer.setDispatcher(pollingDispatcher);
+        });
 
-        SplitClientConfig config = new TestableSplitConfigBuilder()
-                .serviceEndpoints(endpoints())
-                .ready(30000)
-                .featuresRefreshRate(999999)
-                .segmentsRefreshRate(3)
-                .impressionsRefreshRate(999999)
-                .streamingEnabled(false)
-                .trafficType("account")
-                .build();
-
-        SplitFactory factory = buildFactory(config);
+        SplitFactory factory = buildFactory(createPollingConfig(999999, 3));
         SplitClient client1 = factory.client(new Key("key_1"));
         SplitClient client2 = factory.client(new Key("key_2"));
 
-        AtomicReference<SdkUpdateMetadata> client1Metadata = new AtomicReference<>();
-        AtomicInteger client2UpdateCount = new AtomicInteger(0);
-        CountDownLatch updateLatch = new CountDownLatch(1);
+        EventCapture<SdkUpdateMetadata> client1Capture = captureUpdateEvent(client1);
+        EventCapture<SdkUpdateMetadata> client2Capture = captureUpdateEvent(client2);
 
-        client1.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
-                client1Metadata.set(metadata);
-                updateLatch.countDown();
-            }
-        });
-        client2.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
-                client2UpdateCount.incrementAndGet();
-            }
-        });
+        waitForReady(client1);
+        waitForReady(client2);
 
-        CountDownLatch readyLatch1 = new CountDownLatch(1);
-        CountDownLatch readyLatch2 = new CountDownLatch(1);
-        client1.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient c) {
-                readyLatch1.countDown();
-            }
-        });
-        client2.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient c) {
-                readyLatch2.countDown();
-            }
-        });
-        assertTrue("Client1 SDK_READY should fire", readyLatch1.await(10, TimeUnit.SECONDS));
-        assertTrue("Client2 SDK_READY should fire", readyLatch2.await(10, TimeUnit.SECONDS));
-
-        assertTrue("Client1 should receive SDK_UPDATE", updateLatch.await(20, TimeUnit.SECONDS));
-        assertNotNull("Client1 metadata should not be null", client1Metadata.get());
+        awaitEvent(client1Capture.latch, "Client1 SDK_UPDATE", 20);
+        assertNotNull("Client1 metadata should not be null", client1Capture.metadata.get());
         assertEquals("Type should be SEGMENTS_UPDATE",
-                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, client1Metadata.get().getType());
+                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, client1Capture.metadata.get().getType());
 
         Thread.sleep(1000);
-        assertEquals("Client2 should not receive SDK_UPDATE", 0, client2UpdateCount.get());
+        assertEquals("Client2 should not receive SDK_UPDATE", 0, client2Capture.count.get());
 
         factory.destroy();
     }
@@ -1609,34 +1236,19 @@ public class SdkEventsIntegrationTest {
     public void sdkUpdateMetadataForSingleClientMembershipStreaming() throws Exception {
         TwoClientFixture fixture = createTwoStreamingClientsAndWaitForReady(new Key("key1"), new Key("key2"));
 
-        AtomicReference<SdkUpdateMetadata> client1Metadata = new AtomicReference<>();
-        AtomicInteger client2UpdateCount = new AtomicInteger(0);
-        CountDownLatch updateLatch = new CountDownLatch(1);
-
-        fixture.clientA.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
-                client1Metadata.set(metadata);
-                updateLatch.countDown();
-            }
-        });
-        fixture.clientB.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
-                client2UpdateCount.incrementAndGet();
-            }
-        });
+        EventCapture<SdkUpdateMetadata> client1Capture = captureUpdateEvent(fixture.clientA);
+        EventCapture<SdkUpdateMetadata> client2Capture = captureUpdateEvent(fixture.clientB);
 
         // Keylist update: only key1 is included
         fixture.pushMembershipKeyListUpdate("key1", "streaming_segment");
 
-        assertTrue("Client1 should receive SDK_UPDATE", updateLatch.await(10, TimeUnit.SECONDS));
-        assertNotNull("Client1 metadata should not be null", client1Metadata.get());
+        awaitEvent(client1Capture.latch, "Client1 SDK_UPDATE");
+        assertNotNull("Client1 metadata should not be null", client1Capture.metadata.get());
         assertEquals("Type should be SEGMENTS_UPDATE",
-                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, client1Metadata.get().getType());
+                SdkUpdateMetadata.Type.SEGMENTS_UPDATE, client1Capture.metadata.get().getType());
 
         Thread.sleep(500);
-        assertEquals("Client2 should not receive SDK_UPDATE", 0, client2UpdateCount.get());
+        assertEquals("Client2 should not receive SDK_UPDATE", 0, client2Capture.count.get());
 
         fixture.destroy();
     }
@@ -1823,22 +1435,17 @@ public class SdkEventsIntegrationTest {
     public void multipleListenersWithOnUpdateBothInvoked() throws Exception {
         TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
-        AtomicInteger listener1Count = new AtomicInteger(0);
-        AtomicInteger listener2Count = new AtomicInteger(0);
-        AtomicReference<SdkUpdateMetadata> listener1Metadata = new AtomicReference<>();
-        AtomicReference<SdkUpdateMetadata> listener2Metadata = new AtomicReference<>();
-        CountDownLatch updateLatch = new CountDownLatch(2);
-
-        fixture.client.addEventListener(createOnUpdateListener(listener1Count, listener1Metadata, updateLatch));
-        fixture.client.addEventListener(createOnUpdateListener(listener2Count, listener2Metadata, updateLatch));
+        EventCapture<SdkUpdateMetadata> capture1 = captureUpdateEvent(fixture.client);
+        EventCapture<SdkUpdateMetadata> capture2 = captureUpdateEvent(fixture.client);
 
         fixture.pushSplitUpdate();
 
-        assertTrue("Both listeners should be invoked", updateLatch.await(10, TimeUnit.SECONDS));
-        assertEquals("Listener 1 should be invoked exactly once", 1, listener1Count.get());
-        assertEquals("Listener 2 should be invoked exactly once", 1, listener2Count.get());
-        assertNotNull("Listener 1 should receive metadata", listener1Metadata.get());
-        assertNotNull("Listener 2 should receive metadata", listener2Metadata.get());
+        awaitEvent(capture1.latch, "Listener 1 SDK_UPDATE");
+        awaitEvent(capture2.latch, "Listener 2 SDK_UPDATE");
+        assertFiredOnce(capture1.count, "Listener 1");
+        assertFiredOnce(capture2.count, "Listener 2");
+        assertNotNull("Listener 1 should receive metadata", capture1.metadata.get());
+        assertNotNull("Listener 2 should receive metadata", capture2.metadata.get());
 
         fixture.destroy();
     }
@@ -1858,20 +1465,15 @@ public class SdkEventsIntegrationTest {
         SplitFactory factory = buildFactory(buildConfig());
         SplitClient client = factory.client(new Key("key_1"));
 
-        AtomicInteger listener1Count = new AtomicInteger(0);
-        AtomicInteger listener2Count = new AtomicInteger(0);
-        AtomicReference<SdkReadyMetadata> listener1Metadata = new AtomicReference<>();
-        AtomicReference<SdkReadyMetadata> listener2Metadata = new AtomicReference<>();
-        CountDownLatch readyLatch = new CountDownLatch(2);
+        EventCapture<SdkReadyMetadata> capture1 = captureReadyEvent(client);
+        EventCapture<SdkReadyMetadata> capture2 = captureReadyEvent(client);
 
-        client.addEventListener(createOnReadyListener(listener1Count, listener1Metadata, readyLatch));
-        client.addEventListener(createOnReadyListener(listener2Count, listener2Metadata, readyLatch));
-
-        assertTrue("Both listeners should be invoked", readyLatch.await(10, TimeUnit.SECONDS));
-        assertEquals("Listener 1 should be invoked exactly once", 1, listener1Count.get());
-        assertEquals("Listener 2 should be invoked exactly once", 1, listener2Count.get());
-        assertNotNull("Listener 1 should receive metadata", listener1Metadata.get());
-        assertNotNull("Listener 2 should receive metadata", listener2Metadata.get());
+        awaitEvent(capture1.latch, "Listener 1 SDK_READY");
+        awaitEvent(capture2.latch, "Listener 2 SDK_READY");
+        assertFiredOnce(capture1.count, "Listener 1");
+        assertFiredOnce(capture2.count, "Listener 2");
+        assertNotNull("Listener 1 should receive metadata", capture1.metadata.get());
+        assertNotNull("Listener 2 should receive metadata", capture2.metadata.get());
 
         factory.destroy();
     }
@@ -1893,24 +1495,19 @@ public class SdkEventsIntegrationTest {
     public void listenersWithDifferentCallbacksInvokedOnCorrectEventType() throws Exception {
         TestClientFixture fixture = createStreamingClient(new Key("key_1"));
 
-        AtomicInteger onReadyCount = new AtomicInteger(0);
-        AtomicInteger onUpdateCount = new AtomicInteger(0);
-        CountDownLatch readyLatch = new CountDownLatch(1);
-        CountDownLatch updateLatch = new CountDownLatch(1);
+        EventCapture<SdkReadyMetadata> readyCapture = captureReadyEvent(fixture.client);
+        EventCapture<SdkUpdateMetadata> updateCapture = captureUpdateEvent(fixture.client);
 
-        fixture.client.addEventListener(createOnReadyListener(onReadyCount, null, readyLatch));
-        fixture.client.addEventListener(createOnUpdateListener(onUpdateCount, null, updateLatch));
-
-        assertTrue("SDK_READY should fire", readyLatch.await(10, TimeUnit.SECONDS));
-        assertEquals("onReady should be invoked exactly once", 1, onReadyCount.get());
-        assertEquals("onUpdate should NOT be invoked on SDK_READY", 0, onUpdateCount.get());
+        awaitEvent(readyCapture.latch, "SDK_READY");
+        assertFiredOnce(readyCapture.count, "onReady");
+        assertEquals("onUpdate should NOT be invoked on SDK_READY", 0, updateCapture.count.get());
 
         fixture.waitForSseConnection();
         fixture.pushSplitUpdate();
 
-        assertTrue("SDK_UPDATE should fire", updateLatch.await(10, TimeUnit.SECONDS));
-        assertEquals("onUpdate should be invoked exactly once", 1, onUpdateCount.get());
-        assertEquals("onReady should still be 1 (not invoked again)", 1, onReadyCount.get());
+        awaitEvent(updateCapture.latch, "SDK_UPDATE");
+        assertFiredOnce(updateCapture.count, "onUpdate");
+        assertFiredOnce(readyCapture.count, "onReady (not invoked again)");
 
         fixture.destroy();
     }
@@ -1930,30 +1527,30 @@ public class SdkEventsIntegrationTest {
     public void multipleListenersWithBothReadyAndUpdateHandlers() throws Exception {
         TestClientFixture fixture = createStreamingClient(new Key("key_1"));
 
-        AtomicInteger listener1ReadyCount = new AtomicInteger(0);
-        AtomicInteger listener1UpdateCount = new AtomicInteger(0);
-        AtomicInteger listener2ReadyCount = new AtomicInteger(0);
-        AtomicInteger listener2UpdateCount = new AtomicInteger(0);
+        AtomicInteger l1ReadyCount = new AtomicInteger(0);
+        AtomicInteger l1UpdateCount = new AtomicInteger(0);
+        AtomicInteger l2ReadyCount = new AtomicInteger(0);
+        AtomicInteger l2UpdateCount = new AtomicInteger(0);
         CountDownLatch readyLatch = new CountDownLatch(2);
         CountDownLatch updateLatch = new CountDownLatch(2);
 
-        fixture.client.addEventListener(createDualListener(listener1ReadyCount, readyLatch, listener1UpdateCount, updateLatch));
-        fixture.client.addEventListener(createDualListener(listener2ReadyCount, readyLatch, listener2UpdateCount, updateLatch));
+        fixture.client.addEventListener(createDualListener(l1ReadyCount, readyLatch, l1UpdateCount, updateLatch));
+        fixture.client.addEventListener(createDualListener(l2ReadyCount, readyLatch, l2UpdateCount, updateLatch));
 
-        assertTrue("Both onReady handlers should be invoked", readyLatch.await(10, TimeUnit.SECONDS));
-        assertEquals("Listener 1 onReady should be invoked once", 1, listener1ReadyCount.get());
-        assertEquals("Listener 2 onReady should be invoked once", 1, listener2ReadyCount.get());
-        assertEquals("Listener 1 onUpdate should NOT be invoked on SDK_READY", 0, listener1UpdateCount.get());
-        assertEquals("Listener 2 onUpdate should NOT be invoked on SDK_READY", 0, listener2UpdateCount.get());
+        awaitEvent(readyLatch, "Both onReady handlers");
+        assertFiredOnce(l1ReadyCount, "Listener 1 onReady");
+        assertFiredOnce(l2ReadyCount, "Listener 2 onReady");
+        assertEquals("Listener 1 onUpdate should NOT be invoked on SDK_READY", 0, l1UpdateCount.get());
+        assertEquals("Listener 2 onUpdate should NOT be invoked on SDK_READY", 0, l2UpdateCount.get());
 
         fixture.waitForSseConnection();
         fixture.pushSplitUpdate();
 
-        assertTrue("Both onUpdate handlers should be invoked", updateLatch.await(10, TimeUnit.SECONDS));
-        assertEquals("Listener 1 onUpdate should be invoked once", 1, listener1UpdateCount.get());
-        assertEquals("Listener 2 onUpdate should be invoked once", 1, listener2UpdateCount.get());
-        assertEquals("Listener 1 onReady should still be 1", 1, listener1ReadyCount.get());
-        assertEquals("Listener 2 onReady should still be 1", 1, listener2ReadyCount.get());
+        awaitEvent(updateLatch, "Both onUpdate handlers");
+        assertFiredOnce(l1UpdateCount, "Listener 1 onUpdate");
+        assertFiredOnce(l2UpdateCount, "Listener 2 onUpdate");
+        assertFiredOnce(l1ReadyCount, "Listener 1 onReady (not invoked again)");
+        assertFiredOnce(l2ReadyCount, "Listener 2 onReady (not invoked again)");
 
         fixture.destroy();
     }
@@ -1971,21 +1568,16 @@ public class SdkEventsIntegrationTest {
     public void multipleListenersWithOnReadyReplayToLateSubscribers() throws Exception {
         TestClientFixture fixture = createClientAndWaitForReady(new Key("key_1"));
 
-        AtomicInteger listener1Count = new AtomicInteger(0);
-        AtomicInteger listener2Count = new AtomicInteger(0);
-        CountDownLatch listener1Latch = new CountDownLatch(1);
-        CountDownLatch listener2Latch = new CountDownLatch(1);
+        EventCapture<SdkReadyMetadata> capture1 = captureReadyEvent(fixture.client);
+        awaitEvent(capture1.latch, "Listener 1 replay", 5);
+        assertFiredOnce(capture1.count, "Listener 1 (replay)");
 
-        fixture.client.addEventListener(createOnReadyListener(listener1Count, null, listener1Latch));
-        assertTrue("Listener 1 should receive replay", listener1Latch.await(5, TimeUnit.SECONDS));
-        assertEquals("Listener 1 should be invoked once (replay)", 1, listener1Count.get());
-
-        fixture.client.addEventListener(createOnReadyListener(listener2Count, null, listener2Latch));
-        assertTrue("Listener 2 should receive replay", listener2Latch.await(5, TimeUnit.SECONDS));
-        assertEquals("Listener 2 should be invoked once (replay)", 1, listener2Count.get());
+        EventCapture<SdkReadyMetadata> capture2 = captureReadyEvent(fixture.client);
+        awaitEvent(capture2.latch, "Listener 2 replay", 5);
+        assertFiredOnce(capture2.count, "Listener 2 (replay)");
 
         Thread.sleep(500);
-        assertEquals("Listener 1 should still be 1 (not invoked again)", 1, listener1Count.get());
+        assertFiredOnce(capture1.count, "Listener 1 (not invoked again)");
 
         fixture.destroy();
     }
@@ -2122,97 +1714,17 @@ public class SdkEventsIntegrationTest {
         SplitClient clientA = factory.client(keyA);
         SplitClient clientB = factory.client(keyB);
 
-        CountDownLatch readyLatchA = new CountDownLatch(1);
-        CountDownLatch readyLatchB = new CountDownLatch(1);
+        CountDownLatch readyLatchA = captureLegacyReadyEvent(clientA);
+        CountDownLatch readyLatchB = captureLegacyReadyEvent(clientB);
 
-        registerReadyHandler(clientA, null, readyLatchA);
-        registerReadyHandler(clientB, null, readyLatchB);
-
-        boolean readyA = readyLatchA.await(30, TimeUnit.SECONDS);
-        boolean readyB = readyLatchB.await(30, TimeUnit.SECONDS);
-        assertTrue("ClientA SDK_READY should fire", readyA);
-        assertTrue("ClientB SDK_READY should fire", readyB);
+        awaitEvent(readyLatchA, "ClientA SDK_READY", 30);
+        awaitEvent(readyLatchB, "ClientB SDK_READY", 30);
 
         // Wait for SSE connection and send keep-alive
         sseLatch.await(10, TimeUnit.SECONDS);
         TestingHelper.pushKeepAlive(streamingData);
 
         return new TwoClientFixture(factory, clientA, clientB, streamingData);
-    }
-
-    /**
-     * Registers a handler for SDK_READY_FROM_CACHE that captures metadata and counts invocations.
-     */
-    private void registerCacheReadyHandler(SplitClient client, AtomicInteger count,
-                                           AtomicReference<SdkReadyMetadata> metadata,
-                                           CountDownLatch latch) {
-        client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onReadyFromCache(SplitClient client, SdkReadyMetadata eventMetadata) {
-                count.incrementAndGet();
-                if (metadata != null) metadata.set(eventMetadata);
-                if (latch != null) latch.countDown();
-            }
-        });
-    }
-
-    /**
-     * Registers a handler for SDK_UPDATE that counts invocations and optionally captures metadata.
-     */
-    private void registerUpdateHandler(SplitClient client, AtomicInteger count,
-                                       AtomicReference<SdkUpdateMetadata> metadata) {
-        client.addEventListener(new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata eventMetadata) {
-                count.incrementAndGet();
-                if (metadata != null) metadata.set(eventMetadata);
-            }
-        });
-    }
-
-    /**
-     * Registers a handler for SDK_READY that counts invocations and optionally counts down a latch.
-     */
-    private void registerReadyHandler(SplitClient client, AtomicInteger count, CountDownLatch latch) {
-        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
-            @Override
-            public void onPostExecution(SplitClient client) {
-                if (count != null) count.incrementAndGet();
-                if (latch != null) latch.countDown();
-            }
-        });
-    }
-
-    /**
-     * Creates a SdkEventListener that counts onReady invocations and captures metadata.
-     */
-    private SdkEventListener createOnReadyListener(AtomicInteger count,
-                                                   AtomicReference<SdkReadyMetadata> metadata,
-                                                   CountDownLatch latch) {
-        return new SdkEventListener() {
-            @Override
-            public void onReady(SplitClient client, SdkReadyMetadata eventMetadata) {
-                if (count != null) count.incrementAndGet();
-                if (metadata != null) metadata.set(eventMetadata);
-                if (latch != null) latch.countDown();
-            }
-        };
-    }
-
-    /**
-     * Creates a SdkEventListener that counts onUpdate invocations and captures metadata.
-     */
-    private SdkEventListener createOnUpdateListener(AtomicInteger count,
-                                                    AtomicReference<SdkUpdateMetadata> metadata,
-                                                    CountDownLatch latch) {
-        return new SdkEventListener() {
-            @Override
-            public void onUpdate(SplitClient client, SdkUpdateMetadata eventMetadata) {
-                if (count != null) count.incrementAndGet();
-                if (metadata != null) metadata.set(eventMetadata);
-                if (latch != null) latch.countDown();
-            }
-        };
     }
 
     /**
@@ -2440,5 +1952,214 @@ public class SdkEventsIntegrationTest {
     private void populateDatabaseWithRbsData() {
         // Set RBS change number so streaming notifications trigger in-place updates
         mDatabase.generalInfoDao().update(new GeneralInfoEntity("rbsChangeNumber", 1000L));
+    }
+
+    // ==================== Event Capture Helpers ====================
+
+    /**
+     * Container for capturing event invocations with count, metadata, and latch.
+     * Reduces boilerplate of creating separate AtomicInteger, AtomicReference, and CountDownLatch.
+     */
+    private static class EventCapture<M> {
+        final AtomicInteger count = new AtomicInteger(0);
+        final AtomicReference<M> metadata = new AtomicReference<>();
+        final CountDownLatch latch;
+
+        EventCapture() {
+            this(1);
+        }
+
+        EventCapture(int expectedCount) {
+            this.latch = new CountDownLatch(expectedCount);
+        }
+
+        void capture(M meta) {
+            count.incrementAndGet();
+            metadata.set(meta);
+            latch.countDown();
+        }
+
+        void increment() {
+            count.incrementAndGet();
+            latch.countDown();
+        }
+
+        boolean await() throws InterruptedException {
+            return await(10);
+        }
+
+        boolean await(int seconds) throws InterruptedException {
+            return latch.await(seconds, TimeUnit.SECONDS);
+        }
+    }
+
+    /**
+     * Awaits a latch and asserts the event fired within timeout.
+     */
+    private void awaitEvent(CountDownLatch latch, String eventName) throws InterruptedException {
+        awaitEvent(latch, eventName, 10);
+    }
+
+    private void awaitEvent(CountDownLatch latch, String eventName, int timeoutSeconds) throws InterruptedException {
+        boolean fired = latch.await(timeoutSeconds, TimeUnit.SECONDS);
+        assertTrue(eventName + " should fire", fired);
+    }
+
+    /**
+     * Asserts that an event was fired exactly once.
+     */
+    private void assertFiredOnce(AtomicInteger count, String eventName) {
+        assertEquals(eventName + " should be invoked exactly once", 1, count.get());
+    }
+
+    /**
+     * Asserts that an event was fired the expected number of times.
+     */
+    private void assertFiredTimes(AtomicInteger count, String eventName, int expectedTimes) {
+        assertEquals(eventName + " should be invoked " + expectedTimes + " time(s)", expectedTimes, count.get());
+    }
+
+    /**
+     * Registers an onReady listener and returns an EventCapture for the results.
+     */
+    private EventCapture<SdkReadyMetadata> captureReadyEvent(SplitClient client) {
+        EventCapture<SdkReadyMetadata> capture = new EventCapture<>();
+        client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onReady(SplitClient c, SdkReadyMetadata metadata) {
+                capture.capture(metadata);
+            }
+        });
+        return capture;
+    }
+
+    /**
+     * Registers an onReadyFromCache listener and returns an EventCapture for the results.
+     */
+    private EventCapture<SdkReadyMetadata> captureCacheReadyEvent(SplitClient client) {
+        EventCapture<SdkReadyMetadata> capture = new EventCapture<>();
+        client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onReadyFromCache(SplitClient c, SdkReadyMetadata metadata) {
+                capture.capture(metadata);
+            }
+        });
+        return capture;
+    }
+
+    /**
+     * Registers an onUpdate listener and returns an EventCapture for the results.
+     */
+    private EventCapture<SdkUpdateMetadata> captureUpdateEvent(SplitClient client) {
+        return captureUpdateEvent(client, 1);
+    }
+
+    private EventCapture<SdkUpdateMetadata> captureUpdateEvent(SplitClient client, int expectedCount) {
+        EventCapture<SdkUpdateMetadata> capture = new EventCapture<>(expectedCount);
+        client.addEventListener(new SdkEventListener() {
+            @Override
+            public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
+                capture.capture(metadata);
+            }
+        });
+        return capture;
+    }
+
+    /**
+     * Registers a legacy SDK_READY handler with latch countdown.
+     */
+    private CountDownLatch captureLegacyReadyEvent(SplitClient client) {
+        CountDownLatch latch = new CountDownLatch(1);
+        client.on(SplitEvent.SDK_READY, new SplitEventTask() {
+            @Override
+            public void onPostExecution(SplitClient c) {
+                latch.countDown();
+            }
+        });
+        return latch;
+    }
+
+    /**
+     * Creates a polling dispatcher that returns different responses based on hit count.
+     * Useful for tests that need to verify behavior across multiple polling cycles.
+     */
+    private Dispatcher createPollingDispatcher(
+            java.util.function.Function<Integer, String> splitChangesResponseFn,
+            java.util.function.Function<Integer, String> membershipsResponseFn) {
+        AtomicInteger splitChangesHits = new AtomicInteger(0);
+        AtomicInteger membershipsHits = new AtomicInteger(0);
+
+        return new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                final String path = request.getPath();
+                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    int count = membershipsHits.incrementAndGet();
+                    String body = membershipsResponseFn != null
+                            ? membershipsResponseFn.apply(count)
+                            : IntegrationHelper.dummyAllSegments();
+                    return new MockResponse().setResponseCode(200).setBody(body);
+                } else if (path.contains("/splitChanges")) {
+                    int count = splitChangesHits.incrementAndGet();
+                    String body = splitChangesResponseFn != null
+                            ? splitChangesResponseFn.apply(count)
+                            : IntegrationHelper.emptyTargetingRulesChanges(1000, 1000);
+                    return new MockResponse().setResponseCode(200).setBody(body);
+                } else if (path.contains("/testImpressions/bulk")) {
+                    return new MockResponse().setResponseCode(200);
+                }
+                return new MockResponse().setResponseCode(404);
+            }
+        };
+    }
+
+    /**
+     * Creates a delayed dispatcher for timeout tests.
+     */
+    private Dispatcher createDelayedDispatcher(long delaySeconds) {
+        return new Dispatcher() {
+            @Override
+            public MockResponse dispatch(RecordedRequest request) {
+                final String path = request.getPath();
+                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
+                    return new MockResponse()
+                            .setResponseCode(200)
+                            .setBody(IntegrationHelper.dummyAllSegments())
+                            .setBodyDelay(delaySeconds, TimeUnit.SECONDS);
+                } else if (path.contains("/splitChanges")) {
+                    long id = mCurSplitReqId++;
+                    return new MockResponse()
+                            .setResponseCode(200)
+                            .setBody(IntegrationHelper.emptyTargetingRulesChanges(id, id))
+                            .setBodyDelay(delaySeconds, TimeUnit.SECONDS);
+                } else if (path.contains("/testImpressions/bulk")) {
+                    return new MockResponse().setResponseCode(200);
+                }
+                return new MockResponse().setResponseCode(404);
+            }
+        };
+    }
+
+    /**
+     * Creates a polling config with specified refresh rates.
+     */
+    private SplitClientConfig createPollingConfig(int featuresRefreshRate, int segmentsRefreshRate) {
+        return new TestableSplitConfigBuilder()
+                .serviceEndpoints(endpoints())
+                .ready(30000)
+                .featuresRefreshRate(featuresRefreshRate)
+                .segmentsRefreshRate(segmentsRefreshRate)
+                .impressionsRefreshRate(999999)
+                .streamingEnabled(false)
+                .trafficType("account")
+                .build();
+    }
+
+    /**
+     * Waits for SDK_READY on a client and asserts it fired.
+     */
+    private void waitForReady(SplitClient client) throws InterruptedException {
+        CountDownLatch latch = captureLegacyReadyEvent(client);
+        awaitEvent(latch, "SDK_READY");
     }
 }
