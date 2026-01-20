@@ -39,7 +39,7 @@ import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
 import io.split.android.client.api.Key;
-import io.split.android.client.events.SdkEventListener;
+import io.split.android.client.events.SplitEventListener;
 import io.split.android.client.events.SdkReadyMetadata;
 import io.split.android.client.events.SdkUpdateMetadata;
 import io.split.android.client.events.SplitEvent;
@@ -307,7 +307,7 @@ public class SdkEventsIntegrationTest {
 
         // And: a handler H is registered using addEventListener with onReadyView
         EventCapture<SdkReadyMetadata> capture = new EventCapture<>();
-        client.addEventListener(new SdkEventListener() {
+        client.addEventListener(new SplitEventListener() {
             @Override
             public void onReadyView(SplitClient c, SdkReadyMetadata metadata) {
                 capture.capture(metadata);
@@ -474,7 +474,7 @@ public class SdkEventsIntegrationTest {
         AtomicReference<CountDownLatch> secondUpdateLatchRef = new AtomicReference<>(null);
 
         // And: a handler H1 is registered for sdkUpdate
-        fixture.client.addEventListener(new SdkEventListener() {
+        fixture.client.addEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handler1Count.incrementAndGet();
@@ -499,6 +499,7 @@ public class SdkEventsIntegrationTest {
         // When: a second handler H2 is registered for sdkUpdate after one sdkUpdate has already fired
         CountDownLatch secondUpdateLatch = new CountDownLatch(2);
         secondUpdateLatchRef.set(secondUpdateLatch);
+
         EventCapture<SdkUpdateMetadata> handler2Capture = captureUpdateEvent(fixture.client);
 
         // Then: H2 does not receive a replay for past sdkUpdate events
@@ -691,7 +692,7 @@ public class SdkEventsIntegrationTest {
 
         // Given: three handlers H1, H2 and H3 are registered for sdkUpdate in that order
         // And: H2 throws an exception when invoked
-        fixture.client.addEventListener(new SdkEventListener() {
+        fixture.client.addEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handler1Count.incrementAndGet();
@@ -700,7 +701,7 @@ public class SdkEventsIntegrationTest {
             }
         });
 
-        fixture.client.addEventListener(new SdkEventListener() {
+        fixture.client.addEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handler2Count.incrementAndGet();
@@ -710,7 +711,7 @@ public class SdkEventsIntegrationTest {
             }
         });
 
-        fixture.client.addEventListener(new SdkEventListener() {
+        fixture.client.addEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 handler3Count.incrementAndGet();
@@ -890,6 +891,7 @@ public class SdkEventsIntegrationTest {
         TestClientFixture fixture = createStreamingClientAndWaitForReady(new Key("key_1"));
 
         EventCapture<SdkUpdateMetadata> capture = captureUpdateEvent(fixture.client);
+
         fixture.pushSplitUpdate();
 
         awaitEvent(capture.latch, "SDK_UPDATE");
@@ -919,6 +921,7 @@ public class SdkEventsIntegrationTest {
         TestClientFixture fixture = createStreamingClientWithRbsAndWaitForReady(new Key("key_1"));
 
         EventCapture<SdkUpdateMetadata> capture = captureUpdateEvent(fixture.client);
+
         fixture.pushRbsUpdate();
 
         awaitEvent(capture.latch, "SDK_UPDATE for RBS");
@@ -980,7 +983,7 @@ public class SdkEventsIntegrationTest {
         List<SdkUpdateMetadata> receivedMetadataList = new ArrayList<>();
         CountDownLatch updateLatch = new CountDownLatch(1);
 
-        client.addEventListener(new SdkEventListener() {
+        client.addEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
                 synchronized (receivedMetadataList) {
@@ -1069,7 +1072,7 @@ public class SdkEventsIntegrationTest {
 
         AtomicReference<SdkUpdateMetadata> receivedMetadata = new AtomicReference<>();
         CountDownLatch updateLatch = new CountDownLatch(1);
-        client.addEventListener(new SdkEventListener() {
+        client.addEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
                 receivedMetadata.set(metadata);
@@ -1330,7 +1333,7 @@ public class SdkEventsIntegrationTest {
         CountDownLatch updateLatch = new CountDownLatch(expectedEventCount * 2);
 
         // Register new API handler (addEventListener)
-        client.addEventListener(new SdkEventListener() {
+        client.addEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
                 synchronized (receivedMetadataList) {
@@ -1369,7 +1372,7 @@ public class SdkEventsIntegrationTest {
      * Scenario: Multiple listeners with onUpdate are both invoked
      * <p>
      * Given sdkReady has already been emitted
-     * And two different SdkEventListener instances (L1 and L2) with onUpdate handlers are registered
+     * And two different SplitEventListener instances (L1 and L2) with onUpdate handlers are registered
      * When a split update notification arrives via SSE
      * Then SDK_UPDATE is emitted once
      * And both L1.onUpdate and L2.onUpdate are invoked exactly once each
@@ -1397,7 +1400,7 @@ public class SdkEventsIntegrationTest {
      * Scenario: Multiple listeners with onReady are both invoked
      * <p>
      * Given the SDK is starting
-     * And two different SdkEventListener instances (L1 and L2) with onReady handlers are registered
+     * And two different SplitEventListener instances (L1 and L2) with onReady handlers are registered
      * When SDK_READY fires
      * Then both L1.onReady and L2.onReady are invoked exactly once each
      * And both receive SdkReadyMetadata
@@ -1425,8 +1428,8 @@ public class SdkEventsIntegrationTest {
      * Scenario: Listeners with different callbacks (onReady and onUpdate) each invoked on correct event
      * <p>
      * Given the SDK is starting
-     * And a SdkEventListener L1 with onReady handler is registered
-     * And a SdkEventListener L2 with onUpdate handler is registered
+     * And a SplitEventListener L1 with onReady handler is registered
+     * And a SplitEventListener L2 with onUpdate handler is registered
      * When SDK_READY fires
      * Then L1.onReady is invoked
      * And L2.onUpdate is NOT invoked (wrong event type)
@@ -1459,7 +1462,7 @@ public class SdkEventsIntegrationTest {
      * Scenario: Multiple listeners with both onReady and onUpdate in same listener
      * <p>
      * Given the SDK is starting
-     * And two SdkEventListener instances (L1 and L2) each with both onReady and onUpdate handlers
+     * And two SplitEventListener instances (L1 and L2) each with both onReady and onUpdate handlers
      * When SDK_READY fires
      * Then both L1.onReady and L2.onReady are invoked exactly once each
      * And neither L1.onUpdate nor L2.onUpdate are invoked
@@ -1502,8 +1505,8 @@ public class SdkEventsIntegrationTest {
      * Scenario: Multiple listeners with onReady replay to late subscribers
      * <p>
      * Given SDK_READY has already been emitted
-     * And a SdkEventListener L1 with onReady was registered before SDK_READY and was invoked
-     * When a new SdkEventListener L2 with onReady is registered after SDK_READY has fired
+     * And a SplitEventListener L1 with onReady was registered before SDK_READY and was invoked
+     * When a new SplitEventListener L2 with onReady is registered after SDK_READY has fired
      * Then L2.onReady is invoked (replay)
      * And L1.onReady is NOT invoked again
      */
@@ -1650,9 +1653,11 @@ public class SdkEventsIntegrationTest {
 
         return new TwoClientFixture(factory, clientA, clientB, streamingData);
     }
-    private SdkEventListener createDualListener(AtomicInteger readyCount, CountDownLatch readyLatch,
+
+    private SplitEventListener createDualListener(AtomicInteger readyCount, CountDownLatch readyLatch,
                                                 AtomicInteger updateCount, CountDownLatch updateLatch) {
-        return new SdkEventListener() {
+        return new SplitEventListener() {
+
             @Override
             public void onReady(SplitClient client, SdkReadyMetadata metadata) {
                 if (readyCount != null) readyCount.incrementAndGet();
@@ -1898,7 +1903,7 @@ public class SdkEventsIntegrationTest {
 
     private EventCapture<SdkReadyMetadata> captureReadyEvent(SplitClient client) {
         EventCapture<SdkReadyMetadata> capture = new EventCapture<>();
-        client.addEventListener(new SdkEventListener() {
+        client.addEventListener(new SplitEventListener() {
             @Override
             public void onReady(SplitClient c, SdkReadyMetadata metadata) {
                 capture.capture(metadata);
@@ -1909,7 +1914,7 @@ public class SdkEventsIntegrationTest {
 
     private EventCapture<SdkReadyMetadata> captureCacheReadyEvent(SplitClient client) {
         EventCapture<SdkReadyMetadata> capture = new EventCapture<>();
-        client.addEventListener(new SdkEventListener() {
+        client.addEventListener(new SplitEventListener() {
             @Override
             public void onReadyFromCache(SplitClient c, SdkReadyMetadata metadata) {
                 capture.capture(metadata);
@@ -1924,7 +1929,7 @@ public class SdkEventsIntegrationTest {
 
     private EventCapture<SdkUpdateMetadata> captureUpdateEvent(SplitClient client, int expectedCount) {
         EventCapture<SdkUpdateMetadata> capture = new EventCapture<>(expectedCount);
-        client.addEventListener(new SdkEventListener() {
+        client.addEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient c, SdkUpdateMetadata metadata) {
                 capture.capture(metadata);

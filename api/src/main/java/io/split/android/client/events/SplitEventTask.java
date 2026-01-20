@@ -14,7 +14,7 @@ import io.split.android.client.SplitClient;
  * </ul>
  * <p>
  * For events with metadata (like SDK_UPDATE or SDK_READY_FROM_CACHE), use
- * {@link SdkEventListener} instead for type-safe metadata access.
+ * {@link SplitEventListener} instead for type-safe metadata access.
  * <p>
  * Example usage:
  * <pre>{@code
