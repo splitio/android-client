@@ -27,6 +27,10 @@ public final class EventsManagerConfig<E, I> {
     private final Map<E, Set<E>> mSuppressedBy;
     // Execution policy: max executions per external event (-1 = unlimited)
     private final Map<E, Integer> mExecutionLimits;
+    // Metadata source for requireAll events
+    private final Map<E, I> mRequireAllMetadataSource;
+    // Metadata source for requireAny groups
+    private final Map<E, Map<Set<I>, I>> mRequireAnyMetadataSource;
     // Topologically sorted evaluation order (prerequisites and suppressors come before dependents)
     private final List<E> mEvaluationOrder;
 
@@ -43,7 +47,9 @@ public final class EventsManagerConfig<E, I> {
                                 Map<E, Set<Set<I>>> requireAny,
                                 Map<E, Set<E>> prerequisites,
                                 Map<E, Set<E>> suppressedBy,
-                                Map<E, Integer> executionLimits) {
+                                Map<E, Integer> executionLimits,
+                                Map<E, I> requireAllMetadataSource,
+                                Map<E, Map<Set<I>, I>> requireAnyMetadataSource) {
         mRequireAll = requireAll == null
                 ? Collections.emptyMap()
                 : Collections.unmodifiableMap(new HashMap<>(requireAll));
@@ -59,12 +65,20 @@ public final class EventsManagerConfig<E, I> {
         mExecutionLimits = executionLimits == null
                 ? Collections.emptyMap()
                 : Collections.unmodifiableMap(new HashMap<>(executionLimits));
+        mRequireAllMetadataSource = requireAllMetadataSource == null
+                ? Collections.emptyMap()
+                : Collections.unmodifiableMap(new HashMap<>(requireAllMetadataSource));
+        mRequireAnyMetadataSource = requireAnyMetadataSource == null
+                ? Collections.emptyMap()
+                : Collections.unmodifiableMap(new HashMap<>(requireAnyMetadataSource));
         
         mEvaluationOrder = computeEvaluationOrder();
     }
 
     public static <I, E> EventsManagerConfig<E, I> empty() {
         return new EventsManagerConfig<>(Collections.emptyMap(),
+                Collections.emptyMap(),
+                Collections.emptyMap(),
                 Collections.emptyMap(),
                 Collections.emptyMap(),
                 Collections.emptyMap(),
@@ -108,6 +122,16 @@ public final class EventsManagerConfig<E, I> {
     }
 
     @NotNull
+    public Map<E, I> getRequireAllMetadataSource() {
+        return mRequireAllMetadataSource;
+    }
+
+    @NotNull
+    public Map<E, Map<Set<I>, I>> getRequireAnyMetadataSource() {
+        return mRequireAnyMetadataSource;
+    }
+
+    @NotNull
     public List<E> getEvaluationOrder() {
         return mEvaluationOrder;
     }
@@ -135,6 +159,8 @@ public final class EventsManagerConfig<E, I> {
         private final Map<E, Set<E>> mPrerequisites = new HashMap<>();
         private final Map<E, Set<E>> mSuppressedBy = new HashMap<>();
         private final Map<E, Integer> mExecutionLimits = new HashMap<>();
+        private final Map<E, I> mRequireAllMetadataSource = new HashMap<>();
+        private final Map<E, Map<Set<I>, I>> mRequireAnyMetadataSource = new HashMap<>();
 
         private Builder() {
         }
@@ -243,6 +269,36 @@ public final class EventsManagerConfig<E, I> {
         }
 
         /**
+         * Sets the metadata source for a requireAll external event.
+         *
+         * @param externalEvent the external event
+         * @param sourceEvent   the internal event whose metadata should be used
+         * @return this builder
+         */
+        public Builder<E, I> metadataSource(E externalEvent, I sourceEvent) {
+            mRequireAllMetadataSource.put(externalEvent, sourceEvent);
+            return this;
+        }
+
+        /**
+         * Sets the metadata source for a requireAny group.
+         *
+         * @param externalEvent the external event
+         * @param group         the internal event group
+         * @param sourceEvent   the internal event whose metadata should be used
+         * @return this builder
+         */
+        public Builder<E, I> metadataSource(E externalEvent, Set<I> group, I sourceEvent) {
+            Map<Set<I>, I> groupSources = mRequireAnyMetadataSource.get(externalEvent);
+            if (groupSources == null) {
+                groupSources = new HashMap<>();
+                mRequireAnyMetadataSource.put(externalEvent, groupSources);
+            }
+            groupSources.put(new HashSet<>(group), sourceEvent);
+            return this;
+        }
+
+        /**
          * Builds the EventsManagerConfig.
          *
          * @return the built config
@@ -253,7 +309,9 @@ public final class EventsManagerConfig<E, I> {
                     mRequireAny.isEmpty() ? null : mRequireAny,
                     mPrerequisites.isEmpty() ? null : mPrerequisites,
                     mSuppressedBy.isEmpty() ? null : mSuppressedBy,
-                    mExecutionLimits.isEmpty() ? null : mExecutionLimits
+                    mExecutionLimits.isEmpty() ? null : mExecutionLimits,
+                    mRequireAllMetadataSource.isEmpty() ? null : mRequireAllMetadataSource,
+                    mRequireAnyMetadataSource.isEmpty() ? null : mRequireAnyMetadataSource
             );
         }
     }

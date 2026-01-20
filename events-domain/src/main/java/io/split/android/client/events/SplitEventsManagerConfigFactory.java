@@ -74,6 +74,15 @@ final class SplitEventsManagerConfigFactory {
                 .executionLimit(SplitEvent.SDK_READY_TIMED_OUT, 1)
                 .executionLimit(SplitEvent.SDK_UPDATE, -1) // unlimited
 
+                // Metadata sources
+                .metadataSource(SplitEvent.SDK_READY, SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE)
+                // Cache path: if SDK_READY_FROM_CACHE fired because cache was loaded, use storage load metadata.
+                .metadataSource(SplitEvent.SDK_READY_FROM_CACHE, cacheGroup,
+                        SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE)
+                // Sync path: if SDK_READY_FROM_CACHE fired alongside SDK_READY, use sync completion metadata.
+                .metadataSource(SplitEvent.SDK_READY_FROM_CACHE, syncGroup,
+                        SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE)
+
                 .build();
     }
 }
