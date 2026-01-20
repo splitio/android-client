@@ -6,7 +6,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
-import android.util.Base64;
 
 import androidx.annotation.NonNull;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -26,6 +25,7 @@ import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Function;
 
 import fake.HttpClientMock;
 import fake.HttpResponseMock;
@@ -47,7 +47,6 @@ import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.network.HttpMethod;
 import io.split.android.client.storage.db.GeneralInfoEntity;
-import io.split.android.client.storage.db.MyLargeSegmentEntity;
 import io.split.android.client.storage.db.MySegmentEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
@@ -831,8 +830,8 @@ public class SdkEventsIntegrationTest {
         // Given: a factory with two clients (with streaming support)
         TwoClientFixture fixture = createTwoStreamingClientsAndWaitForReady(new Key("key_A"), new Key("key_B"));
 
-        EventCapture<SdkUpdateMetadata> captureA = captureUpdateEvent(fixture.clientA);
-        EventCapture<SdkUpdateMetadata> captureB = captureUpdateEvent(fixture.clientB);
+        EventCapture<SdkUpdateMetadata> captureA = captureUpdateEvent(fixture.mClientA);
+        EventCapture<SdkUpdateMetadata> captureB = captureUpdateEvent(fixture.mClientB);
 
         // When: a SDK-scoped internal "splitsUpdated" event is notified via SSE
         fixture.pushSplitUpdate();
@@ -861,8 +860,8 @@ public class SdkEventsIntegrationTest {
         // Given: a factory with two clients (with streaming support)
         TwoClientFixture fixture = createTwoStreamingClientsAndWaitForReady(new Key("userA"), new Key("userB"));
 
-        EventCapture<SdkUpdateMetadata> captureA = captureUpdateEvent(fixture.clientA);
-        EventCapture<SdkUpdateMetadata> captureB = captureUpdateEvent(fixture.clientB);
+        EventCapture<SdkUpdateMetadata> captureA = captureUpdateEvent(fixture.mClientA);
+        EventCapture<SdkUpdateMetadata> captureB = captureUpdateEvent(fixture.mClientB);
 
         // When: a SDK-scoped split update notification arrives (affects all clients)
         fixture.pushSplitUpdate();
@@ -944,45 +943,14 @@ public class SdkEventsIntegrationTest {
      */
     @Test
     public void sdkUpdateFiresOnlyOnceWhenBothFlagsAndRbsChange() throws Exception {
-        // Track number of /splitChanges calls
         AtomicInteger splitChangesHitCount = new AtomicInteger(0);
 
-        final Dispatcher pollingDispatcher = new Dispatcher() {
-            @Override
-            public MockResponse dispatch(RecordedRequest request) {
-                final String path = request.getPath();
-                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
-                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
-                } else if (path.contains("/splitChanges")) {
-                    int count = splitChangesHitCount.incrementAndGet();
-                    if (count <= 1) {
-                        // Initial sync: empty
-                        return new MockResponse().setResponseCode(200)
-                                .setBody(IntegrationHelper.emptyTargetingRulesChanges(1000, 1000));
-                    } else {
-                        // Polling sync: return BOTH flag and RBS changes
-                        // s and t must be equal to signal end of sync loop
-                        String responseWithBothChanges = "{\"ff\":{\"s\":2000,\"t\":2000,\"d\":[" +
-                                "{\"trafficTypeName\":\"user\",\"name\":\"test_split\",\"status\":\"ACTIVE\"," +
-                                "\"killed\":false,\"defaultTreatment\":\"off\",\"changeNumber\":2000," +
-                                "\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\"," +
-                                "\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"ALL_KEYS\",\"negate\":false}]}," +
-                                "\"partitions\":[{\"treatment\":\"on\",\"size\":100}]}]}" +
-                                "]},\"rbs\":{\"s\":2000,\"t\":2000,\"d\":[" +
-                                "{\"name\":\"test_rbs\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\"," +
-                                "\"excluded\":{\"keys\":[],\"segments\":[]}," +
-                                "\"conditions\":[{\"matcherGroup\":{\"combiner\":\"AND\"," +
-                                "\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"ALL_KEYS\",\"negate\":false}]}}]}" +
-                                "]}}";
-                        return new MockResponse().setResponseCode(200).setBody(responseWithBothChanges);
-                    }
-                } else if (path.contains("/testImpressions/bulk")) {
-                    return new MockResponse().setResponseCode(200);
-                }
-                return new MockResponse().setResponseCode(404);
-            }
-        };
-        mWebServer.setDispatcher(pollingDispatcher);
+        mWebServer.setDispatcher(createPollingDispatcher(
+                count -> count <= 1
+                        ? IntegrationHelper.emptyTargetingRulesChanges(1000, 1000)
+                        : IntegrationHelper.targetingRulesChangesWithFlagAndRbs("test_split", "test_rbs", 2000),
+                count -> IntegrationHelper.dummyAllSegments()
+        ));
 
         // Use polling mode with short refresh rate to trigger sync quickly
         SplitClientConfig config = new TestableSplitConfigBuilder()
@@ -1056,10 +1024,8 @@ public class SdkEventsIntegrationTest {
     @Test
     public void sdkUpdateMetadataContainsTypeForMembershipSegmentsUpdate() throws Exception {
         verifySdkUpdateForSegmentsPollingWithEmptyNames(
-                // Initial sync: segment1, segment2
-                "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":1000},\"ls\":{\"k\":[],\"cn\":1000}}",
-                // Polling: segment1 removed, segment3 added
-                "{\"ms\":{\"k\":[{\"n\":\"segment2\"},{\"n\":\"segment3\"}],\"cn\":2000},\"ls\":{\"k\":[],\"cn\":1000}}"
+                IntegrationHelper.membershipsResponse(new String[]{"segment1", "segment2"}, 1000),
+                IntegrationHelper.membershipsResponse(new String[]{"segment2", "segment3"}, 2000)
         );
     }
 
@@ -1072,35 +1038,12 @@ public class SdkEventsIntegrationTest {
      */
     @Test
     public void sdkUpdateMetadataContainsNamesForPollingFlagsUpdate() throws Exception {
-        AtomicInteger splitChangesHitCount = new AtomicInteger(0);
-        final Dispatcher pollingDispatcher = new Dispatcher() {
-            @Override
-            public MockResponse dispatch(RecordedRequest request) {
-                final String path = request.getPath();
-                if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
-                    return new MockResponse().setResponseCode(200).setBody(IntegrationHelper.dummyAllSegments());
-                } else if (path.contains("/splitChanges")) {
-                    int count = splitChangesHitCount.incrementAndGet();
-                    if (count <= 1) {
-                        return new MockResponse().setResponseCode(200)
-                                .setBody(IntegrationHelper.emptyTargetingRulesChanges(1000, 1000));
-                    } else {
-                        String responseWithFlagChange = "{\"ff\":{\"s\":2000,\"t\":2000,\"d\":[" +
-                                "{\"trafficTypeName\":\"user\",\"name\":\"polling_flag\",\"status\":\"ACTIVE\"," +
-                                "\"killed\":false,\"defaultTreatment\":\"off\",\"changeNumber\":2000," +
-                                "\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\"," +
-                                "\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"ALL_KEYS\",\"negate\":false}]}," +
-                                "\"partitions\":[{\"treatment\":\"on\",\"size\":100}]}]}" +
-                                "]},\"rbs\":{\"s\":2000,\"t\":2000,\"d\":[]}}";
-                        return new MockResponse().setResponseCode(200).setBody(responseWithFlagChange);
-                    }
-                } else if (path.contains("/testImpressions/bulk")) {
-                    return new MockResponse().setResponseCode(200);
-                }
-                return new MockResponse().setResponseCode(404);
-            }
-        };
-        mWebServer.setDispatcher(pollingDispatcher);
+        mWebServer.setDispatcher(createPollingDispatcher(
+                count -> count <= 1
+                        ? IntegrationHelper.emptyTargetingRulesChanges(1000, 1000)
+                        : IntegrationHelper.targetingRulesChangesWithFlag("polling_flag", 2000),
+                count -> IntegrationHelper.dummyAllSegments()
+        ));
 
         SplitClientConfig config = new TestableSplitConfigBuilder()
                 .serviceEndpoints(endpoints())
@@ -1179,8 +1122,8 @@ public class SdkEventsIntegrationTest {
     @Test
     public void sdkUpdateMetadataForSingleClientMembershipPolling() throws Exception {
         AtomicInteger key1MembershipHits = new AtomicInteger(0);
-        final String initialMemberships = "{\"ms\":{\"k\":[{\"n\":\"segment1\"}],\"cn\":1000},\"ls\":{\"k\":[],\"cn\":1000}}";
-        final String updatedMembershipsKey1 = "{\"ms\":{\"k\":[{\"n\":\"segment2\"}],\"cn\":2000},\"ls\":{\"k\":[],\"cn\":1000}}";
+        final String initialMemberships = IntegrationHelper.membershipsResponse(new String[]{"segment1"}, 1000);
+        final String updatedMemberships = IntegrationHelper.membershipsResponse(new String[]{"segment2"}, 2000);
 
         mWebServer.setDispatcher(new Dispatcher() {
             @Override
@@ -1190,7 +1133,7 @@ public class SdkEventsIntegrationTest {
                     if (path.contains("key_1")) {
                         int count = key1MembershipHits.incrementAndGet();
                         return new MockResponse().setResponseCode(200)
-                                .setBody(count <= 1 ? initialMemberships : updatedMembershipsKey1);
+                                .setBody(count <= 1 ? initialMemberships : updatedMemberships);
                     }
                     return new MockResponse().setResponseCode(200).setBody(initialMemberships);
                 } else if (path.contains("/splitChanges")) {
@@ -1236,8 +1179,8 @@ public class SdkEventsIntegrationTest {
     public void sdkUpdateMetadataForSingleClientMembershipStreaming() throws Exception {
         TwoClientFixture fixture = createTwoStreamingClientsAndWaitForReady(new Key("key1"), new Key("key2"));
 
-        EventCapture<SdkUpdateMetadata> client1Capture = captureUpdateEvent(fixture.clientA);
-        EventCapture<SdkUpdateMetadata> client2Capture = captureUpdateEvent(fixture.clientB);
+        EventCapture<SdkUpdateMetadata> client1Capture = captureUpdateEvent(fixture.mClientA);
+        EventCapture<SdkUpdateMetadata> client2Capture = captureUpdateEvent(fixture.mClientB);
 
         // Keylist update: only key1 is included
         fixture.pushMembershipKeyListUpdate("key1", "streaming_segment");
@@ -1266,10 +1209,8 @@ public class SdkEventsIntegrationTest {
     @Test
     public void sdkUpdateMetadataContainsTypeForLargeSegmentsUpdate() throws Exception {
         verifySdkUpdateForSegmentsPollingWithEmptyNames(
-                // Initial sync: large_segment1, large_segment2
-                "{\"ms\":{\"k\":[],\"cn\":1000},\"ls\":{\"k\":[{\"n\":\"large_segment1\"},{\"n\":\"large_segment2\"}],\"cn\":1000}}",
-                // Polling: large_segment1 removed, large_segment3 added
-                "{\"ms\":{\"k\":[],\"cn\":1000},\"ls\":{\"k\":[{\"n\":\"large_segment2\"},{\"n\":\"large_segment3\"}],\"cn\":2000}}"
+                IntegrationHelper.membershipsResponse(new String[]{}, 1000L, new String[]{"large_segment1", "large_segment2"}, 1000L),
+                IntegrationHelper.membershipsResponse(new String[]{}, 1000L, new String[]{"large_segment2", "large_segment3"}, 2000L)
         );
     }
 
@@ -1284,10 +1225,12 @@ public class SdkEventsIntegrationTest {
      */
     @Test
     public void twoDistinctSdkUpdateEventsWhenBothSegmentsAndLargeSegmentsChange() throws Exception {
-        // Initial sync: segment1, segment2 in ms; large_segment1, large_segment2 in ls
-        String initialResponse = "{\"ms\":{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":1000},\"ls\":{\"k\":[{\"n\":\"large_segment1\"},{\"n\":\"large_segment2\"}],\"cn\":1000}}";
-        // Polling: both ms and ls change
-        String pollingResponse = "{\"ms\":{\"k\":[{\"n\":\"segment2\"},{\"n\":\"segment3\"}],\"cn\":2000},\"ls\":{\"k\":[{\"n\":\"large_segment2\"},{\"n\":\"large_segment3\"}],\"cn\":2000}}";
+        String initialResponse = IntegrationHelper.membershipsResponse(
+                new String[]{"segment1", "segment2"}, 1000L,
+                new String[]{"large_segment1", "large_segment2"}, 1000L);
+        String pollingResponse = IntegrationHelper.membershipsResponse(
+                new String[]{"segment2", "segment3"}, 2000L,
+                new String[]{"large_segment2", "large_segment3"}, 2000L);
 
         List<SdkUpdateMetadata> metadataList = waitForSegmentsPollingUpdates(initialResponse, pollingResponse, 2);
 
@@ -1582,10 +1525,6 @@ public class SdkEventsIntegrationTest {
         fixture.destroy();
     }
 
-    /**
-     * Creates a client and waits for SDK_READY to fire.
-     * Returns a TestClientFixture containing the factory, client, and ready latch.
-     */
     private TestClientFixture createClientAndWaitForReady(SplitClientConfig config, Key key) throws InterruptedException {
         SplitFactory factory = buildFactory(config);
         SplitClient client = factory.client(key);
@@ -1604,17 +1543,12 @@ public class SdkEventsIntegrationTest {
         return new TestClientFixture(factory, client, readyLatch);
     }
 
-    /**
-     * Creates a client with default config and waits for SDK_READY.
-     */
     private TestClientFixture createClientAndWaitForReady(Key key) throws InterruptedException {
         return createClientAndWaitForReady(buildConfig(), key);
     }
 
     /**
      * Creates a client with streaming enabled but does NOT wait for SDK_READY.
-     * Useful for tests that need to register handlers before SDK_READY fires.
-     * Returns a fixture that can push SSE messages to trigger SDK_UPDATE.
      */
     private TestClientFixture createStreamingClient(Key key) throws IOException {
         BlockingQueue<String> streamingData = new LinkedBlockingDeque<>();
@@ -1637,10 +1571,6 @@ public class SdkEventsIntegrationTest {
         return new TestClientFixture(factory, client, null, streamingData, sseLatch);
     }
 
-    /**
-     * Creates a client with streaming enabled and waits for SDK_READY.
-     * Returns a fixture that can push SSE messages to trigger SDK_UPDATE.
-     */
     private TestClientFixture createStreamingClientAndWaitForReady(Key key) throws InterruptedException, IOException {
         TestClientFixture fixture = createStreamingClient(key);
 
@@ -1661,9 +1591,6 @@ public class SdkEventsIntegrationTest {
         return new TestClientFixture(fixture.factory, fixture.client, readyLatch, fixture.streamingData, fixture.sseLatch);
     }
 
-    /**
-     * Creates a standard streaming dispatcher for mock HTTP responses.
-     */
     private HttpResponseMockDispatcher createStreamingDispatcher(BlockingQueue<String> streamingData, CountDownLatch sseLatch) {
         return new HttpResponseMockDispatcher() {
             @Override
@@ -1692,9 +1619,6 @@ public class SdkEventsIntegrationTest {
         };
     }
 
-    /**
-     * Creates two clients with streaming enabled and waits for both to be ready.
-     */
     private TwoClientFixture createTwoStreamingClientsAndWaitForReady(Key keyA, Key keyB) throws InterruptedException, IOException {
         BlockingQueue<String> streamingData = new LinkedBlockingDeque<>();
         CountDownLatch sseLatch = new CountDownLatch(1);
@@ -1726,10 +1650,6 @@ public class SdkEventsIntegrationTest {
 
         return new TwoClientFixture(factory, clientA, clientB, streamingData);
     }
-
-    /**
-     * Creates a SdkEventListener with both onReady and onUpdate handlers.
-     */
     private SdkEventListener createDualListener(AtomicInteger readyCount, CountDownLatch readyLatch,
                                                 AtomicInteger updateCount, CountDownLatch updateLatch) {
         return new SdkEventListener() {
@@ -1821,60 +1741,39 @@ public class SdkEventsIntegrationTest {
      * Helper class to hold factory and two clients together for cleanup.
      */
     private static class TwoClientFixture {
-        final SplitFactory factory;
-        final SplitClient clientA;
-        final SplitClient clientB;
-        final BlockingQueue<String> streamingData;
-
-        TwoClientFixture(SplitFactory factory, SplitClient clientA, SplitClient clientB) {
-            this(factory, clientA, clientB, null);
-        }
+        final SplitFactory mFactory;
+        final SplitClient mClientA;
+        final SplitClient mClientB;
+        final BlockingQueue<String> mStreamingData;
 
         TwoClientFixture(SplitFactory factory, SplitClient clientA, SplitClient clientB, BlockingQueue<String> streamingData) {
-            this.factory = factory;
-            this.clientA = clientA;
-            this.clientB = clientB;
-            this.streamingData = streamingData;
+            mFactory = factory;
+            mClientA = clientA;
+            mClientB = clientB;
+            mStreamingData = streamingData;
         }
 
         void pushSplitUpdate() {
-            if (streamingData != null) {
-                pushMessage(streamingData, IntegrationHelper.splitChangeV2CompressionType0());
+            if (mStreamingData != null) {
+                pushMessage(mStreamingData, IntegrationHelper.splitChangeV2CompressionType0());
             }
         }
 
         void pushMembershipKeyListUpdate(String key, String segmentName) {
-            if (streamingData != null) {
-                pushMessage(streamingData, membershipKeyListUpdateMessage(key, segmentName));
+            if (mStreamingData != null) {
+                pushMessage(mStreamingData, membershipKeyListUpdateMessage(key, segmentName));
             }
         }
 
         void destroy() {
-            factory.destroy();
+            mFactory.destroy();
         }
     }
 
     private static String membershipKeyListUpdateMessage(String key, String segmentName) {
         MySegmentsV2PayloadDecoder decoder = new MySegmentsV2PayloadDecoder();
         BigInteger hashedKey = decoder.hashKey(key);
-        String keyListJson = "{\"a\":[" + hashedKey.toString() + "],\"r\":[]}";
-        String encodedKeyList = Base64.encodeToString(
-                keyListJson.getBytes(io.split.android.client.utils.StringHelper.defaultCharset()),
-                Base64.NO_WRAP);
-
-        String notificationJson = "{" +
-                "\\\"type\\\":\\\"MEMBERSHIPS_MS_UPDATE\\\"," +
-                "\\\"cn\\\":2000," +
-                "\\\"n\\\":[\\\"" + segmentName + "\\\"]," +
-                "\\\"c\\\":0," +
-                "\\\"u\\\":2," +
-                "\\\"d\\\":\\\"" + encodedKeyList + "\\\"" +
-                "}";
-
-        return "id: 1\n" +
-                "event: message\n" +
-                "data: {\"id\":\"m1\",\"clientId\":\"pri:test\",\"timestamp\":" + System.currentTimeMillis() +
-                ",\"encoding\":\"json\",\"channel\":\"test_channel\",\"data\":\"" + notificationJson + "\"}\n";
+        return IntegrationHelper.membershipKeyListUpdate(hashedKey, segmentName, 2000);
     }
     private static void pushMessage(BlockingQueue<String> queue, String message) {
         try {
@@ -1897,7 +1796,7 @@ public class SdkEventsIntegrationTest {
             entity.setName("split_" + i);
             long cn = 1000L + i;
             finalChangeNumber = cn;
-            entity.setBody(String.format("{\"name\":\"split_%d\", \"changeNumber\": %d}", i, cn));
+            entity.setBody(IntegrationHelper.splitEntityBody("split_" + i, cn));
             splitEntities.add(entity);
         }
         mDatabase.splitDao().insert(splitEntities);
@@ -1907,14 +1806,14 @@ public class SdkEventsIntegrationTest {
         // Populate segments for default key
         MySegmentEntity segmentEntity = new MySegmentEntity();
         segmentEntity.setUserKey("DEFAULT_KEY");
-        segmentEntity.setSegmentList("{\"k\":[{\"n\":\"segment1\"},{\"n\":\"segment2\"}],\"cn\":null}");
+        segmentEntity.setSegmentList(IntegrationHelper.segmentListJson("segment1", "segment2"));
         segmentEntity.setUpdatedAt(System.currentTimeMillis() / 1000);
         mDatabase.mySegmentDao().update(segmentEntity);
 
         // Populate segments for key_1
         MySegmentEntity segmentEntity2 = new MySegmentEntity();
         segmentEntity2.setUserKey("key_1");
-        segmentEntity2.setSegmentList("{\"k\":[{\"n\":\"segment1\"}],\"cn\":null}");
+        segmentEntity2.setSegmentList(IntegrationHelper.segmentListJson("segment1"));
         segmentEntity2.setUpdatedAt(System.currentTimeMillis() / 1000);
         mDatabase.mySegmentDao().update(segmentEntity2);
     }
@@ -1946,20 +1845,11 @@ public class SdkEventsIntegrationTest {
         return new TestClientFixture(fixture.factory, fixture.client, readyLatch, fixture.streamingData, fixture.sseLatch);
     }
 
-    /**
-     * Populates the database with RBS change number for instant update testing.
-     */
     private void populateDatabaseWithRbsData() {
         // Set RBS change number so streaming notifications trigger in-place updates
         mDatabase.generalInfoDao().update(new GeneralInfoEntity("rbsChangeNumber", 1000L));
     }
 
-    // ==================== Event Capture Helpers ====================
-
-    /**
-     * Container for capturing event invocations with count, metadata, and latch.
-     * Reduces boilerplate of creating separate AtomicInteger, AtomicReference, and CountDownLatch.
-     */
     private static class EventCapture<M> {
         final AtomicInteger count = new AtomicInteger(0);
         final AtomicReference<M> metadata = new AtomicReference<>();
@@ -1984,18 +1874,11 @@ public class SdkEventsIntegrationTest {
             latch.countDown();
         }
 
-        boolean await() throws InterruptedException {
-            return await(10);
-        }
-
         boolean await(int seconds) throws InterruptedException {
             return latch.await(seconds, TimeUnit.SECONDS);
         }
     }
 
-    /**
-     * Awaits a latch and asserts the event fired within timeout.
-     */
     private void awaitEvent(CountDownLatch latch, String eventName) throws InterruptedException {
         awaitEvent(latch, eventName, 10);
     }
@@ -2005,23 +1888,14 @@ public class SdkEventsIntegrationTest {
         assertTrue(eventName + " should fire", fired);
     }
 
-    /**
-     * Asserts that an event was fired exactly once.
-     */
     private void assertFiredOnce(AtomicInteger count, String eventName) {
         assertEquals(eventName + " should be invoked exactly once", 1, count.get());
     }
 
-    /**
-     * Asserts that an event was fired the expected number of times.
-     */
     private void assertFiredTimes(AtomicInteger count, String eventName, int expectedTimes) {
         assertEquals(eventName + " should be invoked " + expectedTimes + " time(s)", expectedTimes, count.get());
     }
 
-    /**
-     * Registers an onReady listener and returns an EventCapture for the results.
-     */
     private EventCapture<SdkReadyMetadata> captureReadyEvent(SplitClient client) {
         EventCapture<SdkReadyMetadata> capture = new EventCapture<>();
         client.addEventListener(new SdkEventListener() {
@@ -2033,9 +1907,6 @@ public class SdkEventsIntegrationTest {
         return capture;
     }
 
-    /**
-     * Registers an onReadyFromCache listener and returns an EventCapture for the results.
-     */
     private EventCapture<SdkReadyMetadata> captureCacheReadyEvent(SplitClient client) {
         EventCapture<SdkReadyMetadata> capture = new EventCapture<>();
         client.addEventListener(new SdkEventListener() {
@@ -2047,9 +1918,6 @@ public class SdkEventsIntegrationTest {
         return capture;
     }
 
-    /**
-     * Registers an onUpdate listener and returns an EventCapture for the results.
-     */
     private EventCapture<SdkUpdateMetadata> captureUpdateEvent(SplitClient client) {
         return captureUpdateEvent(client, 1);
     }
@@ -2065,9 +1933,6 @@ public class SdkEventsIntegrationTest {
         return capture;
     }
 
-    /**
-     * Registers a legacy SDK_READY handler with latch countdown.
-     */
     private CountDownLatch captureLegacyReadyEvent(SplitClient client) {
         CountDownLatch latch = new CountDownLatch(1);
         client.on(SplitEvent.SDK_READY, new SplitEventTask() {
@@ -2081,17 +1946,17 @@ public class SdkEventsIntegrationTest {
 
     /**
      * Creates a polling dispatcher that returns different responses based on hit count.
-     * Useful for tests that need to verify behavior across multiple polling cycles.
      */
     private Dispatcher createPollingDispatcher(
-            java.util.function.Function<Integer, String> splitChangesResponseFn,
-            java.util.function.Function<Integer, String> membershipsResponseFn) {
+            Function<Integer, String> splitChangesResponseFn,
+            Function<Integer, String> membershipsResponseFn) {
         AtomicInteger splitChangesHits = new AtomicInteger(0);
         AtomicInteger membershipsHits = new AtomicInteger(0);
 
         return new Dispatcher() {
+            @NonNull
             @Override
-            public MockResponse dispatch(RecordedRequest request) {
+            public MockResponse dispatch(@NonNull RecordedRequest request) {
                 final String path = request.getPath();
                 if (path.contains("/" + IntegrationHelper.ServicePath.MEMBERSHIPS)) {
                     int count = membershipsHits.incrementAndGet();
@@ -2113,9 +1978,6 @@ public class SdkEventsIntegrationTest {
         };
     }
 
-    /**
-     * Creates a delayed dispatcher for timeout tests.
-     */
     private Dispatcher createDelayedDispatcher(long delaySeconds) {
         return new Dispatcher() {
             @Override
@@ -2140,9 +2002,6 @@ public class SdkEventsIntegrationTest {
         };
     }
 
-    /**
-     * Creates a polling config with specified refresh rates.
-     */
     private SplitClientConfig createPollingConfig(int featuresRefreshRate, int segmentsRefreshRate) {
         return new TestableSplitConfigBuilder()
                 .serviceEndpoints(endpoints())
@@ -2155,9 +2014,6 @@ public class SdkEventsIntegrationTest {
                 .build();
     }
 
-    /**
-     * Waits for SDK_READY on a client and asserts it fired.
-     */
     private void waitForReady(SplitClient client) throws InterruptedException {
         CountDownLatch latch = captureLegacyReadyEvent(client);
         awaitEvent(latch, "SDK_READY");
