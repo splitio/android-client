@@ -327,9 +327,23 @@ public class SplitsSyncHelper {
             mRuleBasedSegmentStorage.clear();
         }
         ProcessedSplitChange processedSplitChange = mSplitChangeProcessor.process(splitChange);
-        mLastProcessedSplitChange.set(processedSplitChange);
+        if (hasFlagUpdates(processedSplitChange)) {
+            mLastProcessedSplitChange.set(processedSplitChange);
+        }
         mSplitsStorage.update(processedSplitChange, mExecutor);
         updateRbsStorage(ruleBasedSegmentChange);
+    }
+
+    private boolean hasFlagUpdates(@Nullable ProcessedSplitChange processedSplitChange) {
+        if (processedSplitChange == null) {
+            return false;
+        }
+        List<Split> activeSplits = processedSplitChange.getActiveSplits();
+        if (activeSplits != null && !activeSplits.isEmpty()) {
+            return true;
+        }
+        List<Split> archivedSplits = processedSplitChange.getArchivedSplits();
+        return archivedSplits != null && !archivedSplits.isEmpty();
     }
 
     /**

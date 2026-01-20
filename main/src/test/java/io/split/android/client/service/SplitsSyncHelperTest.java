@@ -42,6 +42,7 @@ import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.RuleBasedSegmentChange;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TargetingRulesChange;
+import io.split.android.client.dtos.Status;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
@@ -754,6 +755,31 @@ public class SplitsSyncHelperTest {
         // Since we're using real processor, it will process the actual splits from mTargetingRulesChange
         assertNotNull(result);
         // The exact number depends on the splits in the test data, but it should not be null
+    }
+
+    @Test
+    public void getLastUpdatedFlagNamesPreservesLastNonEmptyChange() throws HttpFetcherException {
+        Split split = new Split();
+        split.name = "split_1";
+        split.status = Status.ACTIVE;
+
+        SplitChange firstSplitChange = SplitChange.create(-1, 100L, Collections.singletonList(split));
+        SplitChange secondSplitChange = SplitChange.create(100L, 100L, Collections.emptyList());
+
+        RuleBasedSegmentChange firstRbsChange = RuleBasedSegmentChange.create(-1, 10L, Collections.emptyList());
+        RuleBasedSegmentChange secondRbsChange = RuleBasedSegmentChange.create(10L, 10L, Collections.emptyList());
+
+        when(mSplitsFetcher.execute(any(), any()))
+                .thenReturn(TargetingRulesChange.create(firstSplitChange, firstRbsChange))
+                .thenReturn(TargetingRulesChange.create(secondSplitChange, secondRbsChange));
+        when(mSplitsStorage.getTill()).thenReturn(-1L).thenReturn(100L);
+        when(mRuleBasedSegmentStorageProducer.getChangeNumber()).thenReturn(-1L).thenReturn(10L);
+
+        mSplitsSyncHelper.sync(getSinceChangeNumbers(-1, -1L), false, false, ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
+
+        List<String> result = mSplitsSyncHelper.getLastUpdatedFlagNames();
+        assertEquals(1, result.size());
+        assertTrue(result.contains("split_1"));
     }
 
     @Test
