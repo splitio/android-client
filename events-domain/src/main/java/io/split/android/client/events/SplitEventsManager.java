@@ -113,7 +113,7 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     }
 
     @Override
-    public void registerEventListener(SdkEventListener listener) {
+    public void registerEventListener(SplitEventListener listener) {
         requireNonNull(listener);
 
         // Register SDK_READY handlers (bg + main)
@@ -190,7 +190,7 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     }
 
     // SdkEventListener handlers for SDK_READY
-    private EventHandler<SplitEvent, EventMetadata> createReadyBackgroundHandler(final SdkEventListener listener) {
+    private EventHandler<SplitEvent, EventMetadata> createReadyBackgroundHandler(final SplitEventListener listener) {
         return (event, metadata) -> {
             SplitClient client = mResources.getSplitClient();
             SdkReadyMetadata typedMetadata = TypedTaskConverter.convertForSdkReady(metadata);
@@ -198,7 +198,7 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
         };
     }
 
-    private EventHandler<SplitEvent, EventMetadata> createReadyMainThreadHandler(final SdkEventListener listener) {
+    private EventHandler<SplitEvent, EventMetadata> createReadyMainThreadHandler(final SplitEventListener listener) {
         return (event, metadata) -> {
             SplitClient client = mResources.getSplitClient();
             SdkReadyMetadata typedMetadata = TypedTaskConverter.convertForSdkReady(metadata);
@@ -207,7 +207,7 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     }
 
     // SdkEventListener handlers for SDK_UPDATE
-    private EventHandler<SplitEvent, EventMetadata> createUpdateBackgroundHandler(final SdkEventListener listener) {
+    private EventHandler<SplitEvent, EventMetadata> createUpdateBackgroundHandler(final SplitEventListener listener) {
         return (event, metadata) -> {
             SplitClient client = mResources.getSplitClient();
             SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
@@ -215,7 +215,7 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
         };
     }
 
-    private EventHandler<SplitEvent, EventMetadata> createUpdateMainThreadHandler(final SdkEventListener listener) {
+    private EventHandler<SplitEvent, EventMetadata> createUpdateMainThreadHandler(final SplitEventListener listener) {
         return (event, metadata) -> {
             SplitClient client = mResources.getSplitClient();
             SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
@@ -224,7 +224,7 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
     }
 
     // SdkEventListener handlers for SDK_READY_FROM_CACHE
-    private EventHandler<SplitEvent, EventMetadata> createReadyFromCacheBackgroundHandler(final SdkEventListener listener) {
+    private EventHandler<SplitEvent, EventMetadata> createReadyFromCacheBackgroundHandler(final SplitEventListener listener) {
         return (event, metadata) -> {
             SplitClient client = mResources.getSplitClient();
             SdkReadyMetadata typedMetadata = TypedTaskConverter.convertForSdkReady(metadata);
@@ -232,7 +232,7 @@ public class SplitEventsManager implements ISplitEventsManager, ListenableEvents
         };
     }
 
-    private EventHandler<SplitEvent, EventMetadata> createReadyFromCacheMainThreadHandler(final SdkEventListener listener) {
+    private EventHandler<SplitEvent, EventMetadata> createReadyFromCacheMainThreadHandler(final SplitEventListener listener) {
         return (event, metadata) -> {
             SplitClient client = mResources.getSplitClient();
             SdkReadyMetadata typedMetadata = TypedTaskConverter.convertForSdkReady(metadata);

@@ -1,6 +1,3 @@
-import com.vanniktech.maven.publish.AndroidFusedLibrary
-import org.gradle.api.publish.maven.MavenPublication
-
 buildscript {
     repositories {
         google()

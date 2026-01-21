@@ -36,7 +36,7 @@ import io.split.android.client.SplitClient;
  * });
  * }</pre>
  */
-public abstract class SdkEventListener {
+public abstract class SplitEventListener {
 
     /**
      * Called when SDK_READY event occurs, executed on a background thread.

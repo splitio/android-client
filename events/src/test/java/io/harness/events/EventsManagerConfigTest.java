@@ -24,6 +24,8 @@ public class EventsManagerConfigTest {
         assertTrue(config.getPrerequisites().isEmpty());
         assertTrue(config.getSuppressedBy().isEmpty());
         assertTrue(config.getExecutionLimits().isEmpty());
+        assertTrue(config.getRequireAllMetadataSource().isEmpty());
+        assertTrue(config.getRequireAnyMetadataSource().isEmpty());
     }
 
     @Test
@@ -34,6 +36,8 @@ public class EventsManagerConfigTest {
                 .prerequisite("E1", "E0")
                 .suppressedBy("E1", "E2")
                 .executionLimit("E1", 3)
+                .metadataSource("E1", "I2")
+                .metadataSource("E2", Collections.singleton("I3"), "I3")
                 .build();
 
         assertEquals(1, config.getRequireAll().size());
@@ -54,6 +58,10 @@ public class EventsManagerConfigTest {
 
         assertEquals(1, config.getExecutionLimits().size());
         assertEquals(Integer.valueOf(3), config.getExecutionLimits().get("E1"));
+
+        assertEquals("I2", config.getRequireAllMetadataSource().get("E1"));
+        assertEquals("I3", config.getRequireAnyMetadataSource().get("E2")
+                .get(Collections.singleton("I3")));
     }
 
     @Test
@@ -90,6 +98,7 @@ public class EventsManagerConfigTest {
                 .prerequisite("E1", "E0")
                 .suppressedBy("E1", "E2")
                 .executionLimit("E1", 3)
+                .metadataSource("E1", "I1")
                 .build();
 
         try {
@@ -126,6 +135,20 @@ public class EventsManagerConfigTest {
         } catch (UnsupportedOperationException expected) {
             // expected
         }
+
+        try {
+            config.getRequireAllMetadataSource().put("E2", "I2");
+            Assert.fail("getRequireAllMetadataSource() should return an unmodifiable map");
+        } catch (UnsupportedOperationException expected) {
+            // expected
+        }
+
+        try {
+            config.getRequireAnyMetadataSource().put("E2", Collections.singletonMap(Collections.singleton("I2"), "I2"));
+            Assert.fail("getRequireAnyMetadataSource() should return an unmodifiable map");
+        } catch (UnsupportedOperationException expected) {
+            // expected
+        }
     }
 
     @Test
@@ -137,6 +160,8 @@ public class EventsManagerConfigTest {
         assertTrue(config.getPrerequisites().isEmpty());
         assertTrue(config.getSuppressedBy().isEmpty());
         assertTrue(config.getExecutionLimits().isEmpty());
+        assertTrue(config.getRequireAllMetadataSource().isEmpty());
+        assertTrue(config.getRequireAnyMetadataSource().isEmpty());
 
         try {
             config.getRequireAll().put("E1", Collections.singleton("I1"));

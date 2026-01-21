@@ -159,6 +159,12 @@ public class HttpClientImpl implements HttpClient {
 
     }
 
+    @VisibleForTesting
+    @Nullable
+    SSLSocketFactory getSslSocketFactory() {
+        return mSslSocketFactory;
+    }
+
     private Proxy initializeProxy(HttpProxy proxy) {
         if (proxy != null) {
             return new Proxy(
@@ -279,7 +285,7 @@ public class HttpClientImpl implements HttpClient {
 
                 if (mProxy != null) {
                     mSslSocketFactory = createSslSocketFactoryFromProxy(mProxy);
-                } else {
+                } else if (LegacyTlsUpdater.couldBeOld()) {
                     try {
                         mSslSocketFactory = new Tls12OnlySocketFactory();
                     } catch (NoSuchAlgorithmException | KeyManagementException e) {
@@ -287,6 +293,9 @@ public class HttpClientImpl implements HttpClient {
                     } catch (Exception e) {
                         Logger.e("Unknown TLS v12 error: " + e.getLocalizedMessage());
                     }
+                } else {
+                    // Use platform default
+                    mSslSocketFactory = null;
                 }
             }
 

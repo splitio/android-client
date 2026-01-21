@@ -38,6 +38,7 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
 
     private final ConcurrentMap<Key, ISplitEventsManager> mManagers = new ConcurrentHashMap<>();
     private final Set<SplitInternalEvent> mTriggered = Collections.newSetFromMap(new ConcurrentHashMap<SplitInternalEvent, Boolean>());
+    private final ConcurrentMap<SplitInternalEvent, EventMetadata> mTriggeredMetadata = new ConcurrentHashMap<>();
     private final Object mEventLock = new Object();
 
     /**
@@ -75,6 +76,9 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
 
         synchronized (mEventLock) {
             mTriggered.add(internalEvent);
+            if (metadata != null) {
+                mTriggeredMetadata.put(internalEvent, metadata);
+            }
 
             for (ISplitEventsManager manager : mManagers.values()) {
                 manager.notifyInternalEvent(internalEvent, metadata);
@@ -123,7 +127,7 @@ public class EventsManagerCoordinator implements ISplitEventsManager, EventsMana
     private void propagateTriggeredEvents(ISplitEventsManager splitEventsManager) {
         synchronized (mEventLock) {
             for (SplitInternalEvent event : mTriggered) {
-                splitEventsManager.notifyInternalEvent(event, null);
+                splitEventsManager.notifyInternalEvent(event, mTriggeredMetadata.get(event));
             }
         }
     }

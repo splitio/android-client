@@ -26,6 +26,7 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
     private final Map<E, Set<EventHandler<E, M>>> mSubscriptions = new HashMap<>();
     private final Map<E, Integer> mTriggerCount = new HashMap<>();
     private final Set<I> mSeenInternal = new HashSet<>();
+    private final Map<I, M> mInternalEventMetadata = new HashMap<>();
 
     @NotNull
     private final EventsManagerConfig<E, I> mConfig;
@@ -146,6 +147,9 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
                 return;
             }
             mSeenInternal.add(event);
+            if (metadata != null) {
+                mInternalEventMetadata.put(event, metadata);
+            }
             currentSeenInternal = new HashSet<>(mSeenInternal);
         }
 
@@ -153,14 +157,15 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
         // before their dependents.
         for (E externalEvent : mConfig.getEvaluationOrder()) {
             // Check if internal trigger conditions are met (RequireAll or RequireAny)
-            boolean internalConditionsMet = checkInternalTriggerConditions(externalEvent, currentSeenInternal, event);
-            
-            if (!internalConditionsMet) {
+            InternalTriggerMatch<I> match = checkInternalTriggerConditions(externalEvent, currentSeenInternal, event);
+
+            if (!match.mMatched) {
                 continue;
             }
 
             // Check external guards (prerequisites and suppression) and fire if all conditions met
-            triggerIfConditionsMet(externalEvent, metadata);
+            M resolvedMetadata = resolveMetadata(externalEvent, match, metadata);
+            triggerIfConditionsMet(externalEvent, resolvedMetadata);
         }
     }
 
@@ -249,10 +254,10 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
      * @param seenInternal all internal events seen so far
      * @param currentEvent the internal event that just arrived
      */
-    private boolean checkInternalTriggerConditions(E externalEvent, Set<I> seenInternal, I currentEvent) {
+    private InternalTriggerMatch<I> checkInternalTriggerConditions(E externalEvent, Set<I> seenInternal, I currentEvent) {
         Set<I> requireAll = mConfig.getRequireAll().get(externalEvent);
         if (requireAll != null && !requireAll.isEmpty() && seenInternal.containsAll(requireAll)) {
-            return true;
+            return InternalTriggerMatch.requireAll();
         }
 
         // Check RequireAny: The CURRENT internal event must be in one of the groups,
@@ -262,12 +267,65 @@ class EventsManagerCore<E, I, M> implements EventsManager<E, I, M> {
             for (Set<I> group : requireAnyGroups) {
                 // Only consider groups that contain the current event
                 if (!group.isEmpty() && group.contains(currentEvent) && seenInternal.containsAll(group)) {
-                    return true;
+                    return InternalTriggerMatch.requireAny(group);
                 }
             }
         }
 
-        return false;
+        return InternalTriggerMatch.none();
+    }
+
+    private M resolveMetadata(E externalEvent, InternalTriggerMatch<I> match, M currentMetadata) {
+        if (match.mRequireAllMatched) {
+            I sourceEvent = mConfig.getRequireAllMetadataSource().get(externalEvent);
+            return resolveMetadataFromSource(sourceEvent, currentMetadata);
+        }
+
+        if (match.mRequireAnyGroup != null) {
+            Map<Set<I>, I> groupSources = mConfig.getRequireAnyMetadataSource().get(externalEvent);
+            if (groupSources != null) {
+                I sourceEvent = groupSources.get(match.mRequireAnyGroup);
+                return resolveMetadataFromSource(sourceEvent, currentMetadata);
+            }
+        }
+
+        return resolveMetadataFromSource(null, currentMetadata);
+    }
+
+    private M resolveMetadataFromSource(I sourceEvent, M currentMetadata) {
+        if (sourceEvent != null) {
+            synchronized (mLock) {
+                M stored = mInternalEventMetadata.get(sourceEvent);
+                if (stored != null) {
+                    return stored;
+                }
+            }
+        }
+        return currentMetadata;
+    }
+
+    private static class InternalTriggerMatch<I> {
+        private final boolean mMatched;
+        private final boolean mRequireAllMatched;
+        private final Set<I> mRequireAnyGroup;
+
+        private InternalTriggerMatch(boolean matched, boolean requireAllMatched, Set<I> requireAnyGroup) {
+            mMatched = matched;
+            mRequireAllMatched = requireAllMatched;
+            mRequireAnyGroup = requireAnyGroup;
+        }
+
+        private static <I> InternalTriggerMatch<I> requireAll() {
+            return new InternalTriggerMatch<>(true, true, null);
+        }
+
+        private static <I> InternalTriggerMatch<I> requireAny(Set<I> group) {
+            return new InternalTriggerMatch<>(true, false, group);
+        }
+
+        private static <I> InternalTriggerMatch<I> none() {
+            return new InternalTriggerMatch<>(false, false, null);
+        }
     }
 
 }
