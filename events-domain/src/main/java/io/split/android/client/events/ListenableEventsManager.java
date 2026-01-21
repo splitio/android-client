@@ -8,7 +8,7 @@ public interface ListenableEventsManager {
 
     void register(SplitEvent event, SplitEventTask task);
 
-    void registerEventListener(SdkEventListener listener);
+    void registerEventListener(SplitEventListener listener);
 
     boolean eventAlreadyTriggered(SplitEvent event);
 }

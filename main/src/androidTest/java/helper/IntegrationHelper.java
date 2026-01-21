@@ -56,6 +56,12 @@ import io.split.android.client.utils.logger.SplitLogLevel;
 public class IntegrationHelper {
     public static final int NEVER_REFRESH_RATE = 999999;
 
+    // Base64-encoded split definition payload for "mauro_java" split
+    public static final String SPLIT_UPDATE_PAYLOAD_TYPE0 = "eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiJkNDMxY2RkMC1iMGJlLTExZWEtOGE4MC0xNjYwYWRhOWNlMzkiLCJuYW1lIjoibWF1cm9famF2YSIsInRyYWZmaWNBbGxvY2F0aW9uIjoxMDAsInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6LTkyMzkxNDkxLCJzZWVkIjotMTc2OTM3NzYwNCwic3RhdHVzIjoiQUNUSVZFIiwia2lsbGVkIjpmYWxzZSwiZGVmYXVsdFRyZWF0bWVudCI6Im9mZiIsImNoYW5nZU51bWJlciI6MTY4NDMyOTg1NDM4NSwiYWxnbyI6MiwiY29uZmlndXJhdGlvbnMiOnt9LCJjb25kaXRpb25zIjpbeyJjb25kaXRpb25UeXBlIjoiV0hJVEVMSVNUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7Im1hdGNoZXJUeXBlIjoiV0hJVEVMSVNUIiwibmVnYXRlIjpmYWxzZSwid2hpdGVsaXN0TWF0Y2hlckRhdGEiOnsid2hpdGVsaXN0IjpbImFkbWluIiwibWF1cm8iLCJuaWNvIl19fV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9XSwibGFiZWwiOiJ3aGl0ZWxpc3RlZCJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiSU5fU0VHTUVOVCIsIm5lZ2F0ZSI6ZmFsc2UsInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjp7InNlZ21lbnROYW1lIjoibWF1ci0yIn19XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImluIHNlZ21lbnQgbWF1ci0yIn0seyJjb25kaXRpb25UeXBlIjoiUk9MTE9VVCIsIm1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImRlZmF1bHQgcnVsZSJ9XX0=";
+
+    // Base64-encoded RBS definition payload for "rbs_test" segment
+    public static final String RBS_UPDATE_PAYLOAD_TYPE0 = "eyJuYW1lIjoicmJzX3Rlc3QiLCJzdGF0dXMiOiJBQ1RJVkUiLCJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiZXhjbHVkZWQiOnsia2V5cyI6W10sInNlZ21lbnRzIjpbXX0sImNvbmRpdGlvbnMiOlt7Im1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX19XX0=";
+
     private final static Type EVENT_LIST_TYPE = new TypeToken<List<Event>>() {
     }.getType();
     private final static Type IMPRESSIONS_LIST_TYPE = new TypeToken<List<TestImpressions>>() {
@@ -188,6 +194,68 @@ public class IntegrationHelper {
         return "{\"ms\":{\"k\":[{\"n\":\"" + segment + "\"}],\"cn\":null},\"ls\":{\"k\":[],\"cn\":1702507130121}}";
     }
 
+    /**
+     * Builds a memberships response with custom segments and change number.
+     * @param segments Array of segment names for my segments
+     * @param msCn Change number for my segments (null if not needed)
+     * @param largeSegments Array of segment names for large segments
+     * @param lsCn Change number for large segments
+     */
+    public static String membershipsResponse(String[] segments, Long msCn, String[] largeSegments, Long lsCn) {
+        StringBuilder msSegments = new StringBuilder();
+        for (int i = 0; i < segments.length; i++) {
+            if (i > 0) msSegments.append(",");
+            msSegments.append("{\"n\":\"").append(segments[i]).append("\"}");
+        }
+
+        StringBuilder lsSegments = new StringBuilder();
+        for (int i = 0; i < largeSegments.length; i++) {
+            if (i > 0) lsSegments.append(",");
+            lsSegments.append("{\"n\":\"").append(largeSegments[i]).append("\"}");
+        }
+
+        return String.format("{\"ms\":{\"k\":[%s],\"cn\":%s},\"ls\":{\"k\":[%s],\"cn\":%d}}",
+                msSegments, msCn, lsSegments, lsCn);
+    }
+
+    /**
+     * Simplified memberships response with only my segments.
+     */
+    public static String membershipsResponse(String[] segments, long cn) {
+        return membershipsResponse(segments, cn, new String[]{}, cn);
+    }
+
+    /**
+     * Builds a targeting rules changes response with a simple flag.
+     */
+    public static String targetingRulesChangesWithFlag(String flagName, long till) {
+        return String.format("{\"ff\":{\"s\":%d,\"t\":%d,\"d\":[" +
+                "{\"trafficTypeName\":\"user\",\"name\":\"%s\",\"status\":\"ACTIVE\"," +
+                "\"killed\":false,\"defaultTreatment\":\"off\",\"changeNumber\":%d," +
+                "\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\"," +
+                "\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"ALL_KEYS\",\"negate\":false}]}," +
+                "\"partitions\":[{\"treatment\":\"on\",\"size\":100}]}]}" +
+                "]},\"rbs\":{\"s\":%d,\"t\":%d,\"d\":[]}}", till, till, flagName, till, till, till);
+    }
+
+    /**
+     * Builds a targeting rules changes response with both a flag and an RBS.
+     */
+    public static String targetingRulesChangesWithFlagAndRbs(String flagName, String rbsName, long till) {
+        return String.format("{\"ff\":{\"s\":%d,\"t\":%d,\"d\":[" +
+                "{\"trafficTypeName\":\"user\",\"name\":\"%s\",\"status\":\"ACTIVE\"," +
+                "\"killed\":false,\"defaultTreatment\":\"off\",\"changeNumber\":%d," +
+                "\"conditions\":[{\"conditionType\":\"ROLLOUT\",\"matcherGroup\":{\"combiner\":\"AND\"," +
+                "\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"ALL_KEYS\",\"negate\":false}]}," +
+                "\"partitions\":[{\"treatment\":\"on\",\"size\":100}]}]}" +
+                "]},\"rbs\":{\"s\":%d,\"t\":%d,\"d\":[" +
+                "{\"name\":\"%s\",\"status\":\"ACTIVE\",\"trafficTypeName\":\"user\"," +
+                "\"excluded\":{\"keys\":[],\"segments\":[]}," +
+                "\"conditions\":[{\"matcherGroup\":{\"combiner\":\"AND\"," +
+                "\"matchers\":[{\"keySelector\":{\"trafficType\":\"user\"},\"matcherType\":\"ALL_KEYS\",\"negate\":false}]}}]}" +
+                "]}}", till, till, flagName, till, till, till, rbsName);
+    }
+
     public static String dummyApiKey() {
         return "99049fd8653247c5ea42bc3c1ae2c6a42bc3";
     }
@@ -303,10 +371,7 @@ public class IntegrationHelper {
     }
 
     public static String splitChangeV2CompressionType0() {
-        return splitChangeV2("9999999999999",
-                "1000",
-                "0",
-                "eyJ0cmFmZmljVHlwZU5hbWUiOiJ1c2VyIiwiaWQiOiJkNDMxY2RkMC1iMGJlLTExZWEtOGE4MC0xNjYwYWRhOWNlMzkiLCJuYW1lIjoibWF1cm9famF2YSIsInRyYWZmaWNBbGxvY2F0aW9uIjoxMDAsInRyYWZmaWNBbGxvY2F0aW9uU2VlZCI6LTkyMzkxNDkxLCJzZWVkIjotMTc2OTM3NzYwNCwic3RhdHVzIjoiQUNUSVZFIiwia2lsbGVkIjpmYWxzZSwiZGVmYXVsdFRyZWF0bWVudCI6Im9mZiIsImNoYW5nZU51bWJlciI6MTY4NDMyOTg1NDM4NSwiYWxnbyI6MiwiY29uZmlndXJhdGlvbnMiOnt9LCJjb25kaXRpb25zIjpbeyJjb25kaXRpb25UeXBlIjoiV0hJVEVMSVNUIiwibWF0Y2hlckdyb3VwIjp7ImNvbWJpbmVyIjoiQU5EIiwibWF0Y2hlcnMiOlt7Im1hdGNoZXJUeXBlIjoiV0hJVEVMSVNUIiwibmVnYXRlIjpmYWxzZSwid2hpdGVsaXN0TWF0Y2hlckRhdGEiOnsid2hpdGVsaXN0IjpbImFkbWluIiwibWF1cm8iLCJuaWNvIl19fV19LCJwYXJ0aXRpb25zIjpbeyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9XSwibGFiZWwiOiJ3aGl0ZWxpc3RlZCJ9LHsiY29uZGl0aW9uVHlwZSI6IlJPTExPVVQiLCJtYXRjaGVyR3JvdXAiOnsiY29tYmluZXIiOiJBTkQiLCJtYXRjaGVycyI6W3sia2V5U2VsZWN0b3IiOnsidHJhZmZpY1R5cGUiOiJ1c2VyIn0sIm1hdGNoZXJUeXBlIjoiSU5fU0VHTUVOVCIsIm5lZ2F0ZSI6ZmFsc2UsInVzZXJEZWZpbmVkU2VnbWVudE1hdGNoZXJEYXRhIjp7InNlZ21lbnROYW1lIjoibWF1ci0yIn19XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImluIHNlZ21lbnQgbWF1ci0yIn0seyJjb25kaXRpb25UeXBlIjoiUk9MTE9VVCIsIm1hdGNoZXJHcm91cCI6eyJjb21iaW5lciI6IkFORCIsIm1hdGNoZXJzIjpbeyJrZXlTZWxlY3RvciI6eyJ0cmFmZmljVHlwZSI6InVzZXIifSwibWF0Y2hlclR5cGUiOiJBTExfS0VZUyIsIm5lZ2F0ZSI6ZmFsc2V9XX0sInBhcnRpdGlvbnMiOlt7InRyZWF0bWVudCI6Im9uIiwic2l6ZSI6MH0seyJ0cmVhdG1lbnQiOiJvZmYiLCJzaXplIjoxMDB9LHsidHJlYXRtZW50IjoiVjQiLCJzaXplIjowfSx7InRyZWF0bWVudCI6InY1Iiwic2l6ZSI6MH1dLCJsYWJlbCI6ImRlZmF1bHQgcnVsZSJ9XX0=");
+        return splitChangeV2("9999999999999", "1000", "0", SPLIT_UPDATE_PAYLOAD_TYPE0);
     }
 
     public static String splitChangeV2(String changeNumber, String previousChangeNumber, String compressionType, String compressedPayload) {
@@ -505,5 +570,47 @@ public class IntegrationHelper {
         public static final String COUNT = "testImpressions/count";
         public static final String IMPRESSIONS = "testImpressions/bulk";
         public static final String AUTH = "v2/auth";
+    }
+
+    /**
+     * Creates a simple split entity JSON body for database population.
+     */
+    public static String splitEntityBody(String name, long changeNumber) {
+        return String.format("{\"name\":\"%s\", \"changeNumber\": %d}", name, changeNumber);
+    }
+
+    /**
+     * Creates a segment list JSON for database population (my segments format).
+     * @param segments Array of segment names
+     */
+    public static String segmentListJson(String... segments) {
+        StringBuilder sb = new StringBuilder("{\"k\":[");
+        for (int i = 0; i < segments.length; i++) {
+            if (i > 0) sb.append(",");
+            sb.append("{\"n\":\"").append(segments[i]).append("\"}");
+        }
+        sb.append("],\"cn\":null}");
+        return sb.toString();
+    }
+
+    public static String membershipKeyListUpdate(java.math.BigInteger hashedKey, String segmentName, long changeNumber) {
+        String keyListJson = "{\"a\":[" + hashedKey.toString() + "],\"r\":[]}";
+        String encodedKeyList = Base64.encodeToString(
+                keyListJson.getBytes(java.nio.charset.StandardCharsets.UTF_8),
+                Base64.NO_WRAP);
+
+        String notificationJson = "{" +
+                "\\\"type\\\":\\\"MEMBERSHIPS_MS_UPDATE\\\"," +
+                "\\\"cn\\\":" + changeNumber + "," +
+                "\\\"n\\\":[\\\"" + segmentName + "\\\"]," +
+                "\\\"c\\\":0," +
+                "\\\"u\\\":2," +
+                "\\\"d\\\":\\\"" + encodedKeyList + "\\\"" +
+                "}";
+
+        return "id: 1\n" +
+                "event: message\n" +
+                "data: {\"id\":\"m1\",\"clientId\":\"pri:test\",\"timestamp\":" + System.currentTimeMillis() +
+                ",\"encoding\":\"json\",\"channel\":\"test_channel\",\"data\":\"" + notificationJson + "\"}\n";
     }
 }

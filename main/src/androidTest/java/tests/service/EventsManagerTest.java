@@ -17,7 +17,7 @@ import fake.SplitEventExecutorResourcesMock;
 import helper.TestingHelper;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
-import io.split.android.client.events.SdkEventListener;
+import io.split.android.client.events.SplitEventListener;
 import io.split.android.client.events.SdkUpdateMetadata;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
@@ -198,7 +198,7 @@ public class EventsManagerTest {
         });
 
         // Register for SDK_UPDATE with metadata callback using SdkEventListener
-        eventManager.registerEventListener(new SdkEventListener() {
+        eventManager.registerEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 receivedMetadata.set(metadata);
@@ -315,7 +315,7 @@ public class EventsManagerTest {
         });
 
         // Register SdkEventListener to receive typed metadata
-        eventManager.registerEventListener(new SdkEventListener() {
+        eventManager.registerEventListener(new SplitEventListener() {
             @Override
             public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
                 backgroundCalled.set(true);

@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.ListenableEventsManager;
-import io.split.android.client.events.SdkEventListener;
+import io.split.android.client.events.SplitEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitInternalEvent;
@@ -44,7 +44,7 @@ public class SplitEventsManagerStub implements ISplitEventsManager, ListenableEv
     }
 
     @Override
-    public void registerEventListener(SdkEventListener listener) {
+    public void registerEventListener(SplitEventListener listener) {
         // Stub implementation - does nothing
     }
 }
