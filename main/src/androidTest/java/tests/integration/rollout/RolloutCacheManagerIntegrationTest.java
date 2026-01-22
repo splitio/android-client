@@ -201,9 +201,9 @@ public class RolloutCacheManagerIntegrationTest {
         assertFalse(Json.fromJson(initialSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
         assertFalse(Json.fromJson(initialLargeSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().isEmpty());
         assertEquals(8000L, initialChangeNumber);
-        assertEquals(0, finalSegments.size());
+        assertEquals(0, Json.fromJson(finalSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().size());
         assertEquals(0, finalFlags.size());
-        assertEquals(0, finalLargeSegments.size());
+        assertEquals(0, Json.fromJson(finalLargeSegments.get(0).getSegmentList(), SegmentsChange.class).getSegments().size());
         assertEquals(-1, finalChangeNumber);
         assertTrue(0L < mRoomDb.generalInfoDao()
                 .getByName("rolloutCacheLastClearTimestamp").getLongValue());
