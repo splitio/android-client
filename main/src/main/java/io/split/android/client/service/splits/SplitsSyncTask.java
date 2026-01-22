@@ -5,8 +5,13 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.List;
+
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -93,14 +98,37 @@ public class SplitsSyncTask implements SplitTask {
     }
 
     private void notifyInternalEvent(long storedChangeNumber) {
-        if (mEventsManager != null) {
-            SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
-            if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill())) {
-                event = SplitInternalEvent.SPLITS_UPDATED;
-            }
-
-            mEventsManager.notifyInternalEvent(event);
+        if (mEventsManager == null) {
+            return;
         }
+
+        // Fire *_UPDATED events BEFORE sync complete. This order is important:
+        // if we fire TARGETING_RULES_SYNC_COMPLETE first, it may trigger SDK_READY,
+        // and then the *_UPDATED events would immediately trigger SDK_UPDATE during initial sync.
+        // By firing *_UPDATED first (while SDK_READY hasn't triggered yet), they won't trigger SDK_UPDATE.
+        //
+        // Use else-if logic: if splits changed, only fire SPLITS_UPDATED (FLAGS_UPDATE).
+        // RBS changes are only relevant when flags DIDN'T change.
+        if (mSplitsSyncHelper.splitsHaveChanged()) {
+            EventMetadata metadata = createUpdatedFlagsMetadata();
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
+        } else if (mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()) {
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED,
+                    EventMetadataHelpers.createUpdatedSegmentsMetadata());
+        }
+
+        // Fire sync complete AFTER update events. This ensures SDK_READY triggers after
+        // all *_UPDATED events have been processed (which won't trigger SDK_UPDATE because
+        // SDK_READY's prerequisite for SDK_UPDATE isn't met yet).
+        boolean cacheAlreadyLoaded = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE);
+        EventMetadata syncMetadata = EventMetadataHelpers.createSyncCompleteMetadata(
+                cacheAlreadyLoaded, mSplitsStorage.getUpdateTimestamp());
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
+    }
+
+    private EventMetadata createUpdatedFlagsMetadata() {
+        List<String> updatedSplitNames = mSplitsSyncHelper.getLastUpdatedFlagNames();
+        return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
     }
 
     private boolean splitsFilterHasChanged(String storedSplitsFilterQueryString) {

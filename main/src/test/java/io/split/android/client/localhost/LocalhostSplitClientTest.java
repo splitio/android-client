@@ -10,9 +10,12 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import org.mockito.MockedStatic;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +37,7 @@ import io.split.android.client.TreatmentLabels;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
+import io.split.android.client.events.SplitEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -42,6 +46,7 @@ import io.split.android.client.fallback.FallbackTreatmentsCalculator;
 import io.split.android.client.shared.SplitClientContainer;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
+import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.engine.experiments.SplitParser;
 
@@ -438,6 +443,38 @@ public class LocalhostSplitClientTest {
         client.on(event, task);
 
         verify(mockEventsManager, never()).register(any(), any());
+    }
+
+    @Test
+    public void addEventListenerWithNullListenerDoesNotRegister() {
+        try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
+            client.addEventListener(null);
+
+            verify(mockEventsManager, never()).registerEventListener(any(SplitEventListener.class));
+            logger.verify(() -> Logger.w("SDK Event Listener cannot be null"));
+        }
+    }
+
+    @Test
+    public void addEventListenerDoesNotRegisterWhenClientIsDestroyed() {
+        try (MockedStatic<Logger> logger = mockStatic(Logger.class)) {
+            client.destroy();
+            SplitEventListener listener = mock(SplitEventListener.class);
+
+            client.addEventListener(listener);
+
+            verify(mockEventsManager, never()).registerEventListener(any(SplitEventListener.class));
+            logger.verify(() -> Logger.w("Client has already been destroyed. Cannot add event listener"));
+        }
+    }
+
+    @Test
+    public void addEventListenerWithValidListenerRegistersListener() {
+        SplitEventListener listener = mock(SplitEventListener.class);
+
+        client.addEventListener(listener);
+
+        verify(mockEventsManager).registerEventListener(eq(listener));
     }
 
     @Test

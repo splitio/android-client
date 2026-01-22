@@ -18,9 +18,13 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 
+import java.util.ArrayList;
+
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.storage.legacy.FileStorage;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
@@ -215,9 +219,12 @@ public class LocalhostSplitsStorage implements SplitsStorage {
                 }
             }
             if (!content.equals(mLastContentLoaded)) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_FETCHED);
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED);
+                // Cache path metadata: initialCacheLoad=false (loaded from file), timestamp=null for localhost
+                EventMetadata cacheMetadata = EventMetadataHelpers.createReadyMetadata(null, false);
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE, cacheMetadata);
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE);
+                EventMetadata updateMetadata = createUpdatedFlagsMetadata();
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, updateMetadata);
             }
             mLastContentLoaded = content;
         }
@@ -257,5 +264,10 @@ public class LocalhostSplitsStorage implements SplitsStorage {
         } catch (IOException e) {
             Logger.e(e.getLocalizedMessage());
         }
+    }
+
+    private EventMetadata createUpdatedFlagsMetadata() {
+        List<String> updatedSplitNames = new ArrayList<>(mInMemorySplits.keySet());
+        return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
     }
 }

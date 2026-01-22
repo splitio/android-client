@@ -186,15 +186,31 @@ public class MySegmentsSyncProcessTest {
         MySegmentEntity client1SegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity client2SegmentEntity = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 
+        CountDownLatch client1UpdateLatch2 = new CountDownLatch(1);
+        mClient.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecutionView(SplitClient client) {
+                client1UpdateLatch2.countDown();
+            }
+        });
+
         mCurrentUpdate.set(segment1Update());
         testMySegmentsPush(TestingData.largeSegmentsUnboundedNoCompression("1"));
-        client1UpdateLatch.await(5, TimeUnit.SECONDS);
+        client1UpdateLatch2.await(5, TimeUnit.SECONDS);
         MySegmentEntity client1SegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity client2SegmentEntityPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 
+        CountDownLatch client1UpdateLatch3 = new CountDownLatch(1);
+        mClient.on(SplitEvent.SDK_UPDATE, new SplitEventTask() {
+            @Override
+            public void onPostExecutionView(SplitClient client) {
+                client1UpdateLatch3.countDown();
+            }
+        });
+
         mCurrentUpdate.set(IntegrationHelper.emptyAllSegments());
         testMySegmentsPush(TestingData.largeSegmentsUnboundedNoCompression("1"));
-        client1UpdateLatch.await(5, TimeUnit.SECONDS);
+        client1UpdateLatch3.await(5, TimeUnit.SECONDS);
         MySegmentEntity client1SegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey(mUserKey.matchingKey());
         MySegmentEntity client2SegmentEntityEmptyPayload = mSplitRoomDatabase.mySegmentDao().getByUserKey("key2");
 

@@ -6,8 +6,13 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import java.util.List;
+
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
@@ -67,14 +72,32 @@ public class SplitsUpdateTask implements SplitTask {
 
         SplitTaskExecutionInfo result = mSplitsSyncHelper.sync(new SplitsSyncHelper.SinceChangeNumbers(mChangeNumber, mRbsChangeNumber), ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
         if (result.getStatus() == SplitTaskExecutionStatus.SUCCESS) {
-            SplitInternalEvent event = SplitInternalEvent.SPLITS_FETCHED;
-            if (mChangeChecker.changeNumberIsNewer(storedChangeNumber, mSplitsStorage.getTill()) ||
-                mChangeChecker.changeNumberIsNewer(storedRbsChangeNumber, mRuleBasedSegmentStorage.getChangeNumber())) {
-                event = SplitInternalEvent.SPLITS_UPDATED;
+            // Fire *_UPDATED events BEFORE sync complete. This order is important:
+            // if we fire TARGETING_RULES_SYNC_COMPLETE first, it may trigger SDK_READY,
+            // and then the *_UPDATED events would immediately trigger SDK_UPDATE during initial sync.
+            //
+            // Use If splits changed, only fire SPLITS_UPDATED (FLAGS_UPDATE).
+            // RBS changes are only relevant when flags DIDN'T change.
+            if (mSplitsSyncHelper.splitsHaveChanged()) {
+                EventMetadata metadata = createUpdatedFlagsMetadata();
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLITS_UPDATED, metadata);
+            } else if (mSplitsSyncHelper.ruleBasedSegmentsHaveChanged()) {
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED,
+                        EventMetadataHelpers.createUpdatedSegmentsMetadata());
             }
-            mEventsManager.notifyInternalEvent(event);
+
+            // Fire sync complete AFTER update events.
+            boolean cacheAlreadyLoaded = mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY_FROM_CACHE);
+            EventMetadata syncMetadata = EventMetadataHelpers.createSyncCompleteMetadata(
+                    cacheAlreadyLoaded, mSplitsStorage.getUpdateTimestamp());
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.TARGETING_RULES_SYNC_COMPLETE, syncMetadata);
         }
         return result;
+    }
+
+    private EventMetadata createUpdatedFlagsMetadata() {
+        List<String> updatedSplitNames = mSplitsSyncHelper.getLastUpdatedFlagNames();
+        return EventMetadataHelpers.createUpdatedFlagsMetadata(updatedSplitNames);
     }
 
     @VisibleForTesting

@@ -1,5 +1,7 @@
 package io.split.android.client.storage.splits;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.split.android.client.dtos.Split;
@@ -11,8 +13,9 @@ public class ProcessedSplitChange {
     private final long updateTimestamp;
 
     public ProcessedSplitChange(List<Split> activeSplits, List<Split> archivedSplits, long changeNumber, long updateTimestamp) {
-        this.activeSplits = activeSplits;
-        this.archivedSplits = archivedSplits;
+        // Create defensive copies to ensure thread safety
+        this.activeSplits = activeSplits != null ? Collections.unmodifiableList(new ArrayList<>(activeSplits)) : Collections.emptyList();
+        this.archivedSplits = archivedSplits != null ? Collections.unmodifiableList(new ArrayList<>(archivedSplits)) : Collections.emptyList();
         this.changeNumber = changeNumber;
         this.updateTimestamp = updateTimestamp;
     }

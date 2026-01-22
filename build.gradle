@@ -1,6 +1,3 @@
-import com.vanniktech.maven.publish.AndroidFusedLibrary
-import org.gradle.api.publish.maven.MavenPublication
-
 buildscript {
     repositories {
         google()
@@ -8,17 +5,18 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:9.0.0-alpha13'
-        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:1.8.0'
+        classpath 'com.android.tools.build:gradle:9.0.0-rc02'
+        classpath 'org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.10'
         classpath "com.vanniktech:gradle-maven-publish-plugin:0.34.0"
     }
 }
 
 apply plugin: 'com.android.fused-library'
 apply plugin: 'com.vanniktech.maven.publish'
+apply from: "$rootDir/gradle/jacoco-root.gradle"
 
 ext {
-    splitVersion = '5.4.3-rc4'
+    splitVersion = '5.5.0-rc7'
     jacocoVersion = '0.8.8'
 }
 
@@ -33,16 +31,49 @@ allprojects {
     }
 }
 
+// The SonarQube Gradle plugin is NOT yet compatible with AGP 9.0
+// Using CLI scanner wrapper as workaround until plugin is updated
 
-// Define exclusions for JaCoCo coverage
-def coverageExclusions = [
-        '**/R.class',
-        '**/R$*.class',
-        '**/BuildConfig.*',
-        '**/Manifest*.*',
-        '**/*Test*.*',
-        'android/**/*.*'
-]
+// Sonar task that wraps the CLI scanner (uses sonar-project.properties)
+tasks.register('sonar') {
+    group = 'verification'
+    description = 'Run SonarQube analysis (uses sonar-scanner CLI for AGP 9.0 compatibility)'
+    
+    dependsOn 'jacocoRootReport'
+    
+    doLast {
+        def sonarToken = System.getProperty('sonar.token') ?: project.findProperty('sonar.token')
+        def sonarHost = System.getProperty('sonar.host.url') ?: project.findProperty('sonar.host.url') ?: 'https://sonarcloud.io'
+        def sonarOrg = System.getProperty('sonar.organization') ?: project.findProperty('sonar.organization')
+        
+        if (!sonarToken) {
+            throw new GradleException('SonarQube token required')
+        }
+        
+        // Find sonar-scanner
+        def scannerPath = ['sonar-scanner', '/opt/homebrew/bin/sonar-scanner', '/usr/local/bin/sonar-scanner']
+            .find { path -> 
+                try {
+                    def proc = new ProcessBuilder(path, '--version').redirectErrorStream(true).start()
+                    return proc.waitFor() == 0
+                } catch (Exception e) { return false }
+            }
+        
+        if (!scannerPath) {
+            throw new GradleException('sonar-scanner not found. Install with: brew install sonar-scanner')
+        }
+        
+        println "Running sonar-scanner..."
+        def cmd = [scannerPath, "-Dsonar.token=${sonarToken}", "-Dsonar.host.url=${sonarHost}"]
+        if (sonarOrg) cmd.add("-Dsonar.organization=${sonarOrg}")
+        cmd.add("-Dsonar.projectVersion=${splitVersion}")
+        
+        def proc = new ProcessBuilder(cmd).directory(rootDir).inheritIO().start()
+        if (proc.waitFor() != 0) {
+            throw new GradleException("sonar-scanner failed")
+        }
+    }
+}
 
 androidFusedLibrary {
     namespace = 'io.split.android.android_client'
@@ -106,6 +137,71 @@ repositories {
 dependencies {
     include project(':main')
     include project(':logger')
+    include project(':events')
+    include project(':events-domain')
+    include project(':api')
+}
+
+def javadocSourceProjects = providers.provider {
+    def includeConfig = configurations.findByName("include")
+    if (includeConfig == null) {
+        return []
+    }
+    includeConfig.allDependencies
+        .withType(org.gradle.api.artifacts.ProjectDependency)
+        .collect { dep ->
+            def projectPath = null
+            if (dep.metaClass.hasProperty(dep, 'dependencyProject')) {
+                projectPath = dep.dependencyProject?.path
+            } else if (dep.metaClass.hasProperty(dep, 'dependencyProjectPath')) {
+                projectPath = dep.dependencyProjectPath
+            } else if (dep.metaClass.hasProperty(dep, 'path')) {
+                projectPath = dep.path
+            }
+            return projectPath ? project(projectPath) : null
+        }
+        .findAll { it != null }
+}
+
+def javadocSourceDirsProvider = providers.provider {
+    files(javadocSourceProjects.get().collect { sourceProject ->
+        def androidExtension = sourceProject.extensions.findByName("android")
+        def sourceDirs = androidExtension?.sourceSets?.main?.java?.srcDirs ?: []
+        return sourceDirs.findAll { it.exists() }
+    })
+}
+
+def sourcesJarTask = tasks.register('sourcesJar', Jar) {
+    archiveBaseName = 'android-client'
+    archiveVersion = splitVersion
+    archiveClassifier = 'sources'
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    from(javadocSourceDirsProvider)
+}
+
+tasks.register('javadocJar', Jar) {
+    archiveBaseName = 'android-client'
+    archiveVersion = splitVersion
+    archiveClassifier = 'javadoc'
+    destinationDirectory = layout.buildDirectory.dir('libs')
+    def javadocDir = layout.buildDirectory.dir('intermediates/java_doc_dir/release')
+    from(javadocDir)
+    doFirst {
+        if (!javadocDir.get().asFile.exists()) {
+            throw new GradleException("Javadoc directory not found: ${javadocDir.get().asFile}")
+        }
+    }
+}
+
+afterEvaluate {
+    def agpJavadocTask = tasks.findByName('javaDocRelease') ?:
+        tasks.findByName('javaDocJar') ?:
+        tasks.findByName('javaDoc')
+    if (agpJavadocTask != null) {
+        tasks.named('javadocJar').configure {
+            dependsOn agpJavadocTask
+        }
+    }
 }
 
 def splitPOM = {
@@ -325,34 +421,6 @@ afterEvaluate {
 }
 
 afterEvaluate {
-    def emptySourcesJarTask = tasks.findByName("emptySourcesJar")
-    if (emptySourcesJarTask != null) {
-        // Ensure only one sources artifact is published
-        publishing.publications.withType(MavenPublication) { publication ->
-            if (publication.name == "maven") {
-                // Keep only the sources from fusedLibraryComponent
-                publication.artifacts.removeAll { artifact ->
-                    // Remove artifacts that match the emptySourcesJar task output
-                    try {
-                        def artifactFile = artifact.file
-                        if (artifactFile != null && artifactFile.exists()) {
-                            def emptySourcesFile = emptySourcesJarTask.archiveFile.get().asFile
-                            artifactFile == emptySourcesFile
-                        } else {
-                            artifact.classifier == "sources" && artifact.extension == "jar" &&
-                            !publication.artifacts.any { 
-                                it != artifact && it.classifier == "sources" && 
-                                it.buildDependencies != null
-                            }
-                        }
-                    } catch (Exception e) {
-                        false
-                    }
-                }
-            }
-        }
-    }
-
     // Disable Gradle Module Metadata (.module file) to avoid variant ambiguity
     tasks.configureEach { task ->
         // Match tasks related to module metadata generation
@@ -368,8 +436,37 @@ afterEvaluate {
     // This causes lint to crash when consumers use checkDependencies: true
     publishing.publications.withType(MavenPublication) { publication ->
         if (publication.name == "maven") {
+            publication.artifact(tasks.named('javadocJar'))
+            publication.artifact(tasks.named('sourcesJar'))
             publication.artifacts.removeAll { artifact ->
                 artifact.file?.name?.endsWith('lint.jar') ?: false
+            }
+        }
+    }
+}
+
+// Remove duplicate sources JAR artifact before publishing
+// The vanniktech plugin adds emptySourcesJar while AGP 9.0 also provides one from fusedLibraryComponent
+// We want to keep the AGP one (merged_sources_jar) which has actual sources
+// This must be done at task execution time because artifacts are resolved lazily
+gradle.taskGraph.whenReady { graph ->
+    graph.allTasks.findAll { it.name.startsWith('publishMavenPublication') }.each { publishTask ->
+        publishTask.doFirst {
+            def pub = publication
+            if (pub.name == "maven") {
+                def sourcesJarFile = tasks.named('sourcesJar').get().archiveFile.get().asFile
+                def sourcesArtifacts = pub.artifacts.findAll { it.classifier == "sources" && it.extension == "jar" }
+                sourcesArtifacts.findAll { it.file != null && it.file != sourcesJarFile }.each { artifact ->
+                    pub.artifacts.remove(artifact)
+                    println "Removed duplicate sources artifact: ${artifact.file?.absolutePath}"
+                }
+
+                def javadocJarFile = tasks.named('javadocJar').get().archiveFile.get().asFile
+                def javadocArtifacts = pub.artifacts.findAll { it.classifier == "javadoc" && it.extension == "jar" }
+                javadocArtifacts.findAll { it.file != null && it.file != javadocJarFile }.each { artifact ->
+                    pub.artifacts.remove(artifact)
+                    println "Removed duplicate javadoc artifact: ${artifact.file?.absolutePath}"
+                }
             }
         }
     }

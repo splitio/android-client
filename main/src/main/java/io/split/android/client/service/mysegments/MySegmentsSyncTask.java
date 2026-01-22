@@ -18,6 +18,8 @@ import io.split.android.client.dtos.AllSegmentsChange;
 import io.split.android.client.dtos.SegmentsChange;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadata;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTask;
@@ -50,7 +52,6 @@ public class MySegmentsSyncTask implements SplitTask {
 
     private final SplitTaskType mTaskType;
     private final SplitInternalEvent mUpdateEvent;
-    private final SplitInternalEvent mFetchedEvent;
     private final OperationType mTelemetryOperationType;
 
     private final boolean mAvoidCache;
@@ -105,7 +106,6 @@ public class MySegmentsSyncTask implements SplitTask {
         mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
         mTaskType = config.getTaskType();
         mUpdateEvent = config.getUpdateEvent();
-        mFetchedEvent = config.getFetchedEvent();
         mTelemetryOperationType = config.getTelemetryOperationType();
         mTargetSegmentsChangeNumber = targetSegmentsChangeNumber;
         mTargetLargeSegmentsChangeNumber = targetLargeSegmentsChangeNumber;
@@ -265,29 +265,28 @@ public class MySegmentsSyncTask implements SplitTask {
             return;
         }
 
-        // MY_SEGMENTS_UPDATED event when segments have changed
-        boolean segmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(segmentsResult.oldSegments, segmentsResult.newSegments);
-        boolean largeSegmentsHaveChanged = mMySegmentsChangeChecker.mySegmentsHaveChanged(largeSegmentsResult.oldSegments, largeSegmentsResult.newSegments);
+        // Check for actual updates and fire updated events BEFORE sync complete.
+        // This order is important: if we fire MEMBERSHIPS_SYNC_COMPLETE first, it may trigger SDK_READY,
+        // and then the *_UPDATED events would immediately trigger SDK_UPDATE during initial sync.
+        // By firing *_UPDATED first (while SDK_READY hasn't triggered yet), they won't trigger SDK_UPDATE.
+        List<String> changedSegments = mMySegmentsChangeChecker.getChangedSegments(segmentsResult.oldSegments, segmentsResult.newSegments);
+        List<String> changedLargeSegments = mMySegmentsChangeChecker.getChangedSegments(largeSegmentsResult.oldSegments, largeSegmentsResult.newSegments);
 
-        if (segmentsHaveChanged) {
+        if (!changedSegments.isEmpty()) {
             Logger.v("New segments: " + segmentsResult.newSegments);
+            mEventsManager.notifyInternalEvent(mUpdateEvent, EventMetadataHelpers.createUpdatedSegmentsMetadata());
         }
 
-        if (largeSegmentsHaveChanged) {
+        if (!changedLargeSegments.isEmpty()) {
             Logger.v("New large segments: " + largeSegmentsResult.newSegments);
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED,
+                    EventMetadataHelpers.createUpdatedSegmentsMetadata());
         }
 
-        if (segmentsHaveChanged) {
-            mEventsManager.notifyInternalEvent(mUpdateEvent);
-        } else {
-            // MY_LARGE_SEGMENTS_UPDATED event when large segments have changed
-            if (largeSegmentsHaveChanged) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.MY_LARGE_SEGMENTS_UPDATED);
-            } else {
-                // otherwise, MY_SEGMENTS_FETCHED event
-                mEventsManager.notifyInternalEvent(mFetchedEvent);
-            }
-        }
+        // Fire sync complete AFTER update events. This ensures SDK_READY triggers after
+        // all *_UPDATED events have been processed (which won't trigger SDK_UPDATE because
+        // SDK_READY's prerequisite for SDK_UPDATE isn't met yet).
+        mEventsManager.notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
     }
 
     private static class UpdateSegmentsResult {

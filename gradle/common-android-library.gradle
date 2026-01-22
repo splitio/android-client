@@ -10,6 +10,10 @@ android {
     }
 }
 
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add('-parameters')
+}
+
 def kotlinCompileClass = null
 try {
     kotlinCompileClass = Class.forName('org.jetbrains.kotlin.gradle.tasks.KotlinCompile')
@@ -20,7 +24,10 @@ if (kotlinCompileClass != null) {
     tasks.withType(kotlinCompileClass).configureEach {
         kotlinOptions {
             jvmTarget = "1.8"
+            javaParameters = true
         }
     }
 }
 
+// Enable Jacoco coverage configuration for all Android library modules
+apply from: "$rootDir/gradle/jacoco-android.gradle"

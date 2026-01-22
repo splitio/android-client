@@ -7,14 +7,19 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
+import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.RuleBasedSegmentChange;
+import io.split.android.client.dtos.Split;
 import io.split.android.client.dtos.SplitChange;
 import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
@@ -26,6 +31,7 @@ import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.service.rules.ProcessedRuleBasedSegmentChange;
 import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
+import io.split.android.client.storage.splits.ProcessedSplitChange;
 import io.split.android.client.service.sseclient.BackoffCounter;
 import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
 import io.split.android.client.storage.general.GeneralInfoStorage;
@@ -53,6 +59,10 @@ public class SplitsSyncHelper {
     private final OutdatedSplitProxyHandler mOutdatedSplitProxyHandler;
     private final ExecutorService mExecutor;
     private final TargetingRulesCache mTargetingRulesCache;
+    private final AtomicReference<ProcessedSplitChange> mLastProcessedSplitChange = new AtomicReference<>();
+    private final AtomicReference<ProcessedRuleBasedSegmentChange> mLastProcessedRbsChange = new AtomicReference<>();
+    private boolean mSplitsHaveChanged;
+    private boolean mRuleBasedSegmentsHaveChanged;
 
     public SplitsSyncHelper(@NonNull HttpFetcher<TargetingRulesChange> splitFetcher,
                             @NonNull SplitsStorage splitsStorage,
@@ -136,6 +146,8 @@ public class SplitsSyncHelper {
     }
 
     private SplitTaskExecutionInfo sync(SinceChangeNumbers till, boolean clearBeforeUpdate, boolean avoidCache, boolean resetChangeNumber, int onDemandFetchBackoffMaxRetries) {
+        mSplitsHaveChanged = false;
+        mRuleBasedSegmentsHaveChanged = false;
         try {
             mOutdatedSplitProxyHandler.performProxyCheck();
             if (mOutdatedSplitProxyHandler.isRecoveryMode()) {
@@ -302,16 +314,87 @@ public class SplitsSyncHelper {
     }
 
     private void updateStorage(boolean clearBeforeUpdate, SplitChange splitChange, RuleBasedSegmentChange ruleBasedSegmentChange) {
+        if (splitChange != null && splitChange.splits != null && !splitChange.splits.isEmpty()) {
+            mSplitsHaveChanged = true;
+        }
+
+        if (ruleBasedSegmentChange != null && ruleBasedSegmentChange.getSegments() != null && !ruleBasedSegmentChange.getSegments().isEmpty()) {
+            mRuleBasedSegmentsHaveChanged = true;
+        }
+
         if (clearBeforeUpdate) {
             mSplitsStorage.clear();
             mRuleBasedSegmentStorage.clear();
         }
-        mSplitsStorage.update(mSplitChangeProcessor.process(splitChange), mExecutor);
+        ProcessedSplitChange processedSplitChange = mSplitChangeProcessor.process(splitChange);
+        if (hasFlagUpdates(processedSplitChange)) {
+            mLastProcessedSplitChange.set(processedSplitChange);
+        }
+        mSplitsStorage.update(processedSplitChange, mExecutor);
         updateRbsStorage(ruleBasedSegmentChange);
+    }
+
+    private boolean hasFlagUpdates(@Nullable ProcessedSplitChange processedSplitChange) {
+        if (processedSplitChange == null) {
+            return false;
+        }
+        List<Split> activeSplits = processedSplitChange.getActiveSplits();
+        if (activeSplits != null && !activeSplits.isEmpty()) {
+            return true;
+        }
+        List<Split> archivedSplits = processedSplitChange.getArchivedSplits();
+        return archivedSplits != null && !archivedSplits.isEmpty();
+    }
+
+    /**
+     * Gets the list of updated flag names from the last sync operation.
+     * This includes both active (added/modified) and archived (removed) splits.
+     *
+     * @return list of updated flag names, or empty list if no updates occurred
+     */
+    @NonNull
+    public List<String> getLastUpdatedFlagNames() {
+        ProcessedSplitChange lastChange = mLastProcessedSplitChange.get();
+        if (lastChange == null) {
+            return Collections.emptyList();
+        }
+        return extractFlagNames(lastChange);
+    }
+
+    /**
+     * Extracts split names from a ProcessedSplitChange.
+     * This includes both active (added/modified) and archived (removed) splits.
+     *
+     * @param processedSplitChange the processed split change
+     * @return list of split names, or empty list if change is null
+     */
+    @NonNull
+    public static List<String> extractFlagNames(@Nullable ProcessedSplitChange processedSplitChange) {
+        if (processedSplitChange == null) {
+            return Collections.emptyList();
+        }
+
+        List<String> updatedNames = new ArrayList<>();
+        if (processedSplitChange.getActiveSplits() != null) {
+            for (Split split : processedSplitChange.getActiveSplits()) {
+                if (split != null && split.name != null) {
+                    updatedNames.add(split.name);
+                }
+            }
+        }
+        if (processedSplitChange.getArchivedSplits() != null) {
+            for (Split split : processedSplitChange.getArchivedSplits()) {
+                if (split != null && split.name != null) {
+                    updatedNames.add(split.name);
+                }
+            }
+        }
+        return updatedNames;
     }
 
     private void updateRbsStorage(RuleBasedSegmentChange ruleBasedSegmentChange) {
         ProcessedRuleBasedSegmentChange change = mRuleBasedSegmentChangeProcessor.process(ruleBasedSegmentChange.getSegments(), ruleBasedSegmentChange.getTill());
+        mLastProcessedRbsChange.set(change);
         mRuleBasedSegmentStorage.update(change.getActive(), change.getArchived(), change.getChangeNumber(), mExecutor);
     }
 
@@ -361,6 +444,14 @@ public class SplitsSyncHelper {
                     ", rbs=" + mRbsSince +
                     '}';
         }
+    }
+
+    public boolean splitsHaveChanged() {
+        return mSplitsHaveChanged;
+    }
+
+    public boolean ruleBasedSegmentsHaveChanged() {
+        return mRuleBasedSegmentsHaveChanged;
     }
 
     private enum CdnByPassType {

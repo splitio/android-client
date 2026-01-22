@@ -12,6 +12,7 @@ import java.util.Map;
 
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
+import io.split.android.client.events.SplitEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -190,12 +191,29 @@ public final class SplitClientImpl implements SplitClient {
         checkNotNull(event);
         checkNotNull(task);
 
-        if (!event.equals(SplitEvent.SDK_READY_FROM_CACHE) && mEventsManager.eventAlreadyTriggered(event)) {
-            Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won’t be emitted again. The callback won’t be executed.", event.toString()));
+        // Allow registration for events that support replay (SDK_READY_FROM_CACHE and SDK_READY)
+        // Events with execution limit 1 can replay to late subscribers
+        if (!event.equals(SplitEvent.SDK_READY_FROM_CACHE) && 
+            !event.equals(SplitEvent.SDK_READY) && 
+            mEventsManager.eventAlreadyTriggered(event)) {
+            Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won't be emitted again. The callback won't be executed.", event.toString()));
             return;
         }
 
         mEventsManager.register(event, task);
+    }
+
+    @Override
+    public void addEventListener(@NonNull SplitEventListener listener) {
+        if (mIsClientDestroyed) {
+            Logger.w("Client has already been destroyed. Cannot add event listener");
+            return;
+        }
+        if (listener == null) {
+            Logger.w("SDK Event Listener cannot be null");
+            return;
+        }
+        mEventsManager.registerEventListener(listener);
     }
 
     @Override

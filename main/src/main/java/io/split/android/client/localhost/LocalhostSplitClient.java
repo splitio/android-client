@@ -25,6 +25,7 @@ import io.split.android.client.TreatmentLabels;
 import io.split.android.client.api.Key;
 import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesMerger;
+import io.split.android.client.events.SplitEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
@@ -257,16 +258,30 @@ public final class LocalhostSplitClient implements SplitClient {
         return mEventsManager.eventAlreadyTriggered(SplitEvent.SDK_READY);
     }
 
+    @Override
     public void on(SplitEvent event, SplitEventTask task) {
         checkNotNull(event);
         checkNotNull(task);
 
         if (!event.equals(SplitEvent.SDK_READY_FROM_CACHE) && mEventsManager.eventAlreadyTriggered(event)) {
-            Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won’t be emitted again. The callback won’t be executed.", event));
+            Logger.w(String.format("A listener was added for %s on the SDK, which has already fired and won't be emitted again. The callback won't be executed.", event));
             return;
         }
 
         mEventsManager.register(event, task);
+    }
+
+    @Override
+    public void addEventListener(@NonNull SplitEventListener listener) {
+        if (mIsClientDestroyed) {
+            Logger.w("Client has already been destroyed. Cannot add event listener");
+            return;
+        }
+        if (listener == null) {
+            Logger.w("SDK Event Listener cannot be null");
+            return;
+        }
+        mEventsManager.registerEventListener(listener);
     }
 
     @Override

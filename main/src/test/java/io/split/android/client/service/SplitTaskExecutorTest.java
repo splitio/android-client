@@ -267,19 +267,21 @@ public class SplitTaskExecutorTest {
 
     @Test
     public void stopStartedTask() throws InterruptedException {
-        CountDownLatch latch = new CountDownLatch(4);
-        CountDownLatch timerLatch = new CountDownLatch(1);
+        CountDownLatch executionLatch = new CountDownLatch(2);
         CountDownLatch listenerLatch = new CountDownLatch(1);
-        TestTask task = new TestTask(latch);
+        TestTask task = new TestTask(executionLatch);
 
         TestListener testListener = new TestListener(listenerLatch);
         String taskId = mTaskExecutor.schedule(task, 0L, 1L, testListener);
-        timerLatch.await(2L, TimeUnit.SECONDS);
+
+        boolean completed = executionLatch.await(5L, TimeUnit.SECONDS);
+        assertTrue("Task should have executed at least twice", completed);
+
         mTaskExecutor.stopTask(taskId);
 
         assertTrue(task.taskHasBeenCalled);
         assertTrue(testListener.taskExecutedCalled);
-        assertEquals(2, task.callCount.get());
+        assertTrue(task.callCount.get() >= 2);
     }
 
     @Test

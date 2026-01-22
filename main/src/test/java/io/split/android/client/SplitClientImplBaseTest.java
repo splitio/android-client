@@ -64,7 +64,7 @@ public abstract class SplitClientImplBaseTest {
                 new SplitParser(new ParserCommons(mySegmentsStorageContainer, myLargeSegmentsStorageContainer)),
                 impressionListener,
                 splitClientConfig,
-                new SplitEventsManager(splitClientConfig, new SplitTaskExecutorStub()),
+                new SplitEventsManager(new SplitTaskExecutorStub(), splitClientConfig.blockUntilReady()),
                 eventsTracker,
                 attributesManager,
                 splitValidator,

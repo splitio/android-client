@@ -3,14 +3,13 @@ plugins {
 }
 
 apply from: "$rootDir/gradle/common-android-library.gradle"
-apply from: "$rootDir/gradle/jacoco-android.gradle"
 
 android {
     namespace 'io.split.android.client.main'
 
     defaultConfig {
         multiDexEnabled true
-        consumerProguardFiles 'consumer-rules.pro'
+        consumerProguardFiles "$rootDir/split-proguard-rules.pro"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
 
@@ -50,8 +49,11 @@ android {
 }
 
 dependencies {
-    // Internal module dependencies
+    // Public api modules
     api project(':logger')
+    api project(':api')
+    // Internal module dependencies
+    implementation project(':events-domain')
 
     // External dependencies
     implementation libs.roomRuntime

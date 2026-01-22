@@ -14,6 +14,7 @@ import io.split.android.client.RetryBackoffCounterTimerFactory;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.executor.SplitTaskBatchItem;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
@@ -24,6 +25,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
+import io.split.android.client.storage.splits.SplitsStorage;
 
 public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
 
@@ -48,6 +50,18 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
                                         @NonNull ISplitEventsManager splitEventsManager,
                                         @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory,
                                         @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster) {
+        this(splitClientConfig, taskExecutor, splitSingleThreadTaskExecutor, splitTaskFactory,
+                splitEventsManager, retryBackoffCounterTimerFactory, pushManagerEventBroadcaster, null);
+    }
+
+    public FeatureFlagsSynchronizerImpl(@NonNull SplitClientConfig splitClientConfig,
+                                        @NonNull SplitTaskExecutor taskExecutor,
+                                        @NonNull SplitTaskExecutor splitSingleThreadTaskExecutor,
+                                        @NonNull SplitTaskFactory splitTaskFactory,
+                                        @NonNull ISplitEventsManager splitEventsManager,
+                                        @NonNull RetryBackoffCounterTimerFactory retryBackoffCounterTimerFactory,
+                                        @Nullable PushManagerEventBroadcaster pushManagerEventBroadcaster,
+                                        @Nullable SplitsStorage splitsStorage) {
 
         mTaskExecutor = checkNotNull(taskExecutor);
         mSplitsTaskExecutor = splitSingleThreadTaskExecutor;
@@ -80,8 +94,15 @@ public class FeatureFlagsSynchronizerImpl implements FeatureFlagsSynchronizer {
         }
 
         mSplitsSyncRetryTimer.setTask(mSplitTaskFactory.createSplitsSyncTask(true), mSplitsSyncListener);
+
+        // Create metadata provider for cache path. initialCacheLoad=false because this listener
+        // is only invoked when splits are successfully loaded from local storage (cache exists).
+        LoadLocalDataListener.MetadataProvider cacheMetadataProvider = splitsStorage != null
+                ? () -> EventMetadataHelpers.createReadyMetadata(splitsStorage.getUpdateTimestamp(), false)
+                : null;
+
         mLoadLocalSplitsListener = new LoadLocalDataListener(
-                splitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE);
+                splitEventsManager, SplitInternalEvent.SPLITS_LOADED_FROM_STORAGE, cacheMetadataProvider);
     }
 
     @Override

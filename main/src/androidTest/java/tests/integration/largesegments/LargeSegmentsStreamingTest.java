@@ -153,10 +153,17 @@ public class LargeSegmentsStreamingTest {
     }
 
     private HttpResponseMockDispatcher buildDispatcher() {
+        final long splitsTill = 1602796638344L;
         Map<String, IntegrationHelper.ResponseClosure> responses = new HashMap<>();
         responses.put(SPLIT_CHANGES, (path, query, body) -> {
             updateEndpointHit(SPLIT_CHANGES);
-            return new HttpResponseMock(200, splitChangesLargeSegments(1602796638344L, 1602796638344L));
+            String sinceStr = IntegrationHelper.getSinceFromUri(path);
+            long since = sinceStr != null ? Long.parseLong(sinceStr) : -1;
+            if (since >= splitsTill) {
+                // No changes since last fetch
+                return new HttpResponseMock(200, IntegrationHelper.emptyTargetingRulesChanges(splitsTill, splitsTill));
+            }
+            return new HttpResponseMock(200, splitChangesLargeSegments(splitsTill, splitsTill));
         });
 
         String key = IntegrationHelper.dummyUserKey().matchingKey();

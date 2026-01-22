@@ -36,7 +36,7 @@ public class SplitClientImplFactory {
 
     public static SplitClientImpl get(Key key, SplitsStorage splitsStorage) {
         SplitClientConfig cfg = SplitClientConfig.builder().build();
-        SplitEventsManager eventsManager = new SplitEventsManager(cfg, new SplitTaskExecutorStub());
+        SplitEventsManager eventsManager = new SplitEventsManager(new SplitTaskExecutorStub(), cfg.blockUntilReady());
         SplitParser splitParser = getSplitParser();
         TelemetryStorage telemetryStorage = mock(TelemetryStorage.class);
         TreatmentManagerFactory treatmentManagerFactory = new TreatmentManagerFactoryImpl(
@@ -73,7 +73,7 @@ public class SplitClientImplFactory {
                 splitParser,
                 impressionListener,
                 cfg,
-                new SplitEventsManager(cfg, new SplitTaskExecutorStub()),
+                new SplitEventsManager(new SplitTaskExecutorStub(), cfg.blockUntilReady()),
                 mock(EventsTracker.class),
                 mock(AttributesManager.class),
                 mock(SplitValidator.class),

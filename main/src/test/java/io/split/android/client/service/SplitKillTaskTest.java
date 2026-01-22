@@ -5,9 +5,13 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import java.util.List;
+
+import io.split.android.client.events.SdkUpdateMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
+import io.split.android.client.events.metadata.TypedTaskConverter;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
@@ -17,9 +21,9 @@ import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.splits.SplitKillTask;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.helpers.FileHelper;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -69,7 +73,18 @@ public class SplitKillTaskTest {
         Assert.assertEquals(split.defaultTreatment, splitCaptor.getValue().defaultTreatment);
         Assert.assertEquals(split.changeNumber, splitCaptor.getValue().changeNumber);
         Assert.assertEquals(true, splitCaptor.getValue().killed);
-        verify(mEventsManager, times(1)).notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION);
+
+        ArgumentCaptor<EventMetadata> metadataCaptor = ArgumentCaptor.forClass(EventMetadata.class);
+        verify(mEventsManager, times(1)).notifyInternalEvent(
+                eq(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION), metadataCaptor.capture());
+        EventMetadata metadata = metadataCaptor.getValue();
+        Assert.assertNotNull(metadata);
+        SdkUpdateMetadata typedMetadata = TypedTaskConverter.convertForSdkUpdate(metadata);
+        List<String> names = typedMetadata.getNames();
+        Assert.assertNotNull(names);
+        Assert.assertEquals(1, names.size());
+        Assert.assertTrue(names.contains("split1"));
+        Assert.assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, typedMetadata.getType());
     }
 
     @Test

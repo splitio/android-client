@@ -1,7 +1,11 @@
 package io.split.android.fake;
 
+import androidx.annotation.Nullable;
+
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.ListenableEventsManager;
+import io.split.android.client.events.SplitEventListener;
 import io.split.android.client.events.SplitEvent;
 import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitInternalEvent;
@@ -18,7 +22,12 @@ public class SplitEventsManagerStub implements ISplitEventsManager, ListenableEv
 
     @Override
     public void notifyInternalEvent(SplitInternalEvent internalEvent) {
+        notifyInternalEvent(internalEvent, null);
+    }
 
+    @Override
+    public void notifyInternalEvent(SplitInternalEvent internalEvent, @Nullable EventMetadata metadata) {
+        // Stub implementation - does nothing
     }
 
     @Override
@@ -32,5 +41,10 @@ public class SplitEventsManagerStub implements ISplitEventsManager, ListenableEv
             return isSdkReadyTriggered;
         }
         return false;
+    }
+
+    @Override
+    public void registerEventListener(SplitEventListener listener) {
+        // Stub implementation - does nothing
     }
 }

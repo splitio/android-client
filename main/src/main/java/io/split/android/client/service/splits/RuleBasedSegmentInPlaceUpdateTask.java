@@ -7,6 +7,7 @@ import androidx.annotation.NonNull;
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -43,7 +44,8 @@ public class RuleBasedSegmentInPlaceUpdateTask implements SplitTask {
             boolean triggerSdkUpdate = mRuleBasedSegmentStorage.update(processedChange.getActive(), processedChange.getArchived(), mChangeNumber, null);
 
             if (triggerSdkUpdate) {
-                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED);
+                mEventsManager.notifyInternalEvent(SplitInternalEvent.RULE_BASED_SEGMENTS_UPDATED,
+                        EventMetadataHelpers.createUpdatedSegmentsMetadata());
             }
 
             Logger.v("Updated rule based segment");

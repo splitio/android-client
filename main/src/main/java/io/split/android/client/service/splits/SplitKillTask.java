@@ -4,9 +4,13 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
+import java.util.Collections;
+
+import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.metadata.EventMetadataHelpers;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
@@ -53,7 +57,9 @@ public class SplitKillTask implements SplitTask {
             splitToKill.changeNumber = mKilledSplit.changeNumber;
 
             mSplitsStorage.updateWithoutChecks(splitToKill);
-            mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION);
+            EventMetadata metadata = EventMetadataHelpers.createUpdatedFlagsMetadata(
+                    Collections.singletonList(mKilledSplit.name));
+            mEventsManager.notifyInternalEvent(SplitInternalEvent.SPLIT_KILLED_NOTIFICATION, metadata);
         } catch (Exception e) {
             logError("Unknown error while updating killed feature flag: " + e.getLocalizedMessage());
             return SplitTaskExecutionInfo.error(SplitTaskType.SPLIT_KILL);

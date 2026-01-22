@@ -27,6 +27,9 @@ import io.split.android.client.attributes.AttributesManager;
 import io.split.android.client.attributes.AttributesManagerFactory;
 import io.split.android.client.attributes.AttributesMerger;
 import io.split.android.client.events.EventsManagerCoordinator;
+import io.split.android.client.events.SplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.events.executors.SplitEventExecutorResources;
 import io.split.android.client.localhost.LocalhostSplitFactory;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -96,6 +99,40 @@ public class LocalhostSplitClientContainerImplTest {
         mClientContainer.getClient(key);
 
         verify(mEventsManagerCoordinator).registerEventsManager(eq(key), any());
+    }
+
+    @Test
+    public void gettingNewClientNotifiesInternalEvents() {
+        // Create a mocked SplitEventsManager
+        SplitEventsManager mockEventsManager = mock(SplitEventsManager.class);
+        SplitEventExecutorResources mockExecutorResources = mock(SplitEventExecutorResources.class);
+        when(mockEventsManager.getExecutorResources()).thenReturn(mockExecutorResources);
+
+        // Create a mocked factory that returns the mocked events manager
+        SplitEventsManagerFactory mockFactory = () -> mockEventsManager;
+
+        // Create client container with the mocked factory using @VisibleForTesting constructor
+        LocalhostSplitClientContainerImpl clientContainer = new LocalhostSplitClientContainerImpl(
+                mFactory,
+                mConfig,
+                mSplitsStorage,
+                mSplitParser,
+                mAttributesManagerFactory,
+                mAttributesMerger,
+                mTelemetryStorageProducer,
+                mEventsManagerCoordinator,
+                mTaskExecutor,
+                mFlagSetsFilter,
+                mockFactory
+        );
+
+        Key key = new Key("matching_key", "bucketing_key");
+        clientContainer.getClient(key);
+
+        // Verify that notifyInternalEvent is called on the mocked events manager
+        verify(mockEventsManager).notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_LOADED_FROM_STORAGE);
+        verify(mockEventsManager).notifyInternalEvent(SplitInternalEvent.MEMBERSHIPS_SYNC_COMPLETE);
+        verify(mockEventsManager).notifyInternalEvent(SplitInternalEvent.MY_SEGMENTS_UPDATED);
     }
 
     @NonNull
