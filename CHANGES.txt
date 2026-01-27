@@ -1,3 +1,7 @@
+5.5.0 (Jan 23, 2026)
+- Added functionality to provide metadata alongside SDK update and READY events. Read more in our docs.
+- Fixed issue in which TLS 1.2 was being forced for new connections.
+
 5.4.2 (Oct 30, 2025)
 - Added support for Fallback Treatments in LOCALHOST mode.
 
