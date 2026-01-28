@@ -1,0 +1,25 @@
+plugins {
+    id 'com.android.library'
+}
+
+apply from: "$rootDir/gradle/common-android-library.gradle"
+
+android {
+    namespace 'io.split.android.client.events'
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation libs.annotation
+
+    implementation project(':api')
+    implementation project(':events')
+    implementation project(':logger')
+
+    testImplementation libs.junit4
+    testImplementation libs.mockitoCore
+}

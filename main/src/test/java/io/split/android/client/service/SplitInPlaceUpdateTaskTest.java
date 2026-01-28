@@ -1,0 +1,190 @@
+package io.split.android.client.service;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import org.junit.Before;
+import org.junit.Test;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import io.split.android.client.events.SdkUpdateMetadata;
+import io.split.android.client.events.metadata.EventMetadata;
+import io.split.android.client.events.metadata.TypedTaskConverter;
+import io.split.android.client.dtos.Split;
+import io.split.android.client.events.ISplitEventsManager;
+import io.split.android.client.events.SplitInternalEvent;
+import io.split.android.client.service.executor.SplitTaskExecutionInfo;
+import io.split.android.client.service.executor.SplitTaskExecutionStatus;
+import io.split.android.client.service.splits.SplitChangeProcessor;
+import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
+import io.split.android.client.storage.splits.ProcessedSplitChange;
+import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.telemetry.model.streaming.UpdatesFromSSEEnum;
+import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+
+public class SplitInPlaceUpdateTaskTest {
+
+    @Mock
+    private SplitsStorage mSplitsStorage;
+    @Mock
+    private SplitChangeProcessor mSplitChangeProcessor;
+    @Mock
+    private ISplitEventsManager mEventsManager;
+    @Mock
+    private TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    @Mock
+    private Split mSplit;
+
+    private SplitInPlaceUpdateTask mSplitInPlaceUpdateTask;
+
+    @Before
+    public void setup() {
+        MockitoAnnotations.openMocks(this);
+        long changeNumber = 123L;
+        mSplitInPlaceUpdateTask = new SplitInPlaceUpdateTask(
+                mSplitsStorage, mSplitChangeProcessor, mEventsManager,
+                mTelemetryRuntimeProducer, mSplit, changeNumber
+        );
+    }
+
+    @Test
+    public void sseUpdateIsRecordedInTelemetryWhenOperationIsSuccessful() {
+        ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 0L, 0);
+
+        when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
+
+        SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
+
+        verify(mSplitChangeProcessor).process(mSplit, 123L);
+        verify(mSplitsStorage).update(processedSplitChange, null);
+        verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
+
+        assertEquals(result.getStatus(), SplitTaskExecutionStatus.SUCCESS);
+    }
+
+    @Test
+    public void exceptionDuringProcessingReturnsErrorExecutionInfo() {
+
+        doThrow(new RuntimeException()).when(mSplitChangeProcessor).process(mSplit, 123L);
+
+        SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
+
+        verify(mSplitChangeProcessor).process(mSplit, 123L);
+        verify(mSplitsStorage, never()).update(any(), any());
+        verify(mEventsManager, never()).notifyInternalEvent(any());
+        verify(mTelemetryRuntimeProducer, never()).recordUpdatesFromSSE(any());
+
+        assertEquals(result.getStatus(), SplitTaskExecutionStatus.ERROR);
+    }
+
+    @Test
+    public void exceptionDuringStorageUpdateReturnsErrorExecutionInfo() {
+        ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 0L, 0);
+
+        when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
+        doThrow(new RuntimeException()).when(mSplitsStorage).update(processedSplitChange, null);
+
+        SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
+
+        verify(mSplitChangeProcessor).process(mSplit, 123L);
+        verify(mSplitsStorage).update(processedSplitChange, null);
+        verify(mEventsManager, never()).notifyInternalEvent(any());
+        verify(mTelemetryRuntimeProducer, never()).recordUpdatesFromSSE(any());
+
+        assertEquals(result.getStatus(), SplitTaskExecutionStatus.ERROR);
+    }
+
+    @Test
+    public void sdkUpdateIsNotTriggeredWhenStorageUpdateReturnsFalse() {
+        ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 0L, 0);
+
+        when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
+        when(mSplitsStorage.update(processedSplitChange, null)).thenReturn(false);
+
+        SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
+
+        verify(mSplitChangeProcessor).process(mSplit, 123L);
+        verify(mSplitsStorage).update(processedSplitChange, null);
+        verify(mEventsManager, never()).notifyInternalEvent(any());
+        verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
+    }
+
+    @Test
+    public void sdkUpdateIsTriggeredWhenStorageUpdateReturnsTrue() {
+        ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), new ArrayList<>(), 0L, 0);
+
+        when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
+        when(mSplitsStorage.update(processedSplitChange, null)).thenReturn(true);
+
+        SplitTaskExecutionInfo result = mSplitInPlaceUpdateTask.execute();
+
+        verify(mSplitChangeProcessor).process(mSplit, 123L);
+        verify(mSplitsStorage).update(processedSplitChange, null);
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), any());
+        verify(mTelemetryRuntimeProducer).recordUpdatesFromSSE(UpdatesFromSSEEnum.SPLITS);
+    }
+
+    @Test
+    public void splitsUpdatedIncludesMetadataWithUpdatedFlags() {
+        Split split1 = new Split();
+        split1.name = "test_split_1";
+        Split split2 = new Split();
+        split2.name = "test_split_2";
+        List<Split> activeSplits = Arrays.asList(split1, split2);
+        ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(activeSplits, new ArrayList<>(), 0L, 0);
+
+        when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
+        when(mSplitsStorage.update(processedSplitChange, null)).thenReturn(true);
+
+        mSplitInPlaceUpdateTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
+            if (metadata == null) return false;
+            SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
+            List<String> names = typedMeta.getNames();
+            assertNotNull(names);
+            assertEquals(2, names.size());
+            assertTrue(names.contains("test_split_1"));
+            assertTrue(names.contains("test_split_2"));
+            assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, typedMeta.getType());
+            return true;
+        }));
+    }
+
+    @Test
+    public void splitsUpdatedIncludesArchivedSplitsInMetadata() {
+        Split archivedSplit = new Split();
+        archivedSplit.name = "archived_split";
+        List<Split> archivedSplits = Arrays.asList(archivedSplit);
+        ProcessedSplitChange processedSplitChange = new ProcessedSplitChange(new ArrayList<>(), archivedSplits, 0L, 0);
+
+        when(mSplitChangeProcessor.process(mSplit, 123L)).thenReturn(processedSplitChange);
+        when(mSplitsStorage.update(processedSplitChange, null)).thenReturn(true);
+
+        mSplitInPlaceUpdateTask.execute();
+
+        verify(mEventsManager).notifyInternalEvent(eq(SplitInternalEvent.SPLITS_UPDATED), argThat(metadata -> {
+            if (metadata == null) return false;
+            SdkUpdateMetadata typedMeta = TypedTaskConverter.convertForSdkUpdate(metadata);
+            List<String> names = typedMeta.getNames();
+            assertNotNull(names);
+            assertEquals(1, names.size());
+            assertTrue(names.contains("archived_split"));
+            assertEquals(SdkUpdateMetadata.Type.FLAGS_UPDATE, typedMeta.getType());
+            return true;
+        }));
+    }
+}

@@ -1,0 +1,33 @@
+android {
+    compileSdk 33
+    defaultConfig {
+        minSdk 19
+        targetSdk 31
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.compilerArgs.add('-parameters')
+}
+
+def kotlinCompileClass = null
+try {
+    kotlinCompileClass = Class.forName('org.jetbrains.kotlin.gradle.tasks.KotlinCompile')
+} catch (Throwable ignored) {
+    // Kotlin plugin not applied in this module; skip Kotlin options configuration
+}
+if (kotlinCompileClass != null) {
+    tasks.withType(kotlinCompileClass).configureEach {
+        kotlinOptions {
+            jvmTarget = "1.8"
+            javaParameters = true
+        }
+    }
+}
+
+// Enable Jacoco coverage configuration for all Android library modules
+apply from: "$rootDir/gradle/jacoco-android.gradle"
