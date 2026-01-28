@@ -15,10 +15,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
-import io.split.android.client.telemetry.model.streaming.OccupancyPriStreamingEvent;
-import io.split.android.client.telemetry.model.streaming.OccupancySecStreamingEvent;
-import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.service.sseclient.spi.StreamingTelemetry;
 import io.split.android.client.utils.logger.Logger;
 
 public class NotificationManagerKeeper {
@@ -40,11 +37,11 @@ public class NotificationManagerKeeper {
     private final PushManagerEventBroadcaster mBroadcasterChannel;
     private final AtomicLong mLastControlTimestamp = new AtomicLong(0);
     private final AtomicBoolean mIsStreamingActive = new AtomicBoolean(true);
-    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private final StreamingTelemetry mTelemetry;
 
-    public NotificationManagerKeeper(PushManagerEventBroadcaster broadcasterChannel, TelemetryRuntimeProducer telemetryRuntimeProducer) {
+    public NotificationManagerKeeper(PushManagerEventBroadcaster broadcasterChannel, StreamingTelemetry telemetry) {
         mBroadcasterChannel = broadcasterChannel;
-        mTelemetryRuntimeProducer = telemetryRuntimeProducer;
+        mTelemetry = telemetry;
         /// By default we consider one publisher en primary channel available
         mPublishers.put(CHANNEL_PRI_KEY, new Publisher(1, 0));
         mPublishers.put(CHANNEL_SEC_KEY, new Publisher(0, 0));
@@ -60,20 +57,20 @@ public class NotificationManagerKeeper {
                 case STREAMING_PAUSED:
                     mIsStreamingActive.set(false);
                     mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_DOWN));
-                    mTelemetryRuntimeProducer.recordStreamingEvents(new StreamingStatusStreamingEvent(StreamingStatusStreamingEvent.Status.PAUSED, System.currentTimeMillis()));
+                    mTelemetry.recordStreamingStatus(StreamingTelemetry.StreamingStatus.PAUSED, System.currentTimeMillis());
                     break;
 
                 case STREAMING_DISABLED:
                     mIsStreamingActive.set(false);
                     mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_DISABLED));
-                    mTelemetryRuntimeProducer.recordStreamingEvents(new StreamingStatusStreamingEvent(StreamingStatusStreamingEvent.Status.DISABLED, System.currentTimeMillis()));
+                    mTelemetry.recordStreamingStatus(StreamingTelemetry.StreamingStatus.DISABLED, System.currentTimeMillis());
                     break;
 
                 case STREAMING_RESUMED:
                     mIsStreamingActive.set(true);
                     if (publishersCount() > 0) {
                         mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));
-                        mTelemetryRuntimeProducer.recordStreamingEvents(new StreamingStatusStreamingEvent(StreamingStatusStreamingEvent.Status.ENABLED, System.currentTimeMillis()));
+                        mTelemetry.recordStreamingStatus(StreamingTelemetry.StreamingStatus.ENABLED, System.currentTimeMillis());
                     }
                     break;
 
@@ -103,9 +100,9 @@ public class NotificationManagerKeeper {
         updateChannelInfo(channelKey, notification.getMetrics().getPublishers(), notification.getTimestamp());
 
         if (CHANNEL_PRI_KEY.equals(channelKey)) {
-            mTelemetryRuntimeProducer.recordStreamingEvents(new OccupancyPriStreamingEvent(publishersCount(), System.currentTimeMillis()));
+            mTelemetry.recordOccupancyPri(publishersCount(), System.currentTimeMillis());
         } else if (CHANNEL_SEC_KEY.equals(channelKey)) {
-            mTelemetryRuntimeProducer.recordStreamingEvents(new OccupancySecStreamingEvent(publishersCount(), System.currentTimeMillis()));
+            mTelemetry.recordOccupancySec(publishersCount(), System.currentTimeMillis());
         }
 
         if (publishersCount() == 0 && prevPublishersCount > 0) {

@@ -13,20 +13,13 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
-import io.split.android.client.service.executor.SplitTask;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.service.executor.ThreadFactoryBuilder;
 import io.split.android.client.service.sseclient.SseJwtToken;
 import io.split.android.client.service.sseclient.feedbackchannel.DelayStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent;
 import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent.EventType;
-import io.split.android.client.telemetry.model.OperationType;
-import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreamingEvent;
-import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.service.sseclient.spi.StreamingScheduler;
+import io.split.android.client.service.sseclient.spi.StreamingTelemetry;
 import io.split.android.client.utils.logger.Logger;
 
 public class PushNotificationManager {
@@ -37,21 +30,22 @@ public class PushNotificationManager {
     private final PushManagerEventBroadcaster mBroadcasterChannel;
     private final SseAuthenticator mSseAuthenticator;
     private final SseClient mSseClient;
-    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private final StreamingTelemetry mTelemetry;
     private final SseRefreshTokenTimer mRefreshTokenTimer;
     private final SseDisconnectionTimer mDisconnectionTimer;
 
     private final AtomicBoolean mIsPaused;
     private final AtomicBoolean mIsStopped;
     private Future<?> mConnectionTask;
-    private final SplitTask mBackgroundDisconnectionTask;
+    private final Runnable mBackgroundDisconnectionTask;
     private final long mDefaultSSEConnectionDelayInSecs;
 
     public PushNotificationManager(@NonNull PushManagerEventBroadcaster pushManagerEventBroadcaster,
                                    @NonNull SseAuthenticator sseAuthenticator,
                                    @NonNull SseClient sseClient,
                                    @NonNull SseRefreshTokenTimer refreshTokenTimer,
-                                   @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                   @NonNull StreamingScheduler scheduler,
+                                   @NonNull StreamingTelemetry telemetry,
                                    long defaultSSEConnectionDelayInSecs,
                                    int sseDisconnectionDelayInSecs,
                                    @Nullable ScheduledExecutorService executorService) {
@@ -59,8 +53,8 @@ public class PushNotificationManager {
                 sseAuthenticator,
                 sseClient,
                 refreshTokenTimer,
-                new SseDisconnectionTimer(new SplitSingleThreadTaskExecutor(), sseDisconnectionDelayInSecs),
-                telemetryRuntimeProducer,
+                new SseDisconnectionTimer(scheduler, sseDisconnectionDelayInSecs),
+                telemetry,
                 defaultSSEConnectionDelayInSecs,
                 executorService);
     }
@@ -71,7 +65,7 @@ public class PushNotificationManager {
                                    @NonNull SseClient sseClient,
                                    @NonNull SseRefreshTokenTimer refreshTokenTimer,
                                    @NonNull SseDisconnectionTimer disconnectionTimer,
-                                   @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                   @NonNull StreamingTelemetry telemetry,
                                    long defaultSSEConnectionDelayInSecs,
                                    @Nullable ScheduledExecutorService executor) {
         mBroadcasterChannel = checkNotNull(broadcasterChannel);
@@ -79,7 +73,7 @@ public class PushNotificationManager {
         mSseClient = checkNotNull(sseClient);
         mRefreshTokenTimer = checkNotNull(refreshTokenTimer);
         mDisconnectionTimer = checkNotNull(disconnectionTimer);
-        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
+        mTelemetry = checkNotNull(telemetry);
         mIsStopped = new AtomicBoolean(false);
         mIsPaused = new AtomicBoolean(false);
         mBackgroundDisconnectionTask = new BackgroundDisconnectionTask(mSseClient, mRefreshTokenTimer);
@@ -92,7 +86,7 @@ public class PushNotificationManager {
     }
 
     public synchronized void start() {
-        mTelemetryRuntimeProducer.recordStreamingEvents(new SyncModeUpdateStreamingEvent(SyncModeUpdateStreamingEvent.Mode.STREAMING, System.currentTimeMillis()));
+        mTelemetry.recordSyncModeUpdate(true, System.currentTimeMillis());
         Logger.d("Push notification manager started");
         connect();
     }
@@ -157,17 +151,13 @@ public class PushNotificationManager {
     }
 
     private ScheduledThreadPoolExecutor buildExecutor() {
-        ThreadFactoryBuilder threadFactoryBuilder = new ThreadFactoryBuilder();
-        threadFactoryBuilder.setDaemon(true);
-        threadFactoryBuilder.setNameFormat("split-sse_client-%d");
-        threadFactoryBuilder.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread t, Throwable e) {
-                Logger.e(e, "Error in thread: %s", t.getName());
-            }
+        return new ScheduledThreadPoolExecutor(POOL_SIZE, runnable -> {
+            Thread thread = new Thread(runnable);
+            thread.setDaemon(true);
+            thread.setName("split-sse_client-" + thread.getId());
+            thread.setUncaughtExceptionHandler((t, e) -> Logger.e(e, "Error in thread: %s", t.getName()));
+            return thread;
         });
-
-        return new ScheduledThreadPoolExecutor(POOL_SIZE, threadFactoryBuilder.build());
     }
 
     private class StreamingConnection implements Runnable {
@@ -183,7 +173,7 @@ public class PushNotificationManager {
 
             long startTime = System.currentTimeMillis();
             SseAuthenticationResult authResult = mSseAuthenticator.authenticate(mDefaultSSEConnectionDelayInSecs);
-            mTelemetryRuntimeProducer.recordSyncLatency(OperationType.TOKEN, System.currentTimeMillis() - startTime);
+            mTelemetry.recordTokenSyncLatency(System.currentTimeMillis() - startTime);
 
             if (authResult.isSuccess() && !authResult.isPushEnabled()) {
                 handlePushDisabled();
@@ -231,9 +221,9 @@ public class PushNotificationManager {
         }
 
         private void recordSuccessfulSyncAndTokenRefreshes(SseJwtToken token) {
-            mTelemetryRuntimeProducer.recordSuccessfulSync(OperationType.TOKEN, System.currentTimeMillis());
-            mTelemetryRuntimeProducer.recordStreamingEvents(new TokenRefreshStreamingEvent(token.getExpirationTime(), System.currentTimeMillis()));
-            mTelemetryRuntimeProducer.recordTokenRefreshes();
+            mTelemetry.recordTokenSuccessfulSync(System.currentTimeMillis());
+            mTelemetry.recordTokenRefreshEvent(token.getExpirationTime(), System.currentTimeMillis());
+            mTelemetry.recordTokenRefreshes();
         }
 
         private void handlePushDisabled() {
@@ -249,9 +239,9 @@ public class PushNotificationManager {
         }
 
         private void recordNonRetryableError(SseAuthenticationResult authResult) {
-            mTelemetryRuntimeProducer.recordAuthRejections();
+            mTelemetry.recordAuthRejections();
             if (authResult.getHttpStatus() != null) {
-                mTelemetryRuntimeProducer.recordSyncError(OperationType.TOKEN, authResult.getHttpStatus());
+                mTelemetry.recordTokenSyncError(authResult.getHttpStatus());
             }
         }
 
@@ -275,7 +265,7 @@ public class PushNotificationManager {
         }
     }
 
-    public static class BackgroundDisconnectionTask implements SplitTask {
+    public static class BackgroundDisconnectionTask implements Runnable {
 
         private final SseClient mSseClient;
         private final SseRefreshTokenTimer mRefreshTokenTimer;
@@ -286,13 +276,11 @@ public class PushNotificationManager {
             mRefreshTokenTimer = refreshTokenTimer;
         }
 
-        @NonNull
         @Override
-        public SplitTaskExecutionInfo execute() {
+        public void run() {
             Logger.d("Disconnecting streaming while in background");
             mSseClient.disconnect();
             mRefreshTokenTimer.cancel();
-            return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
         }
     }
 }

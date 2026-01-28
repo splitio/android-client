@@ -13,14 +13,13 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import io.split.android.client.network.HttpClient;
-import io.split.android.client.network.HttpException;
-import io.split.android.client.network.HttpStreamRequest;
-import io.split.android.client.network.HttpStreamResponse;
 import io.split.android.client.network.URIBuilder;
-import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.service.sseclient.EventStreamParser;
 import io.split.android.client.service.sseclient.SseJwtToken;
+import io.split.android.client.service.sseclient.spi.StreamingTransport;
+import io.split.android.client.service.sseclient.spi.StreamingTransport.StreamingConnection;
+import io.split.android.client.service.sseclient.spi.StreamingTransport.StreamingResponse;
+import io.split.android.client.service.sseclient.spi.StreamingTransport.StreamingTransportException;
 import io.split.android.client.utils.StringHelper;
 import io.split.android.client.utils.logger.Logger;
 
@@ -28,15 +27,15 @@ public class SseClientImpl implements SseClient {
 
     private final URI mTargetUrl;
     private final AtomicInteger mStatus;
-    private final HttpClient mHttpClient;
+    private final StreamingTransport mStreamingTransport;
     private final EventStreamParser mEventStreamParser;
     private final AtomicBoolean mIsDisconnectCalled;
     private final SseHandler mSseHandler;
 
     private final StringHelper mStringHelper;
 
-    private HttpStreamRequest mHttpStreamRequest = null;
-    private HttpStreamResponse mHttpStreamResponse = null;
+    private StreamingConnection mStreamingConnection = null;
+    private StreamingResponse mStreamingResponse = null;
 
     private static final String PUSH_NOTIFICATION_CHANNELS_PARAM = "channel";
     private static final String PUSH_NOTIFICATION_TOKEN_PARAM = "accessToken";
@@ -44,11 +43,11 @@ public class SseClientImpl implements SseClient {
     private static final String PUSH_NOTIFICATION_VERSION_VALUE = "1.1";
 
     public SseClientImpl(@NonNull URI uri,
-                         @NonNull HttpClient httpClient,
+                         @NonNull StreamingTransport streamingTransport,
                          @NonNull EventStreamParser eventStreamParser,
                          @NonNull SseHandler sseHandler) {
         mTargetUrl = checkNotNull(uri);
-        mHttpClient = checkNotNull(httpClient);
+        mStreamingTransport = checkNotNull(streamingTransport);
         mEventStreamParser = checkNotNull(eventStreamParser);
         mSseHandler = checkNotNull(sseHandler);
         mStatus = new AtomicInteger(DISCONNECTED);
@@ -72,21 +71,21 @@ public class SseClientImpl implements SseClient {
     private void close() {
         Logger.d("Disconnecting SSE client");
         if (mStatus.getAndSet(DISCONNECTED) != DISCONNECTED) {
-            // Close the HttpStreamResponse first to clean up sockets
-            if (mHttpStreamResponse != null) {
+            // Close the StreamingResponse first to clean up sockets
+            if (mStreamingResponse != null) {
                 try {
-                    mHttpStreamResponse.close();
-                    Logger.v("HttpStreamResponse closed successfully");
+                    mStreamingResponse.close();
+                    Logger.v("StreamingResponse closed successfully");
                 } catch (IOException e) {
-                    Logger.w("Failed to close HttpStreamResponse: " + e.getMessage());
+                    Logger.w("Failed to close StreamingResponse: " + e.getMessage());
                 }
-                mHttpStreamResponse = null;
+                mStreamingResponse = null;
             }
 
-            // Close the HttpStreamRequest
-            if (mHttpStreamRequest != null) {
-                mHttpStreamRequest.close();
-                mHttpStreamRequest = null;
+            // Close the StreamingConnection
+            if (mStreamingConnection != null) {
+                mStreamingConnection.close();
+                mStreamingConnection = null;
             }
             Logger.d("SSE client disconnected");
         }
@@ -107,10 +106,10 @@ public class SseClientImpl implements SseClient {
                     .addParameter(PUSH_NOTIFICATION_CHANNELS_PARAM, channels)
                     .addParameter(PUSH_NOTIFICATION_TOKEN_PARAM, rawToken)
                     .build();
-            mHttpStreamRequest = mHttpClient.streamRequest(url);
-            mHttpStreamResponse = mHttpStreamRequest.execute();
-            if (mHttpStreamResponse.isSuccess()) {
-                bufferedReader = mHttpStreamResponse.getBufferedReader();
+            mStreamingConnection = mStreamingTransport.connect(url);
+            mStreamingResponse = mStreamingConnection.execute();
+            if (mStreamingResponse.isSuccess()) {
+                bufferedReader = mStreamingResponse.getBufferedReader();
                 if (bufferedReader != null) {
                     Logger.d("Streaming connection opened");
                     mStatus.set(CONNECTED);
@@ -140,15 +139,15 @@ public class SseClientImpl implements SseClient {
                     throw (new IOException("Buffer is null"));
                 }
             } else {
-                Logger.e("Streaming connection error. Http return code " + mHttpStreamResponse.getHttpStatus());
-                isErrorRetryable = !mHttpStreamResponse.isClientRelatedError();
+                Logger.e("Streaming connection error. Http return code " + mStreamingResponse.getHttpStatus());
+                isErrorRetryable = !mStreamingResponse.isClientRelatedError();
             }
         } catch (URISyntaxException e) {
             logError("An error has occurred while creating stream Url ", e);
             isErrorRetryable = false;
-        } catch (HttpException e) {
+        } catch (StreamingTransportException e) {
             logError("An error has occurred while creating stream Url ", e);
-            isErrorRetryable = !HttpStatus.isNotRetryable(HttpStatus.fromCode(e.getStatusCode()));
+            isErrorRetryable = !isNotRetryableStatusCode(e.getStatusCode());
         } catch (IOException e) {
             Logger.d("An error has occurred while parsing stream: " + e.getLocalizedMessage());
             isErrorRetryable = true;
@@ -161,6 +160,14 @@ public class SseClientImpl implements SseClient {
                 close();
             }
         }
+    }
+
+    private boolean isNotRetryableStatusCode(Integer statusCode) {
+        if (statusCode == null) {
+            return false;
+        }
+        // Not retryable: 4xx errors except 408 (Request Timeout)
+        return statusCode >= 400 && statusCode < 500 && statusCode != 408;
     }
 
     private static void logError(String message, Exception e) {
