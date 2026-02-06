@@ -190,7 +190,7 @@ public interface SplitClient extends AttributesManager {
      * <p>
      * Example usage:
      * <pre>{@code
-     * client.addEventListener(new SdkEventListener() {
+     * client.addEventListener(new SplitEventListener() {
      *     @Override
      *     public void onReady(SplitClient client, SdkReadyMetadata metadata) {
      *         Boolean initialCacheLoad = metadata.isInitialCacheLoad();
@@ -200,7 +200,7 @@ public interface SplitClient extends AttributesManager {
      *     @Override
      *     public void onUpdate(SplitClient client, SdkUpdateMetadata metadata) {
      *         SdkUpdateMetadata.Type type = metadata.getType(); // FLAGS_UPDATE or SEGMENTS_UPDATE
-     *         List<String> names = metadata.getNames(); // updated flag/segment names
+     *         List<String> names = metadata.getNames(); // updated flag names
      *         // Handle on background thread
      *     }
      *
