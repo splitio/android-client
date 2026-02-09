@@ -202,6 +202,8 @@ public class HttpClientImpl implements HttpClient {
         private CertificatePinningConfiguration mCertificatePinningConfiguration;
         private CertificateChecker mCertificateChecker;
         private Base64Decoder mBase64Decoder = new DefaultBase64Decoder();
+        @Nullable
+        private HttpClientConfiguration mConfiguration;
 
         public Builder setTlsUpdater(@Nullable TlsUpdater tlsUpdater) {
             mTlsUpdater = tlsUpdater;
@@ -263,7 +265,16 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
+        public Builder setConfiguration(@NonNull HttpClientConfiguration configuration) {
+            mConfiguration = configuration;
+            return this;
+        }
+
         public HttpClient build() {
+            if (mConfiguration != null) {
+                applyConfiguration(mConfiguration);
+            }
+
             if (mDevelopmentSslConfig == null) {
                 if (mTlsUpdater != null && mTlsUpdater.couldBeOld()) {
                     mTlsUpdater.update();
@@ -308,6 +319,27 @@ public class HttpClientImpl implements HttpClient {
                     mSslSocketFactory,
                     (mUrlSanitizer == null) ? new UrlSanitizerImpl() : mUrlSanitizer,
                     certificateChecker);
+        }
+
+        private void applyConfiguration(@NonNull HttpClientConfiguration configuration) {
+            if (mConnectionTimeout == -1) {
+                setConnectionTimeout(configuration.getConnectionTimeout());
+            }
+            if (mReadTimeout == -1) {
+                setReadTimeout(configuration.getReadTimeout());
+            }
+            if (mProxy == null && configuration.getProxy() != null) {
+                setProxy(configuration.getProxy());
+            }
+            if (mCertificatePinningConfiguration == null && configuration.getCertificatePinningConfiguration() != null) {
+                setCertificatePinningConfiguration(configuration.getCertificatePinningConfiguration());
+            }
+            if (mDevelopmentSslConfig == null) {
+                setDevelopmentSslConfig(configuration.getDevelopmentSslConfig());
+            }
+            if (mProxyAuthenticator == null) {
+                setProxyAuthenticator(configuration.getProxyAuthenticator());
+            }
         }
 
         private SSLSocketFactory createSslSocketFactoryFromProxy(HttpProxy proxyParams) {

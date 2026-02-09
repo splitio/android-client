@@ -31,7 +31,7 @@ import javax.net.ssl.SSLSocketFactory;
 
 import io.split.android.client.utils.logger.Logger;
 
-public class HttpRequestImpl implements HttpRequest {
+class HttpRequestImpl implements HttpRequest {
 
     public static final String CONTENT_TYPE = "Content-Type";
     public static final String APPLICATION_JSON_CHARSET_UTF_8 = "application/json; charset=utf-8";

@@ -8,7 +8,7 @@ import java.net.Socket;
 
 import io.split.android.client.utils.logger.Logger;
 
-public class HttpStreamResponseImpl extends BaseHttpResponseImpl implements HttpStreamResponse {
+class HttpStreamResponseImpl extends BaseHttpResponseImpl implements HttpStreamResponse {
 
     private final BufferedReader mData;
 

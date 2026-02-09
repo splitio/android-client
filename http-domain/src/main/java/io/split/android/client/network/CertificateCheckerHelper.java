@@ -15,7 +15,7 @@ import java.util.Set;
 
 import io.split.android.client.utils.logger.Logger;
 
-public class CertificateCheckerHelper {
+class CertificateCheckerHelper {
 
     @Nullable
     public static Set<CertificatePin> getPinsForHost(String pattern, Map<String, Set<CertificatePin>> configuredPins) {
