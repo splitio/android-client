@@ -60,7 +60,8 @@ import io.split.android.client.service.sseclient.sseclient.PushNotificationManag
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.sseclient.sseclient.SseClient;
 import io.split.android.client.service.sseclient.sseclient.HttpClientStreamingTransport;
-import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
+import io.split.android.client.service.sseclient.sseclient.DefaultSseClient;
+import io.split.android.client.service.sseclient.sseclient.EventSourceClientImpl;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
 import io.split.android.client.service.sseclient.sseclient.SplitTaskExecutorStreamingScheduler;
@@ -325,9 +326,12 @@ class SplitFactoryHelper {
                 telemetry,
                 pushManagerEventBroadcaster);
 
-        return new SseClientImpl(URI.create(streamingServiceUrlString),
+        EventSourceClientImpl eventSourceClient = new EventSourceClientImpl(
                 new HttpClientStreamingTransport(httpClient),
-                new EventStreamParser(),
+                new EventStreamParser());
+
+        return new DefaultSseClient(URI.create(streamingServiceUrlString),
+                eventSourceClient,
                 sseHandler);
     }
 

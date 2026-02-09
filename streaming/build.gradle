@@ -16,8 +16,7 @@ android {
 dependencies {
     compileOnly libs.jetbrainsAnnotations
     implementation libs.annotation
-    implementation libs.gson
-    
+
     // Logger module for logging
     api project(':logger')
 

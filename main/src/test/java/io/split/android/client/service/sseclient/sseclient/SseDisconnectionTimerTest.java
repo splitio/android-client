@@ -1,8 +1,9 @@
 package io.split.android.client.service.sseclient.sseclient;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -11,55 +12,53 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.split.android.client.SplitClientConfig;
-import io.split.android.client.service.executor.SplitTask;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.sseclient.spi.StreamingScheduler;
 
 public class SseDisconnectionTimerTest {
 
-    private SplitTaskExecutor mTaskExecutor;
-    private SplitTask mTask;
+    private StreamingScheduler mScheduler;
+    private Runnable mTask;
     private SseDisconnectionTimer mSseDisconnectionTimer;
 
     @Before
     public void setUp() {
-        mTaskExecutor = mock(SplitTaskExecutor.class);
-        mTask = mock(SplitTask.class);
-        when(mTask.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK));
-        mSseDisconnectionTimer = new SseDisconnectionTimer(mTaskExecutor, 0);
+        mScheduler = mock(StreamingScheduler.class);
+        mTask = mock(Runnable.class);
+        mSseDisconnectionTimer = new SseDisconnectionTimer(mScheduler, 0);
     }
 
     @Test
-    public void cancelDoesNothingWhenTaskHasNotBeenScheduled() {
+    public void cancelCallsSchedulerCancelWithNull() {
+        // When no task has been scheduled, mTaskId is null
         mSseDisconnectionTimer.cancel();
 
-        verify(mTaskExecutor, times(0)).stopTask(any());
+        verify(mScheduler).cancel(isNull());
     }
 
     @Test
-    public void scheduleSchedulesTaskInTaskExecutor() {
+    public void scheduleSchedulesTaskInScheduler() {
         mSseDisconnectionTimer.schedule(mTask);
 
-        verify(mTaskExecutor).schedule(eq(mTask), eq(0L), eq(mSseDisconnectionTimer));
+        // schedule() internally calls cancel() first, then schedules the task
+        verify(mScheduler).schedule(eq(mTask), eq(0L), any());
     }
 
     @Test
     public void cancelCancelsTaskWithCorrectTaskId() {
-        when(mTaskExecutor.schedule(eq(mTask), anyLong(), any())).thenReturn("id");
+        when(mScheduler.schedule(eq(mTask), anyLong(), any())).thenReturn("task-id");
 
         mSseDisconnectionTimer.schedule(mTask);
         mSseDisconnectionTimer.cancel();
 
-        verify(mTaskExecutor).stopTask("id");
+        // Second cancel call should use the task ID returned by schedule
+        verify(mScheduler).cancel("task-id");
     }
 
     @Test
-    public void scheduleInitialDelayInSecondsDefaultValueIs60() {
-        mSseDisconnectionTimer = new SseDisconnectionTimer(mTaskExecutor, 60);
+    public void scheduleInitialDelayInSecondsUsesProvidedValue() {
+        mSseDisconnectionTimer = new SseDisconnectionTimer(mScheduler, 60);
 
         mSseDisconnectionTimer.schedule(mTask);
-        verify(mTaskExecutor).schedule(mTask, 60L, mSseDisconnectionTimer);
+        verify(mScheduler).schedule(eq(mTask), eq(60L), any());
     }
 }

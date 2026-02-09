@@ -211,7 +211,7 @@ public class PushNotificationManager {
                 return;
             }
 
-            mSseClient.connect(token, new SseClientImpl.ConnectionListener() {
+            mSseClient.connect(token, new SseClient.ConnectionListener() {
                 @Override
                 public void onConnectionSuccess() {
                     mBroadcasterChannel.pushMessage(new PushStatusEvent(EventType.PUSH_SUBSYSTEM_UP));

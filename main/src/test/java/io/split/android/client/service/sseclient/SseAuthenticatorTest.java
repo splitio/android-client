@@ -21,11 +21,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import io.split.android.client.service.http.HttpFetcherException;
-import io.split.android.client.service.http.HttpSseAuthTokenFetcher;
+import io.split.android.client.service.sseclient.spi.StreamingAuthException;
+import io.split.android.client.service.sseclient.spi.StreamingAuthFetcher;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticationResult;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 
+@SuppressWarnings("unchecked")
 public class SseAuthenticatorTest {
 
     @Mock
@@ -35,7 +36,7 @@ public class SseAuthenticatorTest {
     SseAuthenticationResponse mResponse;
 
     @Mock
-    HttpSseAuthTokenFetcher mFetcher;
+    StreamingAuthFetcher mFetcher;
 
     List<String> mDummyChannels;
 
@@ -46,14 +47,14 @@ public class SseAuthenticatorTest {
     }
 
     @Test
-    public void successfulRequest() throws InvalidJwtTokenException, HttpFetcherException {
+    public void successfulRequest() throws InvalidJwtTokenException, StreamingAuthException {
         SseJwtToken token = new SseJwtToken(100, 200, mDummyChannels, "the raw token");
         when(mResponse.isStreamingEnabled()).thenReturn(true);
         when(mResponse.getToken()).thenReturn("");
 
         when(mJwtParser.parse(anyString())).thenReturn(token);
 
-        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
+        when(mFetcher.execute(any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
@@ -67,13 +68,13 @@ public class SseAuthenticatorTest {
     }
 
     @Test
-    public void tokenParseError() throws InvalidJwtTokenException, HttpFetcherException {
+    public void tokenParseError() throws InvalidJwtTokenException, StreamingAuthException {
         when(mResponse.isStreamingEnabled()).thenReturn(true);
         when(mResponse.getToken()).thenReturn("");
 
         when(mJwtParser.parse(anyString())).thenThrow(InvalidJwtTokenException.class);
 
-        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
+        when(mFetcher.execute(any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
@@ -84,12 +85,12 @@ public class SseAuthenticatorTest {
     }
 
     @Test
-    public void recoverableError() throws HttpFetcherException {
+    public void recoverableError() throws StreamingAuthException {
         when(mResponse.isStreamingEnabled()).thenReturn(false);
         when(mResponse.getToken()).thenReturn(null);
         when(mResponse.isClientError()).thenReturn(false);
 
-        when(mFetcher.execute(any(), any())).thenThrow(HttpFetcherException.class);
+        when(mFetcher.execute(any())).thenThrow(StreamingAuthException.class);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
@@ -101,12 +102,12 @@ public class SseAuthenticatorTest {
     }
 
     @Test
-    public void nonRecoverableError() throws HttpFetcherException {
+    public void nonRecoverableError() throws StreamingAuthException {
         when(mResponse.isStreamingEnabled()).thenReturn(false);
         when(mResponse.getToken()).thenReturn(null);
         when(mResponse.isClientError()).thenReturn(true);
 
-        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
+        when(mFetcher.execute(any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);
@@ -118,9 +119,9 @@ public class SseAuthenticatorTest {
     }
 
     @Test
-    public void registeredKeysAreUsedInFetcher() throws HttpFetcherException {
+    public void registeredKeysAreUsedInFetcher() throws StreamingAuthException {
         when(mResponse.isClientError()).thenReturn(false);
-        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
+        when(mFetcher.execute(any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         authenticator.registerKey("user1");
@@ -133,13 +134,13 @@ public class SseAuthenticatorTest {
 
         authenticator.authenticate(60L);
 
-        verify(mFetcher).execute(map, null);
+        verify(mFetcher).execute(map);
     }
 
     @Test
-    public void unregisteredKeysAreNotUsedInFetcher() throws HttpFetcherException {
+    public void unregisteredKeysAreNotUsedInFetcher() throws StreamingAuthException {
         when(mResponse.isClientError()).thenReturn(false);
-        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
+        when(mFetcher.execute(any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         authenticator.registerKey("user1");
@@ -154,13 +155,13 @@ public class SseAuthenticatorTest {
 
         authenticator.authenticate(60L);
 
-        verify(mFetcher).execute(map, null);
+        verify(mFetcher).execute(map);
     }
 
     @Test
-    public void flagsSpecIsUsedInFetcher() throws HttpFetcherException {
+    public void flagsSpecIsUsedInFetcher() throws StreamingAuthException {
         when(mResponse.isClientError()).thenReturn(false);
-        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
+        when(mFetcher.execute(any())).thenReturn(mResponse);
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, "1.1");
 
@@ -170,13 +171,13 @@ public class SseAuthenticatorTest {
             List<String> keys = new ArrayList<>(argument.keySet());
             return keys.get(0).equals("s") &&
                     keys.get(1).equals("users");
-        }), eq(null));
+        }));
     }
 
     @Test
-    public void flagsSpecIsNotUsedInFetcherWhenNull() throws HttpFetcherException {
+    public void flagsSpecIsNotUsedInFetcherWhenNull() throws StreamingAuthException {
         when(mResponse.isClientError()).thenReturn(false);
-        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
+        when(mFetcher.execute(any())).thenReturn(mResponse);
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
 
         authenticator.authenticate(60L);
@@ -184,13 +185,13 @@ public class SseAuthenticatorTest {
         verify(mFetcher).execute(argThat(argument -> {
             List<String> keys = new ArrayList<>(argument.keySet());
             return keys.get(0).equals("users");
-        }), eq(null));
+        }));
     }
 
     @Test
-    public void flagsSpecIsNotUsedInFetcherWhenEmpty() throws HttpFetcherException {
+    public void flagsSpecIsNotUsedInFetcherWhenEmpty() throws StreamingAuthException {
         when(mResponse.isClientError()).thenReturn(false);
-        when(mFetcher.execute(any(), any())).thenReturn(mResponse);
+        when(mFetcher.execute(any())).thenReturn(mResponse);
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, "");
 
         authenticator.authenticate(60L);
@@ -198,13 +199,13 @@ public class SseAuthenticatorTest {
         verify(mFetcher).execute(argThat(argument -> {
             List<String> keys = new ArrayList<>(argument.keySet());
             return keys.get(0).equals("users");
-        }), eq(null));
+        }));
     }
 
     @Test
-    public void returnUnrecoverableErrorWhenHttpStatusIsInternalNonRetryable() throws HttpFetcherException {
+    public void returnUnrecoverableErrorWhenHttpStatusIsInternalNonRetryable() throws StreamingAuthException {
 
-        when(mFetcher.execute(any(), any())).thenThrow(new HttpFetcherException("path", "error", 9009));
+        when(mFetcher.execute(any())).thenThrow(new StreamingAuthException("error", null, 9009));
 
         SseAuthenticator authenticator = new SseAuthenticator(mFetcher, mJwtParser, null);
         SseAuthenticationResult result = authenticator.authenticate(60L);

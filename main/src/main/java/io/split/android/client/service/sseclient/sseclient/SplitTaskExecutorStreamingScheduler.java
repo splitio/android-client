@@ -6,7 +6,6 @@ import androidx.annotation.Nullable;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
-import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.sseclient.spi.StreamingScheduler;
@@ -33,7 +32,7 @@ public class SplitTaskExecutorStreamingScheduler implements StreamingScheduler {
                     task.run();
                     return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
                 } catch (Exception e) {
-                    return SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK, SplitTaskExecutionStatus.ERROR, e.getMessage());
+                    return SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK);
                 }
             }
         }, delaySeconds, new SplitTaskExecutionListener() {

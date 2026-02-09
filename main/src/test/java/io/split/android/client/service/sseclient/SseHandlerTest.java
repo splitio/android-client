@@ -1,8 +1,10 @@
 package io.split.android.client.service.sseclient;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -25,19 +27,16 @@ import io.split.android.client.service.sseclient.notifications.ControlNotificati
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.MembershipNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
-import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.notifications.RuleBasedSegmentChangeNotification;
 import io.split.android.client.service.sseclient.notifications.SplitKillNotification;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.service.sseclient.notifications.StreamingError;
+import io.split.android.client.service.sseclient.spi.StreamingTelemetry;
+import io.split.android.client.service.sseclient.spi.UpdateNotificationListener;
 import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
-import io.split.android.client.telemetry.model.streaming.AblyErrorStreamingEvent;
-import io.split.android.client.telemetry.model.streaming.SseConnectionErrorStreamingEvent;
-import io.split.android.client.telemetry.model.streaming.StreamingEvent;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 
 
 public class SseHandlerTest {
@@ -54,97 +53,81 @@ public class SseHandlerTest {
     PushManagerEventBroadcaster mBroadcasterChannel;
 
     @Mock
-    NotificationProcessor mNotificationProcessor;
+    UpdateNotificationListener mUpdateListener;
 
     @Mock
-    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    StreamingTelemetry mTelemetryRuntimeProducer;
 
     @Before
     public void setup() {
         MockitoAnnotations.openMocks(this);
-        mSseHandler = new SseHandler(mNotificationParser, mNotificationProcessor, mManagerKeeper, mBroadcasterChannel, mTelemetryRuntimeProducer);
+        mSseHandler = new SseHandler(mNotificationParser, mUpdateListener, mManagerKeeper, mBroadcasterChannel, mTelemetryRuntimeProducer);
         when(mNotificationParser.isError(any())).thenReturn(false);
     }
 
     @Test
     public void incomingSplitUpdate() {
-
-
         IncomingNotification incomingNotification =
                 new IncomingNotification(NotificationType.SPLIT_UPDATE, "", "", 100);
-        SplitsChangeNotification notification = new SplitsChangeNotification(-1);
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
-        when(mNotificationParser.parseSplitUpdate(anyString())).thenReturn(notification);
         when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
-        verify(mNotificationProcessor).process(incomingNotification);
+        verify(mUpdateListener).onUpdateNotification(incomingNotification);
     }
 
     @Test
     public void incomingSplitKill() {
-
         IncomingNotification incomingNotification =
                 new IncomingNotification(NotificationType.SPLIT_KILL, "", "", 100);
-        SplitKillNotification notification = new SplitKillNotification();
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
-        when(mNotificationParser.parseSplitKill(anyString())).thenReturn(notification);
         when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
-        verify(mNotificationProcessor).process(incomingNotification);
+        verify(mUpdateListener).onUpdateNotification(incomingNotification);
     }
 
     @Test
     public void incomingMembershipUpdate() {
-
         IncomingNotification incomingNotification =
                 new IncomingNotification(NotificationType.MEMBERSHIPS_MS_UPDATE, "", "", 100);
-        MembershipNotification notification = new MembershipNotification();
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
-        when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(notification);
         when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
-        verify(mNotificationProcessor).process(incomingNotification);
+        verify(mUpdateListener).onUpdateNotification(incomingNotification);
     }
 
     @Test
     public void incomingLargeMembershipUpdate() {
-
         IncomingNotification incomingNotification =
                 new IncomingNotification(NotificationType.MEMBERSHIPS_LS_UPDATE, "", "", 100);
-        MembershipNotification notification = new MembershipNotification();
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
-        when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(notification);
         when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
-        verify(mNotificationProcessor).process(incomingNotification);
+        verify(mUpdateListener).onUpdateNotification(incomingNotification);
     }
 
     @Test
     public void streamingPaused() {
-
         IncomingNotification incomingNotification =
                 new IncomingNotification(NotificationType.MEMBERSHIPS_LS_UPDATE, "", "", 100);
-        MembershipNotification notification = new MembershipNotification();
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
-        when(mNotificationParser.parseMembershipNotification(anyString())).thenReturn(notification);
         when(mManagerKeeper.isStreamingActive()).thenReturn(false);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
-        verify(mNotificationProcessor, never()).process(incomingNotification);
+        verify(mUpdateListener, never()).onUpdateNotification(incomingNotification);
     }
 
     @Test
@@ -186,7 +169,6 @@ public class SseHandlerTest {
     }
 
     public void incomingRetryableSseErrorTest(int code) {
-
         StreamingError notification = new StreamingError("msg", code, code);
 
         when(mNotificationParser.isError(any())).thenReturn(true);
@@ -240,55 +222,34 @@ public class SseHandlerTest {
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
-        ArgumentCaptor<StreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingEvent.class);
-
-        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
-        Assert.assertTrue(argumentCaptor.getValue() instanceof AblyErrorStreamingEvent);
-        Assert.assertEquals(40000, argumentCaptor.getValue().getEventData().longValue());
-        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+        verify(mTelemetryRuntimeProducer).recordAblyError(eq(40000), anyLong());
     }
 
     @Test
     public void sseRecoverableConnectionErrorIsRecordedInTelemetry() {
-        setupNotification();
-
         mSseHandler.handleError(false);
 
-        ArgumentCaptor<StreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingEvent.class);
-
-        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
-        Assert.assertTrue(argumentCaptor.getValue() instanceof SseConnectionErrorStreamingEvent);
-        Assert.assertEquals(SseConnectionErrorStreamingEvent.Status.NON_REQUESTED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
-        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+        verify(mTelemetryRuntimeProducer).recordConnectionError(eq(false), anyLong());
     }
 
     @Test
     public void sseNonRecoverableConnectionErrorIsRecordedInTelemetry() {
-        setupNotification();
-
         mSseHandler.handleError(true);
 
-        ArgumentCaptor<StreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingEvent.class);
-
-        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
-        Assert.assertTrue(argumentCaptor.getValue() instanceof SseConnectionErrorStreamingEvent);
-        Assert.assertEquals(SseConnectionErrorStreamingEvent.Status.REQUESTED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
-        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+        verify(mTelemetryRuntimeProducer).recordConnectionError(eq(true), anyLong());
     }
 
     @Test
     public void incomingRuleBasedSegmentChange() {
         IncomingNotification incomingNotification =
                 new IncomingNotification(NotificationType.RULE_BASED_SEGMENT_UPDATE, "", "", 100);
-        RuleBasedSegmentChangeNotification notification = new RuleBasedSegmentChangeNotification(-1);
 
         when(mNotificationParser.parseIncoming(anyString())).thenReturn(incomingNotification);
-        when(mNotificationParser.parseRuleBasedSegmentUpdate(anyString())).thenReturn(notification);
         when(mManagerKeeper.isStreamingActive()).thenReturn(true);
 
         mSseHandler.handleIncomingMessage(buildMessage("{}"));
 
-        verify(mNotificationProcessor).process(incomingNotification);
+        verify(mUpdateListener).onUpdateNotification(incomingNotification);
     }
 
     private void setupNotification() {
