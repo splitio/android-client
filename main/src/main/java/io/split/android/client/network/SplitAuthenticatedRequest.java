@@ -8,7 +8,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class SplitAuthenticatedRequest implements AuthenticatedRequest<HttpURLConnection> {
+public class SplitAuthenticatedRequest implements AuthenticatedRequest {
 
     private final String mUrl;
     private final Map<String, String> mHeaders = new ConcurrentHashMap<>();

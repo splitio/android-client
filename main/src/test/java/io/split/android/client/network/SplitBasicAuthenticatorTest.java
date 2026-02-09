@@ -29,7 +29,7 @@ public class SplitBasicAuthenticatorTest {
     @Test
     public void callingAuthenticateReturnsCorrectHeaderInRequest() {
         SplitBasicAuthenticator authenticator = new SplitBasicAuthenticator("user", "pass", mBase64Encoder);
-        SplitAuthenticatedRequest request = authenticator.authenticate(mock(SplitAuthenticatedRequest.class));
+        AuthenticatedRequest request = authenticator.authenticate(mock(SplitAuthenticatedRequest.class));
 
         verify(request).setHeader("Proxy-Authorization", "Basic user:pass");
     }

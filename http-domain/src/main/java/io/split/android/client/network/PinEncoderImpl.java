@@ -7,7 +7,7 @@ import java.security.NoSuchAlgorithmException;
 
 import io.split.android.client.utils.logger.Logger;
 
-class PinEncoderImpl implements PinEncoder {
+public class PinEncoderImpl implements PinEncoder {
 
     @Override
     @NonNull

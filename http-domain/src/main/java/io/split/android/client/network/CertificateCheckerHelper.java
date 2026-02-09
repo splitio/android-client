@@ -15,10 +15,10 @@ import java.util.Set;
 
 import io.split.android.client.utils.logger.Logger;
 
-class CertificateCheckerHelper {
+public class CertificateCheckerHelper {
 
     @Nullable
-    static Set<CertificatePin> getPinsForHost(String pattern, Map<String, Set<CertificatePin>> configuredPins) {
+    public static Set<CertificatePin> getPinsForHost(String pattern, Map<String, Set<CertificatePin>> configuredPins) {
         Set<CertificatePin> hostPins = configuredPins.get(pattern);
         Set<CertificatePin> wildcardPins = new LinkedHashSet<>();
 
@@ -53,7 +53,7 @@ class CertificateCheckerHelper {
     }
 
     @NonNull
-    static Set<CertificatePin> getPinsFromInputStream(InputStream inputStream, PinEncoder pinEncoder) {
+    public static Set<CertificatePin> getPinsFromInputStream(InputStream inputStream, PinEncoder pinEncoder) {
         try (InputStream stream = inputStream) {
             CertificateFactory factory = CertificateFactory.getInstance("X.509");
 

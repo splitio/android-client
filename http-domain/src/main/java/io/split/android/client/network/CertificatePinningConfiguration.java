@@ -9,7 +9,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import io.split.android.client.utils.Base64Util;
 import io.split.android.client.utils.logger.Logger;
 
 public class CertificatePinningConfiguration {
@@ -160,7 +159,7 @@ public class CertificatePinningConfiguration {
         }
 
         // Meant to be used only when setting up bg sync jobs
-        void addPins(String host, Set<CertificatePin> pins) {
+        public void addPins(String host, Set<CertificatePin> pins) {
             if (host == null || host.trim().isEmpty()) {
                 Logger.e("Host cannot be null or empty. Ignoring entry");
                 return;
