@@ -1,6 +1,6 @@
 # Streaming Module
 
-Generic Server-Sent Events (SSE) client library for Android. This module is responsible for connecting to an SSE endpoint, managing the connection lifecycle, and delivering raw parsed events to the consumer. It has **no knowledge of application-level message semantics** (e.g. Split notifications, authentication, or JWT tokens).
+Generic Server-Sent Events (SSE) client library. This module is responsible for connecting to an SSE endpoint, managing the connection lifecycle, and delivering raw parsed events. It has **no knowledge of application-level message semantics** (e.g. Split notifications, authentication, or JWT tokens).
 
 ## Architecture
 
@@ -37,7 +37,7 @@ Generic Server-Sent Events (SSE) client library for Android. This module is resp
 | `EventSourceClient` | Interface for a generic SSE client. Defines `connect(URI, EventHandler)` and `disconnect()`. |
 | `EventSourceClient.EventHandler` | Callback interface with `onOpen()`, `onMessage(Map)`, and `onError(boolean)`. |
 | `EventSourceClientImpl` | Default implementation that reads an SSE stream line-by-line and dispatches parsed events. |
-| `EventStreamParser` | Parses raw SSE stream lines into field→value maps following the [W3C EventSource spec](https://www.w3.org/TR/2009/WD-eventsource-20090421/#references). |
+| `EventStreamParser` | Parses raw SSE stream lines into field→value maps. |
 
 ### SPI (Service Provider Interfaces)
 
