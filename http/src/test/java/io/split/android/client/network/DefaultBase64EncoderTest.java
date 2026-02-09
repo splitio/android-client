@@ -2,6 +2,8 @@ package io.split.android.client.network;
 
 import static org.mockito.Mockito.mockStatic;
 
+import android.util.Base64;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -9,39 +11,37 @@ import org.mockito.MockedStatic;
 
 import java.nio.charset.StandardCharsets;
 
-import io.split.android.client.utils.Base64Util;
-
 public class DefaultBase64EncoderTest {
-    
+
     private DefaultBase64Encoder encoder;
-    private MockedStatic<Base64Util> mockedBase64Util;
-    
+    private MockedStatic<Base64> mockedBase64;
+
     @Before
     public void setUp() {
         encoder = new DefaultBase64Encoder();
-        mockedBase64Util = mockStatic(Base64Util.class);
+        mockedBase64 = mockStatic(Base64.class);
     }
-    
+
     @After
     public void tearDown() {
-        mockedBase64Util.close();
+        mockedBase64.close();
     }
-    
+
     @Test
-    public void encodeStringUsesBase64Util() {
+    public void encodeStringUsesAndroidBase64() {
         String input = "test string";
-        
+
         encoder.encode(input);
-        
-        mockedBase64Util.verify(() -> Base64Util.encode(input));
+
+        mockedBase64.verify(() -> Base64.encodeToString(input.getBytes(), Base64.NO_WRAP));
     }
-    
+
     @Test
-    public void encodeByteArrayUsesBase64Util() {
+    public void encodeByteArrayUsesAndroidBase64() {
         byte[] input = "test bytes".getBytes(StandardCharsets.UTF_8);
-        
+
         encoder.encode(input);
-        
-        mockedBase64Util.verify(() -> Base64Util.encode(input));
+
+        mockedBase64.verify(() -> Base64.encodeToString(input, Base64.NO_WRAP));
     }
 }

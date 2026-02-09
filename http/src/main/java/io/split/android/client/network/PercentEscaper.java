@@ -1,6 +1,6 @@
 package io.split.android.client.network;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Based on Guava PercentEscaper
@@ -37,7 +37,7 @@ final class PercentEscaper extends UnicodeEscaper {
      * @throws IllegalArgumentException if any of the parameters were invalid
      */
     public PercentEscaper(String safeChars, boolean plusForSpace) {
-        checkNotNull(safeChars); // eager for GWT.
+        requireNonNull(safeChars); // eager for GWT.
         // Avoid any misunderstandings about the behavior of this escaper
         if (safeChars.matches(".*[0-9A-Za-z].*")) {
             throw new IllegalArgumentException(
@@ -78,7 +78,7 @@ final class PercentEscaper extends UnicodeEscaper {
      */
     @Override
     protected int nextEscapeIndex(CharSequence csq, int index, int end) {
-        checkNotNull(csq);
+        requireNonNull(csq);
         for (; index < end; index++) {
             char c = csq.charAt(index);
             if (c >= safeOctets.length || !safeOctets[c]) {
@@ -94,7 +94,7 @@ final class PercentEscaper extends UnicodeEscaper {
      */
     @Override
     public String escape(String s) {
-        checkNotNull(s);
+        requireNonNull(s);
         int slen = s.length();
         for (int index = 0; index < slen; index++) {
             char c = s.charAt(index);

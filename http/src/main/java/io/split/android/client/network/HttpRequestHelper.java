@@ -1,6 +1,5 @@
 package io.split.android.client.network;
 
-import static io.split.android.client.utils.Utils.getAsInt;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -92,11 +91,11 @@ class HttpRequestHelper {
 
     static void applyTimeouts(long readTimeout, long connectionTimeout, HttpURLConnection connection) {
         if (readTimeout > 0) {
-            connection.setReadTimeout(getAsInt(readTimeout));
+            connection.setReadTimeout((int) readTimeout);
         }
 
         if (connectionTimeout > 0) {
-            connection.setConnectTimeout(getAsInt(connectionTimeout));
+            connection.setConnectTimeout((int) connectionTimeout);
         }
     }
 

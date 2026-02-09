@@ -1,7 +1,5 @@
 package io.split.android.client.network;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.VisibleForTesting;
@@ -20,8 +18,6 @@ import java.util.Map;
 
 import javax.net.ssl.SSLSocketFactory;
 
-import io.split.android.client.utils.Base64Util;
-import io.split.android.client.utils.Utils;
 import io.split.android.client.utils.logger.Logger;
 
 public class HttpClientImpl implements HttpClient {
@@ -180,7 +176,7 @@ public class HttpClientImpl implements HttpClient {
             return null;
         } else if (proxyAuthenticator != null) {
             return new SplitUrlConnectionAuthenticator(proxyAuthenticator);
-        } else if (!Utils.isNullOrEmpty(proxy.getUsername())) {
+        } else if (proxy.getUsername() != null && !proxy.getUsername().isEmpty()) {
             return createBasicAuthenticator(proxy.getUsername(), proxy.getPassword());
         }
 
@@ -188,18 +184,7 @@ public class HttpClientImpl implements HttpClient {
     }
 
     private static SplitUrlConnectionAuthenticator createBasicAuthenticator(String username, String password) {
-        return new SplitUrlConnectionAuthenticator(new SplitBasicAuthenticator(username, password, new Base64Encoder() {
-
-            @Override
-            public String encode(String value) {
-                return Base64Util.encode(value);
-            }
-
-            @Override
-            public String encode(byte[] bytes) {
-                return Base64Util.encode(bytes);
-            }
-        }));
+        return new SplitUrlConnectionAuthenticator(new SplitBasicAuthenticator(username, password, new DefaultBase64Encoder()));
     }
 
     public static class Builder {
@@ -211,14 +196,15 @@ public class HttpClientImpl implements HttpClient {
         private long mConnectionTimeout = -1;
         private DevelopmentSslConfig mDevelopmentSslConfig = null;
         private SSLSocketFactory mSslSocketFactory = null;
-        private Context mHostAppContext;
+        @Nullable
+        private TlsUpdater mTlsUpdater;
         private UrlSanitizer mUrlSanitizer;
         private CertificatePinningConfiguration mCertificatePinningConfiguration;
         private CertificateChecker mCertificateChecker;
         private Base64Decoder mBase64Decoder = new DefaultBase64Decoder();
 
-        public Builder setContext(Context context) {
-            mHostAppContext = context;
+        public Builder setTlsUpdater(@Nullable TlsUpdater tlsUpdater) {
+            mTlsUpdater = tlsUpdater;
             return this;
         }
 
@@ -279,13 +265,13 @@ public class HttpClientImpl implements HttpClient {
 
         public HttpClient build() {
             if (mDevelopmentSslConfig == null) {
-                if (LegacyTlsUpdater.couldBeOld()) {
-                    LegacyTlsUpdater.update(mHostAppContext);
+                if (mTlsUpdater != null && mTlsUpdater.couldBeOld()) {
+                    mTlsUpdater.update();
                 }
 
                 if (mProxy != null) {
                     mSslSocketFactory = createSslSocketFactoryFromProxy(mProxy);
-                } else if (LegacyTlsUpdater.couldBeOld()) {
+                } else if (mTlsUpdater != null && mTlsUpdater.couldBeOld()) {
                     try {
                         mSslSocketFactory = new Tls12OnlySocketFactory();
                     } catch (NoSuchAlgorithmException | KeyManagementException e) {

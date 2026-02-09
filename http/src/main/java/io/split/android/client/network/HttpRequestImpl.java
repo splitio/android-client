@@ -1,6 +1,6 @@
 package io.split.android.client.network;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import static io.split.android.client.network.HttpRequestHelper.applySslConfig;
 import static io.split.android.client.network.HttpRequestHelper.applyTimeouts;
@@ -29,13 +29,18 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
-import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.utils.logger.Logger;
 
 public class HttpRequestImpl implements HttpRequest {
 
     public static final String CONTENT_TYPE = "Content-Type";
     public static final String APPLICATION_JSON_CHARSET_UTF_8 = "application/json; charset=utf-8";
+
+    /**
+     * Non-retryable status code for SSL errors.
+     * Mirrors HttpStatus.INTERNAL_NON_RETRYABLE from :main.
+     */
+    static final int NON_RETRYABLE_STATUS_CODE = 9009;
 
     private final URI mUri;
     private final String mBody;
@@ -73,11 +78,11 @@ public class HttpRequestImpl implements HttpRequest {
                     @Nullable SSLSocketFactory sslSocketFactory,
                     @NonNull UrlSanitizer urlSanitizer,
                     @Nullable CertificateChecker certificateChecker) {
-        mUri = checkNotNull(uri);
-        mHttpMethod = checkNotNull(httpMethod);
+        mUri = requireNonNull(uri);
+        mHttpMethod = requireNonNull(httpMethod);
         mBody = body;
-        mUrlSanitizer = checkNotNull(urlSanitizer);
-        mHeaders = new HashMap<>(checkNotNull(headers));
+        mUrlSanitizer = requireNonNull(urlSanitizer);
+        mHeaders = new HashMap<>(requireNonNull(headers));
         mProxy = proxy;
         mHttpProxy = httpProxy;
         mProxyAuthenticator = proxyAuthenticator;
@@ -119,7 +124,7 @@ public class HttpRequestImpl implements HttpRequest {
         } catch (ProtocolException e) {
             throw new HttpException("Http method not allowed: " + e.getLocalizedMessage());
         } catch (SSLPeerUnverifiedException e) {
-            throw new HttpException("SSL Peer Unverified: " + e.getLocalizedMessage(), HttpStatus.INTERNAL_NON_RETRYABLE.getCode());
+            throw new HttpException("SSL Peer Unverified: " + e.getLocalizedMessage(), NON_RETRYABLE_STATUS_CODE);
         } catch (IOException e) {
             throw new HttpException("Something happened while retrieving data: " + e.getLocalizedMessage());
         } finally {
@@ -146,7 +151,7 @@ public class HttpRequestImpl implements HttpRequest {
                 response = handleProxyAuthentication(response, false, wasRetried);
             }
         } catch (SSLPeerUnverifiedException e) {
-            throw new HttpException("SSL Peer Unverified: " + e.getLocalizedMessage(), HttpStatus.INTERNAL_NON_RETRYABLE.getCode());
+            throw new HttpException("SSL Peer Unverified: " + e.getLocalizedMessage(), NON_RETRYABLE_STATUS_CODE);
         } catch (IOException e) {
             throw new HttpException("Something happened while posting data: " + e.getLocalizedMessage());
         } finally {

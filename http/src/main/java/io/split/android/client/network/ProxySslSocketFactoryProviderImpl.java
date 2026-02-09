@@ -1,6 +1,6 @@
 package io.split.android.client.network;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -43,7 +43,7 @@ class ProxySslSocketFactoryProviderImpl implements ProxySslSocketFactoryProvider
     }
 
     ProxySslSocketFactoryProviderImpl(@NonNull Base64Decoder base64Decoder) {
-        mBase64Decoder = checkNotNull(base64Decoder);
+        mBase64Decoder = requireNonNull(base64Decoder);
     }
 
     @Override
