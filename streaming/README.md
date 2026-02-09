@@ -47,14 +47,6 @@ Generic Server-Sent Events (SSE) client library. This module is responsible for 
 | `StreamingTransport.StreamingConnection` | Represents an open connection that can be executed and closed. |
 | `StreamingTransport.StreamingResponse` | Wraps the HTTP response, exposing success status, HTTP code, and a `BufferedReader` for the stream. |
 
-### Utilities
-
-| Class | Description |
-|---|---|
-| `BackoffCounter` | Interface for reconnection backoff strategies. |
-| `ReconnectBackoffCounter` | Exponential backoff with jitter for reconnection delays. |
-| `FixedIntervalBackoffCounter` | Fixed-interval backoff counter. |
-
 ## Usage
 
 The host application is responsible for:
