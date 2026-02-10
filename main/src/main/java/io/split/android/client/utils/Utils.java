@@ -55,14 +55,6 @@ public class Utils {
         }
     }
 
-    public static int getAsInt(long value) {
-        if (value > Integer.MAX_VALUE) {
-            return Integer.MAX_VALUE;
-        } else {
-            return (int) value;
-        }
-    }
-
     public static <T> List<List<T>> partition(List<T> list, int size) {
         if (list == null) {
             return new ArrayList<>();

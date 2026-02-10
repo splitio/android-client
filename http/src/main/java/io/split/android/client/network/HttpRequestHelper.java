@@ -91,12 +91,19 @@ class HttpRequestHelper {
 
     static void applyTimeouts(long readTimeout, long connectionTimeout, HttpURLConnection connection) {
         if (readTimeout > 0) {
-            connection.setReadTimeout((int) readTimeout);
+            connection.setReadTimeout(getAsInt(readTimeout));
         }
 
         if (connectionTimeout > 0) {
-            connection.setConnectTimeout((int) connectionTimeout);
+            connection.setConnectTimeout(getAsInt(connectionTimeout));
         }
+    }
+
+    private static int getAsInt(long value) {
+        if (value > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        }
+        return (int) value;
     }
 
     static void applySslConfig(SSLSocketFactory sslSocketFactory, DevelopmentSslConfig developmentSslConfig, HttpURLConnection connection) {
