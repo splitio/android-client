@@ -33,6 +33,7 @@ import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.lifecycle.SplitLifecycleManagerImpl;
 import io.split.android.client.network.HttpClient;
 import io.split.android.client.network.HttpClientImpl;
+import io.split.android.client.network.LegacyTlsUpdaterAdapter;
 import io.split.android.client.service.CleanUpDatabaseTask;
 import io.split.android.client.service.SplitApiFacade;
 import io.split.android.client.service.executor.SplitSingleThreadTaskExecutor;
@@ -385,7 +386,7 @@ public class SplitFactoryImpl implements SplitFactory {
                     .setConnectionTimeout(config.connectionTimeout())
                     .setReadTimeout(config.readTimeout())
                     .setDevelopmentSslConfig(config.developmentSslConfig())
-                    .setContext(context)
+                    .setTlsUpdater(new LegacyTlsUpdaterAdapter(context))
                     .setProxyAuthenticator(config.authenticator());
             if (config.proxy() != null) {
                 builder.setProxy(config.proxy());

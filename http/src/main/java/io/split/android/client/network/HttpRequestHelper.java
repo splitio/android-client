@@ -1,6 +1,5 @@
 package io.split.android.client.network;
 
-import static io.split.android.client.utils.Utils.getAsInt;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -98,6 +97,13 @@ class HttpRequestHelper {
         if (connectionTimeout > 0) {
             connection.setConnectTimeout(getAsInt(connectionTimeout));
         }
+    }
+
+    private static int getAsInt(long value) {
+        if (value > Integer.MAX_VALUE) {
+            return Integer.MAX_VALUE;
+        }
+        return (int) value;
     }
 
     static void applySslConfig(SSLSocketFactory sslSocketFactory, DevelopmentSslConfig developmentSslConfig, HttpURLConnection connection) {

@@ -1,6 +1,6 @@
 package io.split.android.client.network;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 /**
  * Based on Guava UnicodeEscaper
@@ -14,7 +14,7 @@ abstract class UnicodeEscaper {
     protected abstract char[] escape(int cp);
 
     public String escape(String string) {
-        checkNotNull(string);
+        requireNonNull(string);
         int end = string.length();
         int index = nextEscapeIndex(string, 0, end);
         return index == end ? string : escapeSlow(string, index);
@@ -136,7 +136,7 @@ abstract class UnicodeEscaper {
      *     surrogate character at the end of the sequence
      */
     protected static int codePointAt(CharSequence seq, int index, int end) {
-        checkNotNull(seq);
+        requireNonNull(seq);
         if (index < end) {
             char c1 = seq.charAt(index++);
             if (c1 < Character.MIN_HIGH_SURROGATE || c1 > Character.MAX_LOW_SURROGATE) {

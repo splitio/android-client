@@ -2,7 +2,7 @@ package io.split.android.client.network;
 
 import static io.split.android.client.network.HttpRequestHelper.checkPins;
 import static io.split.android.client.network.HttpRequestHelper.createConnection;
-import static io.split.android.client.utils.Utils.checkNotNull;
+import static java.util.Objects.requireNonNull;
 
 import static io.split.android.client.network.HttpRequestHelper.applySslConfig;
 import static io.split.android.client.network.HttpRequestHelper.applyTimeouts;
@@ -28,7 +28,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import javax.net.ssl.SSLSocketFactory;
 
-import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.utils.logger.Logger;
 
 public class HttpStreamRequestImpl implements HttpStreamRequest {
@@ -72,11 +71,11 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
                           @Nullable HttpProxy httpProxy,
                           @Nullable ProxyCredentialsProvider proxyCredentialsProvider,
                           @Nullable ProxyCacertConnectionHandler proxyCacertConnectionHandler) {
-        mUri = checkNotNull(uri);
+        mUri = requireNonNull(uri);
         mHttpMethod = HttpMethod.GET;
         mProxy = proxy;
-        mUrlSanitizer = checkNotNull(urlSanitizer);
-        mHeaders = new HashMap<>(checkNotNull(headers));
+        mUrlSanitizer = requireNonNull(urlSanitizer);
+        mHeaders = new HashMap<>(requireNonNull(headers));
         mProxyAuthenticator = proxyAuthenticator;
         mConnectionTimeout = connectionTimeout;
         mDevelopmentSslConfig = developmentSslConfig;
@@ -141,7 +140,7 @@ public class HttpStreamRequestImpl implements HttpStreamRequest {
             throw new HttpException("Http method not allowed: " + e.getLocalizedMessage());
         } catch (SSLPeerUnverifiedException e) {
             disconnect();
-            throw new HttpException("SSL peer not verified: " + e.getLocalizedMessage(), HttpStatus.INTERNAL_NON_RETRYABLE.getCode());
+            throw new HttpException("SSL peer not verified: " + e.getLocalizedMessage(), HttpRequestImpl.NON_RETRYABLE_STATUS_CODE);
         } catch (SocketException e) {
             disconnect();
             // Let socket-related IOExceptions pass through unwrapped for consistent error handling
