@@ -5,7 +5,7 @@ import androidx.annotation.Nullable;
 
 import java.util.Map;
 
-interface AuthenticatedRequest<T> {
+public interface AuthenticatedRequest {
 
     void setHeader(@NonNull String name, @NonNull String value);
 

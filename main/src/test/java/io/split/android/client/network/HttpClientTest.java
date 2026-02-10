@@ -320,7 +320,7 @@ public class HttpClientTest {
                 .setUrlSanitizer(mUrlSanitizerMock)
                 .setProxyAuthenticator(new SplitAuthenticator() {
                     @Override
-                    public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
+                    public AuthenticatedRequest authenticate(@NonNull AuthenticatedRequest request) {
                         authLatch.countDown();
                         request.setHeader("Proxy-Authorization", "my-auth");
 
@@ -375,7 +375,7 @@ public class HttpClientTest {
                 .setUrlSanitizer(mUrlSanitizerMock)
                 .setProxyAuthenticator(new SplitAuthenticator() {
                     @Override
-                    public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
+                    public AuthenticatedRequest authenticate(@NonNull AuthenticatedRequest request) {
                         authLatch.countDown();
                         request.setHeader("Proxy-Authorization", "my-auth");
 

@@ -19,4 +19,6 @@ dependencies {
 
     testImplementation libs.junit4
     testImplementation libs.mockitoCore
+    testImplementation libs.mockitoInline
+    testImplementation libs.okhttpTls
 }

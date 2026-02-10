@@ -27,7 +27,7 @@ import io.split.android.client.SplitFactory;
 import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
 import io.split.android.client.events.SplitEvent;
-import io.split.android.client.network.SplitAuthenticatedRequest;
+import io.split.android.client.network.AuthenticatedRequest;
 import io.split.android.client.network.SplitAuthenticator;
 import io.split.android.client.service.impressions.ImpressionsMode;
 import io.split.android.client.service.synchronizer.ThreadUtils;
@@ -248,7 +248,7 @@ public class ProxyFactoryTest {
                         .serviceEndpoints(endpoints)
                         .proxyAuthenticator(new SplitAuthenticator() {
                             @Override
-                            public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
+                            public AuthenticatedRequest authenticate(@NonNull AuthenticatedRequest request) {
                                 request.setHeader("Proxy-Authorization", "Bearer 1234567890");
                                 return request;
                             }

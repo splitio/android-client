@@ -18,9 +18,9 @@ public class SplitAuthenticatorTest {
 
     @Test
     public void authenticatorModifiesHeaders() {
-        Authenticator<AuthenticatedRequest<MockRequest>> splitAuthenticator = new Authenticator<AuthenticatedRequest<MockRequest>>() {
+        Authenticator splitAuthenticator = new Authenticator() {
             @Override
-            public AuthenticatedRequest<MockRequest> authenticate(@NonNull AuthenticatedRequest<MockRequest> request) {
+            public AuthenticatedRequest authenticate(@NonNull AuthenticatedRequest request) {
                 request.setHeader("new-header", "value");
 
                 return request;
@@ -48,7 +48,7 @@ public class SplitAuthenticatorTest {
         assertEquals("value", finalHeaders.get("new-header"));
     }
 
-    private static class AuthenticatedMockRequest implements AuthenticatedRequest<MockRequest> {
+    private static class AuthenticatedMockRequest implements AuthenticatedRequest {
 
         private final MockRequest mRequest;
 

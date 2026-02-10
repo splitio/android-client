@@ -19,7 +19,7 @@ class SplitBasicAuthenticator extends SplitAuthenticator {
 
     @Nullable
     @Override
-    public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
+    public AuthenticatedRequest authenticate(@NonNull AuthenticatedRequest request) {
         String credential = basic(mUsername, mPassword);
         request.setHeader(PROXY_AUTHORIZATION_HEADER, credential);
 

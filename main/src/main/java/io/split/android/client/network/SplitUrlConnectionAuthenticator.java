@@ -12,7 +12,7 @@ class SplitUrlConnectionAuthenticator {
     }
 
     HttpURLConnection authenticate(HttpURLConnection connection) {
-        SplitAuthenticatedRequest authenticatedRequest = mProxyAuthenticator.authenticate(new SplitAuthenticatedRequest(connection));
+        AuthenticatedRequest authenticatedRequest = mProxyAuthenticator.authenticate(new SplitAuthenticatedRequest(connection));
         if (authenticatedRequest != null) {
             Map<String, String> headers = authenticatedRequest.getHeaders();
 
