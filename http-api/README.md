@@ -1,4 +1,4 @@
-# HTTP Domain module
+# HTTP API module
 
 Public contracts and configuration types for the HTTP client.
 These types are exposed to SDK consumers through the `:main` module's `api` dependency.

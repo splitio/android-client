@@ -2,7 +2,7 @@ rootProject.name = 'android-client'
 
 include ':api'
 include ':logger'
-include ':http-domain'
+include ':http-api'
 include ':http'
 include ':main'
 include ':events'

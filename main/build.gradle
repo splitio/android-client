@@ -52,7 +52,7 @@ dependencies {
     // Public api modules
     api project(':logger')
     api project(':api')
-    api project(':http-domain')
+    api project(':http-api')
     // Internal module dependencies
     implementation project(':http')
     implementation project(':events-domain')

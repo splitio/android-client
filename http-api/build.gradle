@@ -5,7 +5,7 @@ plugins {
 apply from: "$rootDir/gradle/common-android-library.gradle"
 
 android {
-    namespace 'io.split.android.client.network.domain'
+    namespace 'io.split.android.client.network.api'
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8

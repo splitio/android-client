@@ -15,7 +15,7 @@ HttpClient client = new HttpClientImpl.Builder()
 
 ### With `HttpClientConfiguration` (preferred)
 
-Bundle all settings into a single config object from `:http-domain`:
+Bundle all settings into a single config object from `:http-api`:
 
 ```java
 HttpClientConfiguration config = HttpClientConfiguration.builder()
