@@ -20,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
+import androidx.annotation.VisibleForTesting;
+
 import io.split.android.client.main.BuildConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
@@ -383,14 +385,7 @@ public class SplitFactoryImpl implements SplitFactory {
                                             @Nullable GeneralInfoStorage generalInfoStorage) {
         HttpClient defaultHttpClient;
         if (httpClient == null) {
-            HttpClientConfiguration httpConfig = HttpClientConfiguration.builder()
-                    .connectionTimeout(config.connectionTimeout())
-                    .readTimeout(config.readTimeout())
-                    .developmentSslConfig(config.developmentSslConfig())
-                    .proxy(config.proxy())
-                    .certificatePinningConfiguration(config.certificatePinningConfiguration())
-                    .proxyAuthenticator(config.authenticator())
-                    .build();
+            HttpClientConfiguration httpConfig = buildHttpClientConfiguration(config);
 
             defaultHttpClient = new HttpClientImpl.Builder()
                     .setConfiguration(httpConfig)
@@ -410,6 +405,19 @@ public class SplitFactoryImpl implements SplitFactory {
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
         return defaultHttpClient;
+    }
+
+    @VisibleForTesting
+    @NonNull
+    static HttpClientConfiguration buildHttpClientConfiguration(@NonNull SplitClientConfig config) {
+        return HttpClientConfiguration.builder()
+                .connectionTimeout(config.connectionTimeout())
+                .readTimeout(config.readTimeout())
+                .developmentSslConfig(config.developmentSslConfig())
+                .proxy(config.proxy())
+                .certificatePinningConfiguration(config.certificatePinningConfiguration())
+                .proxyAuthenticator(config.authenticator())
+                .build();
     }
 
     private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {

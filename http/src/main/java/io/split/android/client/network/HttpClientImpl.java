@@ -161,6 +161,40 @@ public class HttpClientImpl implements HttpClient {
         return mSslSocketFactory;
     }
 
+    @VisibleForTesting
+    long getReadTimeout() {
+        return mReadTimeout;
+    }
+
+    @VisibleForTesting
+    long getConnectionTimeout() {
+        return mConnectionTimeout;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    HttpProxy getHttpProxy() {
+        return mHttpProxy;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    SplitUrlConnectionAuthenticator getProxyAuthenticator() {
+        return mProxyAuthenticator;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    DevelopmentSslConfig getDevelopmentSslConfig() {
+        return mDevelopmentSslConfig;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    CertificateChecker getCertificateChecker() {
+        return mCertificateChecker;
+    }
+
     private Proxy initializeProxy(HttpProxy proxy) {
         if (proxy != null) {
             return new Proxy(
