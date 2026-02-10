@@ -5,8 +5,8 @@ import android.content.Context;
 import androidx.annotation.Nullable;
 
 /**
- * Adapter that bridges the :http module's {@link TlsUpdater} SPI with the
- * :main module's {@link LegacyTlsUpdater}.
+ * Adapter that bridges the :http module's {@link TlsUpdater} interface with the
+ * :main module's {@link LegacyTlsUpdater} class.
  */
 public class LegacyTlsUpdaterAdapter implements TlsUpdater {
 
