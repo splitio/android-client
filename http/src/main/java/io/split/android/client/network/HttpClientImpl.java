@@ -244,7 +244,7 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
-        public Builder setProxy(HttpProxy proxy) {
+        public Builder setProxy(@NonNull HttpProxy proxy) {
             mProxy = proxy;
             mProxyCredentialsProvider = proxy.getCredentialsProvider();
             return this;
@@ -355,6 +355,8 @@ public class HttpClientImpl implements HttpClient {
                     certificateChecker);
         }
 
+        // Configuration timeout values of 0 or less are intentionally ignored by
+        // setConnectionTimeout / setReadTimeout, leaving the platform default in place.
         private void applyConfiguration(@NonNull HttpClientConfiguration configuration) {
             if (mConnectionTimeout == -1) {
                 setConnectionTimeout(configuration.getConnectionTimeout());
