@@ -29,7 +29,7 @@ public class HttpProxy {
         mIsLegacy = isLegacy;
     }
 
-    public @Nullable String getHost() {
+    public @NonNull String getHost() {
         return mHost;
     }
 
@@ -61,7 +61,7 @@ public class HttpProxy {
         return mCredentialsProvider;
     }
 
-    public static Builder newBuilder(@Nullable String host, int port) {
+    public static Builder newBuilder(@NonNull String host, int port) {
         return new Builder(host, port);
     }
 
@@ -70,7 +70,7 @@ public class HttpProxy {
     }
 
     public static class Builder {
-        private final @Nullable String mHost;
+        private final @NonNull String mHost;
         private final int mPort;
         private @Nullable String mUsername;
         private @Nullable String mPassword;
@@ -80,7 +80,7 @@ public class HttpProxy {
         @Nullable
         private ProxyCredentialsProvider mCredentialsProvider;
 
-        private Builder(@Nullable String host, int port) {
+        private Builder(@NonNull String host, int port) {
             mHost = host;
             mPort = port;
         }

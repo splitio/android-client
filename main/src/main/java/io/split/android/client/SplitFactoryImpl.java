@@ -20,6 +20,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
+import androidx.annotation.VisibleForTesting;
+
 import io.split.android.client.main.BuildConfig;
 import io.split.android.client.api.Key;
 import io.split.android.client.common.CompressionUtilProvider;
@@ -32,6 +34,7 @@ import io.split.android.client.impressions.SyncImpressionListener;
 import io.split.android.client.lifecycle.SplitLifecycleManager;
 import io.split.android.client.lifecycle.SplitLifecycleManagerImpl;
 import io.split.android.client.network.HttpClient;
+import io.split.android.client.network.HttpClientConfiguration;
 import io.split.android.client.network.HttpClientImpl;
 import io.split.android.client.network.LegacyTlsUpdaterAdapter;
 import io.split.android.client.service.CleanUpDatabaseTask;
@@ -382,20 +385,12 @@ public class SplitFactoryImpl implements SplitFactory {
                                             @Nullable GeneralInfoStorage generalInfoStorage) {
         HttpClient defaultHttpClient;
         if (httpClient == null) {
-            HttpClientImpl.Builder builder = new HttpClientImpl.Builder()
-                    .setConnectionTimeout(config.connectionTimeout())
-                    .setReadTimeout(config.readTimeout())
-                    .setDevelopmentSslConfig(config.developmentSslConfig())
-                    .setTlsUpdater(new LegacyTlsUpdaterAdapter(context))
-                    .setProxyAuthenticator(config.authenticator());
-            if (config.proxy() != null) {
-                builder.setProxy(config.proxy());
-            }
-            if (config.certificatePinningConfiguration() != null) {
-                builder.setCertificatePinningConfiguration(config.certificatePinningConfiguration());
-            }
+            HttpClientConfiguration httpConfig = buildHttpClientConfiguration(config);
 
-            defaultHttpClient = builder.build();
+            defaultHttpClient = new HttpClientImpl.Builder()
+                    .setConfiguration(httpConfig)
+                    .setTlsUpdater(new LegacyTlsUpdaterAdapter(context))
+                    .build();
 
             // This should be extracted; has nothing to do with the method.
             if (config.proxy() != null && generalInfoStorage != null) {
@@ -410,6 +405,19 @@ public class SplitFactoryImpl implements SplitFactory {
         defaultHttpClient.addHeaders(factoryHelper.buildHeaders(config, apiToken));
         defaultHttpClient.addStreamingHeaders(factoryHelper.buildStreamingHeaders(apiToken));
         return defaultHttpClient;
+    }
+
+    @VisibleForTesting
+    @NonNull
+    static HttpClientConfiguration buildHttpClientConfiguration(@NonNull SplitClientConfig config) {
+        return HttpClientConfiguration.builder()
+                .connectionTimeout(config.connectionTimeout())
+                .readTimeout(config.readTimeout())
+                .developmentSslConfig(config.developmentSslConfig())
+                .proxy(config.proxy())
+                .certificatePinningConfiguration(config.certificatePinningConfiguration())
+                .proxyAuthenticator(config.authenticator())
+                .build();
     }
 
     private static String getFlagsSpec(@Nullable TestingConfig testingConfig) {

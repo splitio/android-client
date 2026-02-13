@@ -15,6 +15,8 @@ import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.dtos.KeyImpression;
+import io.split.android.client.network.CertificatePin;
+import io.split.android.client.network.CertificatePinSerializer;
 import io.split.android.client.service.impressions.KeyImpressionSerializer;
 import io.split.android.client.utils.serializer.DoubleSerializer;
 
@@ -24,6 +26,7 @@ public class Json {
             .serializeNulls()
             .registerTypeAdapter(Double.class, new DoubleSerializer())
             .registerTypeAdapter(KeyImpression.class, new KeyImpressionSerializer())
+            .registerTypeAdapter(CertificatePin.class, new CertificatePinSerializer())
             .create();
     private static volatile Gson mNonNullJson;
 

@@ -140,7 +140,7 @@ dependencies {
     include project(':events')
     include project(':events-domain')
     include project(':api')
-    include project(':http-domain')
+    include project(':http-api')
     include project(':http')
 }
 

@@ -30,7 +30,7 @@ import javax.net.ssl.SSLSocketFactory;
 
 import io.split.android.client.utils.logger.Logger;
 
-public class HttpStreamRequestImpl implements HttpStreamRequest {
+class HttpStreamRequestImpl implements HttpStreamRequest {
 
     private static final int STREAMING_READ_TIMEOUT_IN_MILLISECONDS = 80000;
 

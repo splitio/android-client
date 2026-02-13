@@ -1,6 +1,6 @@
 package io.split.android.client.network;
 
-public interface Base64Decoder {
+interface Base64Decoder {
 
     byte[] decode(String base64);
 }

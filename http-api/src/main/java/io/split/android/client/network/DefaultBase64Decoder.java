@@ -4,7 +4,7 @@ import android.util.Base64;
 
 import io.split.android.client.utils.logger.Logger;
 
-public class DefaultBase64Decoder implements Base64Decoder {
+class DefaultBase64Decoder implements Base64Decoder {
 
     @Override
     public byte[] decode(String base64) {

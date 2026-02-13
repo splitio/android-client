@@ -3,7 +3,7 @@ package io.split.android.client.network;
 /**
  * Based on Guava UrlEscapers
  */
-final class UrlEscapers {
+public final class UrlEscapers {
     private UrlEscapers() {}
 
     private static final String URL_PATH_OTHER_SAFE_CHARS_LACKING_PLUS =

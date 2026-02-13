@@ -161,6 +161,40 @@ public class HttpClientImpl implements HttpClient {
         return mSslSocketFactory;
     }
 
+    @VisibleForTesting
+    long getReadTimeout() {
+        return mReadTimeout;
+    }
+
+    @VisibleForTesting
+    long getConnectionTimeout() {
+        return mConnectionTimeout;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    HttpProxy getHttpProxy() {
+        return mHttpProxy;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    SplitUrlConnectionAuthenticator getProxyAuthenticator() {
+        return mProxyAuthenticator;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    DevelopmentSslConfig getDevelopmentSslConfig() {
+        return mDevelopmentSslConfig;
+    }
+
+    @VisibleForTesting
+    @Nullable
+    CertificateChecker getCertificateChecker() {
+        return mCertificateChecker;
+    }
+
     private Proxy initializeProxy(HttpProxy proxy) {
         if (proxy != null) {
             return new Proxy(
@@ -202,13 +236,15 @@ public class HttpClientImpl implements HttpClient {
         private CertificatePinningConfiguration mCertificatePinningConfiguration;
         private CertificateChecker mCertificateChecker;
         private Base64Decoder mBase64Decoder = new DefaultBase64Decoder();
+        @Nullable
+        private HttpClientConfiguration mConfiguration;
 
         public Builder setTlsUpdater(@Nullable TlsUpdater tlsUpdater) {
             mTlsUpdater = tlsUpdater;
             return this;
         }
 
-        public Builder setProxy(HttpProxy proxy) {
+        public Builder setProxy(@NonNull HttpProxy proxy) {
             mProxy = proxy;
             mProxyCredentialsProvider = proxy.getCredentialsProvider();
             return this;
@@ -263,7 +299,16 @@ public class HttpClientImpl implements HttpClient {
             return this;
         }
 
+        public Builder setConfiguration(@NonNull HttpClientConfiguration configuration) {
+            mConfiguration = configuration;
+            return this;
+        }
+
         public HttpClient build() {
+            if (mConfiguration != null) {
+                applyConfiguration(mConfiguration);
+            }
+
             if (mDevelopmentSslConfig == null) {
                 if (mTlsUpdater != null && mTlsUpdater.couldBeOld()) {
                     mTlsUpdater.update();
@@ -308,6 +353,29 @@ public class HttpClientImpl implements HttpClient {
                     mSslSocketFactory,
                     (mUrlSanitizer == null) ? new UrlSanitizerImpl() : mUrlSanitizer,
                     certificateChecker);
+        }
+
+        // Configuration timeout values of 0 or less are intentionally ignored by
+        // setConnectionTimeout / setReadTimeout, leaving the platform default in place.
+        private void applyConfiguration(@NonNull HttpClientConfiguration configuration) {
+            if (mConnectionTimeout == -1) {
+                setConnectionTimeout(configuration.getConnectionTimeout());
+            }
+            if (mReadTimeout == -1) {
+                setReadTimeout(configuration.getReadTimeout());
+            }
+            if (mProxy == null && configuration.getProxy() != null) {
+                setProxy(configuration.getProxy());
+            }
+            if (mCertificatePinningConfiguration == null && configuration.getCertificatePinningConfiguration() != null) {
+                setCertificatePinningConfiguration(configuration.getCertificatePinningConfiguration());
+            }
+            if (mDevelopmentSslConfig == null) {
+                setDevelopmentSslConfig(configuration.getDevelopmentSslConfig());
+            }
+            if (mProxyAuthenticator == null) {
+                setProxyAuthenticator(configuration.getProxyAuthenticator());
+            }
         }
 
         private SSLSocketFactory createSslSocketFactoryFromProxy(HttpProxy proxyParams) {
