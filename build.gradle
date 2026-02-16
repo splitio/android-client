@@ -142,6 +142,7 @@ dependencies {
     include project(':api')
     include project(':http-api')
     include project(':http')
+    include project(':streaming')
 }
 
 def javadocSourceProjects = providers.provider {

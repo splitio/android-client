@@ -1,7 +1,5 @@
 package io.split.android.client.service.sseclient.sseclient;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -10,6 +8,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -41,8 +40,8 @@ public class EventSourceClientImpl implements EventSourceClient {
 
     public EventSourceClientImpl(@NonNull StreamingTransport streamingTransport,
                                  @NonNull EventStreamParser eventStreamParser) {
-        mStreamingTransport = checkNotNull(streamingTransport);
-        mEventStreamParser = checkNotNull(eventStreamParser);
+        mStreamingTransport = Objects.requireNonNull(streamingTransport);
+        mEventStreamParser = Objects.requireNonNull(eventStreamParser);
         mStatus = new AtomicInteger(DISCONNECTED);
         mIsDisconnectCalled = new AtomicBoolean(false);
     }
