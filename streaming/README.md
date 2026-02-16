@@ -2,33 +2,7 @@
 
 Generic Server-Sent Events (SSE) client library. This module is responsible for connecting to an SSE endpoint, managing the connection lifecycle, and delivering raw parsed events. It has **no knowledge of application-level message semantics** (e.g. Split notifications, authentication, or JWT tokens).
 
-## Architecture
-
-```
-┌────────────────────────────────────────────────────────┐
-│                    Host application                    │
-│                                                        │
-│  Implements StreamingTransport to provide HTTP layer    │
-│  Calls EventSourceClient.connect(url, handler)         │
-└────────────────────┬───────────────────────────────────┘
-                     │
-       ┌─────────────▼─────────────┐
-       │     EventSourceClient     │  ← public interface
-       │    EventSourceClientImpl  │  ← implementation
-       │                           │
-       │  • Connects via Transport │
-       │  • Parses SSE frames      │
-       │  • Delivers events via    │
-       │    EventHandler callback  │
-       └─────────────┬─────────────┘
-                     │
-       ┌─────────────▼─────────────┐
-       │    StreamingTransport     │  ← SPI (implemented by host)
-       │    (spi interface)        │
-       └───────────────────────────┘
-```
-
-## Key Components
+## Components
 
 ### Public API
 
@@ -49,7 +23,7 @@ Generic Server-Sent Events (SSE) client library. This module is responsible for 
 
 ## Usage
 
-The host application is responsible for:
+The consumer is responsible for:
 
 1. **Implementing `StreamingTransport`** — wrapping its HTTP client to provide streaming connections.
 2. **Building the URL** — including any authentication tokens, query parameters, and channels.
