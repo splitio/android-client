@@ -34,9 +34,9 @@ public class EventSourceClientImpl implements EventSourceClient {
     private final AtomicBoolean mIsDisconnectCalled;
 
     @Nullable
-    private StreamingConnection mStreamingConnection;
+    private volatile StreamingConnection mStreamingConnection;
     @Nullable
-    private StreamingResponse mStreamingResponse;
+    private volatile StreamingResponse mStreamingResponse;
 
     public EventSourceClientImpl(@NonNull StreamingTransport streamingTransport,
                                  @NonNull EventStreamParser eventStreamParser) {
