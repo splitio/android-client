@@ -140,6 +140,8 @@ dependencies {
     include project(':events')
     include project(':events-domain')
     include project(':api')
+    include project(':http-api')
+    include project(':http')
 }
 
 def javadocSourceProjects = providers.provider {
