@@ -30,4 +30,4 @@ if (kotlinCompileClass != null) {
 }
 
 // Enable Jacoco coverage configuration for all Android library modules
-apply from: "$rootDir/gradle/jacoco-android.gradle"
+apply from: "$projectDir/../gradle/jacoco-android.gradle"

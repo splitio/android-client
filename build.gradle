@@ -13,7 +13,7 @@ buildscript {
 
 apply plugin: 'com.android.fused-library'
 apply plugin: 'com.vanniktech.maven.publish'
-apply from: "$rootDir/gradle/jacoco-root.gradle"
+apply from: "$projectDir/gradle/jacoco-root.gradle"
 
 ext {
     splitVersion = '5.5.0'
@@ -68,7 +68,7 @@ tasks.register('sonar') {
         if (sonarOrg) cmd.add("-Dsonar.organization=${sonarOrg}")
         cmd.add("-Dsonar.projectVersion=${splitVersion}")
         
-        def proc = new ProcessBuilder(cmd).directory(rootDir).inheritIO().start()
+        def proc = new ProcessBuilder(cmd).directory(projectDir).inheritIO().start()
         if (proc.waitFor() != 0) {
             throw new GradleException("sonar-scanner failed")
         }
