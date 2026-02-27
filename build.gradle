@@ -13,7 +13,11 @@ buildscript {
 
 apply plugin: 'com.android.fused-library'
 apply plugin: 'com.vanniktech.maven.publish'
-apply from: "$projectDir/gradle/jacoco-root.gradle"
+if (rootProject.name == 'android-client') {
+    apply from: "$projectDir/gradle/jacoco-root.gradle"
+} else {
+    logger.lifecycle("Skipping android-client root JaCoCo config in nested build: ${rootProject.name}")
+}
 
 ext {
     splitVersion = '5.5.0'
@@ -135,13 +139,20 @@ repositories {
 }
 
 dependencies {
-    include project(':main')
-    include project(':logger')
-    include project(':events')
-    include project(':events-domain')
-    include project(':api')
-    include project(':http-api')
-    include project(':http')
+    def resolveProjectPath = { String moduleName ->
+        def nestedPath = (project.path != ':') ? "${project.path}:${moduleName}" : null
+        def candidates = [":${moduleName}", nestedPath].findAll { it != null }
+        return candidates.find { findProject(it) != null }
+    }
+
+    ['main', 'logger', 'events', 'events-domain', 'api', 'http-api', 'http'].each { moduleName ->
+        def resolvedPath = resolveProjectPath(moduleName)
+        if (resolvedPath != null) {
+            include project(resolvedPath)
+        } else {
+            logger.lifecycle("Skipping fused include for '${moduleName}' because no matching project path was found.")
+        }
+    }
 }
 
 def javadocSourceProjects = providers.provider {
