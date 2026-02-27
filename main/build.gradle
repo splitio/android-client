@@ -2,14 +2,14 @@ plugins {
     id 'com.android.library'
 }
 
-apply from: "$rootDir/gradle/common-android-library.gradle"
+apply from: "$projectDir/../gradle/common-android-library.gradle"
 
 android {
     namespace 'io.split.android.client.main'
 
     defaultConfig {
         multiDexEnabled true
-        consumerProguardFiles "$rootDir/split-proguard-rules.pro"
+        consumerProguardFiles "$projectDir/../split-proguard-rules.pro"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
 
