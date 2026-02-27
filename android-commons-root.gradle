@@ -1,3 +1,1 @@
-// Minimal root build file used when android-client is included in the POC project.
-// The full android-client/build.gradle references submodules (:main, :events, etc.)
-// that are not included here, so we use this stub instead.
+// Minimal root build file used when android-client is included as a subproject.
