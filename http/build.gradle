@@ -15,8 +15,8 @@ android {
 
 dependencies {
     implementation libs.annotation
-    implementation project(':android-client:logger')
-    api project(':android-client:http-api')
+    implementation project(':logger')
+    api project(':http-api')
 
     testImplementation libs.junit4
     testImplementation libs.mockitoCore
