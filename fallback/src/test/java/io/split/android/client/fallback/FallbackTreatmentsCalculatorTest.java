@@ -10,8 +10,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.TreatmentLabels;
-
 public class FallbackTreatmentsCalculatorTest {
 
     @Test
@@ -103,7 +101,7 @@ public class FallbackTreatmentsCalculatorTest {
                 .build();
 
         FallbackTreatmentsCalculator calculator = new FallbackTreatmentsCalculatorImpl(config);
-        FallbackTreatment resolved = calculator.resolve("flagA", TreatmentLabels.EXCEPTION);
+        FallbackTreatment resolved = calculator.resolve("flagA", "exception");
 
         assertNotNull(resolved);
         assertEquals("fallback - exception", resolved.getLabel());

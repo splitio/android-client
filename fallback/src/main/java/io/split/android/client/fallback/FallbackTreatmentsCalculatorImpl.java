@@ -1,23 +1,21 @@
 package io.split.android.client.fallback;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import java.util.Map;
-
-import io.split.android.grammar.Treatments;
+import java.util.Objects;
 
 public final class FallbackTreatmentsCalculatorImpl implements FallbackTreatmentsCalculator {
 
     private static final String LABEL_PREFIX = "fallback - ";
+    private static final String CONTROL = "control";
 
     @NonNull
     private final FallbackTreatmentsConfiguration mConfig;
 
     public FallbackTreatmentsCalculatorImpl(@NonNull FallbackTreatmentsConfiguration config) {
-        mConfig = checkNotNull(config);
+        mConfig = Objects.requireNonNull(config);
     }
 
     @NonNull
@@ -40,7 +38,7 @@ public final class FallbackTreatmentsCalculatorImpl implements FallbackTreatment
         if (global != null) {
             return global.copyWithLabel(resolveLabel(label));
         }
-        return new FallbackTreatment(Treatments.CONTROL, null, label);
+        return new FallbackTreatment(CONTROL, null, label);
     }
 
     @Nullable
