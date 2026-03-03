@@ -50,13 +50,13 @@ android {
 
 dependencies {
     // Public api modules
-    api project(':logger')
-    api project(':api')
-    api project(':http-api')
-    api project(':fallback')
+    api clientModuleProject('logger')
+    api clientModuleProject('api')
+    api clientModuleProject('http-api')
+    api clientModuleProject('fallback')
     // Internal module dependencies
-    implementation project(':http')
-    implementation project(':events-domain')
+    implementation clientModuleProject('http')
+    implementation clientModuleProject('events-domain')
 
     // External dependencies
     implementation libs.roomRuntime
