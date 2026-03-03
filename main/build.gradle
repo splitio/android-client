@@ -53,6 +53,7 @@ dependencies {
     api project(':logger')
     api project(':api')
     api project(':http-api')
+    api project(':fallback')
     // Internal module dependencies
     implementation project(':http')
     implementation project(':events-domain')
