@@ -14,7 +14,7 @@ android {
 }
 
 dependencies {
-    api project(':logger')
+    api clientModuleProject('logger')
 
     implementation libs.annotation
 

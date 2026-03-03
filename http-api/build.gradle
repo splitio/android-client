@@ -15,7 +15,7 @@ android {
 
 dependencies {
     implementation libs.annotation
-    implementation project(':logger')
+    implementation clientModuleProject('logger')
 
     testImplementation libs.junit4
     testImplementation libs.mockitoCore

@@ -33,3 +33,24 @@ if (kotlinCompileClass != null) {
 if (rootProject.name == 'android-client') {
     apply from: "$projectDir/../gradle/jacoco-android.gradle"
 }
+
+/**
+ * Resolves an android-client module dependency in both layouts:
+ * - Standalone android-client root, and externally consumable
+ */
+ext.clientModuleProject = { String moduleName ->
+    def standalonePath = ":${moduleName}"
+    def parentPath = project.path.lastIndexOf(':') > 0 ? project.path.substring(0, project.path.lastIndexOf(':')) : null
+    def nestedPath = parentPath ? "${parentPath}:${moduleName}" : null
+    def candidates = [standalonePath, nestedPath].findAll { it != null }
+    def resolvedPath = candidates.find { findProject(it) != null }
+
+    if (resolvedPath == null) {
+        throw new GradleException(
+            "Could not resolve module '${moduleName}' for project '${project.path}'. " +
+                "Tried: ${candidates.join(', ')}"
+        )
+    }
+
+    return project(resolvedPath)
+}
