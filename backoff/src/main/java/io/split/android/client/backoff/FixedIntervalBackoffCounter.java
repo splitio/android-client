@@ -1,4 +1,4 @@
-package io.split.android.client.service.sseclient;
+package io.split.android.client.backoff;
 
 public class FixedIntervalBackoffCounter implements BackoffCounter {
 

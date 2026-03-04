@@ -1,8 +1,8 @@
-package io.split.android.client.service.sseclient;
+package io.split.android.client.backoff;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-public class ReconnectBackoffCounter implements BackoffCounter {
+public class ExponentialBackoffCounter implements BackoffCounter {
     private final static int MAX_TIME_LIMIT_IN_SECS = 1800; // 30 minutes (30 * 60)
     private final static int RETRY_EXPONENTIAL_BASE = 2;
     private final int mBackoffBase;
@@ -12,7 +12,7 @@ public class ReconnectBackoffCounter implements BackoffCounter {
     /**
      * @param backoffBase the base of the backoff in seconds
      */
-    public ReconnectBackoffCounter(int backoffBase) {
+    public ExponentialBackoffCounter(int backoffBase) {
         this(backoffBase, MAX_TIME_LIMIT_IN_SECS);
     }
 
@@ -20,7 +20,7 @@ public class ReconnectBackoffCounter implements BackoffCounter {
      * @param backoffBase the base of the backoff in seconds
      * @param maxTimeLimit the maximum time limit in seconds
      */
-    public ReconnectBackoffCounter(int backoffBase, int maxTimeLimit) {
+    public ExponentialBackoffCounter(int backoffBase, int maxTimeLimit) {
         mBackoffBase = backoffBase;
         mAttemptCount = new AtomicLong(0);
         mMaxTimeLimit = maxTimeLimit;
