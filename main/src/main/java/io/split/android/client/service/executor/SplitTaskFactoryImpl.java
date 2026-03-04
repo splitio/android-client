@@ -44,7 +44,7 @@ import io.split.android.client.service.splits.SplitsSyncHelper;
 import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.splits.TargetingRulesCache;
-import io.split.android.client.backoff.ReconnectBackoffCounter;
+import io.split.android.client.backoff.ExponentialBackoffCounter;
 import io.split.android.client.service.telemetry.TelemetryConfigRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryStatsRecorderTask;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
@@ -104,7 +104,7 @@ public class SplitTaskFactoryImpl implements SplitTaskFactory {
                     ruleBasedSegmentStorageProducer,
                     mSplitsStorageContainer.getGeneralInfoStorage(),
                     mTelemetryRuntimeProducer,
-                    new ReconnectBackoffCounter(1, testingConfig.getCdnBackoffTime()),
+                    new ExponentialBackoffCounter(1, testingConfig.getCdnBackoffTime()),
                     flagsSpecFromConfig,
                     targetingRulesCache);
         } else {

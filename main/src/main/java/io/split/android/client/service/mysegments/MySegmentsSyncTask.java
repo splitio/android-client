@@ -29,7 +29,7 @@ import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.backoff.BackoffCounter;
-import io.split.android.client.backoff.ReconnectBackoffCounter;
+import io.split.android.client.backoff.ExponentialBackoffCounter;
 import io.split.android.client.service.synchronizer.MySegmentsChangeChecker;
 import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.telemetry.model.OperationType;
@@ -80,7 +80,7 @@ public class MySegmentsSyncTask implements SplitTask {
                 config,
                 targetSegmentsChangeNumber,
                 targetLargeSegmentsChangeNumber,
-                new ReconnectBackoffCounter(1, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT),
+                new ExponentialBackoffCounter(1, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT),
                 ServiceConstants.ON_DEMAND_FETCH_BACKOFF_MAX_RETRIES);
     }
 

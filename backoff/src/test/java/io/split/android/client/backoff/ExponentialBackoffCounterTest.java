@@ -3,7 +3,7 @@ package io.split.android.client.backoff;
 import org.junit.Assert;
 import org.junit.Test;
 
-public class ReconnectBackoffCounterTest {
+public class ExponentialBackoffCounterTest {
 
     @Test
     public void base1() {
@@ -32,7 +32,7 @@ public class ReconnectBackoffCounterTest {
     @Test
     public void maxWaitTimeIsTakenIntoAccount() {
         int maxTimeLimit = 100;
-        BackoffCounter counter = new ReconnectBackoffCounter(1, maxTimeLimit);
+        BackoffCounter counter = new ExponentialBackoffCounter(1, maxTimeLimit);
 
         long lastTime = 0;
         for (int i = 0; i < 8; i++) {
@@ -45,7 +45,7 @@ public class ReconnectBackoffCounterTest {
     @Test
     public void defaultMaxWaitTimeIsTakenIntoAccount() {
         int maxTimeLimit = 1800;
-        BackoffCounter counter = new ReconnectBackoffCounter(1, maxTimeLimit);
+        BackoffCounter counter = new ExponentialBackoffCounter(1, maxTimeLimit);
 
         long lastTime = 0;
         for (int i = 0; i < 12; i++) {
@@ -57,7 +57,7 @@ public class ReconnectBackoffCounterTest {
 
     private void testWithBase(int base, long[] results) {
         BackoffCounter counter
-                = new ReconnectBackoffCounter(base);
+                = new ExponentialBackoffCounter(base);
         long v1 = counter.getNextRetryTime();
         long v2 = counter.getNextRetryTime();
         long v3 = counter.getNextRetryTime();
