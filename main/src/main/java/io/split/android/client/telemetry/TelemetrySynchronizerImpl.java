@@ -11,7 +11,7 @@ import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.sseclient.FixedIntervalBackoffCounter;
+import io.split.android.client.backoff.FixedIntervalBackoffCounter;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.telemetry.TelemetryTaskFactory;
 

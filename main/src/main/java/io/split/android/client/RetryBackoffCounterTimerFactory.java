@@ -1,8 +1,8 @@
 package io.split.android.client;
 
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.sseclient.FixedIntervalBackoffCounter;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.backoff.FixedIntervalBackoffCounter;
+import io.split.android.client.backoff.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 
 public class RetryBackoffCounterTimerFactory {

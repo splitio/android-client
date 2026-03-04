@@ -42,7 +42,7 @@ import io.split.android.client.service.impressions.strategy.ImpressionStrategyCo
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
 import io.split.android.client.service.mysegments.AllSegmentsResponseParser;
 import io.split.android.client.service.sseclient.EventStreamParser;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.backoff.ReconnectBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.notifications.InstantUpdateChangeNotification;

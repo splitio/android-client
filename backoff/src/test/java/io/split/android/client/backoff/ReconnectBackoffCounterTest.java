@@ -1,4 +1,4 @@
-package io.split.android.client.service.sseclient;
+package io.split.android.client.backoff;
 
 import org.junit.Assert;
 import org.junit.Test;
