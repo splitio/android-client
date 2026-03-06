@@ -1,0 +1,19 @@
+plugins {
+    id 'com.android.library'
+}
+
+apply from: "$projectDir/../gradle/common-android-library.gradle"
+
+android {
+    namespace 'io.split.android.client.tracker'
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    testImplementation libs.junit4
+    testImplementation libs.mockitoCore
+}
