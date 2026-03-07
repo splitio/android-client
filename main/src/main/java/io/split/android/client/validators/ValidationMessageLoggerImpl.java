@@ -61,7 +61,9 @@ public class ValidationMessageLoggerImpl implements ValidationMessageLogger, Tra
         if (errorInfo.isError()) {
             logError(errorInfo.getMessage(), tag);
         } else {
-            logWarning(errorInfo.getMessage(), tag);
+            for (String warning : errorInfo.getWarnings()) {
+                logWarning(warning, tag);
+            }
         }
     }
 

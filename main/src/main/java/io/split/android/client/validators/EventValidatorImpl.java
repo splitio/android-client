@@ -1,5 +1,7 @@
 package io.split.android.client.validators;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.Event;
@@ -91,11 +93,7 @@ public class EventValidatorImpl implements EventValidator, TrackerEventValidator
         if (result.isError()) {
             return new TrackerValidationError(true, result.getErrorMessage());
         }
-        StringBuilder warnings = new StringBuilder();
-        for (String warning : result.getWarnings().values()) {
-            if (warnings.length() > 0) warnings.append("; ");
-            warnings.append(warning);
-        }
-        return new TrackerValidationError(false, warnings.toString());
+        List<String> warnings = new ArrayList<>(result.getWarnings().values());
+        return new TrackerValidationError(warnings);
     }
 }
