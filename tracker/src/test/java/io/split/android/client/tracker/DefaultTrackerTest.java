@@ -8,6 +8,7 @@ import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -33,6 +34,8 @@ public class DefaultTrackerTest {
     private DefaultTracker.OnEventPush mOnEventPush;
     @Mock
     private DefaultTracker.OnTrackLatency mOnTrackLatency;
+    @Mock
+    private DefaultTracker.OnTrackException mOnTrackException;
 
     private DefaultTracker mTracker;
 
@@ -45,7 +48,7 @@ public class DefaultTrackerTest {
                 .thenReturn(TrackerPropertyValidator.TrackerPropertyResult.valid(null, 0));
 
         mTracker = new DefaultTracker(mEventValidator, mTrackerLogger, mPropertyValidator,
-                mOnEventPush, mOnTrackLatency);
+                mOnEventPush, mOnTrackLatency, mOnTrackException);
     }
 
     @Test
@@ -144,12 +147,33 @@ public class DefaultTrackerTest {
     @Test
     public void nullLatencyCallbackDoesNotCrash() {
         mTracker = new DefaultTracker(mEventValidator, mTrackerLogger, mPropertyValidator,
-                mOnEventPush, null);
+                mOnEventPush, null, null);
 
         boolean result = mTracker.track("key", "traffic", "eventType", 1.0, null, true);
 
         assertTrue(result);
         verify(mOnEventPush).accept(any());
+    }
+
+    @Test
+    public void exceptionDuringTrackingInvokesOnTrackException() {
+        doThrow(new RuntimeException("push failed")).when(mOnEventPush).accept(any());
+
+        boolean result = mTracker.track("key", "traffic", "eventType", 1.0, null, true);
+
+        assertFalse(result);
+        verify(mOnTrackException).accept();
+    }
+
+    @Test
+    public void nullExceptionCallbackDoesNotCrashOnException() {
+        mTracker = new DefaultTracker(mEventValidator, mTrackerLogger, mPropertyValidator,
+                mOnEventPush, null, null);
+        doThrow(new RuntimeException("push failed")).when(mOnEventPush).accept(any());
+
+        boolean result = mTracker.track("key", "traffic", "eventType", 1.0, null, true);
+
+        assertFalse(result);
     }
 
     // Helper matcher for verifying TrackerEvent fields

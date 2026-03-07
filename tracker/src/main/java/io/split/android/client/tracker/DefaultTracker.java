@@ -18,23 +18,31 @@ public class DefaultTracker implements Tracker {
         void accept(long latencyMs);
     }
 
+    /** Callback invoked when an exception occurs during tracking. May be null to skip telemetry. */
+    public interface OnTrackException {
+        void accept();
+    }
+
     private final TrackerEventValidator mEventValidator;
     private final TrackerLogger mTrackerLogger;
     private final TrackerPropertyValidator mPropertyValidator;
     private final OnEventPush mOnEventPush;
     private final OnTrackLatency mOnTrackLatency;
+    private final OnTrackException mOnTrackException;
     private final AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
 
     public DefaultTracker(TrackerEventValidator eventValidator,
                           TrackerLogger trackerLogger,
                           TrackerPropertyValidator propertyValidator,
                           OnEventPush onEventPush,
-                          OnTrackLatency onTrackLatency) {
+                          OnTrackLatency onTrackLatency,
+                          OnTrackException onTrackException) {
         mEventValidator = eventValidator;
         mTrackerLogger = trackerLogger;
         mPropertyValidator = propertyValidator;
         mOnEventPush = onEventPush;
         mOnTrackLatency = onTrackLatency;
+        mOnTrackException = onTrackException;
     }
 
     @Override
@@ -89,6 +97,9 @@ public class DefaultTracker implements Tracker {
             return true;
         } catch (Exception exception) {
             mTrackerLogger.e("Exception while tracking event: " + exception.getMessage(), "track");
+            if (mOnTrackException != null) {
+                mOnTrackException.accept();
+            }
         }
         return false;
     }

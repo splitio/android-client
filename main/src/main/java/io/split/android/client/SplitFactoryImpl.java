@@ -576,7 +576,8 @@ public class SplitFactoryImpl implements SplitFactory {
                                     event.setSizeInBytes(trackerEvent.sizeInBytes);
                                     mSyncManager.pushEvent(event);
                                 },
-                                latencyMs -> mTelemetryStorage.recordLatency(Method.TRACK, latencyMs));
+                                latencyMs -> mTelemetryStorage.recordLatency(Method.TRACK, latencyMs),
+                                () -> mTelemetryStorage.recordException(Method.TRACK));
                     }
                 }
             }
