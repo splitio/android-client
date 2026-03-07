@@ -3,12 +3,13 @@ package io.split.android.client;
 import java.util.HashMap;
 import java.util.Map;
 
+import io.split.android.client.tracker.TrackerPropertyValidator;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.PropertyValidator;
 import io.split.android.client.validators.ValidationConfig;
 
 
-public class PropertyValidatorImpl implements PropertyValidator {
+public class PropertyValidatorImpl implements PropertyValidator, TrackerPropertyValidator {
 
     private final static int MAX_PROPS_COUNT = 300;
     private final static int MAXIMUM_EVENT_PROPERTY_BYTES =
@@ -59,5 +60,17 @@ public class PropertyValidatorImpl implements PropertyValidator {
             valueSize = value.toString().getBytes().length;
         }
         return valueSize + key.getBytes().length;
+    }
+
+    @Override
+    public TrackerPropertyResult validate(Map<String, Object> properties, int initialSizeInBytes,
+                                          String validationTag) {
+        Result result = validate(properties, validationTag);
+        int totalSize = initialSizeInBytes + result.getSizeInBytes();
+        if (result.isValid()) {
+            return TrackerPropertyResult.valid(result.getProperties(), totalSize);
+        } else {
+            return TrackerPropertyResult.invalid(result.getErrorMessage(), totalSize);
+        }
     }
 }

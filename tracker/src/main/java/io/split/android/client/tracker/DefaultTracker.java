@@ -1,97 +1,94 @@
-package io.split.android.client;
-
-import static io.split.android.client.utils.Utils.checkNotNull;
-
-import androidx.annotation.NonNull;
+package io.split.android.client.tracker;
 
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import io.split.android.client.dtos.Event;
-import io.split.android.client.service.synchronizer.SyncManager;
-import io.split.android.client.telemetry.model.Method;
-import io.split.android.client.telemetry.storage.TelemetryStorageProducer;
-import io.split.android.client.utils.logger.Logger;
-import io.split.android.client.validators.EventValidator;
-import io.split.android.client.validators.PropertyValidator;
-import io.split.android.client.validators.ValidationErrorInfo;
-import io.split.android.client.validators.ValidationMessageLogger;
+public class DefaultTracker implements Tracker {
 
-public class EventsTrackerImpl implements EventsTracker {
-    // Estimated event size without properties
-    private final static int ESTIMATED_EVENT_SIZE_WITHOUT_PROPS = 1024;
+    // Estimated event size in bytes without properties
+    private static final int ESTIMATED_EVENT_SIZE_WITHOUT_PROPS = 1024;
 
-    private final EventValidator mEventValidator;
-    private final ValidationMessageLogger mValidationLogger;
-    private final TelemetryStorageProducer mTelemetryStorageProducer;
-    private final PropertyValidator mPropertyValidator;
-    private final SyncManager mSyncManager;
-    private final AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
-
-    public EventsTrackerImpl(@NonNull EventValidator eventValidator,
-                             @NonNull ValidationMessageLogger validationLogger,
-                             @NonNull TelemetryStorageProducer telemetryStorageProducer,
-                             @NonNull PropertyValidator eventPropertiesProcessor,
-                             @NonNull SyncManager syncManager) {
-
-        mEventValidator = checkNotNull(eventValidator);
-        mValidationLogger = checkNotNull(validationLogger);
-        mTelemetryStorageProducer = checkNotNull(telemetryStorageProducer);
-        mPropertyValidator = checkNotNull(eventPropertiesProcessor);
-        mSyncManager = checkNotNull(syncManager);
+    /** Callback invoked with the validated event when tracking succeeds. */
+    public interface OnEventPush {
+        void accept(TrackerEvent event);
     }
 
+    /** Callback invoked with the track latency in milliseconds. May be null to skip telemetry. */
+    public interface OnTrackLatency {
+        void accept(long latencyMs);
+    }
+
+    private final TrackerEventValidator mEventValidator;
+    private final TrackerLogger mTrackerLogger;
+    private final TrackerPropertyValidator mPropertyValidator;
+    private final OnEventPush mOnEventPush;
+    private final OnTrackLatency mOnTrackLatency;
+    private final AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
+
+    public DefaultTracker(TrackerEventValidator eventValidator,
+                          TrackerLogger trackerLogger,
+                          TrackerPropertyValidator propertyValidator,
+                          OnEventPush onEventPush,
+                          OnTrackLatency onTrackLatency) {
+        mEventValidator = eventValidator;
+        mTrackerLogger = trackerLogger;
+        mPropertyValidator = propertyValidator;
+        mOnEventPush = onEventPush;
+        mOnTrackLatency = onTrackLatency;
+    }
+
+    @Override
     public void enableTracking(boolean enable) {
         isTrackingEnabled.set(enable);
     }
 
+    @Override
     public boolean track(String key, String trafficType, String eventType,
                          double value, Map<String, Object> properties, boolean isSdkReady) {
-
         if (!isTrackingEnabled.get()) {
-            Logger.v("Event not tracked because tracking is disabled");
+            mTrackerLogger.v("Event not tracked because tracking is disabled");
             return false;
         }
 
         try {
             final String validationTag = "track";
 
-            Event event = new Event();
-            event.eventTypeId = eventType;
-            event.trafficTypeName = trafficType;
-            event.key = key;
-            event.value = value;
-            event.timestamp = System.currentTimeMillis();
-            event.properties = properties;
-
-            ValidationErrorInfo errorInfo = mEventValidator.validate(event, isSdkReady);
+            TrackerValidationError errorInfo = mEventValidator.validate(
+                    key, trafficType, eventType, value, properties, isSdkReady);
             if (errorInfo != null) {
-
                 if (errorInfo.isError()) {
-                    mValidationLogger.e(errorInfo, validationTag);
+                    mTrackerLogger.e(errorInfo.getMessage(), validationTag);
                     return false;
                 }
-                mValidationLogger.w(errorInfo, validationTag);
-                event.trafficTypeName = event.trafficTypeName.toLowerCase();
+                mTrackerLogger.log(errorInfo, validationTag);
+                trafficType = trafficType.toLowerCase();
             }
 
-            PropertyValidator.Result processedProperties =
-                    mPropertyValidator.validate(event.properties, validationTag);
+            TrackerPropertyValidator.TrackerPropertyResult processedProperties =
+                    mPropertyValidator.validate(properties, ESTIMATED_EVENT_SIZE_WITHOUT_PROPS, validationTag);
             if (!processedProperties.isValid()) {
                 return false;
             }
 
             long startTime = System.currentTimeMillis();
 
+            TrackerEvent event = new TrackerEvent();
+            event.eventType = eventType;
+            event.trafficType = trafficType;
+            event.key = key;
+            event.value = value;
+            event.timestamp = System.currentTimeMillis();
             event.properties = processedProperties.getProperties();
-            event.setSizeInBytes(ESTIMATED_EVENT_SIZE_WITHOUT_PROPS + processedProperties.getSizeInBytes());
-            mSyncManager.pushEvent(event);
+            event.sizeInBytes = processedProperties.getSizeInBytes();
+            mOnEventPush.accept(event);
 
-            mTelemetryStorageProducer.recordLatency(Method.TRACK, System.currentTimeMillis() - startTime);
+            if (mOnTrackLatency != null) {
+                mOnTrackLatency.accept(System.currentTimeMillis() - startTime);
+            }
 
             return true;
         } catch (Exception exception) {
-            mTelemetryStorageProducer.recordException(Method.TRACK);
+            mTrackerLogger.e("Exception while tracking event: " + exception.getMessage(), "track");
         }
         return false;
     }

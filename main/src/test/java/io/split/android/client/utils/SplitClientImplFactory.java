@@ -6,7 +6,7 @@ import androidx.annotation.NonNull;
 
 import java.util.Collections;
 
-import io.split.android.client.EventsTracker;
+import io.split.android.client.tracker.Tracker;
 import io.split.android.client.FlagSetsFilterImpl;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitClientImpl;
@@ -53,7 +53,7 @@ public class SplitClientImplFactory {
                 new ImpressionListener.NoopImpressionListener(),
                 cfg,
                 eventsManager,
-                mock(EventsTracker.class),
+                mock(Tracker.class),
                 attributesManager,
                 mock(SplitValidator.class),
                 treatmentManagerFactory.getTreatmentManager(key, eventsManager, attributesManager)
@@ -74,7 +74,7 @@ public class SplitClientImplFactory {
                 impressionListener,
                 cfg,
                 new SplitEventsManager(new SplitTaskExecutorStub(), cfg.blockUntilReady()),
-                mock(EventsTracker.class),
+                mock(Tracker.class),
                 mock(AttributesManager.class),
                 mock(SplitValidator.class),
                 mock(TreatmentManager.class)
@@ -91,7 +91,7 @@ public class SplitClientImplFactory {
                 new ImpressionListener.NoopImpressionListener(),
                 SplitClientConfig.builder().build(),
                 eventsManager,
-                mock(EventsTracker.class),
+                mock(Tracker.class),
                 mock(AttributesManager.class),
                 mock(SplitValidator.class),
                 mock(TreatmentManager.class)

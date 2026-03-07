@@ -1,13 +1,17 @@
 package io.split.android.client.validators;
 
+import java.util.Map;
+
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.tracker.TrackerEventValidator;
+import io.split.android.client.tracker.TrackerValidationError;
 import io.split.android.client.utils.Utils;
 
 /**
  * Contains func an instance of Event class.
  */
-public class EventValidatorImpl implements EventValidator {
+public class EventValidatorImpl implements EventValidator, TrackerEventValidator {
 
     private final String TYPE_REGEX = ValidationConfig.getInstance().getTrackEventNamePattern();
     private KeyValidator mKeyValidator;
@@ -68,5 +72,30 @@ public class EventValidatorImpl implements EventValidator {
         }
 
         return errorInfo;
+    }
+
+    @Override
+    public TrackerValidationError validate(String key, String trafficTypeName, String eventTypeId,
+                                           Double value, Map<String, Object> properties, boolean isSdkReady) {
+        Event event = new Event();
+        event.key = key;
+        event.trafficTypeName = trafficTypeName;
+        event.eventTypeId = eventTypeId;
+        event.value = (value != null) ? value : 0.0;
+        event.properties = properties;
+
+        ValidationErrorInfo result = validate(event, isSdkReady);
+        if (result == null) {
+            return null;
+        }
+        if (result.isError()) {
+            return new TrackerValidationError(true, result.getErrorMessage());
+        }
+        StringBuilder warnings = new StringBuilder();
+        for (String warning : result.getWarnings().values()) {
+            if (warnings.length() > 0) warnings.append("; ");
+            warnings.append(warning);
+        }
+        return new TrackerValidationError(false, warnings.toString());
     }
 }

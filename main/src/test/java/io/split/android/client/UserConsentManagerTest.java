@@ -17,6 +17,7 @@ import io.split.android.client.service.synchronizer.SyncManager;
 import io.split.android.client.shared.UserConsent;
 import io.split.android.client.storage.events.EventsStorage;
 import io.split.android.client.storage.impressions.ImpressionsStorage;
+import io.split.android.client.tracker.Tracker;
 import io.split.android.fake.SplitTaskExecutorStub;
 
 public class UserConsentManagerTest {
@@ -30,7 +31,7 @@ public class UserConsentManagerTest {
     @Mock
     private SyncManager mSyncManager;
     @Mock
-    private EventsTracker mEventsTracker;
+    private Tracker mEventsTracker;
     @Mock
     private SplitFactoryImpl.EventsTrackerProvider mEventsTrackerProvider;
     @Mock

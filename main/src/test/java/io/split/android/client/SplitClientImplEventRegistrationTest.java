@@ -22,6 +22,7 @@ import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.shared.SplitClientContainer;
+import io.split.android.client.tracker.Tracker;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
@@ -38,7 +39,7 @@ public class SplitClientImplEventRegistrationTest {
     @Mock
     private ImpressionListener impressionListener;
     @Mock
-    private EventsTracker eventsTracker;
+    private Tracker eventsTracker;
     @Mock
     private AttributesManager attributesManager;
     @Mock

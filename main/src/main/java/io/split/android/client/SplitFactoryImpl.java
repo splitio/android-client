@@ -70,11 +70,15 @@ import io.split.android.client.storage.db.StorageFactory;
 import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.TelemetrySynchronizer;
+import io.split.android.client.dtos.Event;
+import io.split.android.client.telemetry.model.Method;
 import io.split.android.client.telemetry.storage.TelemetryStorage;
+import io.split.android.client.tracker.DefaultTracker;
+import io.split.android.client.tracker.Tracker;
+import io.split.android.client.tracker.TrackerEvent;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.ApiKeyValidator;
 import io.split.android.client.validators.ApiKeyValidatorImpl;
-import io.split.android.client.validators.EventValidator;
 import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
@@ -545,7 +549,7 @@ public class SplitFactoryImpl implements SplitFactory {
         private final SplitsStorage mSplitsStorage;
         private final TelemetryStorage mTelemetryStorage;
         private final SyncManager mSyncManager;
-        private volatile EventsTracker mEventsTracker;
+        private volatile Tracker mEventsTracker;
 
         public EventsTrackerProvider(SplitsStorage splitsStorage, TelemetryStorage telemetryStorage, SyncManager syncManager) {
             mSplitsStorage = splitsStorage;
@@ -553,13 +557,26 @@ public class SplitFactoryImpl implements SplitFactory {
             mSyncManager = syncManager;
         }
 
-        public EventsTracker getEventsTracker() {
+        public Tracker getEventsTracker() {
             if (mEventsTracker == null) {
                 synchronized (this) {
                     if (mEventsTracker == null) {
-                        EventValidator eventsValidator = new EventValidatorImpl(new KeyValidatorImpl(), mSplitsStorage);
-                        mEventsTracker = new EventsTrackerImpl(eventsValidator, new ValidationMessageLoggerImpl(), mTelemetryStorage,
-                                new PropertyValidatorImpl(), mSyncManager);
+                        mEventsTracker = new DefaultTracker(
+                                new EventValidatorImpl(new KeyValidatorImpl(), mSplitsStorage),
+                                new ValidationMessageLoggerImpl(),
+                                new PropertyValidatorImpl(),
+                                trackerEvent -> {
+                                    Event event = new Event();
+                                    event.eventTypeId = trackerEvent.eventType;
+                                    event.trafficTypeName = trackerEvent.trafficType;
+                                    event.key = trackerEvent.key;
+                                    event.value = trackerEvent.value;
+                                    event.timestamp = trackerEvent.timestamp;
+                                    event.properties = trackerEvent.properties;
+                                    event.setSizeInBytes(trackerEvent.sizeInBytes);
+                                    mSyncManager.pushEvent(event);
+                                },
+                                latencyMs -> mTelemetryStorage.recordLatency(Method.TRACK, latencyMs));
                     }
                 }
             }
