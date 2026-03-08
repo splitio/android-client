@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.storage.common.PersistentStorage;
 import io.split.android.client.storage.common.Storage;
-import io.split.android.client.storage.common.StoragePusher;
+import io.split.android.client.submitter.StoragePusher;
 import io.split.android.client.utils.logger.Logger;
 
 public class ImpressionsStorage implements Storage<KeyImpression>, StoragePusher<KeyImpression> {

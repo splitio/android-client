@@ -1,7 +1,6 @@
-package io.split.android.client.service.synchronizer;
+package io.split.android.client.submitter;
 
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
-import io.split.android.client.storage.common.InBytesSizable;
 
 public interface RecorderSyncHelper<T extends InBytesSizable> extends SplitTaskExecutionListener {
     boolean pushAndCheckIfFlushNeeded(T entity);
