@@ -54,8 +54,8 @@ dependencies {
     api clientModuleProject('api')
     api clientModuleProject('http-api')
     api clientModuleProject('fallback')
-    api clientModuleProject('backoff')
-    api clientModuleProject('tracker')
+    implementation clientModuleProject('backoff')
+    implementation clientModuleProject('tracker')
     // Internal module dependencies
     implementation clientModuleProject('http')
     implementation clientModuleProject('events-domain')
