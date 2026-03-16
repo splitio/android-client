@@ -122,21 +122,9 @@ public abstract class RecorderTask<T, R> implements SplitTask {
     }
 
     /**
-     * Transform storage items into the submission payload.
-     * <p>
-     * Default implementation casts the list directly to R — works when T and R are the same
-     * type (e.g., {@code List<KeyImpression>} to {@code List<KeyImpression>}).
-     * Override this for tasks that need data transformation before submission
-     * (e.g., UniqueKeys deduplication, ImpressionsCount wrapping).
-     * <p>
-     * <strong>WARNING:</strong> Subclasses where T and R are different types MUST override this
-     * method. The default unchecked cast will throw a {@link ClassCastException} at runtime if T
-     * and R differ. Failing to override in that case is a programming error.
+     * Transform storage items into the submission payload before submitting.
      */
-    @SuppressWarnings("unchecked")
-    protected R transformForSubmission(List<T> items) {
-        return (R) items;
-    }
+    protected abstract R transformForSubmission(List<T> items);
 
     /**
      * Estimate the byte size of one storage item for tracking non-sent bytes.

@@ -31,6 +31,11 @@ public class EventsRecorderTask extends RecorderTask<Event, List<Event>> {
     }
 
     @Override
+    protected List<Event> transformForSubmission(List<Event> items) {
+        return items;
+    }
+
+    @Override
     protected long estimateItemSize(Event item) {
         return item.getSizeInBytes();
     }

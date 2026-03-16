@@ -523,7 +523,7 @@ public class RecorderTaskTest {
 
     /**
      * Minimal concrete subclass of {@link RecorderTask} for testing.
-     * T = String, R = List&lt;String&gt; (identity transform via default unchecked cast).
+     * T = String, R = List&lt;String&gt; (identity transform — same type).
      */
     private static class SimpleRecorderTask extends RecorderTask<String, List<String>> {
 
@@ -534,6 +534,11 @@ public class RecorderTaskTest {
                            RecorderTelemetry telemetry,
                            int failingChunkSize) {
             super(storage, submitter, batchSize, taskType, telemetry, failingChunkSize);
+        }
+
+        @Override
+        protected List<String> transformForSubmission(List<String> items) {
+            return items;
         }
     }
 

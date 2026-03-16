@@ -32,6 +32,11 @@ public class ImpressionsRecorderTask extends RecorderTask<KeyImpression, List<Ke
     }
 
     @Override
+    protected List<KeyImpression> transformForSubmission(List<KeyImpression> items) {
+        return items;
+    }
+
+    @Override
     protected long estimateItemSize(KeyImpression item) {
         return mEstimatedSizeInBytes;
     }
