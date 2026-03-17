@@ -1,10 +1,10 @@
 # submitter
 
-Generic batch recorder task abstraction for the Split Android SDK.
+Generic batch recorder task abstraction.
 
 ## Purpose
 
-Encapsulates the logic for submitting batched data (such as impressions and events) to the Split platform. It provides a reusable abstraction for recorder tasks, decoupled from the SDK's internal storage and networking layers — dependencies are injected via callbacks.
+Encapsulates the logic for submitting batched data (such as impressions and events) to the backend. It provides a reusable abstraction for recorder tasks, decoupled from the SDK's internal storage and networking layers. Dependencies are injected via callbacks.
 
 ## Design notes
 
