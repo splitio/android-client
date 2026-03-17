@@ -12,7 +12,7 @@ import io.split.android.client.SplitFilter;
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.utils.logger.Logger;
 

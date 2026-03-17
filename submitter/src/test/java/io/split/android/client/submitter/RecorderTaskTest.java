@@ -29,7 +29,7 @@ import io.split.android.client.service.executor.SplitTaskType;
 public class RecorderTaskTest {
 
     private static final int BATCH_SIZE = 10;
-    private static final SplitTaskType TASK_TYPE = SplitTaskType.IMPRESSIONS_RECORDER;
+    private static final SplitTaskType TASK_TYPE = new SplitTaskType() {};
 
     private RecorderStorage<String> mStorage;
     private RecorderSubmitter<List<String>> mSubmitter;

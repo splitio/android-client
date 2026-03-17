@@ -34,7 +34,7 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFilter;
 import io.split.android.client.network.CertificatePinningConfiguration;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;
 import io.split.android.client.service.workmanager.ImpressionsRecorderWorker;

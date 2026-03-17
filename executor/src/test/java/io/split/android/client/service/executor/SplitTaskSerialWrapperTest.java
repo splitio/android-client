@@ -12,13 +12,17 @@ import java.util.List;
 
 public class SplitTaskSerialWrapperTest {
 
+    private static final SplitTaskType TASK_TYPE_A = new SplitTaskType() {};
+    private static final SplitTaskType TASK_TYPE_B = new SplitTaskType() {};
+    private static final SplitTaskType TASK_TYPE_C = new SplitTaskType() {};
+
     @Test
     public void successfulStatusContainsResultsOfEveryTask() {
         SplitTask task1 = mock(SplitTask.class);
         SplitTask task2 = mock(SplitTask.class);
 
-        when(task1.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_CONFIG_TASK));
-        when(task2.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_STATS_TASK));
+        when(task1.execute()).thenReturn(SplitTaskExecutionInfo.success(TASK_TYPE_A));
+        when(task2.execute()).thenReturn(SplitTaskExecutionInfo.success(TASK_TYPE_B));
 
         SplitTaskSerialWrapper wrapper = new SplitTaskSerialWrapper(task1, task2);
 
@@ -27,10 +31,10 @@ public class SplitTaskSerialWrapperTest {
         List<SplitTaskExecutionInfo> results = (List<SplitTaskExecutionInfo>) executionInfo.getObjectValue("serial_task_results");
         assertEquals(SplitTaskExecutionStatus.SUCCESS, executionInfo.getStatus());
         assertEquals(2, results.size());
-        assertEquals(SplitTaskType.TELEMETRY_CONFIG_TASK, results.get(0).getTaskType());
+        assertEquals(TASK_TYPE_A, results.get(0).getTaskType());
         assertEquals(SplitTaskExecutionStatus.SUCCESS, results.get(0).getStatus());
 
-        assertEquals(SplitTaskType.TELEMETRY_STATS_TASK, results.get(1).getTaskType());
+        assertEquals(TASK_TYPE_B, results.get(1).getTaskType());
         assertEquals(SplitTaskExecutionStatus.SUCCESS, results.get(1).getStatus());
     }
 
@@ -40,9 +44,9 @@ public class SplitTaskSerialWrapperTest {
         SplitTask task2 = mock(SplitTask.class);
         SplitTask task3 = mock(SplitTask.class);
 
-        when(task1.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_CONFIG_TASK));
-        when(task2.execute()).thenReturn(SplitTaskExecutionInfo.error(SplitTaskType.TELEMETRY_STATS_TASK));
-        when(task3.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER));
+        when(task1.execute()).thenReturn(SplitTaskExecutionInfo.success(TASK_TYPE_A));
+        when(task2.execute()).thenReturn(SplitTaskExecutionInfo.error(TASK_TYPE_B));
+        when(task3.execute()).thenReturn(SplitTaskExecutionInfo.success(TASK_TYPE_C));
 
         SplitTaskSerialWrapper wrapper = new SplitTaskSerialWrapper(task1, task2, task3);
 
@@ -51,10 +55,10 @@ public class SplitTaskSerialWrapperTest {
         List<SplitTaskExecutionInfo> results = (List<SplitTaskExecutionInfo>) executionInfo.getObjectValue("serial_task_results");
         assertEquals(SplitTaskExecutionStatus.ERROR, executionInfo.getStatus());
         assertEquals(2, results.size());
-        assertEquals(SplitTaskType.TELEMETRY_CONFIG_TASK, results.get(0).getTaskType());
+        assertEquals(TASK_TYPE_A, results.get(0).getTaskType());
         assertEquals(SplitTaskExecutionStatus.SUCCESS, results.get(0).getStatus());
 
-        assertEquals(SplitTaskType.TELEMETRY_STATS_TASK, results.get(1).getTaskType());
+        assertEquals(TASK_TYPE_B, results.get(1).getTaskType());
         assertEquals(SplitTaskExecutionStatus.ERROR, results.get(1).getStatus());
     }
 
@@ -64,9 +68,9 @@ public class SplitTaskSerialWrapperTest {
         SplitTask task2 = mock(SplitTask.class);
         SplitTask task3 = mock(SplitTask.class);
 
-        when(task1.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_CONFIG_TASK));
-        when(task2.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_STATS_TASK));
-        when(task3.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER));
+        when(task1.execute()).thenReturn(SplitTaskExecutionInfo.success(TASK_TYPE_A));
+        when(task2.execute()).thenReturn(SplitTaskExecutionInfo.success(TASK_TYPE_B));
+        when(task3.execute()).thenReturn(SplitTaskExecutionInfo.success(TASK_TYPE_C));
 
         SplitTaskSerialWrapper wrapper = new SplitTaskSerialWrapper(task1, task2, task3);
 
@@ -84,10 +88,10 @@ public class SplitTaskSerialWrapperTest {
         SplitTask task3 = mock(SplitTask.class);
         SplitTask task4 = mock(SplitTask.class);
 
-        when(task1.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_CONFIG_TASK));
-        when(task2.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.TELEMETRY_STATS_TASK));
-        when(task3.execute()).thenReturn(SplitTaskExecutionInfo.error(SplitTaskType.IMPRESSIONS_RECORDER));
-        when(task4.execute()).thenReturn(SplitTaskExecutionInfo.success(SplitTaskType.IMPRESSIONS_RECORDER));
+        when(task1.execute()).thenReturn(SplitTaskExecutionInfo.success(TASK_TYPE_A));
+        when(task2.execute()).thenReturn(SplitTaskExecutionInfo.success(TASK_TYPE_B));
+        when(task3.execute()).thenReturn(SplitTaskExecutionInfo.error(TASK_TYPE_C));
+        when(task4.execute()).thenReturn(SplitTaskExecutionInfo.success(TASK_TYPE_C));
 
         SplitTaskSerialWrapper wrapper = new SplitTaskSerialWrapper(task1, task2, task3, task4);
         wrapper.execute();

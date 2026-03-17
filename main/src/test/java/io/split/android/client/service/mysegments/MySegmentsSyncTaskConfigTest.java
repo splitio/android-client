@@ -5,7 +5,7 @@ import static org.junit.Assert.assertEquals;
 import org.junit.Test;
 
 import io.split.android.client.events.SplitInternalEvent;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.telemetry.model.OperationType;
 
 public class MySegmentsSyncTaskConfigTest {

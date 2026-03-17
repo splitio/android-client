@@ -27,7 +27,7 @@ import io.split.android.client.common.CompressionUtilProvider;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.service.rules.RuleBasedSegmentInPlaceUpdateTask;
 import io.split.android.client.service.splits.SplitInPlaceUpdateTask;
 import io.split.android.client.service.sseclient.notifications.InstantUpdateChangeNotification;

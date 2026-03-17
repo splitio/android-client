@@ -6,7 +6,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo.DO_NOT_RE
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
 import io.split.android.client.service.executor.SplitTaskSerialWrapper
-import io.split.android.client.service.executor.SplitTaskType
+import io.split.android.client.service.SplitTaskType
 import io.split.android.client.service.impressions.*
 import io.split.android.client.service.impressions.unique.SaveUniqueImpressionsTask
 import io.split.android.client.service.impressions.unique.UniqueKeysRecorderTask

@@ -25,7 +25,7 @@ import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpStatus;
