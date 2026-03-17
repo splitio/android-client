@@ -5,7 +5,7 @@ plugins {
 apply from: "$projectDir/../gradle/common-android-library.gradle"
 
 android {
-    namespace 'io.split.android.client.submitter'
+    namespace 'io.split.android.client.executor'
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
@@ -14,9 +14,8 @@ android {
 }
 
 dependencies {
-    implementation clientModuleProject('executor')
-    implementation clientModuleProject('logger')
     implementation libs.annotation
+    implementation clientModuleProject('logger')
 
     testImplementation libs.junit4
     testImplementation libs.mockitoCore
