@@ -1,5 +1,7 @@
 package io.split.android.client;
 
+import io.split.android.client.validators.PropertyValidatorAdapter;
+import io.split.android.client.validators.PropertyValidatorImpl;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -78,7 +80,7 @@ public class TreatmentManagerTelemetryTest {
                 mFlagSetsFilter,
                 mSplitsStorage, new ValidationMessageLoggerImpl(),
                 new FlagSetsValidatorImpl(),
-                new PropertyValidatorImpl(),
+                new PropertyValidatorAdapter(new PropertyValidatorImpl(new ValidationMessageLoggerImpl())),
                 new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build()));
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));

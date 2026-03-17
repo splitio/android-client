@@ -19,11 +19,11 @@ public class ValidationErrorInfo {
     private Map<Integer, String> mWarnings = new HashMap<>();
 
     @SuppressWarnings("SameParameterValue")
-    ValidationErrorInfo(int code, String message) {
+    public ValidationErrorInfo(int code, String message) {
         this(code, message, false);
     }
 
-    ValidationErrorInfo(int code, String message, boolean isWarning) {
+    public ValidationErrorInfo(int code, String message, boolean isWarning) {
         if(!isWarning){
             mError = code;
             mErrorMessage = message;

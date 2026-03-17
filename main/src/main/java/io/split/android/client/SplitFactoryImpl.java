@@ -82,7 +82,9 @@ import io.split.android.client.validators.ApiKeyValidatorImpl;
 import io.split.android.client.validators.EventValidatorImpl;
 import io.split.android.client.validators.KeyValidator;
 import io.split.android.client.validators.KeyValidatorImpl;
+import io.split.android.client.validators.PropertyValidatorImpl;
 import io.split.android.client.validators.SplitValidatorImpl;
+import io.split.android.client.validators.TrafficTypeValidatorImpl;
 import io.split.android.client.validators.ValidationConfig;
 import io.split.android.client.validators.ValidationErrorInfo;
 import io.split.android.client.validators.ValidationMessageLogger;
@@ -562,9 +564,14 @@ public class SplitFactoryImpl implements SplitFactory {
                 synchronized (this) {
                     if (mEventsTracker == null) {
                         mEventsTracker = new DefaultTracker(
-                                new EventValidatorImpl(new KeyValidatorImpl(), mSplitsStorage),
+                                new EventValidatorImpl(
+                                        new KeyValidatorImpl(),
+                                        new TrafficTypeValidatorImpl(mSplitsStorage)
+                                ),
                                 new ValidationMessageLoggerImpl(),
-                                new PropertyValidatorImpl(),
+                                new PropertyValidatorImpl(
+                                        new ValidationMessageLoggerImpl()
+                                ),
                                 trackerEvent -> {
                                     Event event = new Event();
                                     event.eventTypeId = trackerEvent.eventType;
