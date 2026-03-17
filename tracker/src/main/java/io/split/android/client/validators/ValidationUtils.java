@@ -4,9 +4,6 @@ import androidx.annotation.Nullable;
 
 /**
  * Utility methods for validator implementations.
- * <p>
- * This class provides helper methods used by validators to avoid depending on
- * the main module's Utils class.
  */
 public class ValidationUtils {
 
@@ -21,6 +18,6 @@ public class ValidationUtils {
     }
 
     private ValidationUtils() {
-        // Utility class, prevent instantiation
+        // Utility class
     }
 }

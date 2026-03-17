@@ -14,7 +14,7 @@ import io.split.android.client.tracker.TrackerValidationError;
 public class EventValidatorImpl implements TrackerEventValidator {
 
     private final String TYPE_REGEX = ValidationConfig.getInstance().getTrackEventNamePattern();
-    private KeyValidator mKeyValidator;
+    private final KeyValidator mKeyValidator;
     private final TrafficTypeValidator mTrafficTypeValidator;
 
     public EventValidatorImpl(KeyValidator keyValidator, TrafficTypeValidator trafficTypeValidator) {

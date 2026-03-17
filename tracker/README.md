@@ -1,10 +1,10 @@
 # tracker
 
-Self-contained event-tracking module for the Split Android SDK.
+Self-contained event-tracking module.
 
 ## Purpose
 
-Encapsulates the logic for validating and dispatching track events. It is intentionally decoupled from the SDK's internal networking, storage, and telemetry layers — dependencies are injected via callbacks.
+Encapsulates the logic for validating and dispatching track events. Dependencies are injected via callbacks.
 
 ## Public API
 
@@ -36,9 +36,3 @@ new DefaultTracker(
 ```
 
 The `onTrackLatency` callback is optional (pass `null` to skip telemetry).
-
-## Design notes
-
-- `TrackerEvent` is a plain domain object separate from the networking DTO (`Event` in `main/dtos/`). The caller converts between them in the `onEventPush` callback.
-- Validator adapters (`EventValidatorImpl`, `PropertyValidatorImpl`, `ValidationMessageLoggerImpl`) implement both the original `main/` interfaces and the tracker interfaces, preserving existing behaviour.
-- No dependency on `SyncManager`, `TelemetryStorageProducer`, or any `main/` internals.

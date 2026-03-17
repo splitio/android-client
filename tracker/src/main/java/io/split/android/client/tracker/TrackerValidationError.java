@@ -11,14 +11,12 @@ public class TrackerValidationError {
     private final String mMessage;
     private final List<String> mWarnings;
 
-    /** Constructor for error results. */
     public TrackerValidationError(boolean isError, String message) {
         mIsError = isError;
         mMessage = message;
         mWarnings = Collections.emptyList();
     }
 
-    /** Constructor for warning results with multiple individual warnings. */
     public TrackerValidationError(List<String> warnings) {
         mIsError = false;
         mMessage = null;
