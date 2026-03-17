@@ -4,8 +4,6 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import io.split.android.client.utils.Utils;
-
 public class KeyValidatorTest {
 
     private KeyValidator validator;
@@ -60,7 +58,7 @@ public class KeyValidatorTest {
 
     @Test
     public void testInvalidLongMatchingKey() {
-        ValidationErrorInfo errorInfo = validator.validate(Utils.repeat("p", 256), null);
+        ValidationErrorInfo errorInfo = validator.validate(repeat("p", 256), null);
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
@@ -87,10 +85,18 @@ public class KeyValidatorTest {
 
     @Test
     public void testInvalidLongBucketingKey() {
-        ValidationErrorInfo errorInfo = validator.validate("key1", Utils.repeat("p", 256));
+        ValidationErrorInfo errorInfo = validator.validate("key1", repeat("p", 256));
 
         Assert.assertNotNull(errorInfo);
         Assert.assertTrue(errorInfo.isError());
         Assert.assertEquals("bucketing key too long - must be " + ValidationConfig.getInstance().getMaximumKeyLength() + " characters or less", errorInfo.getErrorMessage());
+    }
+
+    private String repeat(String str, int count) {
+        StringBuilder builder = new StringBuilder(str.length() * count);
+        for (int i = 0; i < count; i++) {
+            builder.append(str);
+        }
+        return builder.toString();
     }
 }

@@ -16,7 +16,8 @@ import java.util.Set;
 import io.split.android.client.EvaluationOptions;
 import io.split.android.client.EvaluatorImpl;
 import io.split.android.client.FlagSetsFilter;
-import io.split.android.client.PropertyValidatorImpl;
+import io.split.android.client.validators.PropertyValidatorImpl;
+import io.split.android.client.validators.PropertyValidatorAdapter;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
@@ -87,7 +88,9 @@ public final class LocalhostSplitClient implements SplitClient {
                 new SplitValidatorImpl(), getImpressionsListener(splitClientConfig),
                 splitClientConfig.labelsEnabled(), eventsManager, attributesManager, attributesMerger,
                 telemetryStorageProducer, flagSetsFilter, splitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(),
-                new PropertyValidatorImpl(), mFallbackTreatmentsCalculator);
+                new PropertyValidatorAdapter(
+                        new PropertyValidatorImpl(new ValidationMessageLoggerImpl())),
+                mFallbackTreatmentsCalculator);
     }
 
     @Override

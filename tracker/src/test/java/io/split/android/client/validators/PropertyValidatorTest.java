@@ -1,4 +1,6 @@
-package io.split.android.client.events;
+package io.split.android.client.validators;
+
+import static org.mockito.Mockito.mock;
 
 import org.junit.Assert;
 import org.junit.Before;
@@ -7,15 +9,12 @@ import org.junit.Test;
 import java.util.HashMap;
 import java.util.Map;
 
-import io.split.android.client.PropertyValidatorImpl;
-import io.split.android.client.dtos.Split;
-import io.split.android.client.utils.Utils;
-import io.split.android.client.validators.PropertyValidator;
-import io.split.android.client.validators.ValidationConfig;
+import io.split.android.client.tracker.TrackerLogger;
+import io.split.android.client.tracker.TrackerPropertyValidator;
 
 public class PropertyValidatorTest {
 
-    private final PropertyValidator processor = new PropertyValidatorImpl();
+    private final TrackerPropertyValidator processor = new PropertyValidatorImpl(mock(TrackerLogger.class));
     private final static long MAX_BYTES = ValidationConfig.getInstance().getMaximumEventPropertyBytes();
 
     @Before
@@ -28,12 +27,20 @@ public class PropertyValidatorTest {
         int maxCount = (int) (MAX_BYTES / 1024);
         int count = 1;
         while (count <= maxCount) {
-            properties.put("key" + count, Utils.repeat("a", 1021)); // 1025 bytes
+            properties.put("key" + count, repeat("a", 1021)); // 1025 bytes
             count++;
         }
-        PropertyValidator.Result result = validate(properties);
+        TrackerPropertyValidator.TrackerPropertyResult result = validate(properties);
 
         Assert.assertFalse(result.isValid());
+    }
+
+    private String repeat(String str, int count) {
+        StringBuilder builder = new StringBuilder(str.length() * count);
+        for (int i = 0; i < count; i++) {
+            builder.append(str);
+        }
+        return builder.toString();
     }
 
     @Test
@@ -42,10 +49,11 @@ public class PropertyValidatorTest {
         for (int i = 0; i < 10; i++) {
             properties.put("key" + i, "the value");
         }
+        // Add invalid property types (objects that are not Number, Boolean, or String)
         for (int i = 0; i < 10; i++) {
-            properties.put("key" + i, new Split());
+            properties.put("key" + i, new Object());
         }
-        PropertyValidator.Result result = validate(properties);
+        TrackerPropertyValidator.TrackerPropertyResult result = validate(properties);
 
         Assert.assertTrue(result.isValid());
         Assert.assertEquals(10, result.getProperties().size());
@@ -60,7 +68,7 @@ public class PropertyValidatorTest {
         for (int i = 10; i < 20; i++) {
             properties.put("key" + i + 10, null);
         }
-        PropertyValidator.Result result = validate(properties);
+        TrackerPropertyValidator.TrackerPropertyResult result = validate(properties);
 
         Assert.assertTrue(result.isValid());
         Assert.assertEquals(20, result.getProperties().size());
@@ -72,13 +80,13 @@ public class PropertyValidatorTest {
         for (int i = 0; i < 10; i++) {
             properties.put("k" + i, "10 bytes");
         }
-        PropertyValidator.Result result = validate(properties);
+        TrackerPropertyValidator.TrackerPropertyResult result = validate(properties);
 
         Assert.assertTrue(result.isValid());
         Assert.assertEquals(100, result.getSizeInBytes());
     }
 
-    private PropertyValidator.Result validate(Map<String, Object> properties) {
-        return processor.validate(properties, "test");
+    private TrackerPropertyValidator.TrackerPropertyResult validate(Map<String, Object> properties) {
+        return processor.validate(properties, 0, "test");
     }
 }

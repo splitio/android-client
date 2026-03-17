@@ -1,5 +1,7 @@
 package io.split.android.client;
 
+import io.split.android.client.validators.PropertyValidatorAdapter;
+import io.split.android.client.validators.PropertyValidatorImpl;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -157,7 +159,7 @@ public class TreatmentManagerWithFlagSetsTest {
                 mAttributesMerger,
                 mTelemetryStorageProducer,
                 mFlagSetsFilter,
-                mSplitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(), new PropertyValidatorImpl(),
+                mSplitsStorage, new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(), new PropertyValidatorAdapter(new PropertyValidatorImpl(new ValidationMessageLoggerImpl())),
                 new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build()));
     }
 

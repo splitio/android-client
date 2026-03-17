@@ -1,5 +1,7 @@
 package io.split.android.client;
 
+import io.split.android.client.validators.PropertyValidatorAdapter;
+import io.split.android.client.validators.PropertyValidatorImpl;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
@@ -85,7 +87,7 @@ public class TreatmentManagerExceptionsTest {
                 mSplitsStorage,
                 new ValidationMessageLoggerImpl(),
                 mFlagSetsValidator,
-                new PropertyValidatorImpl(),
+                new PropertyValidatorAdapter(new PropertyValidatorImpl(new ValidationMessageLoggerImpl())),
                 new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build()));
 
         when(evaluator.getTreatment(anyString(), anyString(), anyString(), anyMap())).thenReturn(new EvaluationResult("test", "label"));
