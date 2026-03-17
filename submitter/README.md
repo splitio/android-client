@@ -8,6 +8,5 @@ Encapsulates the logic for submitting batched data (such as impressions and even
 
 ## Design notes
 
-- Depends on `events-domain` for shared domain types.
+- For now depends on `events-domain` for the executor types.
 - Depends on `logger` for logging.
-- No dependency on `main/` internals or networking implementation details.
