@@ -56,6 +56,8 @@ dependencies {
     api clientModuleProject('fallback')
     implementation clientModuleProject('backoff')
     implementation clientModuleProject('tracker')
+    api clientModuleProject('submitter')
+
     // Internal module dependencies
     implementation clientModuleProject('http')
     implementation clientModuleProject('events-domain')

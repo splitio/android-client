@@ -1,4 +1,4 @@
-package io.split.android.client.storage.common;
+package io.split.android.client.submitter;
 
 import androidx.annotation.NonNull;
 

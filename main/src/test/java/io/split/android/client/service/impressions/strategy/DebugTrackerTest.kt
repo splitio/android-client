@@ -9,7 +9,7 @@ import io.split.android.client.service.impressions.ImpressionsRecorderTask
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
 import io.split.android.client.service.impressions.observer.ImpressionsObserver
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer
-import io.split.android.client.service.synchronizer.RecorderSyncHelper
+import io.split.android.client.submitter.RecorderSyncHelper
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor

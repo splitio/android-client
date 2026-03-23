@@ -1,11 +1,10 @@
-package io.split.android.client.service.synchronizer;
-
-import static io.split.android.client.utils.Utils.checkNotNull;
+package io.split.android.client.submitter;
 
 import androidx.annotation.NonNull;
 
 import java.lang.ref.WeakReference;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -16,8 +15,6 @@ import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.storage.common.InBytesSizable;
-import io.split.android.client.storage.common.StoragePusher;
 
 public class RecorderSyncHelperImpl<T extends InBytesSizable> implements RecorderSyncHelper<T> {
 
@@ -35,9 +32,9 @@ public class RecorderSyncHelperImpl<T extends InBytesSizable> implements Recorde
                                   int maxQueueSize,
                                   long maxQueueSizeInBytes,
                                   SplitTaskExecutor splitTaskExecutor) {
-        mTaskType = checkNotNull(taskType);
-        mStorage = checkNotNull(storage);
-        mSplitTaskExecutor = checkNotNull(splitTaskExecutor);
+        mTaskType = Objects.requireNonNull(taskType);
+        mStorage = Objects.requireNonNull(storage);
+        mSplitTaskExecutor = Objects.requireNonNull(splitTaskExecutor);
         mPushedCount = new AtomicInteger(0);
         mTotalPushedSizeInBytes = new AtomicLong(0);
         mMaxQueueSize = maxQueueSize;
