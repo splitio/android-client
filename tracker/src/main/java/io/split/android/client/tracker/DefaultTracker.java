@@ -12,35 +12,20 @@ public class DefaultTracker implements Tracker {
     // Estimated event size in bytes without properties
     private static final int ESTIMATED_EVENT_SIZE_WITHOUT_PROPS = 1024;
 
-    /** Callback invoked with the validated event when tracking succeeds. */
-    public interface OnEventPush {
-        void accept(TrackerEvent event);
-    }
-
-    /** Callback invoked with the track latency in milliseconds. May be null to skip telemetry. */
-    public interface OnTrackLatency {
-        void accept(long latencyMs);
-    }
-
-    /** Callback invoked when an exception occurs during tracking. May be null to skip telemetry. */
-    public interface OnTrackException {
-        void accept();
-    }
-
     @NonNull private final TrackerEventValidator mEventValidator;
     @NonNull private final TrackerLogger mTrackerLogger;
     @NonNull private final TrackerPropertyValidator mPropertyValidator;
-    @NonNull private final OnEventPush mOnEventPush;
-    @Nullable private final OnTrackLatency mOnTrackLatency;
-    @Nullable private final OnTrackException mOnTrackException;
+    @NonNull private final EventPushListener mOnEventPush;
+    @Nullable private final TrackLatencyListener mOnTrackLatency;
+    @Nullable private final TrackExceptionListener mOnTrackException;
     private final AtomicBoolean isTrackingEnabled = new AtomicBoolean(true);
 
     public DefaultTracker(@NonNull TrackerEventValidator eventValidator,
                           @NonNull TrackerLogger trackerLogger,
                           @NonNull TrackerPropertyValidator propertyValidator,
-                          @NonNull OnEventPush onEventPush,
-                          @Nullable OnTrackLatency onTrackLatency,
-                          @Nullable OnTrackException onTrackException) {
+                          @NonNull EventPushListener onEventPush,
+                          @Nullable TrackLatencyListener onTrackLatency,
+                          @Nullable TrackExceptionListener onTrackException) {
         mEventValidator = Objects.requireNonNull(eventValidator, "eventValidator must not be null");
         mTrackerLogger = Objects.requireNonNull(trackerLogger, "trackerLogger must not be null");
         mPropertyValidator = Objects.requireNonNull(propertyValidator, "propertyValidator must not be null");

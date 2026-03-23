@@ -36,11 +36,11 @@ public class DefaultTrackerTest {
     @Mock
     private TrackerPropertyValidator mPropertyValidator;
     @Mock
-    private DefaultTracker.OnEventPush mOnEventPush;
+    private EventPushListener mOnEventPush;
     @Mock
-    private DefaultTracker.OnTrackLatency mOnTrackLatency;
+    private TrackLatencyListener mOnTrackLatency;
     @Mock
-    private DefaultTracker.OnTrackException mOnTrackException;
+    private TrackExceptionListener mOnTrackException;
 
     private DefaultTracker mTracker;
 
