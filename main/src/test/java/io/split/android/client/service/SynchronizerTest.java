@@ -71,7 +71,7 @@ import io.split.android.client.service.splits.SplitsSyncTask;
 import io.split.android.client.service.splits.SplitsUpdateTask;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
 import io.split.android.client.service.synchronizer.FeatureFlagsSynchronizer;
-import io.split.android.client.service.synchronizer.RecorderSyncHelper;
+import io.split.android.client.submitter.RecorderSyncHelper;
 import io.split.android.client.service.synchronizer.SynchronizerImpl;
 import io.split.android.client.service.synchronizer.WorkManagerWrapper;
 import io.split.android.client.service.synchronizer.attributes.AttributesSynchronizer;

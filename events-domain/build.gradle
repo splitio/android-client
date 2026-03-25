@@ -2,7 +2,7 @@ plugins {
     id 'com.android.library'
 }
 
-apply from: "$rootDir/gradle/common-android-library.gradle"
+apply from: "$projectDir/../gradle/common-android-library.gradle"
 
 android {
     namespace 'io.split.android.client.events'
@@ -16,9 +16,9 @@ android {
 dependencies {
     implementation libs.annotation
 
-    implementation project(':api')
-    implementation project(':events')
-    implementation project(':logger')
+    implementation clientModuleProject('api')
+    implementation clientModuleProject('events')
+    implementation clientModuleProject('logger')
 
     testImplementation libs.junit4
     testImplementation libs.mockitoCore

@@ -42,7 +42,7 @@ import io.split.android.client.service.impressions.strategy.ImpressionStrategyCo
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
 import io.split.android.client.service.mysegments.AllSegmentsResponseParser;
 import io.split.android.client.service.sseclient.EventStreamParser;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.backoff.ExponentialBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.notifications.InstantUpdateChangeNotification;
@@ -283,7 +283,7 @@ class SplitFactoryHelper {
 
         BackoffCounterTimer backoffCounterTimer = null;
         if (config.syncEnabled()) {
-            backoffCounterTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
+            backoffCounterTimer = new BackoffCounterTimer(splitTaskExecutor, new ExponentialBackoffCounter(1));
         }
 
         return new SyncManagerImpl(config,

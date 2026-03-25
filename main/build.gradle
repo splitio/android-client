@@ -2,14 +2,14 @@ plugins {
     id 'com.android.library'
 }
 
-apply from: "$rootDir/gradle/common-android-library.gradle"
+apply from: "$projectDir/../gradle/common-android-library.gradle"
 
 android {
     namespace 'io.split.android.client.main'
 
     defaultConfig {
         multiDexEnabled true
-        consumerProguardFiles "$rootDir/split-proguard-rules.pro"
+        consumerProguardFiles "$projectDir/../split-proguard-rules.pro"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         testInstrumentationRunnerArguments clearPackageData: 'true'
 
@@ -50,9 +50,14 @@ android {
 
 dependencies {
     // Public api modules
-    api project(':logger')
-    api project(':api')
-    api project(':http-api')
+    api clientModuleProject('logger')
+    api clientModuleProject('api')
+    api clientModuleProject('http-api')
+    api clientModuleProject('fallback')
+    implementation clientModuleProject('backoff')
+    implementation clientModuleProject('tracker')
+    api clientModuleProject('submitter')
+
     // Internal module dependencies
     implementation project(':http')
     implementation project(':events-domain')

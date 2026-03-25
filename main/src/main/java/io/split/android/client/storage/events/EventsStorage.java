@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.split.android.client.dtos.Event;
 import io.split.android.client.storage.common.Storage;
-import io.split.android.client.storage.common.StoragePusher;
+import io.split.android.client.submitter.StoragePusher;
 import io.split.android.client.utils.logger.Logger;
 
 public class EventsStorage implements Storage<Event>, StoragePusher<Event> {

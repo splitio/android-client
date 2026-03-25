@@ -11,7 +11,8 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskType;
-import io.split.android.client.storage.common.StoragePusher;
+import io.split.android.client.submitter.RecorderSyncHelperImpl;
+import io.split.android.client.submitter.StoragePusher;
 
 public class RecorderSyncHelperImplTest {
 

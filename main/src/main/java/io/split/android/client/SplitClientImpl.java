@@ -18,6 +18,7 @@ import io.split.android.client.events.SplitEventTask;
 import io.split.android.client.events.SplitEventsManager;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.shared.SplitClientContainer;
+import io.split.android.client.tracker.Tracker;
 import io.split.android.client.utils.logger.Logger;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
@@ -35,7 +36,7 @@ public final class SplitClientImpl implements SplitClient {
     private final TreatmentManager mTreatmentManager;
     private final ValidationMessageLogger mValidationLogger;
     private final AttributesManager mAttributesManager;
-    private final EventsTracker mEventsTracker;
+    private final Tracker mEventsTracker;
 
     private static final double TRACK_DEFAULT_VALUE = 0.0;
 
@@ -48,7 +49,7 @@ public final class SplitClientImpl implements SplitClient {
                            ImpressionListener impressionListener,
                            SplitClientConfig config,
                            SplitEventsManager eventsManager,
-                           EventsTracker eventsTracker,
+                           Tracker eventsTracker,
                            AttributesManager attributesManager,
                            SplitValidator splitValidator,
                            TreatmentManager treatmentManager) {

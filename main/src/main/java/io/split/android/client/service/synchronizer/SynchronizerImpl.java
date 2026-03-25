@@ -30,7 +30,9 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
 import io.split.android.client.shared.UserConsent;
-import io.split.android.client.storage.common.StoragePusher;
+import io.split.android.client.submitter.RecorderSyncHelper;
+import io.split.android.client.submitter.RecorderSyncHelperImpl;
+import io.split.android.client.submitter.StoragePusher;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreamingEvent;

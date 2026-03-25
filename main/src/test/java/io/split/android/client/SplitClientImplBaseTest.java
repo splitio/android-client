@@ -14,6 +14,7 @@ import io.split.android.client.storage.mysegments.MySegmentsStorage;
 import io.split.android.client.storage.mysegments.MySegmentsStorageContainer;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
+import io.split.android.client.tracker.Tracker;
 import io.split.android.client.validators.SplitValidator;
 import io.split.android.client.validators.TreatmentManager;
 import io.split.android.engine.experiments.ParserCommons;
@@ -41,7 +42,7 @@ public abstract class SplitClientImplBaseTest {
     @Mock
     protected SplitsStorage splitsStorage;
     @Mock
-    protected EventsTracker eventsTracker;
+    protected Tracker eventsTracker;
     @Mock
     protected SyncManager syncManager;
     @Mock
