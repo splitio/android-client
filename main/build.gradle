@@ -59,10 +59,10 @@ dependencies {
     api clientModuleProject('submitter')
 
     // Internal module dependencies
-    implementation project(':http')
-    implementation project(':events-domain')
-    implementation project(':streaming')
-    implementation project(':streaming-support')
+    implementation clientModuleProject(':http')
+    implementation clientModuleProject(':events-domain')
+    implementation clientModuleProject(':streaming')
+    implementation clientModuleProject(':streaming-support')
 
     // External dependencies
     implementation libs.roomRuntime
