@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import io.split.android.client.service.HttpRecorderSubmitterAdapter;
-import io.split.android.client.service.SplitTaskType;
+import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.storage.impressions.PersistentImpressionsUniqueStorage;
 import io.split.android.client.submitter.RecorderTask;
