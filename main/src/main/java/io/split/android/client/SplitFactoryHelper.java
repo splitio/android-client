@@ -22,7 +22,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.streaming.support.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.lifecycle.SplitLifecycleManager;

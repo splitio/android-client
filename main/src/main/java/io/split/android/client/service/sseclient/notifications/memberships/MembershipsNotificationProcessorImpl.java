@@ -5,8 +5,8 @@ import androidx.annotation.Nullable;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
-import io.split.android.client.common.CompressionType;
-import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.streaming.support.CompressionType;
+import io.split.android.client.streaming.support.CompressionUtilProvider;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentUpdateParams;
 import io.split.android.client.service.mysegments.MySegmentsUpdateTask;

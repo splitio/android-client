@@ -1,0 +1,22 @@
+plugins {
+    id 'com.android.library'
+}
+
+apply from: "$rootDir/gradle/common-android-library.gradle"
+
+android {
+    namespace 'io.split.android.client.streaming.support'
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    api project(':logger')
+    implementation libs.gson
+
+    testImplementation libs.junit4
+    testImplementation libs.mockitoCore
+}

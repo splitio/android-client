@@ -62,6 +62,7 @@ dependencies {
     implementation project(':http')
     implementation project(':events-domain')
     implementation project(':streaming')
+    implementation project(':streaming-support')
 
     // External dependencies
     implementation libs.roomRuntime
