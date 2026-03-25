@@ -3,7 +3,7 @@ package io.split.android.client.service.mysegments;
 import androidx.annotation.NonNull;
 
 import io.split.android.client.events.SplitInternalEvent;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.telemetry.model.OperationType;
 
 public class MySegmentsSyncTaskConfig {

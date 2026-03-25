@@ -16,7 +16,7 @@ import io.split.android.client.events.metadata.EventMetadata;
 import io.split.android.client.events.ISplitEventsManager;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 
 public class LoadLocalDataListenerTest {
 

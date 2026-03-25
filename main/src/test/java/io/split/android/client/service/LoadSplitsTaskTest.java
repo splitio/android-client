@@ -11,7 +11,7 @@ import org.junit.Test;
 
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.service.splits.LoadSplitsTask;
 import io.split.android.client.storage.splits.SplitsStorage;
 

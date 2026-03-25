@@ -29,7 +29,7 @@ import io.split.android.client.network.CertificatePin;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.service.impressions.ImpressionManagerConfig;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsWorkManagerWrapper;
 import io.split.android.client.service.workmanager.EventsRecorderWorker;

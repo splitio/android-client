@@ -4,7 +4,7 @@ import static org.junit.Assert.*;
 
 import org.junit.Test;
 
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 
 public class LoadMySegmentsTaskConfigTest {
 

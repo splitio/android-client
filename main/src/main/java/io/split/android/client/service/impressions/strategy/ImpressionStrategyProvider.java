@@ -5,7 +5,7 @@ import androidx.core.util.Pair;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.service.impressions.ImpressionManagerRetryTimerProviderImpl;
 import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsMode;

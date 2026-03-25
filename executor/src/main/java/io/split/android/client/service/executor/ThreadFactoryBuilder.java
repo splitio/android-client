@@ -2,9 +2,6 @@ package io.split.android.client.service.executor;
 
 import static java.util.Objects.requireNonNull;
 
-import static io.split.android.client.utils.Utils.checkArgument;
-import static io.split.android.client.utils.Utils.checkNotNull;
-
 import androidx.annotation.Nullable;
 
 import java.util.Locale;
@@ -71,8 +68,12 @@ public final class ThreadFactoryBuilder {
     public ThreadFactoryBuilder setPriority(int priority) {
         // Thread#setPriority() already checks for validity. These error messages
         // are nicer though and will fail-fast.
-        checkArgument(priority >= Thread.MIN_PRIORITY);
-        checkArgument(priority <= Thread.MAX_PRIORITY);
+        if (priority < Thread.MIN_PRIORITY) {
+            throw new IllegalArgumentException("priority must be >= Thread.MIN_PRIORITY");
+        }
+        if (priority > Thread.MAX_PRIORITY) {
+            throw new IllegalArgumentException("priority must be <= Thread.MAX_PRIORITY");
+        }
         this.priority = priority;
         return this;
     }
@@ -86,7 +87,7 @@ public final class ThreadFactoryBuilder {
      */
     public ThreadFactoryBuilder setUncaughtExceptionHandler(
             Thread.UncaughtExceptionHandler uncaughtExceptionHandler) {
-        this.uncaughtExceptionHandler = checkNotNull(uncaughtExceptionHandler);
+        this.uncaughtExceptionHandler = requireNonNull(uncaughtExceptionHandler);
         return this;
     }
 
@@ -99,7 +100,7 @@ public final class ThreadFactoryBuilder {
      * @return this for the builder pattern
      */
     public ThreadFactoryBuilder setThreadFactory(ThreadFactory backingThreadFactory) {
-        this.backingThreadFactory = checkNotNull(backingThreadFactory);
+        this.backingThreadFactory = requireNonNull(backingThreadFactory);
         return this;
     }
 

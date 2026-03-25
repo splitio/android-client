@@ -1,8 +1,7 @@
 package io.split.android.client.service.executor;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
-
 import java.lang.ref.WeakReference;
+import java.util.Objects;
 
 import io.split.android.client.utils.logger.Logger;
 
@@ -12,7 +11,7 @@ class TaskWrapper implements Runnable {
 
     TaskWrapper(SplitTask task,
                 SplitTaskExecutionListener executionListener) {
-        mTask = checkNotNull(task);
+        mTask = Objects.requireNonNull(task);
         mExecutionListener = new WeakReference<>(executionListener);
     }
 
