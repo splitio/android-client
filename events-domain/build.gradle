@@ -16,6 +16,7 @@ android {
 dependencies {
     implementation libs.annotation
 
+    api clientModuleProject('executor')
     implementation clientModuleProject('api')
     implementation clientModuleProject('events')
     implementation clientModuleProject('logger')

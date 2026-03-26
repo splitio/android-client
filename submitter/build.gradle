@@ -14,7 +14,7 @@ android {
 }
 
 dependencies {
-    api clientModuleProject('events-domain')
+    implementation clientModuleProject('executor')
     implementation clientModuleProject('logger')
     implementation libs.annotation
 

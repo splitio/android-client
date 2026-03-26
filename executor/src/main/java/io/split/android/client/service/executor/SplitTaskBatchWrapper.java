@@ -1,8 +1,7 @@
 package io.split.android.client.service.executor;
 
-import static io.split.android.client.utils.Utils.checkNotNull;
-
 import java.util.List;
+import java.util.Objects;
 
 import io.split.android.client.utils.logger.Logger;
 
@@ -10,7 +9,7 @@ class SplitTaskBatchWrapper implements Runnable {
     private final List<SplitTaskBatchItem> mTaskQueue;
 
     SplitTaskBatchWrapper(List<SplitTaskBatchItem> taskQueue) {
-        mTaskQueue = checkNotNull(taskQueue);
+        mTaskQueue = Objects.requireNonNull(taskQueue);
     }
 
     @Override

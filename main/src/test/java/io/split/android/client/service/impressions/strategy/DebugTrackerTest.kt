@@ -4,7 +4,7 @@ import io.split.android.client.dtos.KeyImpression
 import io.split.android.client.service.executor.SplitTaskExecutionInfo
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
-import io.split.android.client.service.executor.SplitTaskType
+import io.split.android.client.service.SplitTaskType
 import io.split.android.client.service.impressions.ImpressionsRecorderTask
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
 import io.split.android.client.service.impressions.observer.ImpressionsObserver

@@ -24,7 +24,7 @@ import io.split.android.client.service.events.EventsRecorderTask;
 import io.split.android.client.service.events.EventsRecorderTaskConfig;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionStatus;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.service.http.HttpRecorderException;
 import io.split.android.client.storage.events.PersistentEventsStorage;

@@ -1,8 +1,5 @@
 package io.split.android.client.service.executor;
 
-import static io.split.android.client.utils.Utils.checkArgument;
-import static io.split.android.client.utils.Utils.checkNotNull;
-
 import android.os.Handler;
 import android.os.Looper;
 
@@ -12,6 +9,7 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
@@ -42,8 +40,10 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
                            long periodInSecs,
                            @Nullable SplitTaskExecutionListener executionListener
     ) {
-        checkNotNull(task);
-        checkArgument(periodInSecs > 0);
+        Objects.requireNonNull(task);
+        if (periodInSecs <= 0) {
+            throw new IllegalArgumentException("periodInSecs must be positive");
+        }
 
         String taskId = null;
         if (!mScheduler.isShutdown()) {
@@ -62,7 +62,7 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
                            long initialDelayInSecs,
                            @Nullable SplitTaskExecutionListener executionListener
     ) {
-        checkNotNull(task);
+        Objects.requireNonNull(task);
         String taskId = null;
         if (!mScheduler.isShutdown()) {
             ScheduledFuture<?> taskFuture = mScheduler.schedule(
@@ -77,7 +77,7 @@ public abstract class SplitBaseTaskExecutor implements SplitTaskExecutor {
     @Override
     public void submit(@NonNull SplitTask task,
                        @Nullable SplitTaskExecutionListener executionListener) {
-        checkNotNull(task);
+        Objects.requireNonNull(task);
         if (!mScheduler.isShutdown()) {
             mScheduler.submit(new TaskWrapper(task, executionListener));
         }

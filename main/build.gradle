@@ -50,6 +50,7 @@ android {
 
 dependencies {
     // Public api modules
+    api clientModuleProject('executor')
     api clientModuleProject('logger')
     api clientModuleProject('api')
     api clientModuleProject('http-api')

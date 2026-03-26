@@ -7,7 +7,7 @@ import java.util.List;
 import io.split.android.client.service.HttpRecorderSubmitterAdapter;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.TelemetryRecorderAdapter;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.service.http.HttpRecorder;
 import io.split.android.client.storage.impressions.PersistentImpressionsCountStorage;
 import io.split.android.client.submitter.RecorderTask;

@@ -145,7 +145,7 @@ dependencies {
         return candidates.find { findProject(it) != null }
     }
 
-    ['main', 'logger', 'events', 'events-domain', 'api', 'http-api', 'http', 'fallback', 'backoff', 'tracker', 'submitter', 'streaming', 'streaming-support'].each { moduleName ->
+    ['main', 'logger', 'events', 'events-domain', 'api', 'http-api', 'http', 'fallback', 'backoff', 'tracker', 'submitter', 'streaming', 'streaming-support', 'executor'].each { moduleName ->
         def resolvedPath = resolveProjectPath(moduleName)
         if (resolvedPath != null) {
             include project(resolvedPath)
