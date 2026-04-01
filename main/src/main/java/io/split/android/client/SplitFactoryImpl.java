@@ -24,7 +24,7 @@ import androidx.annotation.VisibleForTesting;
 
 import io.split.android.client.main.BuildConfig;
 import io.split.android.client.api.Key;
-import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.streaming.support.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.factory.FactoryMonitor;
 import io.split.android.client.factory.FactoryMonitorImpl;

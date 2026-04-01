@@ -4,37 +4,32 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import io.split.android.client.service.executor.SplitTask;
-import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskExecutionListener;
-import io.split.android.client.service.executor.SplitTaskExecutor;
+import io.split.android.client.service.sseclient.spi.StreamingScheduler;
 import io.split.android.client.utils.logger.Logger;
 
-public class SseDisconnectionTimer implements SplitTaskExecutionListener {
+public class SseDisconnectionTimer {
 
-    private final SplitTaskExecutor mTaskExecutor;
+    private final StreamingScheduler mScheduler;
     private final int mInitialDelayInSeconds;
     private String mTaskId;
 
-    public SseDisconnectionTimer(@NonNull SplitTaskExecutor taskExecutor, int initialDelayInSeconds) {
-        mTaskExecutor = checkNotNull(taskExecutor);
+    public SseDisconnectionTimer(@NonNull StreamingScheduler scheduler, int initialDelayInSeconds) {
+        mScheduler = checkNotNull(scheduler);
         mInitialDelayInSeconds = initialDelayInSeconds;
     }
 
     public void cancel() {
-        if (mTaskId != null) {
-            mTaskExecutor.stopTask(mTaskId);
-        }
+        mScheduler.cancel(mTaskId);
     }
 
-    public void schedule(SplitTask task) {
+    public void schedule(Runnable task) {
         Logger.v("Scheduling disconnection in " + mInitialDelayInSeconds + " seconds");
         cancel();
-        mTaskId = mTaskExecutor.schedule(task, mInitialDelayInSeconds, this);
-    }
-
-    @Override
-    public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-        mTaskId = null;
+        mTaskId = mScheduler.schedule(task, mInitialDelayInSeconds, new StreamingScheduler.TaskExecutionListener() {
+            @Override
+            public void onTaskExecuted() {
+                mTaskId = null;
+            }
+        });
     }
 }

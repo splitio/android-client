@@ -1,19 +1,13 @@
-package io.split.android.client.common;
-
-import androidx.annotation.Nullable;
+package io.split.android.client.streaming.support;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import io.split.android.client.utils.CompressionUtil;
-import io.split.android.client.utils.Gzip;
 import io.split.android.client.utils.logger.Logger;
-import io.split.android.client.utils.Zlib;
 
 public class CompressionUtilProvider {
     Map<CompressionType, CompressionUtil> mCompressionUtils = new ConcurrentHashMap<>();
 
-    @Nullable
     public CompressionUtil get(CompressionType type) {
         CompressionUtil util = mCompressionUtils.get(type);
         return (util != null ? util : create(type));
@@ -21,7 +15,6 @@ public class CompressionUtilProvider {
 
     // Using a method instead of a factory to avoid
     // a complex architecture.
-    @Nullable
     private CompressionUtil create(CompressionType type) {
         switch (type) {
             case NONE:

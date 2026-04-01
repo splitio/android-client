@@ -1,4 +1,4 @@
-package io.split.android.client.utils;
+package io.split.android.client.streaming.support;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -6,10 +6,11 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.util.zip.GZIPInputStream;
 
-import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.utils.logger.Logger;
 
 public class Gzip implements CompressionUtil {
+
+    private static final int BUFFER_SIZE = 256 * 1024; // 256KB buffer
 
     @Override
     public byte[] decompress(byte[] input) {
@@ -21,7 +22,7 @@ public class Gzip implements CompressionUtil {
         GZIPInputStream gzipIn = null;
         try {
             gzipIn = new GZIPInputStream(in);
-            byte[] buffer = new byte[ServiceConstants.MY_SEGMENT_V2_DATA_SIZE];
+            byte[] buffer = new byte[BUFFER_SIZE];
             int byteCount;
             while ((byteCount = gzipIn.read(buffer)) >= 0) {
                 out.write(buffer, 0, byteCount);

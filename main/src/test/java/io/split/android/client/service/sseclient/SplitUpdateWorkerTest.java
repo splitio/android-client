@@ -22,8 +22,8 @@ import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
-import io.split.android.client.common.CompressionType;
-import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.streaming.support.CompressionType;
+import io.split.android.client.streaming.support.CompressionUtilProvider;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
@@ -38,7 +38,7 @@ import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
-import io.split.android.client.utils.CompressionUtil;
+import io.split.android.client.streaming.support.CompressionUtil;
 import io.split.android.fake.SplitTaskExecutorStub;
 
 public class SplitUpdateWorkerTest {

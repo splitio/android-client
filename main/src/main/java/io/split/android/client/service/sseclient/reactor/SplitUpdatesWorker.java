@@ -8,7 +8,7 @@ import androidx.annotation.VisibleForTesting;
 
 import java.util.concurrent.BlockingQueue;
 
-import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.streaming.support.CompressionUtilProvider;
 import io.split.android.client.dtos.Helper;
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.dtos.Split;
@@ -23,7 +23,7 @@ import io.split.android.client.service.synchronizer.Synchronizer;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorage;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.utils.Base64Util;
-import io.split.android.client.utils.CompressionUtil;
+import io.split.android.client.streaming.support.CompressionUtil;
 import io.split.android.client.utils.Json;
 import io.split.android.client.utils.logger.Logger;
 

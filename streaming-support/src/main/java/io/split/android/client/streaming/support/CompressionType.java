@@ -1,4 +1,4 @@
-package io.split.android.client.common;
+package io.split.android.client.streaming.support;
 
 import com.google.gson.annotations.SerializedName;
 

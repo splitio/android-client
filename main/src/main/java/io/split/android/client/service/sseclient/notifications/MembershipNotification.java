@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.Set;
 
-import io.split.android.client.common.CompressionType;
+import io.split.android.client.streaming.support.CompressionType;
 
 public class MembershipNotification extends IncomingNotification {
 

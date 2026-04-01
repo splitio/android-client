@@ -28,7 +28,7 @@ import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 
-import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.streaming.support.CompressionUtilProvider;
 import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.mysegments.MySegmentUpdateParams;
@@ -43,7 +43,7 @@ import io.split.android.client.service.sseclient.notifications.MySegmentsV2Paylo
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
 import io.split.android.client.service.sseclient.notifications.NotificationType;
 import io.split.android.client.service.sseclient.notifications.memberships.MembershipsNotificationProcessorImpl;
-import io.split.android.client.utils.CompressionUtil;
+import io.split.android.client.streaming.support.CompressionUtil;
 
 public class MySegmentsNotificationProcessorImplTest {
 

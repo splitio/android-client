@@ -16,40 +16,38 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.IncomingNotification;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
-import io.split.android.client.service.sseclient.notifications.NotificationProcessor;
+import io.split.android.client.service.sseclient.spi.StreamingTelemetry;
+import io.split.android.client.service.sseclient.spi.UpdateNotificationListener;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.notifications.StreamingError;
-import io.split.android.client.telemetry.model.streaming.AblyErrorStreamingEvent;
-import io.split.android.client.telemetry.model.streaming.SseConnectionErrorStreamingEvent;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 import io.split.android.client.utils.logger.Logger;
 
 public class SseHandler {
 
     private final PushManagerEventBroadcaster mBroadcasterChannel;
     private final NotificationParser mNotificationParser;
-    private final NotificationProcessor mNotificationProcessor;
+    private final UpdateNotificationListener mUpdateListener;
     private final NotificationManagerKeeper mNotificationManagerKeeper;
-    private final TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private final StreamingTelemetry mTelemetry;
 
     public SseHandler(@NonNull NotificationParser notificationParser,
-                      @NonNull NotificationProcessor notificationProcessor,
-                      @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer,
+                      @NonNull UpdateNotificationListener updateListener,
+                      @NonNull StreamingTelemetry telemetry,
                       @NonNull PushManagerEventBroadcaster broadcasterChannel) {
-        this(notificationParser, notificationProcessor, new NotificationManagerKeeper(broadcasterChannel, telemetryRuntimeProducer), broadcasterChannel, telemetryRuntimeProducer);
+        this(notificationParser, updateListener, new NotificationManagerKeeper(broadcasterChannel, telemetry), broadcasterChannel, telemetry);
     }
 
     @VisibleForTesting
     public SseHandler(@NonNull NotificationParser notificationParser,
-                      @NonNull NotificationProcessor notificationProcessor,
+                      @NonNull UpdateNotificationListener updateListener,
                       @NonNull NotificationManagerKeeper managerKeeper,
                       @NonNull PushManagerEventBroadcaster broadcasterChannel,
-                      @NonNull TelemetryRuntimeProducer telemetryRuntimeProducer) {
+                      @NonNull StreamingTelemetry telemetry) {
         mNotificationParser = checkNotNull(notificationParser);
-        mNotificationProcessor = checkNotNull(notificationProcessor);
+        mUpdateListener = checkNotNull(updateListener);
         mBroadcasterChannel = checkNotNull(broadcasterChannel);
         mNotificationManagerKeeper = checkNotNull(managerKeeper);
-        mTelemetryRuntimeProducer = checkNotNull(telemetryRuntimeProducer);
+        mTelemetry = checkNotNull(telemetry);
     }
 
     public boolean isConnectionConfirmed(Map<String, String> values) {
@@ -88,7 +86,7 @@ public class SseHandler {
                 case MEMBERSHIPS_MS_UPDATE:
                 case MEMBERSHIPS_LS_UPDATE:
                     if (mNotificationManagerKeeper.isStreamingActive()) {
-                        mNotificationProcessor.process(incomingNotification);
+                        mUpdateListener.onUpdateNotification(incomingNotification);
                     }
                     break;
                 default:
@@ -100,13 +98,7 @@ public class SseHandler {
     public void handleError(boolean retryable) {
         PushStatusEvent event = new PushStatusEvent(retryable ? EventType.PUSH_RETRYABLE_ERROR : EventType.PUSH_NON_RETRYABLE_ERROR);
         mBroadcasterChannel.pushMessage(event);
-
-        mTelemetryRuntimeProducer.recordStreamingEvents(
-                new SseConnectionErrorStreamingEvent(
-                        (retryable) ? SseConnectionErrorStreamingEvent.Status.REQUESTED : SseConnectionErrorStreamingEvent.Status.NON_REQUESTED,
-                        System.currentTimeMillis()
-                )
-        );
+        mTelemetry.recordConnectionError(retryable, System.currentTimeMillis());
     }
 
     public boolean isRetryableError(Map<String, String> values) {
@@ -162,7 +154,7 @@ public class SseHandler {
                 return;
             }
 
-            mTelemetryRuntimeProducer.recordStreamingEvents(new AblyErrorStreamingEvent(errorNotification.getCode(), System.currentTimeMillis()));
+            mTelemetry.recordAblyError(errorNotification.getCode(), System.currentTimeMillis());
 
             PushStatusEvent message = new PushStatusEvent(
                     errorNotification.isRetryable() ? EventType.PUSH_RETRYABLE_ERROR : EventType.PUSH_NON_RETRYABLE_ERROR);

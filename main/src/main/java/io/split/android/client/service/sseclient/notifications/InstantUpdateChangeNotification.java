@@ -4,7 +4,7 @@ import androidx.annotation.Nullable;
 
 import com.google.gson.annotations.SerializedName;
 
-import io.split.android.client.common.CompressionType;
+import io.split.android.client.streaming.support.CompressionType;
 
 public abstract class InstantUpdateChangeNotification extends IncomingNotification {
 
