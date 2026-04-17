@@ -1,0 +1,38 @@
+events/pom.xml
+  human 1-76
+---
+{
+  "attestations": [
+    {
+      "entries": [
+        {
+          "accepted_lines": 76,
+          "added_lines": 76,
+          "deleted_lines": 0,
+          "hash": "human",
+          "lines": "1-76",
+          "overridden_lines": 0
+        }
+      ],
+      "file": "events/pom.xml"
+    }
+  ],
+  "base_commit_sha": "e9dbbc2cffe92d496eb6dd7fc5e6c87bf30a8156",
+  "branch": "add-events-maven-pom",
+  "commit_sha": "f2e01d57907cf692472659333c1c78f882cac12b",
+  "commit_time": "2026-04-17T17:44:00-03:00",
+  "git_ai_version": "1.2.6",
+  "prompts": {
+    "human": {
+      "accepted_lines": 76,
+      "agent_id": null,
+      "human_author": "Gaston Thea <gaston.thea@harness.io>",
+      "messages": [],
+      "overriden_lines": 0,
+      "total_additions": 76,
+      "total_deletions": 0
+    }
+  },
+  "repo": "git@github.com:splitio/android-client.git",
+  "schema_version": "authorship/3.0.0"
+}
