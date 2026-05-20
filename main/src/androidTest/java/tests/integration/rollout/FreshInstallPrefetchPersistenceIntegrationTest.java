@@ -14,7 +14,9 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import helper.DatabaseHelper;
@@ -53,16 +55,56 @@ public class FreshInstallPrefetchPersistenceIntegrationTest {
     }
 
     @Test
-    public void emptyDeltaDoesNotPersistChangeNumberBeforeFullSnapshotIsDurable() {
-        PausedExecutorService pausedExecutor = new PausedExecutorService();
+    public void processKillBeforeAsyncWriteCompletes_dbRemainsConsistent() throws InterruptedException {
+        // Block the executor so the first write doesn't complete
+        CountDownLatch blockLatch = new CountDownLatch(1);
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        executor.submit(() -> {
+            try {
+                blockLatch.await();
+            } catch (InterruptedException e) {
+                // shutdownNow will interrupt this
+            }
+        });
+
+        SplitsStorage storage = new SplitsStorageImpl(mPersistentStorage);
+
+        // First update queues behind the blocked task
+        storage.update(
+                mSplitChangeProcessor.process(SplitChange.create(-1, CHANGE_NUMBER, createSplits())),
+                executor);
+
+        // Simulate process kill — first write never completes
+        executor.shutdownNow();
+        executor.awaitTermination(1, TimeUnit.SECONDS);
+
+        // Second update (empty delta) — submit is rejected since executor is shut down
+        storage.update(
+                mSplitChangeProcessor.process(SplitChange.create(CHANGE_NUMBER, CHANGE_NUMBER, new ArrayList<>())),
+                executor);
+
+        // DB should be untouched — no partial CN write
+        SplitsStorage reloadedStorage = new SplitsStorageImpl(mPersistentStorage);
+        reloadedStorage.loadLocal();
+
+        assertEquals(-1, reloadedStorage.getTill());
+        assertEquals(0, mRoomDb.splitDao().getAll().size());
+    }
+
+    @Test
+    public void fullSnapshotAndEmptyDeltaPersistCorrectlyWhenExecutorIsRunning() throws InterruptedException {
+        ExecutorService executor = Executors.newSingleThreadExecutor();
         SplitsStorage storage = new SplitsStorageImpl(mPersistentStorage);
 
         storage.update(
                 mSplitChangeProcessor.process(SplitChange.create(-1, CHANGE_NUMBER, createSplits())),
-                pausedExecutor);
+                executor);
         storage.update(
                 mSplitChangeProcessor.process(SplitChange.create(CHANGE_NUMBER, CHANGE_NUMBER, new ArrayList<>())),
-                pausedExecutor);
+                executor);
+
+        executor.shutdown();
+        executor.awaitTermination(5, TimeUnit.SECONDS);
 
         SplitsStorage reloadedStorage = new SplitsStorageImpl(mPersistentStorage);
         reloadedStorage.loadLocal();
@@ -85,37 +127,5 @@ public class FreshInstallPrefetchPersistenceIntegrationTest {
             splits.add(split);
         }
         return splits;
-    }
-
-    private static class PausedExecutorService extends AbstractExecutorService {
-
-        @Override
-        public void shutdown() {
-        }
-
-        @Override
-        public List<Runnable> shutdownNow() {
-            return new ArrayList<>();
-        }
-
-        @Override
-        public boolean isShutdown() {
-            return false;
-        }
-
-        @Override
-        public boolean isTerminated() {
-            return false;
-        }
-
-        @Override
-        public boolean awaitTermination(long timeout, TimeUnit unit) {
-            return false;
-        }
-
-        @Override
-        public void execute(Runnable command) {
-            // Keep submitted tasks queued forever to mimic a process kill before async persistence runs.
-        }
     }
 }
