@@ -167,7 +167,9 @@ public class SplitsStorageImpl implements SplitsStorage {
 
         if (mExecutor != null) {
             try {
-                mExecutor.submit(() -> mPersistentStorage.update(splitChange, mTrafficTypes, mFlagSets));
+                Map<String, Integer> trafficTypesSnapshot = new HashMap<>(mTrafficTypes);
+                Map<String, Set<String>> flagSetsSnapshot = copyFlagSets(mFlagSets);
+                mExecutor.submit(() -> mPersistentStorage.update(splitChange, trafficTypesSnapshot, flagSetsSnapshot));
             } catch (Exception e) {
                 Logger.v("Failed to submit persistent write: " + e.getLocalizedMessage());
             }
@@ -176,6 +178,15 @@ public class SplitsStorageImpl implements SplitsStorage {
         }
 
         return appliedUpdates;
+    }
+
+    @NonNull
+    private static Map<String, Set<String>> copyFlagSets(Map<String, Set<String>> flagSets) {
+        Map<String, Set<String>> flagSetsSnapshot = new HashMap<>();
+        for (Map.Entry<String, Set<String>> entry : flagSets.entrySet()) {
+            flagSetsSnapshot.put(entry.getKey(), new HashSet<>(entry.getValue()));
+        }
+        return flagSetsSnapshot;
     }
 
     @Override

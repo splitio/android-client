@@ -2,6 +2,7 @@ package tests.storage;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -20,7 +21,10 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.AbstractExecutorService;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
@@ -32,7 +36,9 @@ import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.GeneralInfoEntity;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
+import io.split.android.client.storage.splits.PersistentSplitsStorage;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
+import io.split.android.client.storage.splits.SplitsSnapshot;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.storage.splits.SplitsStorageImpl;
 import io.split.android.client.storage.splits.SqLitePersistentSplitsStorage;
@@ -534,6 +540,34 @@ public class SplitsStorageTest {
         assertEquals("", flagsSpec);
     }
 
+    @Test
+    public void asyncPersistentUpdateReceivesMetadataSnapshot() {
+        CapturingPersistentSplitsStorage persistentStorage = new CapturingPersistentSplitsStorage();
+        ControlledExecutorService executor = new ControlledExecutorService();
+        SplitsStorage splitsStorage = new SplitsStorageImpl(persistentStorage);
+
+        splitsStorage.update(
+                new ProcessedSplitChange(
+                        Collections.singletonList(newSplit("split_1", Status.ACTIVE, "type_1", Collections.singleton("set_1"))),
+                        Collections.emptyList(),
+                        1L,
+                        0L),
+                executor);
+        splitsStorage.update(
+                new ProcessedSplitChange(
+                        Collections.singletonList(newSplit("split_2", Status.ACTIVE, "type_2", Collections.singleton("set_2"))),
+                        Collections.emptyList(),
+                        2L,
+                        0L),
+                executor);
+
+        executor.runNext();
+
+        assertEquals(Collections.singletonMap("type_1", 1), persistentStorage.lastTrafficTypes);
+        assertEquals(Collections.singleton("split_1"), persistentStorage.lastFlagSets.get("set_1"));
+        assertNull(persistentStorage.lastFlagSets.get("set_2"));
+    }
+
     private Split newSplit(String name, Status status, String trafficType) {
         return newSplit(name, status, trafficType, Collections.emptySet());
     }
@@ -563,5 +597,109 @@ public class SplitsStorageTest {
         entity.setBody(String.format(IntegrationHelper.JSON_SPLIT_WITH_TRAFFIC_TYPE_TEMPLATE, name, INITIAL_CHANGE_NUMBER, trafficType, setsString));
 
         return entity;
+    }
+
+    private static class ControlledExecutorService extends AbstractExecutorService {
+        private final Queue<Runnable> tasks = new ConcurrentLinkedQueue<>();
+
+        void runNext() {
+            Runnable task = tasks.poll();
+            assertNotNull(task);
+            task.run();
+        }
+
+        @Override
+        public void shutdown() {
+        }
+
+        @Override
+        public List<Runnable> shutdownNow() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public boolean isShutdown() {
+            return false;
+        }
+
+        @Override
+        public boolean isTerminated() {
+            return false;
+        }
+
+        @Override
+        public boolean awaitTermination(long timeout, TimeUnit unit) {
+            return false;
+        }
+
+        @Override
+        public void execute(Runnable command) {
+            tasks.add(command);
+        }
+    }
+
+    private static class CapturingPersistentSplitsStorage implements PersistentSplitsStorage {
+        Map<String, Integer> lastTrafficTypes;
+        Map<String, Set<String>> lastFlagSets;
+
+        @Override
+        public boolean update(ProcessedSplitChange splitChange, Map<String, Integer> trafficTypes, Map<String, Set<String>> flagSets) {
+            lastTrafficTypes = new HashMap<>(trafficTypes);
+            lastFlagSets = new HashMap<>();
+            for (Map.Entry<String, Set<String>> entry : flagSets.entrySet()) {
+                lastFlagSets.put(entry.getKey(), new HashSet<>(entry.getValue()));
+            }
+            return true;
+        }
+
+        @Override
+        public SplitsSnapshot getSnapshot() {
+            return new SplitsSnapshot(Collections.emptyList(), -1L, 0L, "", "", Collections.emptyMap(), Collections.emptyMap());
+        }
+
+        @Override
+        public List<Split> getAll() {
+            return Collections.emptyList();
+        }
+
+        @Override
+        public void update(Split splitName) {
+            // no-op
+        }
+
+        @Override
+        public String getFilterQueryString() {
+            return "";
+        }
+
+        @Override
+        public void updateFilterQueryString(String queryString) {
+            // no-op
+        }
+
+        @Override
+        public String getFlagsSpec() {
+            return "";
+        }
+
+        @Override
+        public void updateFlagsSpec(String flagsSpec) {
+            // no-op
+        }
+
+        @Override
+        public void delete(List<String> splitNames) {
+            // no-op
+        }
+
+        @Override
+        public void clear() {
+            // no-op
+        }
+
+        @Override
+        public void close() {
+            // no-op
+        }
     }
 }
