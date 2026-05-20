@@ -17,9 +17,8 @@ import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.service.sseclient.notifications.KeyList;
 import io.split.android.client.service.sseclient.notifications.MySegmentsV2PayloadDecoder;
 import io.split.android.client.service.sseclient.notifications.NotificationParser;
-import io.split.android.client.utils.Gzip;
-import io.split.android.client.utils.MurmurHash3;
-import io.split.android.client.utils.Zlib;
+import io.split.android.client.streaming.support.Gzip;
+import io.split.android.client.streaming.support.Zlib;
 
 public class MySegmentV2PayloadDecoderTest {
 
