@@ -1,3 +1,6 @@
+5.5.1 (May 22, 2026)
+- Fixed race condition in which killing the SDK process during first initialization could leave cache in an inconsistent state.
+
 5.5.0 (Jan 28, 2026)
 - Added functionality to provide metadata alongside SDK update, ready and ready from cache events. Read more in our docs.
 - Fixed issue in which TLS 1.2 was being forced for new connections.
