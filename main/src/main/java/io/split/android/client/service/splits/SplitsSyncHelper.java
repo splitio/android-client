@@ -331,7 +331,9 @@ public class SplitsSyncHelper {
             mLastProcessedSplitChange.set(processedSplitChange);
         }
         mSplitsStorage.update(processedSplitChange, mExecutor);
-        updateRbsStorage(ruleBasedSegmentChange);
+        if (ruleBasedSegmentChange != null) {
+            updateRbsStorage(ruleBasedSegmentChange);
+        }
     }
 
     private boolean hasFlagUpdates(@Nullable ProcessedSplitChange processedSplitChange) {
