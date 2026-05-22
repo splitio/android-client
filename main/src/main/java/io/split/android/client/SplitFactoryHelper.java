@@ -22,7 +22,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
-import io.split.android.client.common.CompressionUtilProvider;
+import io.split.android.client.streaming.support.CompressionUtilProvider;
 import io.split.android.client.events.EventsManagerCoordinator;
 import io.split.android.client.events.SplitInternalEvent;
 import io.split.android.client.lifecycle.SplitLifecycleManager;
@@ -42,7 +42,7 @@ import io.split.android.client.service.impressions.strategy.ImpressionStrategyCo
 import io.split.android.client.service.impressions.strategy.ImpressionStrategyProvider;
 import io.split.android.client.service.mysegments.AllSegmentsResponseParser;
 import io.split.android.client.service.sseclient.EventStreamParser;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.backoff.ExponentialBackoffCounter;
 import io.split.android.client.service.sseclient.SseJwtParser;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.notifications.InstantUpdateChangeNotification;
@@ -54,13 +54,22 @@ import io.split.android.client.service.sseclient.notifications.mysegments.Member
 import io.split.android.client.service.sseclient.reactor.MySegmentsUpdateWorkerRegistry;
 import io.split.android.client.service.sseclient.reactor.SplitUpdatesWorker;
 import io.split.android.client.service.sseclient.sseclient.BackoffCounterTimer;
+import io.split.android.client.service.sseclient.sseclient.HttpFetcherStreamingAuthFetcher;
+import io.split.android.client.service.sseclient.sseclient.NotificationProcessorUpdateListener;
 import io.split.android.client.service.sseclient.sseclient.PushNotificationManager;
 import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.sseclient.sseclient.SseClient;
-import io.split.android.client.service.sseclient.sseclient.SseClientImpl;
+import io.split.android.client.service.sseclient.sseclient.HttpClientStreamingTransport;
+import io.split.android.client.service.sseclient.sseclient.DefaultSseClient;
+import io.split.android.client.service.sseclient.sseclient.EventSourceClientImpl;
 import io.split.android.client.service.sseclient.sseclient.SseHandler;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
+import io.split.android.client.service.sseclient.sseclient.SplitTaskExecutorStreamingScheduler;
 import io.split.android.client.service.sseclient.sseclient.StreamingComponents;
+import io.split.android.client.service.sseclient.sseclient.TelemetryRuntimeProducerStreamingTelemetry;
+import io.split.android.client.service.sseclient.spi.StreamingScheduler;
+import io.split.android.client.service.sseclient.spi.StreamingTelemetry;
+import io.split.android.client.service.sseclient.spi.UpdateNotificationListener;
 import io.split.android.client.service.synchronizer.RolloutCacheManager;
 import io.split.android.client.service.synchronizer.RolloutCacheManagerImpl;
 import io.split.android.client.service.synchronizer.SyncGuardian;
@@ -274,7 +283,7 @@ class SplitFactoryHelper {
 
         BackoffCounterTimer backoffCounterTimer = null;
         if (config.syncEnabled()) {
-            backoffCounterTimer = new BackoffCounterTimer(splitTaskExecutor, new ReconnectBackoffCounter(1));
+            backoffCounterTimer = new BackoffCounterTimer(splitTaskExecutor, new ExponentialBackoffCounter(1));
         }
 
         return new SyncManagerImpl(config,
@@ -288,18 +297,19 @@ class SplitFactoryHelper {
     }
 
     @NonNull
-    PushNotificationManager getPushNotificationManager(SplitTaskExecutor splitTaskExecutor,
+    PushNotificationManager getPushNotificationManager(StreamingScheduler scheduler,
                                                        SseAuthenticator sseAuthenticator,
                                                        PushManagerEventBroadcaster pushManagerEventBroadcaster,
                                                        SseClient sseClient,
-                                                       TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                                       StreamingTelemetry telemetry,
                                                        long defaultSseConnectionDelayInSecs,
                                                        int sseDisconnectionDelayInSecs) {
         return new PushNotificationManager(pushManagerEventBroadcaster,
                 sseAuthenticator,
                 sseClient,
-                new SseRefreshTokenTimer(splitTaskExecutor, pushManagerEventBroadcaster),
-                telemetryRuntimeProducer,
+                new SseRefreshTokenTimer(scheduler, pushManagerEventBroadcaster),
+                scheduler,
+                telemetry,
                 defaultSseConnectionDelayInSecs,
                 sseDisconnectionDelayInSecs,
                 null);
@@ -307,18 +317,21 @@ class SplitFactoryHelper {
 
     public SseClient getSseClient(String streamingServiceUrlString,
                                   NotificationParser notificationParser,
-                                  NotificationProcessor notificationProcessor,
-                                  TelemetryRuntimeProducer telemetryRuntimeProducer,
+                                  UpdateNotificationListener updateListener,
+                                  StreamingTelemetry telemetry,
                                   PushManagerEventBroadcaster pushManagerEventBroadcaster,
                                   HttpClient httpClient) {
         SseHandler sseHandler = new SseHandler(notificationParser,
-                notificationProcessor,
-                telemetryRuntimeProducer,
+                updateListener,
+                telemetry,
                 pushManagerEventBroadcaster);
 
-        return new SseClientImpl(URI.create(streamingServiceUrlString),
-                httpClient,
-                new EventStreamParser(),
+        EventSourceClientImpl eventSourceClient = new EventSourceClientImpl(
+                new HttpClientStreamingTransport(httpClient),
+                new EventStreamParser());
+
+        return new DefaultSseClient(URI.create(streamingServiceUrlString),
+                eventSourceClient,
                 sseHandler);
     }
 
@@ -396,22 +409,25 @@ class SplitFactoryHelper {
                 notificationParser, splitsUpdateNotificationQueue);
 
         PushManagerEventBroadcaster pushManagerEventBroadcaster = new PushManagerEventBroadcaster();
+        StreamingScheduler scheduler = new SplitTaskExecutorStreamingScheduler(splitTaskExecutor);
+        StreamingTelemetry streamingTelemetry = new TelemetryRuntimeProducerStreamingTelemetry(storageContainer.getTelemetryStorage());
+        UpdateNotificationListener updateListener = new NotificationProcessorUpdateListener(notificationProcessor);
 
         SseClient sseClient = getSseClient(config.streamingServiceUrl(),
                 notificationParser,
-                notificationProcessor,
-                storageContainer.getTelemetryStorage(),
+                updateListener,
+                streamingTelemetry,
                 pushManagerEventBroadcaster,
                 defaultHttpClient);
 
-        SseAuthenticator sseAuthenticator = new SseAuthenticator(splitApiFacade.getSseAuthenticationFetcher(),
+        SseAuthenticator sseAuthenticator = new SseAuthenticator(new HttpFetcherStreamingAuthFetcher(splitApiFacade.getSseAuthenticationFetcher()),
                 new SseJwtParser(), flagsSpec);
 
-        PushNotificationManager pushNotificationManager = getPushNotificationManager(splitTaskExecutor,
+        PushNotificationManager pushNotificationManager = getPushNotificationManager(scheduler,
                 sseAuthenticator,
                 pushManagerEventBroadcaster,
                 sseClient,
-                storageContainer.getTelemetryStorage(),
+                streamingTelemetry,
                 config.defaultSSEConnectionDelay(),
                 config.sseDisconnectionDelay());
 

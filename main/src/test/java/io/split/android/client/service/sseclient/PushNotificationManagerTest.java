@@ -40,9 +40,7 @@ import io.split.android.client.service.sseclient.sseclient.SseAuthenticator;
 import io.split.android.client.service.sseclient.sseclient.SseClient;
 import io.split.android.client.service.sseclient.sseclient.SseDisconnectionTimer;
 import io.split.android.client.service.sseclient.sseclient.SseRefreshTokenTimer;
-import io.split.android.client.telemetry.model.OperationType;
-import io.split.android.client.telemetry.model.streaming.TokenRefreshStreamingEvent;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.service.sseclient.spi.StreamingTelemetry;
 import io.split.android.fake.SseClientMock;
 
 public class PushNotificationManagerTest {
@@ -69,7 +67,7 @@ public class PushNotificationManagerTest {
     private SseAuthenticationResult mResult;
 
     @Mock
-    private TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    private StreamingTelemetry mTelemetryRuntimeProducer;
 
     PushNotificationManager mPushManager;
 
@@ -218,8 +216,8 @@ public class PushNotificationManagerTest {
         performSuccessfulConnection();
 
         verify(mTelemetryRuntimeProducer).recordTokenRefreshes();
-        verify(mTelemetryRuntimeProducer).recordSuccessfulSync(eq(OperationType.TOKEN), longThat(argument -> argument > 0));
-        verify(mTelemetryRuntimeProducer).recordStreamingEvents(any(TokenRefreshStreamingEvent.class));
+        verify(mTelemetryRuntimeProducer).recordTokenSuccessfulSync(longThat(argument -> argument > 0));
+        verify(mTelemetryRuntimeProducer).recordTokenRefreshEvent(anyLong(), longThat(argument -> argument > 0));
     }
 
     @Test
@@ -236,7 +234,7 @@ public class PushNotificationManagerTest {
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
 
-        verify(mTelemetryRuntimeProducer).recordAuthRejections();
+        verify(mTelemetryRuntimeProducer, times(1)).recordAuthRejections();
     }
 
     @Test
@@ -254,7 +252,7 @@ public class PushNotificationManagerTest {
         mPushManager.start();
         sseClient.mConnectLatch.await(2, TimeUnit.SECONDS);
 
-        verify(mTelemetryRuntimeProducer).recordSyncError(OperationType.TOKEN, 500);
+        verify(mTelemetryRuntimeProducer).recordTokenSyncError(500);
     }
 
     @Test
@@ -262,7 +260,7 @@ public class PushNotificationManagerTest {
         performSuccessfulConnection();
         Thread.sleep(1000);
 
-        verify(mTelemetryRuntimeProducer).recordSyncLatency(eq(OperationType.TOKEN), anyLong());
+        verify(mTelemetryRuntimeProducer).recordTokenSyncLatency(anyLong());
     }
 
     @Test

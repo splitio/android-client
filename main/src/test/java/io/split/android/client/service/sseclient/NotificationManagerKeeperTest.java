@@ -4,6 +4,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
+import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -14,12 +15,7 @@ import io.split.android.client.service.sseclient.feedbackchannel.PushStatusEvent
 import io.split.android.client.service.sseclient.notifications.ControlNotification;
 import io.split.android.client.service.sseclient.notifications.OccupancyNotification;
 import io.split.android.client.service.sseclient.sseclient.NotificationManagerKeeper;
-import io.split.android.client.telemetry.model.EventTypeEnum;
-import io.split.android.client.telemetry.model.streaming.OccupancyPriStreamingEvent;
-import io.split.android.client.telemetry.model.streaming.OccupancySecStreamingEvent;
-import io.split.android.client.telemetry.model.streaming.StreamingEvent;
-import io.split.android.client.telemetry.model.streaming.StreamingStatusStreamingEvent;
-import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
+import io.split.android.client.service.sseclient.spi.StreamingTelemetry;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
@@ -47,7 +43,7 @@ public class NotificationManagerKeeperTest {
     OccupancyNotification.Metrics mMetrics;
 
     @Mock
-    TelemetryRuntimeProducer mTelemetryRuntimeProducer;
+    StreamingTelemetry mTelemetryRuntimeProducer;
 
 
     @Before
@@ -215,47 +211,38 @@ public class NotificationManagerKeeperTest {
 
     @Test
     public void pausedStreamingIsRecordedInTelemetry() {
-        ArgumentCaptor<StreamingStatusStreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingStatusStreamingEvent.class);
-
         when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_PAUSED);
         when(mControlNotification.getTimestamp()).thenReturn(20L);
 
         mManagerKeeper.handleControlNotification(mControlNotification);
 
-        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
-        Assert.assertEquals(StreamingStatusStreamingEvent.Status.PAUSED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
-        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS.getNumericValue(), argumentCaptor.getValue().getEventType());
-        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+        verify(mTelemetryRuntimeProducer).recordStreamingStatus(
+                ArgumentMatchers.eq(StreamingTelemetry.StreamingStatus.PAUSED),
+                ArgumentMatchers.longThat(ts -> ts > 0));
     }
 
     @Test
     public void enabledStreamingIsRecordedInTelemetry() {
-        ArgumentCaptor<StreamingStatusStreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingStatusStreamingEvent.class);
-
         when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_RESUMED);
         when(mControlNotification.getTimestamp()).thenReturn(20L);
 
         mManagerKeeper.handleControlNotification(mControlNotification);
 
-        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
-        Assert.assertEquals(StreamingStatusStreamingEvent.Status.ENABLED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
-        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS.getNumericValue(), argumentCaptor.getValue().getEventType());
-        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+        verify(mTelemetryRuntimeProducer).recordStreamingStatus(
+                ArgumentMatchers.eq(StreamingTelemetry.StreamingStatus.ENABLED),
+                ArgumentMatchers.longThat(ts -> ts > 0));
     }
 
     @Test
     public void disabledStreamingIsRecordedInTelemetry() {
-        ArgumentCaptor<StreamingStatusStreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingStatusStreamingEvent.class);
-
         when(mControlNotification.getControlType()).thenReturn(ControlNotification.ControlType.STREAMING_DISABLED);
         when(mControlNotification.getTimestamp()).thenReturn(20L);
 
         mManagerKeeper.handleControlNotification(mControlNotification);
 
-        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
-        Assert.assertEquals(StreamingStatusStreamingEvent.Status.DISABLED.getNumericValue(), argumentCaptor.getValue().getEventData().longValue());
-        Assert.assertEquals(EventTypeEnum.STREAMING_STATUS.getNumericValue(), argumentCaptor.getValue().getEventType());
-        Assert.assertTrue(argumentCaptor.getValue().getTimestamp() > 0);
+        verify(mTelemetryRuntimeProducer).recordStreamingStatus(
+                ArgumentMatchers.eq(StreamingTelemetry.StreamingStatus.DISABLED),
+                ArgumentMatchers.longThat(ts -> ts > 0));
     }
 
     @Test
@@ -267,10 +254,9 @@ public class NotificationManagerKeeperTest {
         when(mOccupancyNotification.isControlSecChannel()).thenReturn(false);
         mManagerKeeper.handleOccupancyNotification(mOccupancyNotification);
 
-        ArgumentCaptor<StreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingEvent.class);
-
-        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
-        Assert.assertTrue(argumentCaptor.getValue() instanceof OccupancyPriStreamingEvent);
+        verify(mTelemetryRuntimeProducer).recordOccupancyPri(
+                ArgumentMatchers.eq(0),
+                ArgumentMatchers.longThat(ts -> ts > 0));
     }
 
     @Test
@@ -282,9 +268,9 @@ public class NotificationManagerKeeperTest {
         when(mOccupancyNotification.isControlSecChannel()).thenReturn(true);
         mManagerKeeper.handleOccupancyNotification(mOccupancyNotification);
 
-        ArgumentCaptor<StreamingEvent> argumentCaptor = ArgumentCaptor.forClass(StreamingEvent.class);
-
-        verify(mTelemetryRuntimeProducer).recordStreamingEvents(argumentCaptor.capture());
-        Assert.assertTrue(argumentCaptor.getValue() instanceof OccupancySecStreamingEvent);
+        // publishersCount() is the total across both channels: PRI(1) + SEC(0) = 1
+        verify(mTelemetryRuntimeProducer).recordOccupancySec(
+                ArgumentMatchers.eq(1),
+                ArgumentMatchers.longThat(ts -> ts > 0));
     }
 }

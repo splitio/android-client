@@ -3,12 +3,14 @@ package io.split.android.client.validators;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.split.android.client.tracker.TrackerLogger;
+import io.split.android.client.tracker.TrackerValidationError;
 import io.split.android.client.utils.logger.Logger;
 
 /**
  * Default implementation of ValidationMessageLogger interface
  */
-public class ValidationMessageLoggerImpl implements ValidationMessageLogger {
+public class ValidationMessageLoggerImpl implements ValidationMessageLogger, TrackerLogger {
 
     @Override
     public void log(ValidationErrorInfo errorInfo, String tag) {
@@ -50,6 +52,24 @@ public class ValidationMessageLoggerImpl implements ValidationMessageLogger {
 
     private String sanitizeTag(String tag) {
         return (tag != null ? tag : "");
+    }
+
+    // TrackerLogger implementation
+
+    @Override
+    public void log(TrackerValidationError errorInfo, String tag) {
+        if (errorInfo.isError()) {
+            logError(errorInfo.getMessage(), tag);
+        } else {
+            for (String warning : errorInfo.getWarnings()) {
+                logWarning(warning, tag);
+            }
+        }
+    }
+
+    @Override
+    public void v(String message) {
+        Logger.v(message);
     }
 
 }

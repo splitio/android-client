@@ -4,11 +4,11 @@ import io.split.android.client.dtos.KeyImpression
 import io.split.android.client.service.executor.SplitTaskExecutionInfo
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
-import io.split.android.client.service.executor.SplitTaskType
+import io.split.android.client.service.SplitTaskType
 import io.split.android.client.service.impressions.ImpressionsRecorderTask
 import io.split.android.client.service.impressions.ImpressionsTaskFactory
 import io.split.android.client.service.impressions.observer.ImpressionsObserver
-import io.split.android.client.service.synchronizer.RecorderSyncHelper
+import io.split.android.client.submitter.RecorderSyncHelper
 import io.split.android.client.telemetry.model.ImpressionsDataType
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer
 import org.junit.Before

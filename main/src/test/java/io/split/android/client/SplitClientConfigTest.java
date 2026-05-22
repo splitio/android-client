@@ -16,6 +16,7 @@ import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
 import io.split.android.client.fallback.FallbackTreatmentsConfiguration;
+import io.split.android.client.network.AuthenticatedRequest;
 import io.split.android.client.network.CertificatePinningConfiguration;
 import io.split.android.client.network.ProxyConfiguration;
 import io.split.android.client.network.SplitAuthenticatedRequest;
@@ -298,7 +299,7 @@ public class SplitClientConfigTest {
                 .proxyAuthenticator(new SplitAuthenticator() {
                     @Nullable
                     @Override
-                    public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
+                    public AuthenticatedRequest authenticate(@NonNull AuthenticatedRequest request) {
                         return null;
                     }
                 })

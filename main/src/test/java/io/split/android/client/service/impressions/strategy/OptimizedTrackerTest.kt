@@ -6,11 +6,11 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo.DO_NOT_RE
 import io.split.android.client.service.executor.SplitTaskExecutionListener
 import io.split.android.client.service.executor.SplitTaskExecutor
 import io.split.android.client.service.executor.SplitTaskSerialWrapper
-import io.split.android.client.service.executor.SplitTaskType
+import io.split.android.client.service.SplitTaskType
 import io.split.android.client.service.impressions.*
 import io.split.android.client.service.impressions.observer.ImpressionsObserver
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer
-import io.split.android.client.service.synchronizer.RecorderSyncHelper
+import io.split.android.client.submitter.RecorderSyncHelper
 import org.junit.Before
 import org.junit.Test
 import org.mockito.ArgumentCaptor

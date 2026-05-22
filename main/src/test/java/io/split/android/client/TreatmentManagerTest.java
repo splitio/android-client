@@ -1,5 +1,7 @@
 package io.split.android.client;
 
+import io.split.android.client.validators.PropertyValidatorAdapter;
+import io.split.android.client.validators.PropertyValidatorImpl;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.argThat;
@@ -372,7 +374,7 @@ public class TreatmentManagerTest {
                 new KeyValidatorImpl(), splitValidator,
                 mock(ImpressionListener.FederatedImpressionListener.class), config.labelsEnabled(), eventsManager,
                 mock(AttributesManager.class), mock(AttributesMerger.class),
-                mock(TelemetryStorageProducer.class), mFlagSetsFilter, mSplitsStorage, validationLogger, new FlagSetsValidatorImpl(), new PropertyValidatorImpl(),
+                mock(TelemetryStorageProducer.class), mFlagSetsFilter, mSplitsStorage, validationLogger, new FlagSetsValidatorImpl(), new PropertyValidatorAdapter(new PropertyValidatorImpl(new ValidationMessageLoggerImpl())),
                 new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build()));
     }
 
@@ -403,7 +405,7 @@ public class TreatmentManagerTest {
                 telemetryStorageProducer,
                 mFlagSetsFilter,
                 mSplitsStorage,
-                new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(), new PropertyValidatorImpl(),
+                new ValidationMessageLoggerImpl(), new FlagSetsValidatorImpl(), new PropertyValidatorAdapter(new PropertyValidatorImpl(new ValidationMessageLoggerImpl())),
                 new FallbackTreatmentsCalculatorImpl(FallbackTreatmentsConfiguration.builder().build()));
     }
 

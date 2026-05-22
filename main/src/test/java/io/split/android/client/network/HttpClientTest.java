@@ -10,8 +10,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import android.content.Context;
-
 import androidx.annotation.NonNull;
 
 import com.google.gson.reflect.TypeToken;
@@ -281,7 +279,6 @@ public class HttpClientTest {
         mProxyServer.start();
 
         HttpClient client = new HttpClientImpl.Builder()
-                .setContext(mock(Context.class))
                 .setUrlSanitizer(mUrlSanitizerMock)
                 .setProxy(HttpProxy.newBuilder(mProxyServer.getHostName(), mProxyServer.getPort()).buildLegacy())
                 .build();
@@ -316,11 +313,10 @@ public class HttpClientTest {
         mProxyServer.start();
 
         HttpClient client = new HttpClientImpl.Builder()
-                .setContext(mock(Context.class))
                 .setUrlSanitizer(mUrlSanitizerMock)
                 .setProxyAuthenticator(new SplitAuthenticator() {
                     @Override
-                    public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
+                    public AuthenticatedRequest authenticate(@NonNull AuthenticatedRequest request) {
                         authLatch.countDown();
                         request.setHeader("Proxy-Authorization", "my-auth");
 
@@ -371,11 +367,10 @@ public class HttpClientTest {
         mProxyServer.start();
 
         HttpClient client = new HttpClientImpl.Builder()
-                .setContext(mock(Context.class))
                 .setUrlSanitizer(mUrlSanitizerMock)
                 .setProxyAuthenticator(new SplitAuthenticator() {
                     @Override
-                    public SplitAuthenticatedRequest authenticate(@NonNull SplitAuthenticatedRequest request) {
+                    public AuthenticatedRequest authenticate(@NonNull AuthenticatedRequest request) {
                         authLatch.countDown();
                         request.setHeader("Proxy-Authorization", "my-auth");
 
@@ -407,36 +402,30 @@ public class HttpClientTest {
 
     @Test
     public void buildUsesTls12FactoryWhenLegacyAndNoProxy() throws Exception {
-        Context context = mock(Context.class);
+        TlsUpdater tlsUpdater = mock(TlsUpdater.class);
+        when(tlsUpdater.couldBeOld()).thenReturn(true);
 
-        try (MockedStatic<LegacyTlsUpdater> legacyMock = Mockito.mockStatic(LegacyTlsUpdater.class)) {
-            legacyMock.when(LegacyTlsUpdater::couldBeOld).thenReturn(true);
+        HttpClient legacyClient = new HttpClientImpl.Builder()
+                .setTlsUpdater(tlsUpdater)
+                .setUrlSanitizer(mUrlSanitizerMock)
+                .build();
 
-            HttpClient legacyClient = new HttpClientImpl.Builder()
-                    .setContext(context)
-                    .setUrlSanitizer(mUrlSanitizerMock)
-                    .build();
-
-            legacyMock.verify(() -> LegacyTlsUpdater.update(context));
-            assertTrue(((HttpClientImpl) legacyClient).getSslSocketFactory() instanceof Tls12OnlySocketFactory);
-        }
+        Mockito.verify(tlsUpdater).update();
+        assertTrue(((HttpClientImpl) legacyClient).getSslSocketFactory() instanceof Tls12OnlySocketFactory);
     }
 
     @Test
     public void buildUsesDefaultSslWhenNotLegacyAndNoProxy() throws Exception {
-        Context context = mock(Context.class);
+        TlsUpdater tlsUpdater = mock(TlsUpdater.class);
+        when(tlsUpdater.couldBeOld()).thenReturn(false);
 
-        try (MockedStatic<LegacyTlsUpdater> legacyMock = Mockito.mockStatic(LegacyTlsUpdater.class)) {
-            legacyMock.when(LegacyTlsUpdater::couldBeOld).thenReturn(false);
+        HttpClient modernClient = new HttpClientImpl.Builder()
+                .setTlsUpdater(tlsUpdater)
+                .setUrlSanitizer(mUrlSanitizerMock)
+                .build();
 
-            HttpClient modernClient = new HttpClientImpl.Builder()
-                    .setContext(context)
-                    .setUrlSanitizer(mUrlSanitizerMock)
-                    .build();
-
-            legacyMock.verify(() -> LegacyTlsUpdater.update(context), Mockito.never());
-            assertNull(((HttpClientImpl) modernClient).getSslSocketFactory());
-        }
+        Mockito.verify(tlsUpdater, Mockito.never()).update();
+        assertNull(((HttpClientImpl) modernClient).getSslSocketFactory());
     }
 
 

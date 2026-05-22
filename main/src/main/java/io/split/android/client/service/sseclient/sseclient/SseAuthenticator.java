@@ -1,6 +1,5 @@
 package io.split.android.client.service.sseclient.sseclient;
 
-import static io.split.android.client.service.ServiceConstants.FLAGS_SPEC_PARAM;
 import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
@@ -12,23 +11,23 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import io.split.android.client.service.http.HttpFetcher;
-import io.split.android.client.service.http.HttpFetcherException;
-import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.service.sseclient.InvalidJwtTokenException;
 import io.split.android.client.service.sseclient.SseAuthenticationResponse;
 import io.split.android.client.service.sseclient.SseJwtParser;
+import io.split.android.client.service.sseclient.StreamingConstants;
+import io.split.android.client.service.sseclient.spi.StreamingAuthException;
+import io.split.android.client.service.sseclient.spi.StreamingAuthFetcher;
 import io.split.android.client.utils.logger.Logger;
 
 public class SseAuthenticator {
     private static final String USER_KEY_PARAM = "users";
 
-    private final HttpFetcher<SseAuthenticationResponse> mAuthFetcher;
+    private final StreamingAuthFetcher mAuthFetcher;
     private final Set<String> mUserKeys;
     private final SseJwtParser mJwtParser;
     private final String mFlagsSpec;
 
-    public SseAuthenticator(@NonNull HttpFetcher<SseAuthenticationResponse> authFetcher,
+    public SseAuthenticator(@NonNull StreamingAuthFetcher authFetcher,
                             @NonNull SseJwtParser jwtParser,
                             @Nullable String flagsSpec) {
         mAuthFetcher = checkNotNull(authFetcher);
@@ -42,19 +41,19 @@ public class SseAuthenticator {
         try {
             Map<String, Object> params = new LinkedHashMap<>();
             if (mFlagsSpec != null && !mFlagsSpec.trim().isEmpty()) {
-                params.put(FLAGS_SPEC_PARAM, mFlagsSpec);
+                params.put(StreamingConstants.FLAGS_SPEC_PARAM, mFlagsSpec);
             }
             params.put(USER_KEY_PARAM, mUserKeys);
-            authResponse = mAuthFetcher.execute(params, null);
+            authResponse = mAuthFetcher.execute(params);
 
-        } catch (HttpFetcherException httpFetcherException) {
-            logError("Unexpected " + httpFetcherException.getLocalizedMessage());
-            if (httpFetcherException.getHttpStatus() != null) {
-                if (HttpStatus.isNotRetryable(HttpStatus.fromCode(httpFetcherException.getHttpStatus()))) {
+        } catch (StreamingAuthException authException) {
+            logError("Unexpected " + authException.getLocalizedMessage());
+            if (authException.getStatusCode() != null) {
+                if (isNotRetryable(authException.getStatusCode())) {
                     return unsuccessfulAuthenticationUnrecoverableError();
                 }
 
-                return unexpectedHttpError(httpFetcherException.getHttpStatus());
+                return unexpectedHttpError(authException.getStatusCode());
             } else {
                 return unexpectedError();
             }
@@ -108,5 +107,12 @@ public class SseAuthenticator {
 
     private SseAuthenticationResult unexpectedHttpError(int httpStatus) {
         return new SseAuthenticationResult(httpStatus);
+    }
+
+    private boolean isNotRetryable(int httpStatus) {
+        return httpStatus == 400
+                || httpStatus == 403
+                || httpStatus == 414
+                || httpStatus == 9009;
     }
 }

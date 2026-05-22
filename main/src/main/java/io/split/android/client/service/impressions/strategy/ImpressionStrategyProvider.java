@@ -5,7 +5,7 @@ import androidx.core.util.Pair;
 import io.split.android.client.dtos.KeyImpression;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutor;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.service.impressions.ImpressionManagerRetryTimerProviderImpl;
 import io.split.android.client.service.impressions.ImpressionsCounter;
 import io.split.android.client.service.impressions.ImpressionsMode;
@@ -13,7 +13,7 @@ import io.split.android.client.service.impressions.ImpressionsTaskFactory;
 import io.split.android.client.service.impressions.observer.ImpressionsObserverImpl;
 import io.split.android.client.service.impressions.unique.UniqueKeysTracker;
 import io.split.android.client.service.impressions.unique.UniqueKeysTrackerImpl;
-import io.split.android.client.service.synchronizer.RecorderSyncHelperImpl;
+import io.split.android.client.submitter.RecorderSyncHelperImpl;
 import io.split.android.client.storage.common.SplitStorageContainer;
 import io.split.android.client.telemetry.storage.TelemetryRuntimeProducer;
 

@@ -1,6 +1,6 @@
 package io.split.android.client.service.mysegments;
 
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 
 public class LoadMySegmentsTaskConfig {
 

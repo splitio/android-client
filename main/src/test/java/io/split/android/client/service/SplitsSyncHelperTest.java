@@ -53,7 +53,7 @@ import io.split.android.client.service.rules.ProcessedRuleBasedSegmentChange;
 import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.service.splits.SplitChangeProcessor;
 import io.split.android.client.service.splits.SplitsSyncHelper;
-import io.split.android.client.service.sseclient.BackoffCounter;
+import io.split.android.client.backoff.BackoffCounter;
 import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageImplTest;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;

@@ -14,6 +14,10 @@ tasks.withType(JavaCompile).configureEach {
     options.compilerArgs.add('-parameters')
 }
 
+tasks.withType(Test).configureEach {
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+}
+
 def kotlinCompileClass = null
 try {
     kotlinCompileClass = Class.forName('org.jetbrains.kotlin.gradle.tasks.KotlinCompile')
@@ -29,5 +33,28 @@ if (kotlinCompileClass != null) {
     }
 }
 
-// Enable Jacoco coverage configuration for all Android library modules
-apply from: "$rootDir/gradle/jacoco-android.gradle"
+// Enable JaCoCo only for standalone android-client builds.
+if (rootProject.name == 'android-client') {
+    apply from: "$projectDir/../gradle/jacoco-android.gradle"
+}
+
+/**
+ * Resolves an android-client module dependency in both layouts:
+ * - Standalone android-client root, and externally consumable
+ */
+ext.clientModuleProject = { String moduleName ->
+    def standalonePath = ":${moduleName}"
+    def parentPath = project.path.lastIndexOf(':') > 0 ? project.path.substring(0, project.path.lastIndexOf(':')) : null
+    def nestedPath = parentPath ? "${parentPath}:${moduleName}" : null
+    def candidates = [standalonePath, nestedPath].findAll { it != null }
+    def resolvedPath = candidates.find { findProject(it) != null }
+
+    if (resolvedPath == null) {
+        throw new GradleException(
+            "Could not resolve module '${moduleName}' for project '${project.path}'. " +
+                "Tried: ${candidates.join(', ')}"
+        )
+    }
+
+    return project(resolvedPath)
+}

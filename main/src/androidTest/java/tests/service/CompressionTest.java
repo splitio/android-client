@@ -8,18 +8,17 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
 import helper.CompressionHelper;
 import helper.FileHelper;
+import io.split.android.client.streaming.support.CompressionUtil;
+import io.split.android.client.streaming.support.Gzip;
+import io.split.android.client.streaming.support.Zlib;
 import io.split.android.client.utils.Base64Util;
-import io.split.android.client.utils.CompressionUtil;
-import io.split.android.client.utils.Gzip;
 import io.split.android.client.utils.StringHelper;
-import io.split.android.client.utils.Zlib;
 
 public class CompressionTest {
 

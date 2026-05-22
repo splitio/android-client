@@ -5,7 +5,7 @@ import java.util.HashSet;
 
 import io.split.android.client.exceptions.MySegmentsParsingException;
 import io.split.android.client.utils.Base64Util;
-import io.split.android.client.utils.CompressionUtil;
+import io.split.android.client.streaming.support.CompressionUtil;
 import io.split.android.client.utils.MurmurHash3;
 import io.split.android.client.utils.StringHelper;
 

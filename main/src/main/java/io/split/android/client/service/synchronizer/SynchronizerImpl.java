@@ -19,7 +19,7 @@ import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskExecutionListener;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.service.executor.SplitTaskFactory;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.service.impressions.StrategyImpressionManager;
 import io.split.android.client.service.sseclient.feedbackchannel.PushManagerEventBroadcaster;
 import io.split.android.client.service.sseclient.sseclient.RetryBackoffCounterTimer;
@@ -30,7 +30,9 @@ import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchro
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistry;
 import io.split.android.client.service.synchronizer.mysegments.MySegmentsSynchronizerRegistryImpl;
 import io.split.android.client.shared.UserConsent;
-import io.split.android.client.storage.common.StoragePusher;
+import io.split.android.client.submitter.RecorderSyncHelper;
+import io.split.android.client.submitter.RecorderSyncHelperImpl;
+import io.split.android.client.submitter.StoragePusher;
 import io.split.android.client.storage.splits.SplitsStorage;
 import io.split.android.client.telemetry.model.EventsDataRecordsEnum;
 import io.split.android.client.telemetry.model.streaming.SyncModeUpdateStreamingEvent;
@@ -305,14 +307,12 @@ public class SynchronizerImpl implements Synchronizer, SplitTaskExecutionListene
 
     @Override
     public void taskExecuted(@NonNull SplitTaskExecutionInfo taskInfo) {
-        switch (taskInfo.getTaskType()) {
-            case SPLITS_SYNC:
-                mFeatureFlagsSynchronizer.submitLoadingTask(null);
-                break;
-            case MY_SEGMENTS_SYNC:
-                Logger.d("Loading my segments updated in background");
-                mMySegmentsSynchronizerRegistry.submitMySegmentsLoadingTask();
-                break;
+        io.split.android.client.service.executor.SplitTaskType type = taskInfo.getTaskType();
+        if (type == SplitTaskType.SPLITS_SYNC) {
+            mFeatureFlagsSynchronizer.submitLoadingTask(null);
+        } else if (type == SplitTaskType.MY_SEGMENTS_SYNC) {
+            Logger.d("Loading my segments updated in background");
+            mMySegmentsSynchronizerRegistry.submitMySegmentsLoadingTask();
         }
     }
 }

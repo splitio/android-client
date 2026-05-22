@@ -5,7 +5,7 @@ import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
-import io.split.android.client.common.CompressionType;
+import io.split.android.client.streaming.support.CompressionType;
 import io.split.android.client.service.sseclient.notifications.SplitsChangeNotification;
 import io.split.android.client.utils.Json;
 

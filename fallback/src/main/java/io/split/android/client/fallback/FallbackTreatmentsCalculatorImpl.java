@@ -1,0 +1,52 @@
+package io.split.android.client.fallback;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
+import java.util.Map;
+import java.util.Objects;
+
+public final class FallbackTreatmentsCalculatorImpl implements FallbackTreatmentsCalculator {
+
+    private static final String LABEL_PREFIX = "fallback - ";
+    private static final String CONTROL = "control";
+
+    @NonNull
+    private final FallbackTreatmentsConfiguration mConfig;
+
+    public FallbackTreatmentsCalculatorImpl(@NonNull FallbackTreatmentsConfiguration config) {
+        mConfig = Objects.requireNonNull(config);
+    }
+
+    @NonNull
+    @Override
+    public FallbackTreatment resolve(@NonNull String flagName) {
+        return resolve(flagName, null);
+    }
+
+    @NonNull
+    @Override
+    public FallbackTreatment resolve(@NonNull String flagName, @Nullable String label) {
+        Map<String, FallbackTreatment> byFlag = mConfig.getByFlag();
+        if (byFlag != null) {
+            FallbackTreatment flagTreatment = byFlag.get(flagName);
+            if (flagTreatment != null) {
+                return flagTreatment.copyWithLabel(resolveLabel(label));
+            }
+        }
+        FallbackTreatment global = mConfig.getGlobal();
+        if (global != null) {
+            return global.copyWithLabel(resolveLabel(label));
+        }
+        return new FallbackTreatment(CONTROL, null, label);
+    }
+
+    @Nullable
+    private static String resolveLabel(@Nullable String label) {
+        if (label == null) {
+            return null;
+        }
+
+        return LABEL_PREFIX + label;
+    }
+}

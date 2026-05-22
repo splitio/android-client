@@ -25,15 +25,15 @@ import io.split.android.client.dtos.TargetingRulesChange;
 import io.split.android.client.network.SplitHttpHeadersBuilder;
 import io.split.android.client.service.ServiceConstants;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
-import io.split.android.client.service.executor.SplitTaskType;
+import io.split.android.client.service.SplitTaskType;
 import io.split.android.client.service.http.HttpFetcher;
 import io.split.android.client.service.http.HttpFetcherException;
 import io.split.android.client.service.http.HttpStatus;
 import io.split.android.client.service.rules.ProcessedRuleBasedSegmentChange;
 import io.split.android.client.service.rules.RuleBasedSegmentChangeProcessor;
 import io.split.android.client.storage.splits.ProcessedSplitChange;
-import io.split.android.client.service.sseclient.BackoffCounter;
-import io.split.android.client.service.sseclient.ReconnectBackoffCounter;
+import io.split.android.client.backoff.BackoffCounter;
+import io.split.android.client.backoff.ExponentialBackoffCounter;
 import io.split.android.client.storage.general.GeneralInfoStorage;
 import io.split.android.client.storage.rbs.RuleBasedSegmentStorageProducer;
 import io.split.android.client.storage.splits.SplitsStorage;
@@ -81,7 +81,7 @@ public class SplitsSyncHelper {
                 ruleBasedSegmentStorage,
                 generalInfoStorage,
                 telemetryRuntimeProducer,
-                new ReconnectBackoffCounter(1, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT),
+                new ExponentialBackoffCounter(1, ON_DEMAND_FETCH_BACKOFF_MAX_WAIT),
                 flagsSpec,
                 forBackgroundSync,
                 DEFAULT_PROXY_CHECK_INTERVAL_MILLIS,
@@ -331,7 +331,9 @@ public class SplitsSyncHelper {
             mLastProcessedSplitChange.set(processedSplitChange);
         }
         mSplitsStorage.update(processedSplitChange, mExecutor);
-        updateRbsStorage(ruleBasedSegmentChange);
+        if (ruleBasedSegmentChange != null) {
+            updateRbsStorage(ruleBasedSegmentChange);
+        }
     }
 
     private boolean hasFlagUpdates(@Nullable ProcessedSplitChange processedSplitChange) {

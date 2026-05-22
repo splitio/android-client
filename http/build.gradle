@@ -1,0 +1,26 @@
+plugins {
+    id 'com.android.library'
+}
+
+apply from: "$projectDir/../gradle/common-android-library.gradle"
+
+android {
+    namespace 'io.split.android.client.network.http'
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+}
+
+dependencies {
+    implementation libs.annotation
+    implementation clientModuleProject('logger')
+    api clientModuleProject('http-api')
+
+    testImplementation libs.junit4
+    testImplementation libs.mockitoCore
+    testImplementation libs.mockitoInline
+    testImplementation libs.okhttpMockwebserver
+    testImplementation libs.okhttpTls
+}

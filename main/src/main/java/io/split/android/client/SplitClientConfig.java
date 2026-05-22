@@ -13,9 +13,9 @@ import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.X509TrustManager;
 
-import io.split.android.client.main.BuildConfig;
 import io.split.android.client.impressions.ImpressionListener;
 import io.split.android.client.network.CertificatePinningConfiguration;
+import io.split.android.client.network.SdkVersionProvider;
 import io.split.android.client.network.DevelopmentSslConfig;
 import io.split.android.client.network.HttpProxy;
 import io.split.android.client.network.ProxyConfiguration;
@@ -242,7 +242,7 @@ public class SplitClientConfig {
 
         mUserConsent = userConsent;
 
-        splitSdkVersion = "Android-" + BuildConfig.SPLIT_VERSION_NAME;
+        splitSdkVersion = SdkVersionProvider.getSdkVersion();
 
         mShouldRecordTelemetry = shouldRecordTelemetry;
 
