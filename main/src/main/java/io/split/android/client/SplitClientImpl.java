@@ -38,8 +38,6 @@ public final class SplitClientImpl implements SplitClient {
     private final AttributesManager mAttributesManager;
     private final Tracker mEventsTracker;
 
-    private static final double TRACK_DEFAULT_VALUE = 0.0;
-
     private boolean mIsClientDestroyed = false;
 
     public SplitClientImpl(SplitFactory container,
@@ -219,7 +217,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public boolean track(String trafficType, String eventType) {
-        return track(mKey.matchingKey(), trafficType, eventType, TRACK_DEFAULT_VALUE, null);
+        return track(mKey.matchingKey(), trafficType, eventType, null, null);
     }
 
     @Override
@@ -229,7 +227,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public boolean track(String eventType) {
-        return track(mKey.matchingKey(), mConfig.trafficType(), eventType, TRACK_DEFAULT_VALUE, null);
+        return track(mKey.matchingKey(), mConfig.trafficType(), eventType, null, null);
     }
 
     @Override
@@ -239,7 +237,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public boolean track(String trafficType, String eventType, Map<String, Object> properties) {
-        return track(mKey.matchingKey(), trafficType, eventType, TRACK_DEFAULT_VALUE, properties);
+        return track(mKey.matchingKey(), trafficType, eventType, null, properties);
     }
 
     @Override
@@ -249,7 +247,7 @@ public final class SplitClientImpl implements SplitClient {
 
     @Override
     public boolean track(String eventType, Map<String, Object> properties) {
-        return track(mKey.matchingKey(), mConfig.trafficType(), eventType, TRACK_DEFAULT_VALUE, properties);
+        return track(mKey.matchingKey(), mConfig.trafficType(), eventType, null, properties);
     }
 
     @Override
@@ -257,7 +255,7 @@ public final class SplitClientImpl implements SplitClient {
         return track(mKey.matchingKey(), mConfig.trafficType(), eventType, value, properties);
     }
 
-    private boolean track(String key, String trafficType, String eventType, double value, Map<String, Object> properties) {
+    private boolean track(String key, String trafficType, String eventType, Double value, Map<String, Object> properties) {
         if (mIsClientDestroyed) {
             mValidationLogger.e("Client has already been destroyed - no calls possible", "track");
             return false;

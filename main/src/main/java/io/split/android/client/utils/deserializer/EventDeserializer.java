@@ -28,7 +28,8 @@ public class EventDeserializer implements JsonDeserializer<Event> {
         event.eventTypeId = jsonObject.get(Event.EVENT_TYPE_FIELD).getAsString();
         event.trafficTypeName = jsonObject.get(Event.TRAFFIC_TYPE_NAME_FIELD).getAsString();
         event.key = jsonObject.get(Event.KEY_FIELD).getAsString();
-        event.value = jsonObject.get(Event.VALUE_FIELD).getAsDouble();
+        JsonElement valueElement = jsonObject.get(Event.VALUE_FIELD);
+        event.value = (valueElement != null && !valueElement.isJsonNull()) ? valueElement.getAsDouble() : null;
         event.timestamp = jsonObject.get(Event.TIMESTAMP_FIELD).getAsLong();
         event.properties = buildMappedProperties(properties);
 

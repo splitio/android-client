@@ -56,7 +56,7 @@ public class DefaultTracker implements Tracker {
 
     @Override
     public boolean track(String key, String trafficType, String eventType,
-                         double value, Map<String, Object> properties, boolean isSdkReady) {
+                         Double value, Map<String, Object> properties, boolean isSdkReady) {
         if (!isTrackingEnabled.get()) {
             mTrackerLogger.v("Event not tracked because tracking is disabled");
             return false;

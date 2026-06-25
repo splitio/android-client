@@ -205,6 +205,20 @@ public class DefaultTrackerTest {
         assertEquals(512, captured.sizeInBytes);
     }
 
+    @Test
+    public void trackWithNullValueSucceeds() {
+        boolean result = mTracker.track("key", "traffic", "eventType", null, null, true);
+
+        assertTrue(result);
+
+        ArgumentCaptor<TrackerEvent> captor = ArgumentCaptor.forClass(TrackerEvent.class);
+        verify(mOnEventPush).accept(captor.capture());
+
+        TrackerEvent captured = captor.getValue();
+        assertNotNull(captured);
+        assertEquals(null, captured.value);
+    }
+
     // Helper matcher for verifying TrackerEvent fields
     private static <T> T argThat(ArgumentMatcherWithReturn<T> matcher) {
         return org.mockito.ArgumentMatchers.argThat(matcher::matches);
