@@ -2,10 +2,15 @@ package tests.integration;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 import android.content.Context;
+import android.util.Log;
 
 import androidx.test.platform.app.InstrumentationRegistry;
+
+import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
 
 import org.junit.After;
 import org.junit.Assert;
@@ -49,6 +54,7 @@ public class TrackTest {
     ArrayList<String> mJsonChanges = null;
     ArrayList<CountDownLatch> mLatchs;
     ArrayList<List<Event>> mEventsHits;
+    ArrayList<String> mRawEventsHitBodies;
 
     @Before
     public void setup() {
@@ -56,6 +62,7 @@ public class TrackTest {
         mCurReqId = 0;
         mLatchs = new ArrayList<>();
         mEventsHits = new ArrayList<>();
+        mRawEventsHitBodies = new ArrayList<>();
         for (int i = 0; i < 6; i++) {
             mLatchs.add(new CountDownLatch(1));
         }
@@ -89,7 +96,9 @@ public class TrackTest {
                         if (index > 0 && index < 4) {
                             code = 500;
                         } else {
-                            List<Event> data = IntegrationHelper.buildEventsFromJson(request.getBody().readUtf8());
+                            String body = request.getBody().readUtf8();
+                            mRawEventsHitBodies.add(body);
+                            List<Event> data = IntegrationHelper.buildEventsFromJson(body);
                             mEventsHits.add(data);
                             code = 200;
                         }
@@ -259,6 +268,65 @@ public class TrackTest {
         assertNotNull(event);
         assertEquals(24584535, event.properties.get("price"));
         assertEquals(158576837, event.properties.get("id"));
+    }
+
+    @Test
+    public void trackWithNullValueSendsNullInPayload() throws InterruptedException, SplitInstantiationException {
+        CountDownLatch latch = new CountDownLatch(1);
+        String apiKey = IntegrationHelper.dummyApiKey();
+        SplitRoomDatabase splitRoomDatabase = DatabaseHelper.getTestDatabase(mContext);
+        splitRoomDatabase.clearAllTables();
+
+        final String url = mWebServer.url("/").url().toString();
+
+        Key key = new Key("CUSTOMER_ID", null);
+        SplitClientConfig config = new TestableSplitConfigBuilder()
+                .serviceEndpoints(ServiceEndpoints
+                        .builder()
+                        .apiEndpoint(url)
+                        .eventsEndpoint(url)
+                        .build())
+                .ready(30000)
+                .eventFlushInterval(5)
+                .eventsPerPush(5)
+                .eventsQueueSize(1000)
+                .enableDebug()
+                .trafficType("client")
+                .build();
+
+        SplitFactory splitFactory = SplitFactoryBuilder.build(apiKey, key, config, mContext);
+
+        SplitClient client = splitFactory.client();
+
+        SplitEventTaskHelper readyTask = new SplitEventTaskHelper(latch);
+        SplitEventTaskHelper readyTimeOutTask = new SplitEventTaskHelper(latch);
+
+        client.on(SplitEvent.SDK_READY, readyTask);
+        client.on(SplitEvent.SDK_READY_TIMED_OUT, readyTimeOutTask);
+
+        latch.await(20, TimeUnit.SECONDS);
+
+        client.track("trafficType", "no-value-event");
+        mLatchs.get(0).await(20, TimeUnit.SECONDS);
+        Thread.sleep(500);
+
+        assertNotNull("Expected at least one events/bulk hit", mRawEventsHitBodies.isEmpty() ? null : mRawEventsHitBodies.get(0));
+        String rawBody = mRawEventsHitBodies.get(0);
+        Log.d("Track_test", rawBody);
+        JsonArray events = JsonParser.parseString(rawBody).getAsJsonArray();
+        boolean found = false;
+        for (int i = 0; i < events.size(); i++) {
+            if ("no-value-event".equals(events.get(i).getAsJsonObject().get("eventTypeId").getAsString())) {
+                assertTrue("Expected value to be null in JSON payload, but got: " +
+                        events.get(i).getAsJsonObject().get("value"),
+                        events.get(i).getAsJsonObject().get("value").isJsonNull());
+                found = true;
+                break;
+            }
+        }
+        assertTrue("Event 'no-value-event' not found in payload", found);
+
+        client.destroy();
     }
 
     private String emptyChanges() {

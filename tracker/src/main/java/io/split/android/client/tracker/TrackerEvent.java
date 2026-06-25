@@ -10,7 +10,7 @@ public class TrackerEvent {
     public String trafficType;
     public String eventType;
     public String key;
-    public double value;
+    public Double value;
     public long timestamp;
     public Map<String, Object> properties;
     public int sizeInBytes;

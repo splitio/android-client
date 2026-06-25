@@ -130,7 +130,7 @@ public class SqLitePersistentEventsStorageTest {
         mStorage.entityForModel(event);
 
         verify(mSplitCipher).encrypt("{\"sizeInBytes\":0,\"eventTypeId\":\"test_event_0\"," +
-                "\"trafficTypeName\":\"custom\",\"key\":\"key1\",\"value\":0,\"timestamp\":0," +
+                "\"trafficTypeName\":\"custom\",\"key\":\"key1\",\"value\":null,\"timestamp\":0," +
                 "\"properties\":{}}");
     }
 
