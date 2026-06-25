@@ -35,6 +35,8 @@ import io.split.android.client.ServiceEndpoints;
 import io.split.android.client.SplitClient;
 import io.split.android.client.SplitClientConfig;
 import io.split.android.client.SplitFactory;
+import java.util.Objects;
+
 import io.split.android.client.SplitFactoryBuilder;
 import io.split.android.client.api.Key;
 import io.split.android.client.dtos.Event;
@@ -339,7 +341,7 @@ public class TrackTest {
             List<Event> events = mEventsHits.get(i);
             if (events != null) {
                 Optional<Event> oe = events.stream()
-                        .filter(event -> event.eventTypeId.equals(type) && event.value == value).findFirst();
+                        .filter(event -> event.eventTypeId.equals(type) && Objects.equals(event.value, value)).findFirst();
                 if (oe.isPresent()) {
                     return oe.get();
                 }
