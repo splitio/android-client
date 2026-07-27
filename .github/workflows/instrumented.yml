@@ -1,5 +1,9 @@
 name: Instrumented tests
 
+# Disabled in favor of the Harness pipeline (androidclient_instrumented_tests).
+on:
+  workflow_dispatch: {}
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true

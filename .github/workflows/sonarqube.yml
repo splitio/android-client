@@ -1,14 +1,16 @@
 name: SonarCloud Analysis
 
 on:
-  push:
-    branches:
-      - master
-      - development
-      - '*_baseline'
-  pull_request:
-    branches:
-      - '*'
+  workflow_dispatch: {}
+  # Disabled in favor of the Harness pipeline (androidclienttest.yaml).
+  # push:
+  #   branches:
+  #     - master
+  #     - development
+  #     - '*_baseline'
+  # pull_request:
+  #   branches:
+  #     - '*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

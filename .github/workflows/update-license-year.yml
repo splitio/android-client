@@ -1,8 +1,10 @@
 name: Update License Year
 
 on:
-  schedule:
-    - cron: "0 3 1 1 *" # 03:00 AM on January 1
+  workflow_dispatch: {}
+  # Disabled per request.
+  # schedule:
+  #   - cron: "0 3 1 1 *" # 03:00 AM on January 1
 
 permissions:
   contents: write

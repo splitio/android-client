@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# Ensure Android SDK env vars exist even if the pipeline runner doesn't predefine them.
+export ANDROID_HOME="${ANDROID_HOME:-/opt/android-sdk}"
+export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+# Install profile controls how much Android setup is performed:
+# - unit: Java + SDK components required for local unit tests
+# - full/instrumented: includes system image + emulator setup
+INSTALL_PROFILE="${INSTALL_PROFILE:-full}"
+
 echo "========================================"
 echo "  Android Platform Dependencies Setup"
 echo "========================================"
+echo ""
+echo "Install profile: $INSTALL_PROFILE"
 echo ""
 
 # ============================================
@@ -140,38 +150,43 @@ else
   echo "✓ Android platform 29 already installed"
 fi
 
-# Install x86_64 system image for AMD64 architecture
-SYSTEM_IMAGE="system-images;android-29;default;x86_64"
-echo ""
-echo "Using system image: $SYSTEM_IMAGE"
-if ! echo "$INSTALLED_PACKAGES" | grep -q "$SYSTEM_IMAGE"; then
-  echo "Installing system image: $SYSTEM_IMAGE"
-  yes | sdkmanager "$SYSTEM_IMAGE" 2>&1 || true
+if [ "$INSTALL_PROFILE" = "unit" ]; then
+  echo ""
+  echo "Skipping system-image and emulator installation for unit-test profile"
 else
-  echo "✓ System image already installed: $SYSTEM_IMAGE"
-fi
+  # Install x86_64 system image for AMD64 architecture
+  SYSTEM_IMAGE="system-images;android-29;default;x86_64"
+  echo ""
+  echo "Using system image: $SYSTEM_IMAGE"
+  if ! echo "$INSTALLED_PACKAGES" | grep -q "$SYSTEM_IMAGE"; then
+    echo "Installing system image: $SYSTEM_IMAGE"
+    yes | sdkmanager "$SYSTEM_IMAGE" 2>&1 || true
+  else
+    echo "✓ System image already installed: $SYSTEM_IMAGE"
+  fi
 
-# Install/update emulator (force update to ensure we have a working version)
-echo "Installing/updating Android emulator..."
-yes | sdkmanager "emulator" 2>&1 || true
+  # Install/update emulator (force update to ensure we have a working version)
+  echo "Installing/updating Android emulator..."
+  yes | sdkmanager "emulator" 2>&1 || true
 
-# Verify emulator binary is accessible and working
-export PATH="$PATH:$ANDROID_HOME/emulator"
-if ! command -v emulator >/dev/null 2>&1; then
-  echo "ERROR: emulator binary not found after installation"
-  echo "Contents of ANDROID_HOME/emulator:"
-  ls -la "$ANDROID_HOME/emulator" || echo "Directory does not exist"
-  exit 1
-fi
+  # Verify emulator binary is accessible and working
+  export PATH="$PATH:$ANDROID_HOME/emulator"
+  if ! command -v emulator >/dev/null 2>&1; then
+    echo "ERROR: emulator binary not found after installation"
+    echo "Contents of ANDROID_HOME/emulator:"
+    ls -la "$ANDROID_HOME/emulator" || echo "Directory does not exist"
+    exit 1
+  fi
 
-# Test emulator can show version (quick check it's not corrupted)
-echo "Testing emulator binary..."
-if emulator -version 2>&1 | head -1 | grep -q "emulator"; then
-  echo "✓ Emulator binary is working:"
-  emulator -version | head -3
-else
-  echo "WARNING: Emulator binary may have issues"
-  emulator -version 2>&1 | head -5 || echo "Failed to get emulator version"
+  # Test emulator can show version (quick check it's not corrupted)
+  echo "Testing emulator binary..."
+  if emulator -version 2>&1 | head -1 | grep -q "emulator"; then
+    echo "✓ Emulator binary is working:"
+    emulator -version | head -3
+  else
+    echo "WARNING: Emulator binary may have issues"
+    emulator -version 2>&1 | head -5 || echo "Failed to get emulator version"
+  fi
 fi
 
 echo ""

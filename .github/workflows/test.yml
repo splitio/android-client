@@ -1,8 +1,10 @@
 name: test
 on:
-  push:
-    branches:
-      - '*'
+  workflow_dispatch: {}
+  # Disabled in favor of the Harness pipeline (androidclienttest.yaml).
+  # push:
+  #   branches:
+  #     - '*'
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
