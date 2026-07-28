@@ -35,7 +35,6 @@ inputSet:
     properties:
       ci:
         codebase:
-          connectorRef: fmegithubrunnersci
           repoName: android-client
           build:
             type: PR

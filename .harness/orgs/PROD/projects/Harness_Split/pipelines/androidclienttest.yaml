@@ -1,0 +1,141 @@
+pipeline:
+  name: android-client-test
+  identifier: androidclienttest
+  projectIdentifier: Harness_Split
+  orgIdentifier: PROD
+  tags: {}
+  properties:
+    ci:
+      codebase:
+        repoName: android-client
+        build: <+input>
+  stages:
+    - stage:
+        name: Build
+        identifier: Build
+        description: ""
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            override: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          variables:
+            - name: ANDROID_HOME
+              type: String
+              value: /opt/android-sdk
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: Install Dependencies
+                  identifier: install_dependencies
+                  spec:
+                    shell: Sh
+                    command: |
+                      export INSTALL_PROFILE=unit
+                      chmod +x .harness/scripts/install-deps.sh
+                      .harness/scripts/install-deps.sh
+              - step:
+                  type: RunTests
+                  name: Run unit tests
+                  identifier: run_unit_tests
+                  spec:
+                    language: Java
+                    buildTool: Gradle
+                    args: test
+                    shell: Sh
+                    preCommand: |
+                      export ANDROID_HOME="${ANDROID_HOME:-/opt/android-sdk}"
+                      # Set Android SDK environment variables to point to the same location
+                      export ANDROID_SDK_ROOT=$ANDROID_HOME
+
+                      JAVA17_BIN=$(find /usr/lib/jvm -maxdepth 3 -type f -path "*/java-17-openjdk-*/bin/java" | head -n1)
+                      if [ -n "$JAVA17_BIN" ]; then
+                        export JAVA_HOME=$(dirname $(dirname "$JAVA17_BIN"))
+                        export PATH="$JAVA_HOME/bin:$PATH"
+                      fi
+
+                      export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$ANDROID_HOME/cmdline-tools/latest/bin"
+                      java -version
+                      echo "JAVA_HOME: $JAVA_HOME"
+                    testIntelligence:
+                      enabled: true
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - "**/build/test-results/**/*.xml"
+              - step:
+                  type: Run
+                  name: Generate JaCoCo Coverage Report
+                  identifier: generate_jacoco_coverage_report
+                  spec:
+                    shell: Sh
+                    command: |
+                      export ANDROID_HOME="${ANDROID_HOME:-/opt/android-sdk}"
+                      export ANDROID_SDK_ROOT=$ANDROID_HOME
+
+                      JAVA17_BIN=$(find /usr/lib/jvm -maxdepth 3 -type f -path "*/java-17-openjdk-*/bin/java" | head -n1)
+                      if [ -n "$JAVA17_BIN" ]; then
+                        export JAVA_HOME=$(dirname $(dirname "$JAVA17_BIN"))
+                        export PATH="$JAVA_HOME/bin:$PATH"
+                      fi
+
+                      export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin"
+                      ./gradlew jacocoRootReport --stacktrace
+
+                      echo "JaCoCo XML report:"
+                      ls -la build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml || true
+                      echo "JaCoCo HTML report:"
+                      ls -la build/reports/jacoco/jacocoRootReport/html/index.html || true
+                  when:
+                    stageStatus: Success
+              - step:
+                  type: Run
+                  name: Install and Run SonarQube Scanner
+                  identifier: install_sonarqube_scanner
+                  spec:
+                    connectorRef: account.harnessImage
+                    image: sonarsource/sonar-scanner-cli
+                    shell: Bash
+                    command: |
+                      set -euo pipefail
+
+                      # Run scanner from repository root if present.
+                      if [ -d "/harness/<+codebase.repoName>" ]; then
+                        cd "/harness/<+codebase.repoName>"
+                      fi
+
+                      COMMON_ARGS="
+                        -Dsonar.host.url=https://sonar.harness.io
+                        -Dsonar.token=$SONAR_TOKEN
+                        -Dsonar.scanner.skipJreProvisioning=true
+                        -Dsonar.scanner.skipSystemTruststore=true
+                        -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml
+                      "
+
+                      if [ "<+codebase.prNumber>" != "" ] && [ "<+codebase.prNumber>" != "null" ]; then
+                        echo "Pull Request Analysis"
+                        sonar-scanner \
+                          $COMMON_ARGS \
+                          -Dsonar.pullrequest.key=<+codebase.prNumber> \
+                          -Dsonar.pullrequest.branch=<+codebase.sourceBranch> \
+                          -Dsonar.pullrequest.base=<+codebase.targetBranch>
+                      else
+                        echo "Branch Analysis"
+                        sonar-scanner \
+                          $COMMON_ARGS \
+                          -Dsonar.branch.name=<+codebase.branch>
+                      fi
+                    envVariables:
+                      SONAR_TOKEN: <+secrets.getValue("sonarqube-token")>
+                  timeout: 10m
+                  when:
+                    stageStatus: Success
