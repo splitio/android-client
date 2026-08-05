@@ -44,7 +44,7 @@ public class LoadAttributesTaskTest {
         SplitTaskExecutionInfo result = loadAttributesTask.execute();
 
         verify(persistentAttributesStorage).getAll(matchingKey);
-        verify(attributesStorage).set(valuesInPersistentStorage);
+        verify(attributesStorage).loadFromPersistence(valuesInPersistentStorage);
         Assert.assertEquals(SplitTaskType.LOAD_LOCAL_ATTRIBUTES, result.getTaskType());
         Assert.assertEquals(SplitTaskExecutionStatus.SUCCESS, result.getStatus());
     }

@@ -1,7 +1,5 @@
 package io.split.android.client.service.attributes;
 
-import java.util.Map;
-
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
 
@@ -16,8 +14,8 @@ public class AttributeTaskFactoryImpl implements AttributeTaskFactory {
     }
 
     @Override
-    public UpdateAttributesInPersistentStorageTask createAttributeUpdateTask(PersistentAttributesStorage persistentAttributesStorage, Map<String, Object> attributes) {
-        return new UpdateAttributesInPersistentStorageTask(mMatchingKey, persistentAttributesStorage, attributes);
+    public UpdateAttributesInPersistentStorageTask createAttributeUpdateTask(PersistentAttributesStorage persistentAttributesStorage) {
+        return new UpdateAttributesInPersistentStorageTask(mMatchingKey, persistentAttributesStorage, mAttributesStorage);
     }
 
     @Override

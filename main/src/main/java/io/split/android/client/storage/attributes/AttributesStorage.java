@@ -21,4 +21,11 @@ public interface AttributesStorage {
     void destroy();
 
     void remove(String name);
+
+    /**
+     * Merges attributes read from persistent storage into memory, without overwriting values already
+     * set by the SDK consumer. If the consumer cleared attributes before the load completed, the
+     * persisted attributes are discarded.
+     */
+    void loadFromPersistence(@NonNull Map<String, Object> persistedAttributes);
 }

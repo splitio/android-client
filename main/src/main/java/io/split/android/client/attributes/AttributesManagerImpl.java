@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import java.util.Map;
 
 import io.split.android.client.service.attributes.AttributeTaskFactory;
+import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutor;
 import io.split.android.client.storage.attributes.AttributesStorage;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
@@ -15,6 +16,8 @@ import io.split.android.client.validators.AttributesValidator;
 import io.split.android.client.validators.ValidationMessageLogger;
 
 public class AttributesManagerImpl implements AttributesManager {
+
+    private static final long PERSIST_TASK_DELAY_SECONDS = 5L;
 
     private final AttributesStorage mAttributesStorage;
     private final AttributesValidator mAttributesValidator;
@@ -25,16 +28,14 @@ public class AttributesManagerImpl implements AttributesManager {
     private final AttributeTaskFactory mAttributeTaskFactory;
     @Nullable
     private final SplitTaskExecutor mSplitTaskExecutor;
+    private final Object mScheduledPersistTaskLock = new Object();
+    @Nullable
+    private String mScheduledPersistTaskId;
+    @Nullable
+    private ScheduledTaskKind mScheduledPersistTaskKind;
 
-    AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
-                          @NonNull AttributesValidator attributesValidator,
-                          @NonNull ValidationMessageLogger validationMessageLogger) {
-        mAttributesStorage = checkNotNull(attributesStorage);
-        mAttributesValidator = checkNotNull(attributesValidator);
-        mValidationMessageLogger = checkNotNull(validationMessageLogger);
-        mPersistentAttributesStorage = null;
-        mAttributeTaskFactory = null;
-        mSplitTaskExecutor = null;
+    private enum ScheduledTaskKind {
+        UPDATE, CLEAR
     }
 
     AttributesManagerImpl(@NonNull AttributesStorage attributesStorage,
@@ -60,7 +61,7 @@ public class AttributesManagerImpl implements AttributesManager {
 
         mAttributesStorage.set(attributeName, value);
 
-        submitUpdateTask(mPersistentAttributesStorage, mAttributesStorage.getAll());
+        submitUpdateTask(mPersistentAttributesStorage);
 
         return true;
     }
@@ -82,7 +83,7 @@ public class AttributesManagerImpl implements AttributesManager {
 
         mAttributesStorage.set(attributes);
 
-        submitUpdateTask(mPersistentAttributesStorage, mAttributesStorage.getAll());
+        submitUpdateTask(mPersistentAttributesStorage);
 
         return true;
     }
@@ -102,7 +103,7 @@ public class AttributesManagerImpl implements AttributesManager {
     public boolean removeAttribute(String attributeName) {
         mAttributesStorage.remove(attributeName);
 
-        submitUpdateTask(mPersistentAttributesStorage, mAttributesStorage.getAll());
+        submitUpdateTask(mPersistentAttributesStorage);
 
         return true;
     }
@@ -116,15 +117,66 @@ public class AttributesManagerImpl implements AttributesManager {
         return true;
     }
 
-    private void submitUpdateTask(PersistentAttributesStorage persistentStorage, Map<String, Object> mInMemoryAttributes) {
-        if (persistentStorage != null && mSplitTaskExecutor != null && mAttributeTaskFactory != null) {
-            mSplitTaskExecutor.schedule(mAttributeTaskFactory.createAttributeUpdateTask(persistentStorage, mInMemoryAttributes), 5L, null);
+    private void submitUpdateTask(@Nullable PersistentAttributesStorage persistentStorage) {
+        schedulePersistTask(persistentStorage, ScheduledTaskKind.UPDATE);
+    }
+
+    private void submitClearTask(@Nullable PersistentAttributesStorage persistentStorage) {
+        schedulePersistTask(persistentStorage, ScheduledTaskKind.CLEAR);
+    }
+
+    /**
+     * Schedules a single pending persistence task of the given kind, coalescing repeated calls:
+     * while a task of the same kind is already pending, no new one is scheduled. A pending task of
+     * a different kind is cancelled and replaced, so that a clear is never overwritten by a stale
+     * update (or vice versa).
+     */
+    private void schedulePersistTask(@Nullable PersistentAttributesStorage persistentStorage, ScheduledTaskKind kind) {
+        if (persistentStorage == null || mSplitTaskExecutor == null || mAttributeTaskFactory == null) {
+            return;
+        }
+
+        synchronized (mScheduledPersistTaskLock) {
+            if (mScheduledPersistTaskId != null && mScheduledPersistTaskKind != kind) {
+                mSplitTaskExecutor.stopTask(mScheduledPersistTaskId);
+                clearScheduledSlot();
+            }
+
+            if (mScheduledPersistTaskId != null) {
+                return;
+            }
+
+            SplitTask task = kind == ScheduledTaskKind.CLEAR ?
+                    mAttributeTaskFactory.createAttributeClearTask(persistentStorage) :
+                    mAttributeTaskFactory.createAttributeUpdateTask(persistentStorage);
+
+            // The wrapped task needs the task id, which is only known after scheduling, hence the holder.
+            // The slot is cleared at the START of execution (not on completion) so that a mutation
+            // landing while the task's execute() is still running (e.g. a slow DB write) is not
+            // silently deduped.
+            String[] idHolder = new String[1];
+            SplitTask wrapped = () -> {
+                clearScheduledSlotIfCurrent(idHolder[0]);
+                return task.execute();
+            };
+            String taskId = mSplitTaskExecutor.schedule(wrapped, PERSIST_TASK_DELAY_SECONDS, null);
+            idHolder[0] = taskId;
+
+            mScheduledPersistTaskId = taskId;
+            mScheduledPersistTaskKind = kind;
         }
     }
 
-    private void submitClearTask(PersistentAttributesStorage persistentStorage) {
-        if (persistentStorage != null && mSplitTaskExecutor != null && mAttributeTaskFactory != null) {
-            mSplitTaskExecutor.schedule(mAttributeTaskFactory.createAttributeClearTask(persistentStorage), 5L, null);
+    private void clearScheduledSlotIfCurrent(@Nullable String taskId) {
+        synchronized (mScheduledPersistTaskLock) {
+            if (taskId != null && taskId.equals(mScheduledPersistTaskId)) {
+                clearScheduledSlot();
+            }
         }
+    }
+
+    private void clearScheduledSlot() {
+        mScheduledPersistTaskId = null;
+        mScheduledPersistTaskKind = null;
     }
 }

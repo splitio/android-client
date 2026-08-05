@@ -43,9 +43,19 @@ public class SqLitePersistentAttributesStorageTest {
 
     @Test
     public void clearCallsDeleteAllInAttributesDao() {
+        when(mSplitCipher.encrypt("matching_key")).thenReturn("encrypted_matching_key");
         storage.clear(matchingKey);
 
-        Mockito.verify(mAttributesDao).deleteAll("matching_key");
+        Mockito.verify(mAttributesDao).deleteAll("encrypted_matching_key");
+    }
+
+    @Test
+    public void clearDoesNotCallDeleteAllWhenEncryptedMatchingKeyIsNull() {
+        when(mSplitCipher.encrypt("matching_key")).thenReturn(null);
+
+        storage.clear(matchingKey);
+
+        Mockito.verify(mAttributesDao, Mockito.never()).deleteAll(any());
     }
 
     @Test

@@ -1,5 +1,5 @@
 inputSet:
-  name: " inputset"
+  name: "inputset"
   identifier: inputset
   orgIdentifier: PROD
   projectIdentifier: Harness_Split

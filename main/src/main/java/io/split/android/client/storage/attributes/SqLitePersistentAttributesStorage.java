@@ -60,7 +60,12 @@ public class SqLitePersistentAttributesStorage implements PersistentAttributesSt
 
     @Override
     public void clear(String matchingKey) {
-        mAttributesDao.deleteAll(matchingKey);
+        String encryptedMatchingKey = mSplitCipher.encrypt(matchingKey);
+        if (encryptedMatchingKey == null) {
+            Logger.e("Error encrypting matching key for attributes clear");
+            return;
+        }
+        mAttributesDao.deleteAll(encryptedMatchingKey);
     }
 
     private Map<String, Object> getAttributesMapFromEntity(AttributesEntity attributesEntity) {
