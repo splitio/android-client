@@ -17,15 +17,17 @@ class TaskWrapper implements Runnable {
 
     @Override
     public void run() {
+        SplitTaskExecutionInfo info;
         try {
-            SplitTaskExecutionInfo info = mTask.execute();
-            SplitTaskExecutionListener listener = mExecutionListener.get();
-            if (listener != null) {
-                listener.taskExecuted(info);
-            }
-
+            info = mTask.execute();
         } catch (Exception e) {
             Logger.e("An error has occurred while running task on executor: " + e.getLocalizedMessage());
+            info = SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK);
+        }
+
+        SplitTaskExecutionListener listener = mExecutionListener.get();
+        if (listener != null) {
+            listener.taskExecuted(info);
         }
     }
 }

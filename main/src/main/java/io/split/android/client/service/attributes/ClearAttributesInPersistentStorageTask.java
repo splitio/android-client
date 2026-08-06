@@ -8,6 +8,7 @@ import io.split.android.client.service.executor.SplitTask;
 import io.split.android.client.service.executor.SplitTaskExecutionInfo;
 import io.split.android.client.service.executor.SplitTaskType;
 import io.split.android.client.storage.attributes.PersistentAttributesStorage;
+import io.split.android.client.utils.logger.Logger;
 
 public class ClearAttributesInPersistentStorageTask implements SplitTask {
 
@@ -22,7 +23,12 @@ public class ClearAttributesInPersistentStorageTask implements SplitTask {
     @NonNull
     @Override
     public SplitTaskExecutionInfo execute() {
-        mPersistentAttributesStorage.clear(mMatchingKey);
+        try {
+            mPersistentAttributesStorage.clear(mMatchingKey);
+        } catch (Exception e) {
+            Logger.e("Error clearing attributes: " + e.getLocalizedMessage());
+            return SplitTaskExecutionInfo.error(SplitTaskType.GENERIC_TASK);
+        }
 
         return SplitTaskExecutionInfo.success(SplitTaskType.GENERIC_TASK);
     }

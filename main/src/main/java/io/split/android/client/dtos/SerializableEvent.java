@@ -21,7 +21,7 @@ public class SerializableEvent {
     @SerializedName(KEY_FIELD)
     public String key;
     @SerializedName(VALUE_FIELD)
-    public double value;
+    public Double value;
     @SerializedName(TIMESTAMP_FIELD)
     public long timestamp;
     @SerializedName(PROPERTIES_FIELD)
@@ -31,8 +31,8 @@ public class SerializableEvent {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        Event event = (Event) o;
-        return Double.compare(event.value, value) == 0 &&
+        SerializableEvent event = (SerializableEvent) o;
+        return Objects.equals(value, event.value) &&
                 timestamp == event.timestamp &&
                 Objects.equals(eventTypeId, event.eventTypeId) &&
                 Objects.equals(trafficTypeName, event.trafficTypeName) &&

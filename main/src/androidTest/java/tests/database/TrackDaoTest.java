@@ -156,7 +156,7 @@ public class TrackDaoTest extends GenericDaoTest {
             trackEvent.trafficTypeName = "traffic_" + i;
             trackEvent.eventTypeId = "type_" + i;
             trackEvent.key = "key";
-            trackEvent.value = i;
+            trackEvent.value = (double) i;
             trackEvent.timestamp = timestamp + i;
 
             EventEntity eventEntity = new EventEntity();

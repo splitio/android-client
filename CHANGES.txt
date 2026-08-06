@@ -1,3 +1,6 @@
+5.5.2 (Aug 6, 2026)
+- Fixed issue in which persisted attributes could overwrite new values if those were set before SDK_READY_FROM_CACHE was fired.
+
 5.5.1 (May 22, 2026)
 - Fixed race condition in which killing the SDK process during first initialization could leave cache in an inconsistent state.
 - Refactored internal SDK components into standalone modules.

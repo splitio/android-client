@@ -29,7 +29,7 @@ public class LoadAttributesTask implements SplitTask {
     @Override
     public SplitTaskExecutionInfo execute() {
         if (mPersistentAttributesStorage != null && mAttributesStorage != null) {
-            mAttributesStorage.set(mPersistentAttributesStorage.getAll(mMatchingKey));
+            mAttributesStorage.loadFromPersistence(mPersistentAttributesStorage.getAll(mMatchingKey));
         }
         return SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_ATTRIBUTES);
     }
