@@ -89,12 +89,12 @@ public interface StreamingTransport {
             mStatusCode = null;
         }
 
-        public StreamingTransportException(String message, int statusCode) {
+        public StreamingTransportException(String message, @Nullable Integer statusCode) {
             super(message);
             mStatusCode = statusCode;
         }
 
-        public StreamingTransportException(String message, Throwable cause, int statusCode) {
+        public StreamingTransportException(String message, Throwable cause, @Nullable Integer statusCode) {
             super(message, cause);
             mStatusCode = statusCode;
         }
