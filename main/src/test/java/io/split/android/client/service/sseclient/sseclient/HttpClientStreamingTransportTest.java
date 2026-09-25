@@ -15,12 +15,6 @@ import io.split.android.client.service.sseclient.spi.StreamingTransport;
 
 public class HttpClientStreamingTransportTest {
 
-    /**
-     * Reproduces a crash seen when a proxy/tunnel setup failure surfaces as a plain IOException,
-     * which HttpStreamRequestImpl wraps into an HttpException with no status code (null).
-     * Propagating that null status code used to blow up on unboxing instead of surfacing as a
-     * StreamingTransportException.
-     */
     @Test
     public void executeWrapsHttpExceptionWithNullStatusCodeWithoutThrowingNpe() throws Exception {
         HttpStreamRequest request = mock(HttpStreamRequest.class);
