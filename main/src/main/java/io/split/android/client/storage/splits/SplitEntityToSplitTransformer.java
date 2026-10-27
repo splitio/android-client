@@ -4,16 +4,14 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 
 import androidx.annotation.NonNull;
 
-import com.google.gson.JsonSyntaxException;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.storage.cipher.SplitCipher;
+import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.SplitEntity;
-import io.split.android.client.utils.logger.Logger;
 
 public class SplitEntityToSplitTransformer implements SplitListTransformer<SplitEntity, Split> {
 
@@ -35,24 +33,22 @@ public class SplitEntityToSplitTransformer implements SplitListTransformer<Split
             return new ArrayList<>();
         }
 
-        List<Split> splits = new ArrayList<>(allNamesAndBodies.size());
+        List<String> stored = new ArrayList<>(allNamesAndBodies.size() * 2);
         for (Map.Entry<String, SplitEntity> entry : allNamesAndBodies.entrySet()) {
             if (entry == null || entry.getValue() == null) {
                 continue;
             }
-            try {
-                String decryptedName = mSplitCipher.decrypt(entry.getKey());
-                if (decryptedName == null) {
-                    continue;
-                }
-                String decryptedBody = mSplitCipher.decrypt(entry.getValue().getBody());
-                if (decryptedBody == null) {
-                    continue;
-                }
+            stored.add(entry.getKey());
+            stored.add(entry.getValue().getBody());
+        }
 
-                splits.add(new Split(decryptedName, decryptedBody));
-            } catch (JsonSyntaxException e) {
-                Logger.e("Could not parse entity to split: " + entry.getKey());
+        List<String> plain = SplitCipherFactory.decryptAll(mSplitCipher, stored);
+        List<Split> splits = new ArrayList<>(plain.size() / 2);
+        for (int i = 0; i < plain.size(); i += 2) {
+            String name = plain.get(i);
+            String body = plain.get(i + 1);
+            if (name != null && body != null) {
+                splits.add(new Split(name, body));
             }
         }
 

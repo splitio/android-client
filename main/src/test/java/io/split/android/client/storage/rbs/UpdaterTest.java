@@ -1,15 +1,19 @@
 package io.split.android.client.storage.rbs;
 
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static io.split.android.client.storage.rbs.RuleBasedSegmentStorageImplTest.createRuleBasedSegment;
 
 import androidx.annotation.NonNull;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -21,6 +25,8 @@ import java.util.Set;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.storage.cipher.SplitCipher;
+import io.split.android.client.storage.db.RefusedWrites;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity;
 import io.split.android.client.storage.general.GeneralInfoStorage;
@@ -30,6 +36,7 @@ public class UpdaterTest {
     private SplitCipher mCipher;
     private RuleBasedSegmentDao mDao;
     private GeneralInfoStorage mGeneralInfoStorage;
+    private SplitRoomDatabase mDatabase;
     private Updater mUpdater;
 
     @Before
@@ -37,6 +44,12 @@ public class UpdaterTest {
         mCipher = mock(SplitCipher.class);
         mDao = mock(RuleBasedSegmentDao.class);
         mGeneralInfoStorage = mock(GeneralInfoStorage.class);
+        mDatabase = mock(SplitRoomDatabase.class);
+    }
+
+    @After
+    public void tearDown() {
+        RefusedWrites.resetForTesting();
     }
 
     @Test
@@ -118,8 +131,93 @@ public class UpdaterTest {
                 argument.get(0).getName().equals("encrypted_segment1")));
     }
 
+    @Test
+    public void rbsInsertEncryptFailureRefusesWrite() {
+        Set<RuleBasedSegment> toAdd = Set.of(createRuleBasedSegment("segment1"));
+        when(mCipher.encrypt(any())).thenThrow(new IllegalStateException("keystore"));
+        mUpdater = createUpdater(toAdd, Collections.emptySet(), 10);
+
+        mUpdater.run();
+
+        verify(mGeneralInfoStorage).setRbsChangeNumber(-1);
+        verify(mGeneralInfoStorage, never()).setRbsChangeNumber(10);
+        assertTrue(RefusedWrites.ruleBasedSegmentsRefused(mDatabase));
+    }
+
+    @Test
+    public void rbsNullEncryptedNameRefusesWrite() {
+        Set<RuleBasedSegment> toRemove = Set.of(createRuleBasedSegment("segment1"));
+        when(mCipher.encrypt("segment1")).thenReturn(null);
+        mUpdater = createUpdater(Collections.emptySet(), toRemove, 10);
+
+        mUpdater.run();
+
+        verify(mGeneralInfoStorage).setRbsChangeNumber(-1);
+        verify(mGeneralInfoStorage, never()).setRbsChangeNumber(10);
+        assertTrue(RefusedWrites.ruleBasedSegmentsRefused(mDatabase));
+    }
+
+    @Test
+    public void rbsNullNameForInsertRefusesWrite() {
+        Set<RuleBasedSegment> toAdd = Set.of(createRuleBasedSegment("segment1"));
+        when(mCipher.encrypt(anyString())).thenAnswer(invocation -> "encrypted_" + invocation.getArgument(0));
+        when(mCipher.encrypt("segment1")).thenReturn(null);
+        mUpdater = createUpdater(toAdd, Collections.emptySet(), 10);
+
+        mUpdater.run();
+
+        verify(mGeneralInfoStorage).setRbsChangeNumber(-1);
+        assertTrue(RefusedWrites.ruleBasedSegmentsRefused(mDatabase));
+    }
+
+    @Test
+    public void rbsNullBodyRefusesWrite() {
+        Set<RuleBasedSegment> toAdd = Set.of(createRuleBasedSegment("segment1"));
+        when(mCipher.encrypt(anyString())).thenReturn(null);
+        when(mCipher.encrypt("segment1")).thenReturn("encrypted_segment1");
+        mUpdater = createUpdater(toAdd, Collections.emptySet(), 10);
+
+        mUpdater.run();
+
+        verify(mGeneralInfoStorage).setRbsChangeNumber(-1);
+        verify(mGeneralInfoStorage, never()).setRbsChangeNumber(10);
+        assertTrue(RefusedWrites.ruleBasedSegmentsRefused(mDatabase));
+    }
+
+    @Test
+    public void rbsRefusedDatabaseWritesMinusOne() {
+        RefusedWrites.refuseRuleBasedSegments(mDatabase);
+        mUpdater = createUpdater(Collections.emptySet(), Collections.emptySet(), 10);
+
+        mUpdater.run();
+
+        verify(mGeneralInfoStorage).setRbsChangeNumber(-1);
+        verify(mGeneralInfoStorage, never()).setRbsChangeNumber(10);
+    }
+
+    @Test
+    public void flagsRefusalLeavesRbsChangeNumberAlone() {
+        RefusedWrites.refuseFlags(mDatabase);
+        mUpdater = createUpdater(Collections.emptySet(), Collections.emptySet(), 10);
+
+        mUpdater.run();
+
+        verify(mGeneralInfoStorage).setRbsChangeNumber(10);
+        assertFalse(RefusedWrites.ruleBasedSegmentsRefused(mDatabase));
+    }
+
+    @Test
+    public void rbsRefusalLeavesFlagsAlone() {
+        when(mCipher.encrypt("segment1")).thenReturn(null);
+        mUpdater = createUpdater(Collections.emptySet(), Set.of(createRuleBasedSegment("segment1")), 10);
+
+        mUpdater.run();
+
+        assertFalse(RefusedWrites.flagsRefused(mDatabase));
+    }
+
     @NonNull
     private Updater createUpdater(Set<RuleBasedSegment> toAdd, Set<RuleBasedSegment> toRemove, long changeNumber) {
-        return new Updater(mCipher, mDao, mGeneralInfoStorage, toAdd, toRemove, changeNumber);
+        return new Updater(mCipher, mDao, mGeneralInfoStorage, toAdd, toRemove, changeNumber, mDatabase);
     }
 }

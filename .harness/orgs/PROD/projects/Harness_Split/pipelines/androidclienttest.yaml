@@ -91,51 +91,83 @@ pipeline:
                       export PATH="$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/cmdline-tools/latest/bin"
                       ./gradlew jacocoRootReport --stacktrace
 
+                      REPORT=/harness/build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml
                       echo "JaCoCo XML report:"
-                      ls -la build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml || true
+                      ls -la "$REPORT"
                       echo "JaCoCo HTML report:"
-                      ls -la build/reports/jacoco/jacocoRootReport/html/index.html || true
+                      ls -la /harness/build/reports/jacoco/jacocoRootReport/html/index.html || true
+
+                      # hcli only treats jacoco.xml as JaCoCo. analyze does not receive --file
+                      # and only searches coverage/ and build/reports/jacoco/test.
+                      mkdir -p /harness/coverage /harness/build/reports/jacoco/test
+                      cp "$REPORT" /harness/coverage/jacoco.xml
+                      cp "$REPORT" /harness/build/reports/jacoco/test/jacoco.xml
+                      ls -la /harness/coverage/jacoco.xml /harness/build/reports/jacoco/test/jacoco.xml
                   when:
                     stageStatus: Success
-              - step:
-                  type: Run
-                  name: Install and Run SonarQube Scanner
-                  identifier: install_sonarqube_scanner
-                  spec:
-                    connectorRef: account.harnessImage
-                    image: sonarsource/sonar-scanner-cli
-                    shell: Bash
-                    command: |
-                      set -euo pipefail
+              - parallel:
+                  - step:
+                      type: Run
+                      name: Install and Run SonarQube Scanner
+                      identifier: install_sonarqube_scanner
+                      spec:
+                        connectorRef: account.harnessImage
+                        image: sonarsource/sonar-scanner-cli
+                        shell: Bash
+                        command: |-
+                          set -euo pipefail
 
-                      # Run scanner from repository root if present.
-                      if [ -d "/harness/<+codebase.repoName>" ]; then
-                        cd "/harness/<+codebase.repoName>"
-                      fi
+                          # Run scanner from repository root if present.
+                          if [ -d "/harness/<+codebase.repoName>" ]; then
+                            cd "/harness/<+codebase.repoName>"
+                          fi
 
-                      COMMON_ARGS="
-                        -Dsonar.host.url=https://sonar.harness.io
-                        -Dsonar.token=$SONAR_TOKEN
-                        -Dsonar.scanner.skipJreProvisioning=true
-                        -Dsonar.scanner.skipSystemTruststore=true
-                        -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml
-                      "
+                          COMMON_ARGS="
+                            -Dsonar.host.url=https://sonar.harness.io
+                            -Dsonar.token=$SONAR_TOKEN
+                            -Dsonar.scanner.skipJreProvisioning=true
+                            -Dsonar.scanner.skipSystemTruststore=true
+                            -Dsonar.coverage.jacoco.xmlReportPaths=build/reports/jacoco/jacocoRootReport/jacocoRootReport.xml
+                          "
 
-                      if [ "<+codebase.prNumber>" != "" ] && [ "<+codebase.prNumber>" != "null" ]; then
-                        echo "Pull Request Analysis"
-                        sonar-scanner \
-                          $COMMON_ARGS \
-                          -Dsonar.pullrequest.key=<+codebase.prNumber> \
-                          -Dsonar.pullrequest.branch=<+codebase.sourceBranch> \
-                          -Dsonar.pullrequest.base=<+codebase.targetBranch>
-                      else
-                        echo "Branch Analysis"
-                        sonar-scanner \
-                          $COMMON_ARGS \
-                          -Dsonar.branch.name=<+codebase.branch>
-                      fi
-                    envVariables:
-                      SONAR_TOKEN: <+secrets.getValue("sonarqube-token")>
-                  timeout: 10m
-                  when:
-                    stageStatus: Success
+                          if [ "<+codebase.prNumber>" != "" ] && [ "<+codebase.prNumber>" != "null" ]; then
+                            echo "Pull Request Analysis"
+                            sonar-scanner \
+                              $COMMON_ARGS \
+                              -Dsonar.pullrequest.key=<+codebase.prNumber> \
+                              -Dsonar.pullrequest.branch=<+codebase.sourceBranch> \
+                              -Dsonar.pullrequest.base=<+codebase.targetBranch>
+                          else
+                            echo "Branch Analysis"
+                            sonar-scanner \
+                              $COMMON_ARGS \
+                              -Dsonar.branch.name=<+codebase.branch>
+                          fi
+                        envVariables:
+                          SONAR_TOKEN: <+secrets.getValue("sonarqube-token")>
+                      timeout: 10m
+                      when:
+                        stageStatus: Success
+                      failureStrategies:
+                        - onFailure:
+                            errors:
+                              - AllErrors
+                            action:
+                              type: Ignore
+                  - step:
+                      name: harnessCoverage
+                      identifier: harnessCoverage
+                      when:
+                        stageStatus: Success
+                      template:
+                        templateRef: account.codeCoverage
+                        versionLabel: v1
+                        templateInputs:
+                          type: Run
+                          spec:
+                            envVariables:
+                              patch_coverage_percent: "80"
+                              file_path: /harness/coverage/jacoco.xml
+                              overall_coverage_percent: ""
+                              ignore_failure: "false"
+                              exclude: "**/build/**,**/.gradle/**,**/src/test/**,**/src/androidTest/**,**/*Test.java,**/*Tests.java,**/*Test.kt,**/*Tests.kt"

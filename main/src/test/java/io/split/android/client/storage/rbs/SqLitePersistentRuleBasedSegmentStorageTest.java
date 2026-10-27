@@ -1,13 +1,18 @@
 package io.split.android.client.storage.rbs;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertThrows;
 import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static helper.TestingHelper.getFieldValue;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -17,6 +22,7 @@ import java.util.Set;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.storage.cipher.SplitCipher;
+import io.split.android.client.storage.db.RefusedWrites;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
 import io.split.android.client.storage.general.GeneralInfoStorage;
@@ -39,6 +45,44 @@ public class SqLitePersistentRuleBasedSegmentStorageTest {
         when(mDatabase.ruleBasedSegmentDao()).thenReturn(mDao);
 
         storage = new SqLitePersistentRuleBasedSegmentStorage(mCipher, mDatabase, mGeneralInfoStorage);
+    }
+
+    @After
+    public void tearDown() {
+        RefusedWrites.resetForTesting();
+    }
+
+    @Test
+    public void rbsTransactionExceptionWritesMinusOneAndRethrows() {
+        IllegalStateException failure = new IllegalStateException("boom");
+        doThrow(failure).when(mDatabase).runInTransaction(any(Updater.class));
+
+        IllegalStateException thrown = assertThrows(IllegalStateException.class,
+                () -> storage.update(new HashSet<>(), new HashSet<>(), 123L));
+
+        assertSame(failure, thrown);
+        verify(mGeneralInfoStorage).setRbsChangeNumber(-1);
+        assertTrue(RefusedWrites.ruleBasedSegmentsRefused(mDatabase));
+        assertFalse(RefusedWrites.flagsRefused(mDatabase));
+    }
+
+    @Test
+    public void rbsRefusalIsStickyForTheDatabase() {
+        doThrow(new IllegalStateException("boom")).when(mDatabase).runInTransaction(any(Updater.class));
+        assertThrows(IllegalStateException.class, () -> storage.update(new HashSet<>(), new HashSet<>(), 1L));
+        org.mockito.Mockito.reset(mDatabase);
+        when(mDatabase.ruleBasedSegmentDao()).thenReturn(mDao);
+        org.mockito.Mockito.doAnswer(invocation -> {
+            ((Runnable) invocation.getArgument(0)).run();
+            return null;
+        }).when(mDatabase).runInTransaction(any(Updater.class));
+        GeneralInfoStorage secondInfo = mock(GeneralInfoStorage.class);
+        SqLitePersistentRuleBasedSegmentStorage second = new SqLitePersistentRuleBasedSegmentStorage(mCipher, mDatabase, secondInfo);
+
+        second.update(new HashSet<>(), new HashSet<>(), 500L);
+
+        verify(secondInfo).setRbsChangeNumber(-1);
+        verify(secondInfo, never()).setRbsChangeNumber(500L);
     }
 
     @Test

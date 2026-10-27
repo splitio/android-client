@@ -14,11 +14,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.Split;
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutor;
+import io.split.android.client.storage.cipher.CBCCipher;
+import io.split.android.client.storage.cipher.JceCbcCipherProvider;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.SplitEntity;
 
@@ -89,6 +92,68 @@ public class SplitEntityToSplitTransformerTest {
         List<Split> splits = mConverter.transform(mockEntities);
 
         assertEquals(0, splits.size());
+    }
+
+    @Test
+    public void cbcCipherUsesOneOperationPerBatch() {
+        JceCbcCipherProvider provider = new JceCbcCipherProvider();
+        CBCCipher cipher = new CBCCipher(provider);
+        Map<String, SplitEntity> stored = new LinkedHashMap<>();
+        for (SplitEntity entity : getMockEntities(50)) {
+            SplitEntity encrypted = new SplitEntity();
+            encrypted.setName(cipher.encrypt(entity.getName()));
+            encrypted.setBody(cipher.encrypt(entity.getBody()));
+            stored.put(encrypted.getName(), encrypted);
+        }
+        List<String> expectedNames = new ArrayList<>();
+        List<String> expectedBodies = new ArrayList<>();
+        for (Map.Entry<String, SplitEntity> entry : stored.entrySet()) {
+            expectedNames.add(cipher.decrypt(entry.getKey()));
+            expectedBodies.add(cipher.decrypt(entry.getValue().getBody()));
+        }
+        provider.decryptionCalls.set(0);
+
+        List<Split> splits = new SplitEntityToSplitTransformer(cipher).transform(stored);
+
+        assertEquals(1, provider.decryptionCalls.get());
+        assertEquals(50, splits.size());
+        for (int i = 0; i < splits.size(); i++) {
+            assertEquals(expectedNames.get(i), splits.get(i).name);
+            assertEquals(expectedBodies.get(i), splits.get(i).json);
+        }
+    }
+
+    @Test
+    public void rowsWithUndecryptableNameOrBodyAreSkippedAndTheRestStayPaired() {
+        JceCbcCipherProvider provider = new JceCbcCipherProvider();
+        CBCCipher cipher = new CBCCipher(provider);
+        byte[] corrupt = new byte[16];
+        java.util.Arrays.fill(corrupt, (byte) 'z');
+        corrupt[15] = 5;
+        String undecryptable = java.util.Base64.getEncoder().encodeToString(provider.encryptWithoutPadding(corrupt));
+        Map<String, SplitEntity> stored = new LinkedHashMap<>();
+        stored.put(cipher.encrypt("one"), entityWithBody(cipher.encrypt("body-one")));
+        stored.put(undecryptable, entityWithBody(cipher.encrypt("body-lost-name")));
+        stored.put(cipher.encrypt("three"), entityWithBody(cipher.encrypt("body-three")));
+        stored.put(cipher.encrypt("four"), entityWithBody(undecryptable));
+        stored.put(cipher.encrypt("skipped"), null);
+        stored.put(cipher.encrypt("six"), entityWithBody(cipher.encrypt("body-six")));
+
+        List<Split> splits = new SplitEntityToSplitTransformer(cipher).transform(stored);
+
+        assertEquals(3, splits.size());
+        assertEquals("one", splits.get(0).name);
+        assertEquals("body-one", splits.get(0).json);
+        assertEquals("three", splits.get(1).name);
+        assertEquals("body-three", splits.get(1).json);
+        assertEquals("six", splits.get(2).name);
+        assertEquals("body-six", splits.get(2).json);
+    }
+
+    private static SplitEntity entityWithBody(String body) {
+        SplitEntity entity = new SplitEntity();
+        entity.setBody(body);
+        return entity;
     }
 
     private List<SplitEntity> getMockEntities(int amount) {
