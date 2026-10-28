@@ -5,7 +5,6 @@ import static org.junit.Assert.assertFalse;
 
 import android.os.Build;
 
-import androidx.annotation.RequiresApi;
 import androidx.test.filters.SdkSuppress;
 
 import org.junit.After;
@@ -20,7 +19,6 @@ import java.util.UUID;
 import io.split.android.client.storage.cipher.CBCCipher;
 
 @SdkSuppress(minSdkVersion = Build.VERSION_CODES.M)
-@RequiresApi(Build.VERSION_CODES.M)
 public class BatchDecryptKeyStoreInstrumentedTest {
 
     private String mApiKey;

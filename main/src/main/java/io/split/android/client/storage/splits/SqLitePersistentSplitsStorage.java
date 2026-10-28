@@ -71,6 +71,9 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             return false;
         }
 
+        // Before any write: a preload taken from older rows must not be served after this.
+        mDatabase.getSplitQueryDao().invalidate();
+
         final List<String> removedSplits;
         final List<SplitEntity> splitEntities;
         final String encryptedTrafficTypes;
@@ -138,8 +141,10 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public SplitsSnapshot getSnapshot() {
-        SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase, loadSplits(), mCipher);
-        loader.run();
+        // General info (change number first) is read before the flag rows.
+        SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase, mCipher);
+        loader.readGeneralInfo();
+        loader.run(loadSplits());
         return new SplitsSnapshot(loader.getSplits(), loader.getChangeNumber(),
                 loader.getUpdateTimestamp(), loader.getSplitsFilterQueryString(), loader.getFlagsSpec(),
                 loader.getTrafficTypes(), loader.getFlagSets());
@@ -147,6 +152,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public void update(Split split) {
+        mDatabase.getSplitQueryDao().invalidate();
         List<Split> splits = new ArrayList<>();
         splits.add(split);
         mDatabase.splitDao().insert(convertSplitListToEntities(splits));
@@ -171,6 +177,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public void delete(List<String> splitNames) {
+        mDatabase.getSplitQueryDao().invalidate();
         List<String> encryptedNames = new ArrayList<>();
         for (String splitName : splitNames) {
             encryptedNames.add(mCipher.encrypt(splitName));
@@ -237,7 +244,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         return names;
     }
 
-    private static class SplitsSnapshotLoader implements Runnable {
+    private static class SplitsSnapshotLoader {
         private final SplitRoomDatabase mDatabase;
         private Long mChangeNumber = -1L;
         private Long mUpdateTimestamp = 0L;
@@ -245,23 +252,23 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         private String mFlagsSpec = "";
         private Map<String, Integer> mTrafficTypes = new ConcurrentHashMap<>();
         private Map<String, Set<String>> mFlagSets = new ConcurrentHashMap<>();
-        private final List<Split> mSplits;
+        private List<Split> mSplits = new ArrayList<>();
         private final SplitCipher mCipher;
+        private GeneralInfoEntity mTrafficTypesEntity;
+        private GeneralInfoEntity mFlagSetsEntity;
 
-        public SplitsSnapshotLoader(SplitRoomDatabase database, List<Split> splits, SplitCipher cipher) {
+        public SplitsSnapshotLoader(SplitRoomDatabase database, SplitCipher cipher) {
             mDatabase = database;
-            mSplits = splits;
             mCipher = cipher;
         }
 
-        @Override
-        public void run() {
-            GeneralInfoEntity timestampEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP);
+        void readGeneralInfo() {
             GeneralInfoEntity changeNumberEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
+            GeneralInfoEntity timestampEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP);
             GeneralInfoEntity filterQueryStringEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING);
             GeneralInfoEntity flagsSpecEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.FLAGS_SPEC);
-            GeneralInfoEntity trafficTypesEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.TRAFFIC_TYPES_MAP);
-            GeneralInfoEntity flagSetsEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.FLAG_SETS_MAP);
+            mTrafficTypesEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.TRAFFIC_TYPES_MAP);
+            mFlagSetsEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.FLAG_SETS_MAP);
 
             if (changeNumberEntity != null) {
                 mChangeNumber = changeNumberEntity.getLongValue();
@@ -278,6 +285,12 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             if (flagsSpecEntity != null) {
                 mFlagsSpec = flagsSpecEntity.getStringValue();
             }
+        }
+
+        void run(List<Split> splits) {
+            mSplits = splits;
+            GeneralInfoEntity trafficTypesEntity = mTrafficTypesEntity;
+            GeneralInfoEntity flagSetsEntity = mFlagSetsEntity;
 
             boolean splitsAreNotEmpty = !mSplits.isEmpty();
             boolean trafficTypesEntityIsEmpty = !hasStringValue(trafficTypesEntity);

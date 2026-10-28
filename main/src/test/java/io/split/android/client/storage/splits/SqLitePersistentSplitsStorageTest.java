@@ -9,6 +9,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -21,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.ArgumentMatcher;
+import org.mockito.InOrder;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.mockito.stubbing.Answer;
@@ -144,15 +146,9 @@ public class SqLitePersistentSplitsStorageTest {
         long changeNumber = 9999;
         long timestamp = 123456789;
 
-        Split split1 = new Split();
-        split1.name = "split-1";
-        archivedSplits.add(split1);
-        Split split2 = new Split();
-        split2.name = "split-2";
-        archivedSplits.add(split2);
-        Split split3 = new Split();
-        split3.name = "split-3";
-        archivedSplits.add(split3);
+        archivedSplits.add(newSplit("split-1"));
+        archivedSplits.add(newSplit("split-2"));
+        archivedSplits.add(newSplit("split-3"));
         ProcessedSplitChange change = new ProcessedSplitChange(activeSplits, archivedSplits, changeNumber, timestamp);
         when(mCipher.encrypt(any())).thenAnswer((Answer<String>) invocation -> invocation.getArgument(0) + "_encrypted");
 
@@ -168,15 +164,9 @@ public class SqLitePersistentSplitsStorageTest {
         long changeNumber = 9999;
         long timestamp = 123456789;
 
-        Split split1 = new Split();
-        split1.name = "split-1";
-        activeSplits.add(split1);
-        Split split2 = new Split();
-        split2.name = "split-2";
-        activeSplits.add(split2);
-        Split split3 = new Split();
-        split3.name = "split-3";
-        activeSplits.add(split3);
+        activeSplits.add(newSplit("split-1"));
+        activeSplits.add(newSplit("split-2"));
+        activeSplits.add(newSplit("split-3"));
         ProcessedSplitChange change = new ProcessedSplitChange(activeSplits, archivedSplits, changeNumber, timestamp);
         when(mCipher.encrypt(any())).thenAnswer((Answer<String>) invocation -> invocation.getArgument(0) + "_encrypted");
 
@@ -294,6 +284,7 @@ public class SqLitePersistentSplitsStorageTest {
         GeneralInfoDao otherGeneralInfoDao = mock(GeneralInfoDao.class);
         when(otherDatabase.generalInfoDao()).thenReturn(otherGeneralInfoDao);
         when(otherDatabase.splitDao()).thenReturn(mock(SplitDao.class));
+        when(otherDatabase.getSplitQueryDao()).thenReturn(mock(SplitQueryDao.class));
         doAnswer((Answer<Void>) invocation -> {
             ((Runnable) invocation.getArgument(0)).run();
             return null;
@@ -528,8 +519,7 @@ public class SqLitePersistentSplitsStorageTest {
 
     @Test
     public void updateSingleSplitUsesTransformer() {
-        Split split = new Split();
-        split.name = "split-1";
+        Split split = newSplit("split-1");
         SplitEntity entity = new SplitEntity();
         entity.setName("split-1");
         when(mSplitToSplitEntityTransformer.transform(Collections.singletonList(split))).thenReturn(Collections.singletonList(entity));
@@ -643,6 +633,66 @@ public class SqLitePersistentSplitsStorageTest {
         int writeCount() {
             return mWrites;
         }
+    }
+
+    @Test
+    public void snapshotReadsChangeNumberBeforeTheFlagRows() {
+        mStorage.getSnapshot();
+
+        InOrder inOrder = inOrder(mGeneralInfoDao, mSplitQueryDao);
+        inOrder.verify(mGeneralInfoDao).getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
+        inOrder.verify(mSplitQueryDao).getAllAsMap();
+    }
+
+    @Test
+    public void updateChangeInvalidatesPreloadBeforeTheFirstWrite() {
+        Split split = newSplit("split-1");
+        Split archived = newSplit("split-2");
+        SplitEntity entity = new SplitEntity();
+        entity.setName("split-1");
+        when(mSplitToSplitEntityTransformer.transform(Collections.singletonList(split))).thenReturn(Collections.singletonList(entity));
+        ProcessedSplitChange change = new ProcessedSplitChange(Collections.singletonList(split),
+                Collections.singletonList(archived), 9999, 1);
+
+        mStorage.update(change, mTrafficTypes, mFlagSets);
+
+        InOrder inOrder = inOrder(mSplitQueryDao, mDatabase, mSplitDao);
+        inOrder.verify(mSplitQueryDao).invalidate();
+        inOrder.verify(mDatabase).runInTransaction(any(Runnable.class));
+        inOrder.verify(mSplitDao).insert(any(List.class));
+        inOrder.verify(mSplitDao).delete(any(List.class));
+    }
+
+    @Test
+    public void updateInvalidatesPreloadEvenWhenEncryptionFails() {
+        when(mCipher.encrypt(any())).thenThrow(new RuntimeException("boom"));
+        ProcessedSplitChange change = new ProcessedSplitChange(Collections.emptyList(), Collections.emptyList(), 9999, 1);
+
+        mStorage.update(change, mTrafficTypes, mFlagSets);
+
+        InOrder inOrder = inOrder(mSplitQueryDao, mGeneralInfoDao);
+        inOrder.verify(mSplitQueryDao).invalidate();
+        inOrder.verify(mGeneralInfoDao).update(argThat(e -> e.getName().equals(GeneralInfoEntity.CHANGE_NUMBER_INFO)));
+    }
+
+    @Test
+    public void updateSingleSplitInvalidatesPreloadBeforeTheWrite() {
+        Split split = newSplit("split-1");
+
+        mStorage.update(split);
+
+        InOrder inOrder = inOrder(mSplitQueryDao, mSplitDao);
+        inOrder.verify(mSplitQueryDao).invalidate();
+        inOrder.verify(mSplitDao).insert(any(List.class));
+    }
+
+    @Test
+    public void deleteInvalidatesPreloadBeforeTheWrite() {
+        mStorage.delete(Collections.singletonList("split-1"));
+
+        InOrder inOrder = inOrder(mSplitQueryDao, mSplitDao);
+        inOrder.verify(mSplitQueryDao).invalidate();
+        inOrder.verify(mSplitDao).delete(any(List.class));
     }
 
     private List<SplitEntity> getMockEntities() {
