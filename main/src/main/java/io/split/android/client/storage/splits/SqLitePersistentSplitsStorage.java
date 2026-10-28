@@ -26,6 +26,7 @@ import io.split.android.client.service.executor.parallel.SplitParallelTaskExecut
 import io.split.android.client.service.executor.parallel.SplitParallelTaskExecutorFactoryImpl;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.GeneralInfoEntity;
+import io.split.android.client.storage.db.RefusedWrites;
 import io.split.android.client.storage.db.SplitEntity;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.utils.Json;
@@ -70,27 +71,53 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             return false;
         }
 
-        List<String> removedSplits = splitNameList(splitChange.getArchivedSplits());
-        List<SplitEntity> splitEntities = convertSplitListToEntities(splitChange.getActiveSplits());
+        // Before any write: a preload taken from older rows must not be served after this.
+        mDatabase.getSplitQueryDao().invalidate();
+
+        final List<String> removedSplits;
+        final List<SplitEntity> splitEntities;
+        final String encryptedTrafficTypes;
+        final String encryptedFlagSets;
+        try {
+            removedSplits = splitNameList(splitChange.getArchivedSplits());
+            splitEntities = convertSplitListToEntities(splitChange.getActiveSplits());
+            encryptedTrafficTypes = mTrafficTypes.isEmpty() ? null : mCipher.encrypt(Json.toJson(mTrafficTypes));
+            encryptedFlagSets = mCipher.encrypt(Json.toJson(mFlagSets));
+        } catch (RuntimeException e) {
+            RefusedWrites.refuseFlags(mDatabase);
+            Logger.e("Refusing to advance the flags change number: encryption failed");
+            mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, -1));
+            return false;
+        }
+
+        List<Split> active = splitChange.getActiveSplits();
+        if (splitEntities.size() != (active == null ? 0 : active.size())
+                || removedSplits.contains(null)
+                || (!mTrafficTypes.isEmpty() && encryptedTrafficTypes == null)
+                || encryptedFlagSets == null) {
+            RefusedWrites.refuseFlags(mDatabase);
+            Logger.e("Refusing to advance the flags change number: a value failed to encrypt");
+        }
 
         mDatabase.runInTransaction(new Runnable() {
             @Override
             public void run() {
+                // Read under the writer lock, so a refusal made by another writer is seen.
+                long changeNumber = RefusedWrites.flagsRefused(mDatabase) ? -1 : splitChange.getChangeNumber();
                 mDatabase.generalInfoDao().update(
-                        new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, splitChange.getChangeNumber()));
+                        new GeneralInfoEntity(GeneralInfoEntity.CHANGE_NUMBER_INFO, changeNumber));
                 if (!splitEntities.isEmpty()) {
                     mDatabase.splitDao().insert(splitEntities);
                 }
-                if (!removedSplits.isEmpty()) {
-                    mDatabase.splitDao().delete(removedSplits);
+                List<String> names = withoutNulls(removedSplits);
+                if (!names.isEmpty()) {
+                    mDatabase.splitDao().delete(names);
                 }
-                if (!mTrafficTypes.isEmpty()) {
-                    String encryptedTrafficTypes = mCipher.encrypt(Json.toJson(mTrafficTypes));
+                if (encryptedTrafficTypes != null) {
                     mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP,
                             encryptedTrafficTypes));
                 }
-                if (!mFlagSets.isEmpty()) {
-                    String encryptedFlagSets = mCipher.encrypt(Json.toJson(mFlagSets));
+                if (encryptedFlagSets != null) {
                     mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP,
                             encryptedFlagSets));
                 }
@@ -99,13 +126,25 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             }
         });
 
-        return true;
+        return !RefusedWrites.flagsRefused(mDatabase);
+    }
+
+    private static List<String> withoutNulls(List<String> names) {
+        List<String> result = new ArrayList<>(names.size());
+        for (String name : names) {
+            if (name != null) {
+                result.add(name);
+            }
+        }
+        return result;
     }
 
     @Override
     public SplitsSnapshot getSnapshot() {
-        SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase, loadSplits(), mCipher);
-        loader.run();
+        // General info (change number first) is read before the flag rows.
+        SplitsSnapshotLoader loader = new SplitsSnapshotLoader(mDatabase, mCipher);
+        loader.readGeneralInfo();
+        loader.run(loadSplits());
         return new SplitsSnapshot(loader.getSplits(), loader.getChangeNumber(),
                 loader.getUpdateTimestamp(), loader.getSplitsFilterQueryString(), loader.getFlagsSpec(),
                 loader.getTrafficTypes(), loader.getFlagSets());
@@ -113,6 +152,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public void update(Split split) {
+        mDatabase.getSplitQueryDao().invalidate();
         List<Split> splits = new ArrayList<>();
         splits.add(split);
         mDatabase.splitDao().insert(convertSplitListToEntities(splits));
@@ -137,6 +177,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
     @Override
     public void delete(List<String> splitNames) {
+        mDatabase.getSplitQueryDao().invalidate();
         List<String> encryptedNames = new ArrayList<>();
         for (String splitName : splitNames) {
             encryptedNames.add(mCipher.encrypt(splitName));
@@ -203,7 +244,7 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         return names;
     }
 
-    private static class SplitsSnapshotLoader implements Runnable {
+    private static class SplitsSnapshotLoader {
         private final SplitRoomDatabase mDatabase;
         private Long mChangeNumber = -1L;
         private Long mUpdateTimestamp = 0L;
@@ -211,23 +252,23 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
         private String mFlagsSpec = "";
         private Map<String, Integer> mTrafficTypes = new ConcurrentHashMap<>();
         private Map<String, Set<String>> mFlagSets = new ConcurrentHashMap<>();
-        private final List<Split> mSplits;
+        private List<Split> mSplits = new ArrayList<>();
         private final SplitCipher mCipher;
+        private GeneralInfoEntity mTrafficTypesEntity;
+        private GeneralInfoEntity mFlagSetsEntity;
 
-        public SplitsSnapshotLoader(SplitRoomDatabase database, List<Split> splits, SplitCipher cipher) {
+        public SplitsSnapshotLoader(SplitRoomDatabase database, SplitCipher cipher) {
             mDatabase = database;
-            mSplits = splits;
             mCipher = cipher;
         }
 
-        @Override
-        public void run() {
-            GeneralInfoEntity timestampEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP);
+        void readGeneralInfo() {
             GeneralInfoEntity changeNumberEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.CHANGE_NUMBER_INFO);
+            GeneralInfoEntity timestampEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_UPDATE_TIMESTAMP);
             GeneralInfoEntity filterQueryStringEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.SPLITS_FILTER_QUERY_STRING);
             GeneralInfoEntity flagsSpecEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.FLAGS_SPEC);
-            GeneralInfoEntity trafficTypesEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.TRAFFIC_TYPES_MAP);
-            GeneralInfoEntity flagSetsEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.FLAG_SETS_MAP);
+            mTrafficTypesEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.TRAFFIC_TYPES_MAP);
+            mFlagSetsEntity = mDatabase.generalInfoDao().getByName(GeneralInfoEntity.FLAG_SETS_MAP);
 
             if (changeNumberEntity != null) {
                 mChangeNumber = changeNumberEntity.getLongValue();
@@ -244,10 +285,16 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
             if (flagsSpecEntity != null) {
                 mFlagsSpec = flagsSpecEntity.getStringValue();
             }
+        }
+
+        void run(List<Split> splits) {
+            mSplits = splits;
+            GeneralInfoEntity trafficTypesEntity = mTrafficTypesEntity;
+            GeneralInfoEntity flagSetsEntity = mFlagSetsEntity;
 
             boolean splitsAreNotEmpty = !mSplits.isEmpty();
-            boolean trafficTypesEntityIsEmpty = trafficTypesEntity == null || trafficTypesEntity.getStringValue().isEmpty();
-            boolean flagSetsEntityIsEmpty = flagSetsEntity == null || flagSetsEntity.getStringValue().isEmpty();
+            boolean trafficTypesEntityIsEmpty = !hasStringValue(trafficTypesEntity);
+            boolean flagSetsEntityIsEmpty = !hasStringValue(flagSetsEntity);
             boolean trafficTypesAndSetsMigrationRequired = splitsAreNotEmpty &&
                     (trafficTypesEntityIsEmpty || flagSetsEntityIsEmpty);
             if (trafficTypesAndSetsMigrationRequired) {
@@ -259,19 +306,23 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
 
         private synchronized void parseTrafficTypesAndSets(@Nullable GeneralInfoEntity trafficTypesEntity, @Nullable GeneralInfoEntity flagSetsEntity) {
             Logger.v("Parsing traffic types and sets");
-            if (trafficTypesEntity != null && !trafficTypesEntity.getStringValue().isEmpty()) {
+            if (hasStringValue(trafficTypesEntity)) {
                 Type mapType = new TypeToken<Map<String, Integer>>(){}.getType();
                 String encryptedTrafficTypes = trafficTypesEntity.getStringValue();
                 String decryptedTrafficTypes = mCipher.decrypt(encryptedTrafficTypes);
                 mTrafficTypes = Json.fromJson(decryptedTrafficTypes, mapType);
             }
 
-            if (flagSetsEntity != null && !flagSetsEntity.getStringValue().isEmpty()) {
+            if (hasStringValue(flagSetsEntity)) {
                 Type flagsMapType = new TypeToken<Map<String, Set<String>>>(){}.getType();
                 String encryptedFlagSets = flagSetsEntity.getStringValue();
                 String decryptedFlagSets = mCipher.decrypt(encryptedFlagSets);
                 mFlagSets = Json.fromJson(decryptedFlagSets, flagsMapType);
             }
+        }
+
+        private static boolean hasStringValue(@Nullable GeneralInfoEntity entity) {
+            return entity != null && entity.getStringValue() != null && !entity.getStringValue().isEmpty();
         }
 
         private void migrateTrafficTypesAndSetsFromStoredData() {
@@ -294,15 +345,19 @@ public class SqLitePersistentSplitsStorage implements PersistentSplitsStorage {
                 if (mTrafficTypes != null && !mTrafficTypes.isEmpty()) {
                     String decryptedTrafficTypes = Json.toJson(mTrafficTypes);
                     String encryptedTrafficTypes = mCipher.encrypt(decryptedTrafficTypes);
-                    mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, encryptedTrafficTypes));
+                    if (encryptedTrafficTypes != null) {
+                        mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.TRAFFIC_TYPES_MAP, encryptedTrafficTypes));
+                    }
                 }
 
-                if (mFlagSets != null && !mFlagSets.isEmpty()) {
+                if (mFlagSets != null) {
                     // persist flag sets
                     String decryptedFlagSets = Json.toJson(mFlagSets);
                     String encryptedFlagSets = mCipher.encrypt(decryptedFlagSets);
 
-                    mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, encryptedFlagSets));
+                    if (encryptedFlagSets != null) {
+                        mDatabase.generalInfoDao().update(new GeneralInfoEntity(GeneralInfoEntity.FLAG_SETS_MAP, encryptedFlagSets));
+                    }
                 }
             } catch (Exception e) {
                 Logger.e("Failed to migrate traffic types and flag sets", e);

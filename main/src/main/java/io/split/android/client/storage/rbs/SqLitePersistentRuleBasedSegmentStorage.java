@@ -6,6 +6,7 @@ import java.util.Set;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.storage.cipher.SplitCipher;
+import io.split.android.client.storage.db.RefusedWrites;
 import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
 import io.split.android.client.storage.general.GeneralInfoStorage;
@@ -33,7 +34,13 @@ class SqLitePersistentRuleBasedSegmentStorage implements PersistentRuleBasedSegm
 
     @Override
     public void update(Set<RuleBasedSegment> toAdd, Set<RuleBasedSegment> toRemove, long changeNumber) {
-        mDatabase.runInTransaction(new Updater(mCipher, mDao, mGeneralInfoStorage, toAdd, toRemove, changeNumber));
+        try {
+            mDatabase.runInTransaction(new Updater(mCipher, mDao, mGeneralInfoStorage, toAdd, toRemove, changeNumber, mDatabase));
+        } catch (RuntimeException e) {
+            RefusedWrites.refuseRuleBasedSegments(mDatabase);
+            mGeneralInfoStorage.setRbsChangeNumber(-1);
+            throw e;
+        }
     }
 
     @Override

@@ -14,17 +14,16 @@ class SplitTaskBatchWrapper implements Runnable {
 
     @Override
     public void run() {
-        try {
-            for (SplitTaskBatchItem enqueued : mTaskQueue) {
+        for (SplitTaskBatchItem enqueued : mTaskQueue) {
+            try {
                 SplitTaskExecutionInfo info = enqueued.getTask().execute();
                 SplitTaskExecutionListener listener = enqueued.getListener();
                 if (listener != null) {
                     listener.taskExecuted(info);
                 }
+            } catch (Exception e) {
+                Logger.e("An error has occurred while running task on executor: " + e.getLocalizedMessage());
             }
-
-        } catch (Exception e) {
-            Logger.e("An error has occurred while running task on executor: " + e.getLocalizedMessage());
         }
     }
 }

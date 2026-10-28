@@ -74,6 +74,9 @@ public class SplitsStorageImpl implements SplitsStorage {
             for (Split split : splits) {
                 mInMemorySplits.put(split.name, split);
             }
+
+            long elapsedMs = System.currentTimeMillis() - startTime;
+            Logger.v("SplitsStorage loadLocal finished in " + elapsedMs + " ms (" + splits.size() + " flags)");
         } finally {
             mInitialized.compareAndSet(false, true);
         }

@@ -10,6 +10,8 @@ import java.util.Set;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.storage.cipher.SplitCipher;
+import io.split.android.client.storage.db.RefusedWrites;
+import io.split.android.client.storage.db.SplitRoomDatabase;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity;
 import io.split.android.client.storage.general.GeneralInfoStorage;
@@ -28,6 +30,8 @@ final class Updater implements Runnable {
     private final Set<RuleBasedSegment> mToAdd;
     @NonNull
     private final Set<RuleBasedSegment> mToRemove;
+    @NonNull
+    private final SplitRoomDatabase mDatabase;
     private final long mChangeNumber;
 
     Updater(@NonNull SplitCipher cipher,
@@ -35,23 +39,28 @@ final class Updater implements Runnable {
             @NonNull GeneralInfoStorage generalInfoStorage,
             @NonNull Set<RuleBasedSegment> toAdd,
             @NonNull Set<RuleBasedSegment> toRemove,
-            long changeNumber) {
+            long changeNumber,
+            @NonNull SplitRoomDatabase database) {
         mCipher = checkNotNull(cipher);
         mDao = checkNotNull(dao);
         mGeneralInfoStorage = checkNotNull(generalInfoStorage);
         mToAdd = checkNotNull(toAdd);
         mToRemove = checkNotNull(toRemove);
         mChangeNumber = changeNumber;
+        mDatabase = checkNotNull(database);
     }
 
     @Override
     public void run() {
         try {
+            boolean refused = false;
             List<String> toDelete = new ArrayList<>();
             for (RuleBasedSegment segment : mToRemove) {
                 String encryptedName = mCipher.encrypt(segment.getName());
                 if (encryptedName != null) {
                     toDelete.add(encryptedName);
+                } else {
+                    refused = true;
                 }
             }
 
@@ -65,17 +74,23 @@ final class Updater implements Runnable {
                     String name = mCipher.encrypt(segment.getName());
                     String body = mCipher.encrypt(Json.toJson(segment));
                     if (name == null || body == null) {
+                        refused = true;
                         continue;
                     }
                     toAdd.add(new RuleBasedSegmentEntity(name, body, System.currentTimeMillis()));
                 } catch (Exception e) {
+                    refused = true;
                     Logger.e("Error parsing RBS with name " + segment.getName() + ": " + e.getLocalizedMessage());
                 }
             }
 
             mDao.delete(toDelete);
             mDao.insert(toAdd);
-            mGeneralInfoStorage.setRbsChangeNumber(mChangeNumber);
+            if (refused) {
+                RefusedWrites.refuseRuleBasedSegments(mDatabase);
+                Logger.e("Refusing to advance the rule-based segments change number: a value failed to encrypt");
+            }
+            mGeneralInfoStorage.setRbsChangeNumber(RefusedWrites.ruleBasedSegmentsRefused(mDatabase) ? -1 : mChangeNumber);
         } catch (Exception e) {
             Logger.e("Error updating RBS: " + e.getLocalizedMessage());
             throw e;

@@ -10,11 +10,14 @@ import static org.mockito.Mockito.when;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
 import io.split.android.client.dtos.RuleBasedSegment;
+import io.split.android.client.storage.cipher.CBCCipher;
+import io.split.android.client.storage.cipher.JceCbcCipherProvider;
 import io.split.android.client.storage.cipher.SplitCipher;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity;
@@ -68,6 +71,57 @@ public class SnapshotLoaderTest {
         assertEquals("segment2", rbs2.getName());
         assertEquals("user", rbs2.getTrafficTypeName());
         assertEquals(2, rbs2.getChangeNumber());
+    }
+
+    @Test
+    public void cbcCipherUsesOneOperationPerBatch() {
+        JceCbcCipherProvider provider = new JceCbcCipherProvider();
+        CBCCipher cbcCipher = new CBCCipher(provider);
+        List<RuleBasedSegmentEntity> entities = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            String name = "segment" + i;
+            entities.add(new RuleBasedSegmentEntity(cbcCipher.encrypt(name), cbcCipher.encrypt(segmentJson(name, i)), 1L));
+        }
+        when(mDao.getAll()).thenReturn(entities);
+        provider.decryptionCalls.set(0);
+
+        RuleBasedSegmentSnapshot snapshot = new SnapshotLoader(mDao, cbcCipher, mGeneralInfoStorage).call();
+
+        assertEquals(1, provider.decryptionCalls.get());
+        assertEquals(20, snapshot.getSegments().size());
+        for (int i = 0; i < 20; i++) {
+            RuleBasedSegment segment = snapshot.getSegments().get("segment" + i);
+            assertNotNull(segment);
+            assertEquals(i, segment.getChangeNumber());
+        }
+    }
+
+    @Test
+    public void segmentsWithUndecryptableNameOrBodyOrInvalidJsonAreSkippedAndTheRestStayPaired() {
+        JceCbcCipherProvider provider = new JceCbcCipherProvider();
+        CBCCipher cipher = new CBCCipher(provider);
+        byte[] corrupt = new byte[16];
+        Arrays.fill(corrupt, (byte) 'z');
+        corrupt[15] = 5;
+        String undecryptable = java.util.Base64.getEncoder().encodeToString(provider.encryptWithoutPadding(corrupt));
+        when(mDao.getAll()).thenReturn(Arrays.asList(
+                new RuleBasedSegmentEntity(cipher.encrypt("one"), cipher.encrypt(segmentJson("one", 1)), 1L),
+                new RuleBasedSegmentEntity(undecryptable, cipher.encrypt(segmentJson("lost", 2)), 1L),
+                new RuleBasedSegmentEntity(cipher.encrypt("three"), cipher.encrypt(segmentJson("three", 3)), 1L),
+                new RuleBasedSegmentEntity(cipher.encrypt("four"), undecryptable, 1L),
+                new RuleBasedSegmentEntity(cipher.encrypt("five"), cipher.encrypt("{ not json"), 1L),
+                new RuleBasedSegmentEntity(cipher.encrypt("six"), cipher.encrypt(segmentJson("six", 6)), 1L)));
+
+        Map<String, RuleBasedSegment> segments = new SnapshotLoader(mDao, cipher, mGeneralInfoStorage).call().getSegments();
+
+        assertEquals(3, segments.size());
+        assertEquals(1, segments.get("one").getChangeNumber());
+        assertEquals(3, segments.get("three").getChangeNumber());
+        assertEquals(6, segments.get("six").getChangeNumber());
+    }
+
+    private static String segmentJson(String name, int changeNumber) {
+        return "{ \"name\": \"" + name + "\", \"trafficTypeName\": \"user\", \"changeNumber\": " + changeNumber + " }";
     }
 
     @Test

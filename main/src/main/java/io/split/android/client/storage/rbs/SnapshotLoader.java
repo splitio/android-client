@@ -5,6 +5,7 @@ import static io.split.android.client.utils.Utils.checkNotNull;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import java.util.concurrent.Callable;
 
 import io.split.android.client.dtos.RuleBasedSegment;
 import io.split.android.client.storage.cipher.SplitCipher;
+import io.split.android.client.storage.cipher.SplitCipherFactory;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentDao;
 import io.split.android.client.storage.db.rbs.RuleBasedSegmentEntity;
 import io.split.android.client.storage.general.GeneralInfoStorage;
@@ -48,9 +50,16 @@ final class SnapshotLoader implements Callable<RuleBasedSegmentSnapshot> {
     private Map<String, RuleBasedSegment> convertToDTOs(@Nullable List<RuleBasedSegmentEntity> entities) {
         Map<String, RuleBasedSegment> segments = new HashMap<>();
         if (entities != null) {
+            List<String> stored = new ArrayList<>(entities.size() * 2);
             for (RuleBasedSegmentEntity entity : entities) {
-                String name = mCipher.decrypt(entity.getName());
-                String body = mCipher.decrypt(entity.getBody());
+                stored.add(entity.getName());
+                stored.add(entity.getBody());
+            }
+
+            List<String> plain = SplitCipherFactory.decryptAll(mCipher, stored);
+            for (int i = 0; i < plain.size(); i += 2) {
+                String name = plain.get(i);
+                String body = plain.get(i + 1);
                 if (name == null || body == null) {
                     continue;
                 }

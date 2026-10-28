@@ -34,7 +34,7 @@ public class LoadSplitsTask implements SplitTask {
     @NonNull
     public SplitTaskExecutionInfo execute() {
         long startTime = System.currentTimeMillis();
-        
+
         // This call loads the feature flags from the DB into memory, as well as the
         // filter and flags spec values
         mSplitsStorage.loadLocal();
@@ -57,6 +57,7 @@ public class LoadSplitsTask implements SplitTask {
         boolean flagsSpecHasNotChanged = mFlagsSpecFromConfig.equals(flagsSpecFromStorage);
 
         if (isNotInitialChangeNumber && filterHasNotChanged && flagsSpecHasNotChanged) {
+            logElapsed(startTime);
             return SplitTaskExecutionInfo.success(SplitTaskType.LOAD_LOCAL_SPLITS);
         }
 
@@ -80,7 +81,12 @@ public class LoadSplitsTask implements SplitTask {
 
         // Since change number is -1 or the storage has been cleared,
         // we don't consider the flags to be loaded, so the task status is error
+        logElapsed(startTime);
         return SplitTaskExecutionInfo.error(SplitTaskType.LOAD_LOCAL_SPLITS);
+    }
+
+    private static void logElapsed(long startTime) {
+        Logger.v("LoadSplitsTask finished in " + (System.currentTimeMillis() - startTime) + " ms");
     }
 
     private static void logClearingMessage(boolean filterHasChanged, boolean flagsSpecHasChanged) {
