@@ -1,3 +1,8 @@
+5.5.3 (Oct 28, 2026)
+- Fixed issue in which flags could be served from a stale cache preload after an update.
+- Fixed issue in which an oversized or unreadable flag row in the cache prevented the remaining flags from loading.
+- Improved load performance of encrypted cache by batching decryption.
+
 5.5.2 (Aug 6, 2026)
 - Fixed issue in which persisted attributes could overwrite new values if those were set before SDK_READY_FROM_CACHE was fired.
 
