@@ -243,10 +243,28 @@ def splitPOM = {
     }
 }
 
+// CI passes -PpublishSha=<short sha> on fme-mvn publishes so each merge gets a unique version (5.5.3-<sha>)
+def publishSha = findProperty('publishSha')
+version = publishSha ? "${splitVersion}-${publishSha}" : splitVersion
+
 mavenPublishing {
-    coordinates("io.split.client", "android-client", splitVersion)
+    coordinates("io.split.client", "android-client", project.version)
     pom(splitPOM)
     publishToMavenCentral(false)
+}
+
+// Harness Maven registry (fme-mvn). Credentials come from the CI environment.
+publishing {
+    repositories {
+        maven {
+            name = 'fmeMvn'
+            url = 'https://harness0.harness.io/pkg/l7B_kbSEQD2wjrM7PShm5w/fme-mvn/maven'
+            credentials {
+                username = System.getenv('HARNESS_MAVEN_USERNAME')
+                password = System.getenv('HARNESS_MAVEN_PASSWORD')
+            }
+        }
+    }
 }
 
 // GPG signing task
