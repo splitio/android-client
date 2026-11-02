@@ -467,7 +467,10 @@ afterEvaluate {
     // This causes lint to crash when consumers use checkDependencies: true
     publishing.publications.withType(MavenPublication) { publication ->
         if (publication.name == "maven") {
-            publication.artifact(tasks.named('javadocJar'))
+            // The root project does not generate javadoc, so fme-mvn SHA publishes skip the javadoc jar
+            if (!publishSha) {
+                publication.artifact(tasks.named('javadocJar'))
+            }
             publication.artifact(tasks.named('sourcesJar'))
             publication.artifacts.removeAll { artifact ->
                 artifact.file?.name?.endsWith('lint.jar') ?: false
